@@ -304,6 +304,31 @@ const reject = async (req, res) => {
     }
  }
 
+const saveReject = async (data, by, approvalOf) => {
+    try {
+        const existingUser = await User.findById(by)
+        if (!existingUser) {
+            console.log('User not found');
+            return;
+        };
+        const newApproved = new Approved({
+            data,
+            by: existingUser?._id,
+            approvalOf
+        });
+        const savedApproval = await newApproved.save();
+        if (existingUser.approved) {
+            existingUser.approved.push(savedApproval._id);
+            await existingUser.save();
+        } else {
+            console.log('existingUser.approved is not an array or is undefined');
+        }
+        // console.log(approved)
+    } catch (error) {
+        console.log(error);
+    }
+};
+
 const saveApproved = async (data, by, approvalOf) => {
     try {
         const existingUser = await User.findById(by)
