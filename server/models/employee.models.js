@@ -1,0 +1,91 @@
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+
+const employeeSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    },
+    name: {
+        type: String,
+        trim: true
+    },
+    email: {
+        type: String,
+        unique: true,
+        lowercase: true,
+        trim: true
+    },
+    password: {
+        type: String,
+        minlength: 8
+    },
+    contactNo: {
+        type: Number,
+    },
+    whatsapp: {
+        type: Number,
+        required: true,
+    },
+    employeeId: {
+        type: String,
+        unique: true,
+        index: true
+    },
+    address: {
+        type: String,
+    },
+    addhar:{ 
+        type:String,
+    },
+    pan: { 
+        type:String,
+    },
+    cv: { 
+        type:String,
+    },
+    offerletter: { 
+        type:String,
+    },
+    bank: { 
+        type:String,
+    },
+    certificates: { 
+        type:[{ 
+            type:String,
+        }],
+    },
+    joinDate: { 
+        type:Date,
+        default:Date.now,
+    },
+    department: {
+        type: String,
+    },
+    birthdate: {
+        type: Date,
+    },
+    salary: {
+        type: Number,
+    },
+    salarySlip: [{
+        type: String,
+        content: String
+    }],
+}, { timestamps: { createdAt: 'joinDate', updatedAt: 'updatedAt' }, touch: true })
+
+employeeSchema.pre('save', async function (next) {
+    if (this.isModified('password')) {
+      try {
+        const hashedPassword = await bcrypt.hash(this.password, 10);
+        this.password = hashedPassword;
+      } catch (error) {
+        return next(error);
+      }
+    }
+    next();
+  });
+  
+
+const Employee = mongoose.model('Employee', employeeSchema);
+module.exports = Employee;
