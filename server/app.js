@@ -1,5 +1,6 @@
 const express = require('express');
 const dotenv = require('dotenv').config();
+const app = express();
 const cors = require('cors');
 const UserRouter = require('./routes/user.routes');
 const Site = require('./routes/site.routes');
@@ -20,27 +21,14 @@ const PurchaseOrder = require('./routes/purchaseorder.routes');
 const Todo = require('./routes/todo.routes');
 const Approval = require('./routes/approval.routes');
 const path = require('path');
-const http = require('http');
-const io = require('./utils/socket');
 const { Attendance, Leave } = require('./routes/attendance.routes');
-const app = express();
-const server = http.createServer(app);
-io.attach(server);
-
-// io.on('connection', (socket) => {
-//   console.log('User Connected');
-//   // console.log('Id:', socket.id);
-//   socket.on('disconnect', () => {
-//     console.log('User Disconnected')
-//   })
-// })
 
 // midellware
 const corsOptions = {
   origin: `${process.env.CORS_ORIGIN}`,
   methods: ['GET', 'HEAD', 'PUT', 'OPTIONS', 'PATCH', 'POST', 'DELETE'],
   credentials: true, // Enable cookies across domains
-  secure: true, // Allow credentials only over HTTPS
+  secure: false, // Allow credentials only over HTTPS
   // allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-csrf-token'],
   // exposedHeaders: ['set-cookie', 'Content-Range', 'X-Content-Range', 'Authorization'],
 };
@@ -54,18 +42,13 @@ app.use(cors(corsOptions));
 //   next();
 // });
 const buildpath = path.join(__dirname, '../client/dist');
-// app.set('io', io);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(buildpath));
 app.use(helmet())
 
-//API's  
-app.use(function (request, response, next) {
-  request.io = io;
-  next();
-});
 app.use('/api/v1/user', UserRouter);
 app.use('/api/v1/attendance', Attendance);
 app.use('/api/v1/leave', Leave);
@@ -96,4 +79,4 @@ app.get('/', (req, res) => {
   res.status(201).send('Hello World');
 });
 
-module.exports = server;
+module.exports = app;

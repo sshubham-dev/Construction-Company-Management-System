@@ -9,7 +9,6 @@ const ProjectSchedule = require('../models/projectschedule.models');
 const PurchaseOrder = require('../models/purchaseOrder.models.js');
 const ExtraWork = require('../models/extrawork.models.js');
 const uploadOnCloudinary = require('../utils/cloudinary.js');
-const io = require('../utils/socket');
 
 const getSites = async (req, res) => {
     try {
@@ -27,9 +26,6 @@ const getSites = async (req, res) => {
             .populate('workOrder')
             .exec();
         if (sites.length === 0) return res.status(404).json({ error: 'Sites Not Found' });
-        // setInterval(() => {
-        //     io.emit('Sites', `Total ${sites.length} Sites`);
-        // }, 4000);
         res.status(200).json(sites);
     } catch (error) {
         console.log(error)

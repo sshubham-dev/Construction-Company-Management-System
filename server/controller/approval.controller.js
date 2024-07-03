@@ -6,7 +6,6 @@ const {
 const User = require('../models/user.models');
 const Bill = require('../models/bill.models.js');
 const PurchaseOrder = require('../models/purchaseOrder.models.js');
-const io = require('../utils/socket');
 const WorkOrder = require('../models/workorder.models');
 
 const getAllApprovals = async (req, res) => {
@@ -76,8 +75,7 @@ const reject = async (req, res) => {
                             await approval.save();
                         bill.adminApprove = 'Approved',
                             await bill.save();
-                        io.emit('notification', 'Bill is Approved By Ceo');
-                        saveApproved(approval, user._id, 'Bill'), 
+                        saveReject(approval, user._id, 'Bill'), 
                         await Approval.findByIdAndDelete(approval?._id);
                         bill.createdBy.message.push('Bill has been Approved By Parveen Sir');
                         res.status(201).json({message: 'Bill has been Approved By Parveen Sir'});
@@ -92,8 +90,7 @@ const reject = async (req, res) => {
                         purchaseOrder.adminApprove = 'Approved',
                             await purchaseOrder.save();
                         console.log(purchaseOrder)
-                        io.emit('notification', 'Purchase Order has been Approved By Parveen Sir');
-                        saveApproved(approval, user._id, 'Purchase Order')
+                        saveReject(approval, user._id, 'Purchase Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         purchaseOrder.createdBy?.message.push('Purchase Order has been Approved By Parveen Sir');
                         res.status(201).json({message: 'Purchase Order has been Approved By Parveen Sir'});
@@ -111,8 +108,7 @@ const reject = async (req, res) => {
                         // workOrder.approvalStatus = 'Approved'
                             await workOrder.save();
                         // console.log(workOrder)
-                        io.emit('notification', 'Work Order has been Approved By Parveen Sir');
-                        saveApproved(approval, user?._id, 'Work Order')
+                        saveReject(approval, user?._id, 'Work Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         workOrder.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
                         res.status(201).json({message: 'Work Order has been Approved By Parveen Sir'});
@@ -134,7 +130,7 @@ const reject = async (req, res) => {
                             await approval.save();
                         bill.accoutantApprove = 'Approved'
                         await bill.save();
-                        saveApproved(approval, user._id, 'Bill'), 
+                        saveReject(approval, user._id, 'Bill'), 
                         await Approval.findByIdAndDelete(approval?._id);
                         bill.createdBy.message.push('Bill has been Approved By Parveen Sir');
                         res.status(201).json({message: 'Bill has been Approved By Parveen Sir'});
@@ -148,7 +144,6 @@ const reject = async (req, res) => {
                         purchaseOrder.adminApprove = 'Approved',
                             await purchaseOrder.save();
                         console.log(purchaseOrder)
-                        io.emit('notification', 'Purchase Order has been Approved By Parveen Sir');
                         saveApproved(approval, user._id, 'Purchase Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         purchaseOrder.createdBy.message.push('Purchase Order has been Approved By Parveen Sir');
@@ -164,7 +159,6 @@ const reject = async (req, res) => {
                         workOrder.adminApprove = 'Approved',
                             await workOrder.save();
                         console.log(workOrder)
-                        io.emit('notification', 'Purchase Order has been Approved By Parveen Sir');
                         saveApproved(approval, user?._id, 'Work Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         workOrder.createdBy?.message.push('Purchase Order has been Approved By Parveen Sir');
@@ -203,7 +197,6 @@ const reject = async (req, res) => {
                         workOrder.adminApprove = 'Approved',
                             await workOrder.save();
                         console.log(workOrder)
-                        io.emit('notification', 'Purchase Order has been Approved By Parveen Sir');
                         saveApproved(approval, user?._id, 'Work Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         workOrder.createdBy?.message.push('Purchase Order has been Approved By Parveen Sir');
@@ -280,7 +273,7 @@ const reject = async (req, res) => {
                         purchaseOrder.supplierApprove = 'Approved',
                             await purchaseOrder.save();
                         console.log(purchaseOrder)
-                        io.emit('notification', 'Purchase Order has been Approved By Parveen Sir');
+
                         saveApproved(approval, user._id, 'Purchase Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         purchaseOrder.createdBy.message.push('Purchase Order has been Approved By Parveen Sir');
@@ -385,7 +378,7 @@ const approve = async (req, res) => {
                             await approval.save();
                         bill.adminApprove = 'Approved',
                             await bill.save();
-                        io.emit('notification', 'Bill is Approved By Ceo');
+
                         saveApproved(approval, user._id, 'Bill'), 
                         await Approval.findByIdAndDelete(approval?._id);
                         bill.createdBy.message.push('Bill has been Approved By Parveen Sir');
@@ -401,7 +394,6 @@ const approve = async (req, res) => {
                         purchaseOrder.adminApprove = 'Approved',
                             await purchaseOrder.save();
                         console.log(purchaseOrder)
-                        io.emit('notification', 'Purchase Order has been Approved By Parveen Sir');
                         saveApproved(approval, user._id, 'Purchase Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         purchaseOrder.createdBy?.message.push('Purchase Order has been Approved By Parveen Sir');
@@ -420,7 +412,6 @@ const approve = async (req, res) => {
                         // workOrder.approvalStatus = 'Approved'
                             await workOrder.save();
                         // console.log(workOrder)
-                        io.emit('notification', 'Work Order has been Approved By Parveen Sir');
                         saveApproved(approval, user?._id, 'Work Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         workOrder.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
@@ -457,7 +448,6 @@ const approve = async (req, res) => {
                         purchaseOrder.adminApprove = 'Approved',
                             await purchaseOrder.save();
                         console.log(purchaseOrder)
-                        io.emit('notification', 'Purchase Order has been Approved By Parveen Sir');
                         saveApproved(approval, user._id, 'Purchase Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         purchaseOrder.createdBy.message.push('Purchase Order has been Approved By Parveen Sir');
@@ -473,7 +463,6 @@ const approve = async (req, res) => {
                         workOrder.adminApprove = 'Approved',
                             await workOrder.save();
                         console.log(workOrder)
-                        io.emit('notification', 'Purchase Order has been Approved By Parveen Sir');
                         saveApproved(approval, user?._id, 'Work Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         workOrder.createdBy?.message.push('Purchase Order has been Approved By Parveen Sir');
@@ -512,7 +501,6 @@ const approve = async (req, res) => {
                         workOrder.adminApprove = 'Approved',
                             await workOrder.save();
                         console.log(workOrder)
-                        io.emit('notification', 'Purchase Order has been Approved By Parveen Sir');
                         saveApproved(approval, user?._id, 'Work Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         workOrder.createdBy?.message.push('Purchase Order has been Approved By Parveen Sir');
@@ -589,7 +577,6 @@ const approve = async (req, res) => {
                         purchaseOrder.supplierApprove = 'Approved',
                             await purchaseOrder.save();
                         console.log(purchaseOrder)
-                        io.emit('notification', 'Purchase Order has been Approved By Parveen Sir');
                         saveApproved(approval, user._id, 'Purchase Order')
                         await Approval.findByIdAndDelete(approval?._id);
                         purchaseOrder.createdBy.message.push('Purchase Order has been Approved By Parveen Sir');

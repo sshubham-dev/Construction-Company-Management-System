@@ -77,9 +77,10 @@ const ExtraWork = () => {
         }}>
         <Header category="Page" title="Extra Work's" />
         <div className="w-full mx-auto text-gray-700 px-2 flex justify-end items-center">
+        {user.department === 'Site Incharge' && (
           <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
             <MdAdd className='text-xl' />
-          </button>
+          </button>)}
         </div>
 
         <Tabs defaultActiveKey='client'>
@@ -317,6 +318,7 @@ const ExtraWork = () => {
 
           </Tabs.TabPane>
 
+          {user.department === 'Site Incharge' && (
           <Tabs.TabPane tab='Draft' key={'draft'}>
 
             <div className="overflow-x-auto">
@@ -360,7 +362,7 @@ const ExtraWork = () => {
               </table>
             </div>
 
-          </Tabs.TabPane>
+          </Tabs.TabPane>)}
 
         </Tabs>
 

@@ -6,11 +6,13 @@ import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import Header from '../components/Header';
+import { useSelector } from 'react-redux'
 axios.defaults.withCredentials = true;
 
 const Contractors = () => {
     const navigate = useNavigate();
     const [contractors, setContractor] = useState([]);
+    const { user, isLoggedIn } = useSelector((state) => state.auth)
 
     useEffect(() => {
         getContractors();
@@ -56,9 +58,10 @@ const Contractors = () => {
                     <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
                         Total Contractor: {contractors?.length}
                     </h2>
+                    {user.department === 'Site Incharge' && (
                     <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
                         <MdAdd className='text-xl' />
-                    </button>
+                    </button>)}
                 </div>
 
                 <div className="overflow-x-auto"

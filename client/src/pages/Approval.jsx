@@ -11,8 +11,6 @@ import Header from '../components/Header';
 import { useSelector } from 'react-redux';
 import { LuShieldClose } from "react-icons/lu";
 import { useNavigate } from 'react-router-dom';
-// import io from 'socket.io-client';
-// const socket = io('http://localhost:8080');
 axios.defaults.withCredentials = true;
 
 const Approval = () => {
@@ -26,14 +24,6 @@ const Approval = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // socket.on('message', (incomingData) => {
-        //     console.log('Received message:', incomingData);
-        //     setAllMessages((prevMessages) => [...prevMessages, { content: incomingData, isUser: false }]);
-        // });
-
-        // return () => {
-        //     socket.disconnect();
-        // };
         if (user) {
             fetchApproval(user._id);
             fetchApproved(user._id);

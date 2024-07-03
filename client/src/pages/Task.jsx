@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import CreateTask from '../components/CreateTask.jsx';
 import toast, { Toaster } from 'react-hot-toast';
 import Header from '../components/Header';
-// import io from 'socket.io-client';
 import axios from 'axios';
-// const socket = io('http://localhost:8080');
+
 
 const Task = () => {
     const [tasks, setTask] = useState([]);
@@ -20,15 +19,6 @@ const Task = () => {
             }
         };
         fetchTask();
-
-        // socket.on('task', (todo) => {
-        //     console.log('Received message:', todo);
-        //     // setTask(todo);
-        // });
-
-        // return () => {
-        //     socket.disconnect();
-        // };
     }, []);
 
     console.log(tasks)

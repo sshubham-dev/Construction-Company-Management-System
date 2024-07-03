@@ -96,9 +96,10 @@ const PurchaseOrders = () => {
           <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
             Total Purchase Orders: {purchaseOrders?.length}
           </h2>
+          {user.department === 'Site Incharge' && (
           <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
             <MdAdd className='text-xl' />
-          </button>
+          </button>)}
         </div>
         <Tabs defaultActiveKey='ordered' tabPosition='top' className="w-full">
           <Tabs.TabPane tab='Ordered' key={'ordered'}>
@@ -148,6 +149,7 @@ const PurchaseOrders = () => {
               </table>
             </div>
           </Tabs.TabPane>
+          {user.department === 'Site Incharge' && (
           <Tabs.TabPane tab='Draft' key={'draft'}>
             <div className="overflow-x-auto"
               style={{
@@ -191,7 +193,7 @@ const PurchaseOrders = () => {
                 </tbody>
               </table>
             </div>
-          </Tabs.TabPane>
+          </Tabs.TabPane>)}
         </Tabs>
         </div>
         <Toaster

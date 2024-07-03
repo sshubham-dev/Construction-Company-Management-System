@@ -110,8 +110,8 @@ const login = async (req, res) => {
                 .select("-password -refreshToken");
             const options = {
                 httpOnly: true,
-                secure: true, // Ensure this is true in a production environment with HTTPS
-                sameSite: 'none',
+                // secure: false, // Ensure this is true in a production environment with HTTPS
+                // sameSite: 'none',
                 expires: new Date(Date.now() + 60 * 60 * 1000),
             };
             return res
@@ -145,8 +145,8 @@ const logout = async (req, res) => {
     )
     const options = {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none',
+        // secure: true,
+        // sameSite: 'none',
     };
     const token = req.cookies
     res

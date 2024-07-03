@@ -102,7 +102,7 @@ const Sidebar = () => {
       to: '/clients',
       name: 'Clients',
       icon: <MdBusiness />,
-      role: ['Company', 'Ceo']
+      role: ['Company', 'Ceo', 'Accountant']
     },
     {
       to: '/contractors',
@@ -120,7 +120,7 @@ const Sidebar = () => {
       to: '/employee',
       name: 'Employees',
       icon: <MdPeople />,
-      role: ['Company', 'Ceo']
+      role: ['Company', 'Ceo', 'H.R', 'Accountant']
     },
     {
       to: '/approval',

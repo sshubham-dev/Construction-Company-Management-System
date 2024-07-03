@@ -113,9 +113,10 @@ const WorkOrders = () => {
           <div className=" mx-auto mb-6">
             <div className="text-sm text-gray-700 py-1 flex flex-row sm:flex-row items-center justify-between">
               <h2 className="text-lg sm:text-xl text-green-600 mb-2 sm:mb-0 sm:mr-4">Total Work Orders: {workOrders.length}</h2>
+              {user.department === 'Site Incharge' && (
               <button onClick={handleAdd} className="bg-green-500 rounded-full text-white p-2 mt-2 sm:mt-0">
                 <MdAdd className='text-xl' />
-              </button>
+              </button>)}
             </div>
           </div>
           <Tabs defaultActiveKey='approved' tabPosition='top' className="w-full">
@@ -166,6 +167,7 @@ const WorkOrders = () => {
                 </table>
               </div>
             </Tabs.TabPane>
+            {user.department === 'Site Incharge' && (
             <Tabs.TabPane tab='Draft' key={'draft'}>
               <div className="overflow-x-auto"
                 style={{
@@ -215,7 +217,7 @@ const WorkOrders = () => {
                   </tbody>
                 </table>
               </div>
-            </Tabs.TabPane>
+            </Tabs.TabPane>)}
           </Tabs>
           <Toaster position="top-right" reverseOrder={false} />
         </div>
