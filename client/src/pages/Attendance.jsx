@@ -13,9 +13,8 @@ const { Option } = Select;
 
 const Attendance = () => {
   const [attendances, setAttendance] = useState([]);
-  const [leaves, setLeave] = useState([]);
-  const currentMonthYear = moment().format('MMMM YYYY');
-  const [selectedMonth, setSelectedMonth] = useState(currentMonthYear);
+  const [leaves, setleave] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState('');
   const navigate = useNavigate();
   const [markAttendance, setMarkAttendance] = useState({
     date: moment().format('DD-MM-YYYY'),
@@ -35,7 +34,7 @@ const Attendance = () => {
   const fetchLeave = async () => {
     try {
       const response = await axios.get('/api/v1/leave');
-      setLeave(response.data);
+      setleave(response.data);
     } catch (error) {
       console.error(error);
     }
@@ -44,17 +43,13 @@ const Attendance = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log(markAttendance);
       const response = await axios.post('/api/v1/attendance', markAttendance);
       toast.success(response.data.message);
       fetchAttendance();
     } catch (error) {
       console.error(error);
     }
-  };
-
-  // Handle month selection
-  const handleMonthSelect = (value) => {
-    setSelectedMonth(value);
   };
 
   useEffect(() => {
@@ -69,7 +64,7 @@ const Attendance = () => {
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/api/v1/leave/${id}`);
-      setLeave(leaves.filter((leave) => leave._id !== id));
+      setleave(leaves.filter((leave) => leave._id !== id));
     } catch (error) {
       toast.error(error.message);
     }
@@ -85,6 +80,10 @@ const Attendance = () => {
     groupedAttendances[month].push(attendance);
   });
 
+  // Handle month selection
+  const handleMonthSelect = (value) => {
+    setSelectedMonth(value);
+  };
 
   const attendanceTable = (monthAttendances) => (
     <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
@@ -195,7 +194,7 @@ const Attendance = () => {
       <section className="h-full w-full overflow-x-auto">
         <div className="w-full mx-auto text-gray-700 flex justify-end items-center">
           {/* Month filter */}
-          <Select value={selectedMonth} style={{ width: 120 }} onChange={handleMonthSelect}>
+          <Select defaultValue="" style={{ width: 120 }} onChange={handleMonthSelect}>
             <Option value="">All Months</Option>
             {Object.keys(groupedAttendances).map((month, index) => (
               <Option key={index} value={month}>{month}</Option>
