@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast';
+import { useSelector } from 'react-redux';
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaExternalLinkAlt } from "react-icons/fa";
@@ -13,6 +14,7 @@ const UserManagement = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     const getUsers = async () => {

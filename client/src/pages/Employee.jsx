@@ -5,11 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaExternalLinkAlt } from "react-icons/fa";
+import { useSelector } from 'react-redux';
 import Header from '../components/Header';
 axios.defaults.withCredentials = true;
 
 const Employee = () => {
   const [employees, setEmployee] = useState([]);
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     const getEmployees = async () => {

@@ -2,7 +2,7 @@ const { Attendance, Leave } = require('../models/attendance.models');
 const User = require('../models/user.models.js');
 const {
     sendApproveByAdmin,
-} = require('./approval.controller.js')
+} = require('./approval.controller.js');
 
 const getAttendance = async (req, res) => {
     try {

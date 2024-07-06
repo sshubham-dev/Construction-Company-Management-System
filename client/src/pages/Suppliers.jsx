@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast';
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
+import { useSelector } from 'react-redux';
 import { FaExternalLinkAlt } from "react-icons/fa";
 import Header from '../components/Header';
 
 const Suppliers = () => {
     const navigate = useNavigate();
     const [suppliers, setSuppliers] = useState([]);
+    const { user } = useSelector((state) => state.auth);
 
     useEffect(() => {
         const getSuppliers = async () => {
