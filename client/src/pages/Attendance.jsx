@@ -17,7 +17,7 @@ const Attendance = () => {
   const [selectedMonth, setSelectedMonth] = useState('');
   const navigate = useNavigate();
   const [markAttendance, setMarkAttendance] = useState({
-    date: moment().format('DD-MM-YYYY'),
+    date: moment(),
     timeIn: moment().format('HH:mm'),
     status: '',
   });
