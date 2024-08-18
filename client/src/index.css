@@ -39,6 +39,7 @@ body {
     background-color: #ebeae7;
     color: #373636;
     font-family: 'Poppins', sans-serif;
+    touch-action: manipulation;
 }
 
 .navbar {
