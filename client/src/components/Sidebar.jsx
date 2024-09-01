@@ -30,7 +30,7 @@ const Sidebar = () => {
       to: '/',
       name: 'Dashboard',
       icon: <AiFillPieChart />,
-      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer']
+      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head']
     },
     {
       to: '/attendance',
@@ -42,91 +42,91 @@ const Sidebar = () => {
       to: '/profile',
       name: 'Profile',
       icon: <CgProfile />,
-      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer']
+      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head']
     },
     {
       to: '/user',
       name: 'Users',
       icon: <MdPerson />,
-      role: ['Company', 'Ceo']
+      role: ['Company', 'Ceo', 'Account Head']
     },
     {
       to: '/sites',
       name: 'Sites',
       icon: <MdLocationOn />,
-      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant', 'Client']
+      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant', 'Client', 'Account Head']
     },
     {
       to: '/project-schedules',
       name: 'Project Schedules',
       icon: <GrSchedulePlay />,
-      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant']
+      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Account Head']
     },
     {
       to: '/payment-schedules',
       name: 'Payment Schedules',
       icon: <TbCalendarDollar />,
-      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant']
+      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant', 'Account Head']
     },
     {
       to: '/quality-schedules',
       name: 'Quality Schedules',
       icon: <LuCalendarCheck2 />,
-      role: ['Company', 'Ceo', 'Quality Engineer', 'Site Incharge', 'Site Supervisor', 'Accountant']
+      role: ['Company', 'Ceo', 'Quality Engineer', 'Site Incharge', 'Site Supervisor', 'Account Head']
     },
     {
       to: '/bills',
       name: 'Bills',
       icon: <LiaFileInvoiceDollarSolid />,
-      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant']
+      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant', 'Account Head']
     },
     {
       to: '/work-orders',
       name: 'Work-Orders',
       icon: <MdWork />,
-      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant']
+      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant', 'Account Head']
     },
     {
       to: '/purchase-order',
       name: 'Purchase-Orders',
       icon: <BiSolidPurchaseTag />,
-      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant']
+      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant', 'Account Head']
     },
     {
       to: '/extra-work',
       name: 'Extra-Works',
       icon: <MdBuild />,
-      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant']
+      role: ['Company', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Accountant', 'Account Head']
     },
     {
       to: '/clients',
       name: 'Clients',
       icon: <MdBusiness />,
-      role: ['Company', 'Ceo', 'Accountant']
+      role: ['Company', 'Ceo', 'Accountant', 'Account Head']
     },
     {
       to: '/contractors',
       name: 'Contractors',
       icon: <GrUserWorker />,
-      role: ['Company', 'Ceo', 'Site Incharge', 'Accountant']
+      role: ['Company', 'Ceo', 'Site Incharge', 'Accountant', 'Account Head']
     },
     {
       to: '/suppliers',
       name: 'Suppliers',
       icon: <MdTrolley />,
-      role: ['Company', 'Ceo', 'Site Incharge', 'Accountant']
+      role: ['Company', 'Ceo', 'Site Incharge', 'Accountant', 'Account Head']
     },
     {
       to: '/employee',
       name: 'Employees',
       icon: <MdPeople />,
-      role: ['Company', 'Ceo', 'H.R', 'Accountant']
+      role: ['Company', 'Ceo', 'H.R', 'Account Head']
     },
     {
       to: '/approval',
       name: 'Approval',
       icon: <AiFillNotification />,
-      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Ceo', 'Site Incharge', 'Quality Head', 'Quality Engineer']
+      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Ceo', 'Site Incharge', 'Quality Head', 'Quality Engineer', 'Account Head']
     },
     // { 
     //   to: '/checklist', 
@@ -138,7 +138,7 @@ const Sidebar = () => {
       to: '/work-details',
       name: 'Work-Details',
       icon: <MdAssignment />,
-      role: ['Company', 'Ceo', 'Admin', 'Accountant']
+      role: ['Company', 'Ceo', 'Admin', 'Account Head']
     },
     // { 
     //   to: '/design', 

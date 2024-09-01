@@ -53,7 +53,7 @@ const Employee = () => {
           <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
             Total Employee: {employees.length}
           </h2>
-          {user.department === 'H.R' || 'Accountant' && (
+          {user.department === 'H.R' || user.department === 'Account Head' && (
           <button onClick={() => navigate('/create-employee')} className="bg-green-500 rounded-full text-white px-2 py-2 sm:mt-0">
             <MdAdd className='text-xl' />
           </button>)}

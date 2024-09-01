@@ -30,7 +30,8 @@ const CreateUser = () => {
     'Quality Head',
     'Quality Engineer',
     'Store Incharge', 
-    'H.R'
+    'H.R',
+    'Account Head'
   ];
   const navigate = useNavigate();
   const [userIdToEdit, setUserIdToEdit] = useState(null);

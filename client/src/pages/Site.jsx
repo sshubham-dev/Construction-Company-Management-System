@@ -84,7 +84,7 @@ const Sites = () => {
         <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>
           <div className="w-full mx-auto mb-6 text-gray-700 py-1 flex flex-row sm:flex-row justify-between items-center">
             <h2 className="text-lg sm:text-md md:text-lg lg:text-xl text-green-600 mb-2 sm:mb-0 sm:mr-4">Total Sites: {sites?.length}</h2>
-            {user.department === 'Admin' || 'Ceo' && (
+            {user.department === 'Admin' || user.department === 'Account Head' && (
               <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
                 <MdAdd className='text-xl' />
               </button>

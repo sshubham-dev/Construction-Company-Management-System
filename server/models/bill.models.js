@@ -50,7 +50,11 @@ const billSchema = new mongoose.Schema({
         type: String,
         default: 'Pending'
     },
-    accoutantApprove: {
+    accountantApprove: {
+        type: String,
+        default: 'Pending'
+    },
+    accountheadApprove: {
         type: String,
         default: 'Pending'
     },

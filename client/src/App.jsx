@@ -63,6 +63,7 @@ import Approval from './pages/Approval.jsx';
 import ResetPasswd from './components/ResetPasswd.jsx';
 import Attendance from './pages/Attendance.jsx';
 import CreateLeave from './components/CreateLeave.jsx';
+import Account_Head from './pages/AccountHead.jsx';
 
 const App = () => {
 
@@ -104,6 +105,7 @@ const App = () => {
         <Route path='/create-leave' element={<CreateLeave />} />
         <Route path='/edit-leave/:id' element={<CreateLeave />} />
         <Route path='/accountant' element={<Accountant />} />
+        <Route path='/account_head' element={<Account_Head />} />
         <Route path='/employee' element={<Employee />} />
         <Route path='/create-employee' element={<CreateEmployee />} />
         <Route path='/contractors' element={<Contractors />} />

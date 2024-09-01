@@ -27,6 +27,9 @@ const Dashboard = () => {
           case 'Accountant':
             navigate('/accountant');
             break;
+          case 'Account Head':
+            navigate('/account-head');
+            break;
           case 'Marketing':
             navigate('/marketing');
             break;

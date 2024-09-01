@@ -59,7 +59,7 @@ const UserManagement = () => {
           {/* <div className="mx-auto mb-6 w-full sm:w-4/5 "> */}
           <div className="w-full mx-auto mb-6 text-gray-700 py-1 flex flex-row sm:flex-row justify-between items-center">
             <h2 className="text-lg sm:text-xl text-green-600 mb-2 sm:mb-0 sm:mr-4">Total Users: {users.length}</h2>
-            {user.department === 'Ceo' || user.department === 'Accountant' || user.department === 'Company' && (
+            {user.department === 'Ceo' || user.department === 'Account Head' || user.department === 'Company' && (
             <button onClick={handleAdd} className="bg-green-500 rounded-full text-white p-2 mt-2 sm:mt-0">
               <MdAdd className='text-xl' />
             </button>)}

@@ -169,6 +169,57 @@ const reject = async (req, res) => {
                         break;
                 }
                 break;
+                
+            case 'Account Head':
+                switch (approval.approvalOf) {
+
+                    case 'Bill':
+                        const bill = await Bill.findById(approval.data._id)
+                            .populate('createdBy')
+                            .exec();
+                        approval.isApproved = true,
+                            await approval.save();
+                        bill.accoutantApprove = 'Approved'
+                        await bill.save();
+                        saveReject(approval, user._id, 'Bill'), 
+                        await Approval.findByIdAndDelete(approval?._id);
+                        bill.createdBy.message.push('Bill has been Approved By Parveen Sir');
+                        res.status(201).json({message: 'Bill has been Approved By Parveen Sir'});
+                        // console.log('bill:', bill)
+                        break;
+
+                    case 'Purchase Order':
+                        const purchaseOrder = await PurchaseOrder.findById(approval?.data._id);
+                        approval.isApproved = true,
+                            await approval.save();
+                        purchaseOrder.adminApprove = 'Approved',
+                            await purchaseOrder.save();
+                        console.log(purchaseOrder)
+                        saveApproved(approval, user._id, 'Purchase Order')
+                        await Approval.findByIdAndDelete(approval?._id);
+                        purchaseOrder.createdBy.message.push('Purchase Order has been Approved By Parveen Sir');
+                        res.status(201).json({message: 'Bill has been Approved By Parveen Sir'});
+                        break;
+
+                    case 'Work Order':
+                        const workOrder = await WorkOrder.findById(approval?.data._id)
+                            .populate('createdBy')
+                            .exec();
+                        approval.isApproved = true,
+                            await approval.save();
+                        workOrder.adminApprove = 'Approved',
+                            await workOrder.save();
+                        console.log(workOrder)
+                        saveApproved(approval, user?._id, 'Work Order')
+                        await Approval.findByIdAndDelete(approval?._id);
+                        workOrder.createdBy?.message.push('Purchase Order has been Approved By Parveen Sir');
+                        res.status(201).json({message: 'Bill has been Approved By Parveen Sir'});
+                        break;
+
+                    default:
+                        break;
+                }
+                break;
 
             case 'Site Incharge':
                 switch (approval.approvalOf) {
