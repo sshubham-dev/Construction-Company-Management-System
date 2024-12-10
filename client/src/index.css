@@ -72,3 +72,28 @@ body {
 ::-webkit-scrollbar-track {
   background-color: transparent;
 }
+
+
+.transition-all {
+  transition: all 0.3s ease-in-out;
+}
+
+.max-h-0 {
+  max-height: 0;
+  overflow: hidden;
+}
+
+.max-h-screen {
+  max-height: 500px; /* Adjust as needed */
+}
+
+.sidebar-container {
+  /* Add your existing styles */
+  overflow-y: auto; /* Enable scrolling */
+  scrollbar-width: none; /* Hide scrollbar in Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar in IE/Edge */
+}
+
+.sidebar-container::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome, Safari, and other webkit browsers */
+}

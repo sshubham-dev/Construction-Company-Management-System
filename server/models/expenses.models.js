@@ -13,6 +13,14 @@ const expensesSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    amount:{
+        type: Date,
+        required: true,
+    },
+    purpose:{
+        type: String,
+        required: true,
+    }
 },{timestamps:true});
 
 const Expenses = mongoose.model('Expenses', expensesSchema);

@@ -79,7 +79,7 @@ const userSchema = new mongoose.Schema({
     message: [{
         type: String,
     }],
-    expenses: [{
+    account: [{
         type: String,
         date: Date,
     }],

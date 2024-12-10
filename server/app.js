@@ -28,7 +28,7 @@ const corsOptions = {
   origin: `${process.env.CORS_ORIGIN}`,
   methods: ['GET', 'HEAD', 'PUT', 'OPTIONS', 'PATCH', 'POST', 'DELETE'],
   credentials: true, // Enable cookies across domains
-  secure: false, // Allow credentials only over HTTPS
+  secure: true, // Allow credentials only over HTTPS
   // allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-csrf-token'],
   // exposedHeaders: ['set-cookie', 'Content-Range', 'X-Content-Range', 'Authorization'],
 };
