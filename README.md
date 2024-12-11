@@ -92,7 +92,7 @@ For deploying in a production environment:
 - Real-time collaboration tools.
 
 ## Feedback and Support 📬
-For feedback or support, reach out to us at bhuviconsultants09@gmail.com.
+For feedback or support, reach out to us at shubhamkrg1819@gmail.com.
 
 ## Developer 👨‍💻
 Developed and maintained by [@sshubham-dev](https://github.com/sshubham-dev).
