@@ -5,7 +5,6 @@ import { useStateContext } from '../contexts/ContextProvider.jsx';
 import logo from '../asset/logo.webp';
 import { MdPerson, MdInventory, MdDateRange, MdWarehouse, MdWorkHistory, MdTrolley, MdMessage, MdOutlineCancel, MdLocationOn, MdBusiness, MdPeople, MdReceipt, MdConstruction, MdApproval, MdBuild, MdDesignServices, MdMoney, MdAssignment, MdWork, MdManageAccounts, MdAccountBalance } from "react-icons/md";
 import { GrUserWorker, GrSchedulePlay } from "react-icons/gr";
-import { FaFileInvoiceDollar, FaBusinessTime } from "react-icons/fa";
 import { BiSolidPurchaseTag } from "react-icons/bi";
 import { AiFillNotification, AiFillPieChart, AiOutlineMenu, AiOutlineProject } from "react-icons/ai";
 import { LiaFileInvoiceDollarSolid } from "react-icons/lia";
@@ -17,10 +16,10 @@ import { IoIosJournal } from "react-icons/io";
 import { FcCustomerSupport } from "react-icons/fc";
 import { RiCustomerService2Fill } from "react-icons/ri";
 import { FcManager, FcApproval } from "react-icons/fc";
-import { FaWallet } from "react-icons/fa";
+import { FaWallet, FaBalanceScale, FaFileInvoiceDollar, FaBusinessTime } from "react-icons/fa";
 import { TbTruckReturn } from "react-icons/tb";
-import { FaTruckMedical } from "react-icons/fa6";
-import { FaPersonCircleQuestion, FaPersonCircleCheck, FaPersonShelter, FaTruckArrowRight } from "react-icons/fa6";
+import { FaPersonCircleQuestion, FaPersonCircleCheck, FaPersonShelter, FaTruckArrowRight, FaTruckMedical } from "react-icons/fa6";
+import { HiUserGroup } from "react-icons/hi2";
 
 const Sidebar = () => {
   const { activeMenu } = useStateContext();
@@ -82,7 +81,7 @@ const Sidebar = () => {
         {
           to: '/erp/balance-sheet',
           name: 'Balance Sheet',
-          icon: <FaPersonCircleQuestion />,
+          icon: <FaBalanceScale />,
           role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },
         // {
@@ -205,12 +204,12 @@ const Sidebar = () => {
       name: 'Site Management',
       icon: <MdLocationOn />,
       children: [
-        // {
-        //   to: '/sites/clients',
-        //   name: 'Clients',
-        //   icon: <FaPersonShelter />,
-        //   role: ['Company', 'Ceo', 'Accountant', 'Account Head']
-        // },
+        {
+          to: '/site',
+          name: 'Sites Report',
+          icon: <FaPersonShelter />,
+          role: ['Company', 'Ceo', 'Accountant', 'Account Head']
+        },
         {
           to: '/sites/project-schedules',
           name: 'Project Schedules',
@@ -282,26 +281,27 @@ const Sidebar = () => {
     },
 
     /* Employee Management*/
-    // {
-    //   to: '/employee/dashboard',
-    //   name: 'Employee Management',
-    //   icon: <FcManager />,
-    //   children: [
-    //     {
-    //       to: '/employee/salary',
-    //       name: 'Salary',
-    //       icon: '',
-    //       role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
-    //     },
-    //   ],
-    //   role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
-    // },
     {
-      to: '/employee/dashboard',
+      to: '/hr/dashboard',
       name: 'Employee Management',
       icon: <FcManager />,
+      children: [
+        {
+          to: '/hr/employee/dashboard',
+          name: 'Employee Management',
+          icon: <FcManager />,
+          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
+        },
+        // {
+        //   to: '/employee/salary',
+        //   name: 'Salary',
+        //   icon: '',
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
+        // },
+      ],
       role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
     },
+
 
     {
       to: '/approval',

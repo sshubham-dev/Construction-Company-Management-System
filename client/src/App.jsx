@@ -48,7 +48,6 @@ import CreatePurchaseOrder from './components/CreatePurchaseOrder.jsx';
 import PurchaseOrders from './pages/Site/PurchaseOrders.jsx';
 import Suppliers from './pages/Dashboard/Suppliers.jsx';
 import PurchaseOrderScreen from './screen/PurchaseOrderScreen.jsx';
-import Message from './pages/Message.jsx';
 import Employee from './pages/HR/Employee.jsx';
 import Task from './pages/Dashboard/Task.jsx';
 import ExtraWorkScreen from './screen/ExtraWorkScreen.jsx';
@@ -81,6 +80,8 @@ import Return from './pages/Store/Return.jsx';
 import Expenses from './pages/Store/Expenses.jsx';
 import OfficeExpenses from './pages/Accounts/OfficeExpenses.jsx';
 import BalanceSheet from './pages/Accounts/BalanceSheet.jsx';
+import SitesDashboard from './pages/Site/SitesDashboard.jsx';
+import ReturnOrders from './pages/Site/ReturnOrders.jsx';
 
 const App = () => {
 
@@ -129,7 +130,8 @@ const App = () => {
 
         <Route path='/tasks' element={<Task />} />
         
-        <Route path='/employee/dashboard' element={<Employee />} />
+        <Route path='/hr/employee/dashboard' element={<Employee />} />
+        <Route path='/hr/dashboard' element={<Employee />} />
         <Route path='/create-employee' element={<CreateEmployee />} />
         
         <Route path='/user' element={<UserManagement />} />
@@ -141,6 +143,7 @@ const App = () => {
         <Route path='/contractor/:id' element={<ContractorScreen />} />
         <Route path='/edit-contractor/:id' element={<CreateContractor />} />
         
+        <Route path='/site' element={<SitesDashboard />} />
         <Route path='/sites/dashboard' element={<Sites />} />
         <Route path='/site/:id' element={<SiteScreen />} />
         <Route path='/create-site' element={<CreateSite />} />
@@ -204,7 +207,11 @@ const App = () => {
         <Route path='/edit-purchaseOrder/:id' element={<CreatePurchaseOrder />} />
         <Route path='/edit-purchaseOrder/:id/material/:index' element={<CreatePurchaseOrder />} />
         
-        <Route path='/sites/return-order' element={<PurchaseOrders />} />
+        <Route path='/sites/return-order' element={<ReturnOrders />} />
+        <Route path='/return-order/:id' element={<PurchaseOrderScreen />} />
+        <Route path='/create-returnOrder' element={<CreatePurchaseOrder />} />
+        <Route path='/edit-returnOrder/:id' element={<CreatePurchaseOrder />} />
+        <Route path='/edit-returnOrder/:id/material/:index' element={<CreatePurchaseOrder />} />
         
         <Route path='/erp' element={<ERP />} />
         <Route path='/erp/office-expenses' element={<OfficeExpenses />} />
@@ -230,8 +237,6 @@ const App = () => {
         <Route path='/record-site-kharchi/:userId' element={<CreateRecord />} />
 
         <Route path='/setting' element={<Profile />} />
-
-        <Route path='/message' element={<Message />} />
         
         <Route path='/approval' element={<Approval />} />
         
