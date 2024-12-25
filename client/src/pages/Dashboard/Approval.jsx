@@ -9,7 +9,6 @@ import { FcApproval } from "react-icons/fc";
 import { BiLinkExternal } from "react-icons/bi";
 import Header from '../../components/Header';
 import { useSelector } from 'react-redux';
-import { LuShieldClose } from "react-icons/lu";
 import { useNavigate } from 'react-router-dom';
 axios.defaults.withCredentials = true;
 

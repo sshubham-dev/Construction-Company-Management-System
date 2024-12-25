@@ -13,12 +13,18 @@ ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend);
 
 
 const PolarAreaChart = () => {
+    const generateRandomData = (numPoints, min, max) => {
+        return Array.from({ length: numPoints }, () =>
+            Math.floor(Math.random() * (max - min + 1)) + min
+        );
+    };
+    const labels = ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'];
     const data = {
-        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+        labels,
         datasets: [
             {
                 label: '# of Votes',
-                data: [12, 19, 3, 5, 2, 3],
+                data:  generateRandomData(labels.length, -1000, 1000),
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.5)',
                     'rgba(54, 162, 235, 0.5)',
@@ -32,11 +38,7 @@ const PolarAreaChart = () => {
         ],
     };
 
-    return (
-        <div className="bg-white rounded-lg shadow p-4">
-            <PolarArea data={data} />
-        </div>
-    )
+    return  <PolarArea data={data} />
 }
 
 export default PolarAreaChart

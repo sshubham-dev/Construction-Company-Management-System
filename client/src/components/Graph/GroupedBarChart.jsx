@@ -9,7 +9,6 @@ import {
     Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import faker from 'faker';
 
 ChartJS.register(
     CategoryScale,
@@ -24,6 +23,7 @@ ChartJS.register(
 
 const GroupedBarChart = () => {
     const options = {
+        maintainAspectRatio: true,
         plugins: {
             title: {
                 display: true,
@@ -45,35 +45,36 @@ const GroupedBarChart = () => {
         },
     };
 
-
+    const labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
+    const generateRandomData = (numPoints, min, max) => {
+        return Array.from({ length: numPoints }, () =>
+            Math.floor(Math.random() * (max - min + 1)) + min
+        );
+    };
     const data = {
         labels,
         datasets: [
             {
                 label: 'Dataset 1',
-                data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
+                data: generateRandomData(labels.length, -1000, 1000),
                 backgroundColor: 'rgb(255, 99, 132)',
                 stack: 'Stack 0',
             },
             {
                 label: 'Dataset 2',
-                data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
+                data: generateRandomData(labels.length, -1000, 1000),
                 backgroundColor: 'rgb(75, 192, 192)',
                 stack: 'Stack 0',
             },
             {
                 label: 'Dataset 3',
-                data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
+                data: generateRandomData(labels.length, -1000, 1000),
                 backgroundColor: 'rgb(53, 162, 235)',
                 stack: 'Stack 1',
             },
         ],
     };
-    return (
-        <div className="bg-white rounded-lg shadow p-4">
-            <Bar data={data} options={options} />
-        </div>
-    )
+    return <Bar data={data} options={options} />
 }
 
 export default GroupedBarChart

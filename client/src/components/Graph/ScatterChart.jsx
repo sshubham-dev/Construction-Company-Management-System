@@ -8,38 +8,37 @@ import {
   Legend,
 } from 'chart.js';
 import { Scatter } from 'react-chartjs-2';
-import faker from 'faker';
+
 
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 
 const ScatterChart = () => {
     const options = {
+      maintainAspectRatio: true,
         scales: {
           y: {
             beginAtZero: true,
           },
         },
       };
-      
+      const generateData = (numPoints, xMin, xMax, yMin, yMax) => {
+        return Array.from({ length: numPoints }, () => ({
+            x: Math.floor(Math.random() * (xMax - xMin + 1)) + xMin, // Random x
+            y: Math.floor(Math.random() * (yMax - yMin + 1)) + yMin, // Random y
+        }));
+    };
       const data = {
         datasets: [
           {
             label: 'A dataset',
-            data: Array.from({ length: 100 }, () => ({
-              x: faker.datatype.number({ min: -100, max: 100 }),
-              y: faker.datatype.number({ min: -100, max: 100 }),
-            })),
+            data: generateData(100, 0, 1000, 0, 1000),
             backgroundColor: 'rgba(255, 99, 132, 1)',
           },
         ],
       };
       
-  return (
-        <div className="bg-white rounded-lg shadow p-4">
-            <Scatter options={options} data={data} />
-        </div>
-  )
+  return   <Scatter options={options} data={data} />
 }
 
 export default ScatterChart

@@ -4,13 +4,19 @@ import { Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const DoughnutChart = ({ chartData, options }) => {
+const DoughnutChart = () => {
+    const generateRandomData = (numPoints, min, max) => {
+        return Array.from({ length: numPoints }, () =>
+            Math.floor(Math.random() * (max - min + 1)) + min
+        );
+    };
+    const labels = ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'];
     const data = {
-        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+        labels,
         datasets: [
             {
                 label: '# of Votes',
-                data: [12, 19, 3, 5, 2, 3],
+                data:  generateRandomData(labels.length, -1000, 1000),
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.2)',
                     'rgba(54, 162, 235, 0.2)',
@@ -31,12 +37,7 @@ const DoughnutChart = ({ chartData, options }) => {
             },
         ],
     };
-    return (
-        <div className="bg-white rounded-lg shadow p-4">
-            <Doughnut data={data} options={options} />
-        </div>
-
-    )
+    return <Doughnut data={data} options={{maintainAspectRatio: true, responsive: true}} />
 }
 
 export default DoughnutChart

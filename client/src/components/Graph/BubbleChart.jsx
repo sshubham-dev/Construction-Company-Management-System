@@ -7,7 +7,7 @@ import {
     Legend,
 } from 'chart.js';
 import { Bubble } from 'react-chartjs-2';
-import faker from 'faker';
+
 
 ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
 
@@ -16,46 +16,39 @@ ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
 
 const BubbleChart = () => {
     const options = {
+        Response:true,
         scales: {
             y: {
                 beginAtZero: true,
             },
         },
-        maintainAspectRatio: false,
+        maintainAspectRatio: true,
     };
-
+    const generateBubbleData = (numPoints, xMin, xMax, yMin, yMax, rMin, rMax) => {
+        return Array.from({ length: numPoints }, () => ({
+            x: Math.floor(Math.random() * (xMax - xMin + 1)) + xMin, // Random x
+            y: Math.floor(Math.random() * (yMax - yMin + 1)) + yMin, // Random y
+            r: Math.floor(Math.random() * (rMax - rMin + 1)) + rMin, // Random radius
+        }));
+    };
     const data = {
         datasets: [
             {
                 label: 'Red dataset',
-                data: Array.from({ length: 50 }, () => ({
-                    x: faker.datatype.number({ min: -100, max: 100 }),
-                    y: faker.datatype.number({ min: -100, max: 100 }),
-                    r: faker.datatype.number({ min: 5, max: 20 }),
-                })),
+                data: generateBubbleData(50, 0, 100, 0, 100, 5, 20),
                 backgroundColor: 'rgba(255, 99, 132, 0.5)',
             },
             {
                 label: 'Blue dataset',
-                data: Array.from({ length: 50 }, () => ({
-                    x: faker.datatype.number({ min: -100, max: 100 }),
-                    y: faker.datatype.number({ min: -100, max: 100 }),
-                    r: faker.datatype.number({ min: 5, max: 20 }),
-                })),
+                data: generateBubbleData(50, 0, 100, 0, 100, 5, 20),
                 backgroundColor: 'rgba(53, 162, 235, 0.5)',
             },
         ],
     };
-    return (
-        <div className="bg-white rounded-lg shadow p-4">
-            <Bubble 
+    return <Bubble 
             options={options} 
             data={data} 
-            width={100}
-            height={50}
             />
-        </div>
-    )
 }
 
 export default BubbleChart

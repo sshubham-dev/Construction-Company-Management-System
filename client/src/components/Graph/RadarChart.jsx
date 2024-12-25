@@ -23,23 +23,24 @@ ChartJS.register(
 
 
 const RadarChart = () => {
+    const generateRandomData = (numPoints, min, max) => {
+        return Array.from({ length: numPoints }, () =>
+            Math.floor(Math.random() * (max - min + 1)) + min
+        );
+    };
+    const labels = ['Thing 1', 'Thing 2', 'Thing 3', 'Thing 4', 'Thing 5', 'Thing 6'];
     const data = {
-        labels: ['Thing 1', 'Thing 2', 'Thing 3', 'Thing 4', 'Thing 5', 'Thing 6'],
+        labels,
         datasets: [
             {
                 label: '# of Votes',
-                data: [2, 9, 3, 5, 2, 3],
+                data:  generateRandomData(labels.length, -1000, 1000),
                 backgroundColor: 'rgba(255, 99, 132, 0.2)',
                 borderColor: 'rgba(255, 99, 132, 1)',
                 borderWidth: 1,
             },
         ],
     };
-    return (
-        <div className="bg-white rounded-lg shadow p-4">
-            <Radar data={data} />
-        </div>
-    )
+    return  <Radar data={data} options={{maintainAspectRatio: true,}} />
 }
-
 export default RadarChart

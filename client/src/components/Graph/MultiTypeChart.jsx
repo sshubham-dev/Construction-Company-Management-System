@@ -12,7 +12,7 @@ import {
     BarController,
 } from 'chart.js';
 import { Chart } from 'react-chartjs-2';
-import faker from 'faker';
+
 
 ChartJS.register(
     LinearScale,
@@ -29,7 +29,11 @@ ChartJS.register(
 
 const MultiTypeChart = () => {
     const labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
-
+    const generateRandomData = (numPoints, min, max) => {
+        return Array.from({ length: numPoints }, () =>
+            Math.floor(Math.random() * (max - min + 1)) + min
+        );
+    };
     const data = {
         labels,
         datasets: [
@@ -39,13 +43,13 @@ const MultiTypeChart = () => {
                 borderColor: 'rgb(255, 99, 132)',
                 borderWidth: 2,
                 fill: false,
-                data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
+                data:  generateRandomData(labels.length, -1000, 1000),
             },
             {
                 type: 'bar',
                 label: 'Dataset 2',
                 backgroundColor: 'rgb(75, 192, 192)',
-                data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
+                data:  generateRandomData(labels.length, -1000, 1000),
                 borderColor: 'white',
                 borderWidth: 2,
             },
@@ -53,16 +57,12 @@ const MultiTypeChart = () => {
                 type: 'bar',
                 label: 'Dataset 3',
                 backgroundColor: 'rgb(53, 162, 235)',
-                data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
+                data:  generateRandomData(labels.length, -1000, 1000),
             },
         ],
     };
 
-    return (
-        <div className="bg-white rounded-lg shadow p-4">
-            <Chart type='bar' data={data} />
-        </div>
-    )
+    return  <Chart type='bar' data={data} options={{maintainAspectRatio: true, responsive: true}} />
 }
 
 export default MultiTypeChart

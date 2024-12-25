@@ -30,7 +30,7 @@ const Layout = ({children}) => {
           </div>
 
           {/* Main */}
-          <div className={`${isLoggedIn ? 'ml-16' : 'ml-0'} mt-16 min-w-screen  min-h-screen p-3`}>
+          <div className={`${isLoggedIn ? 'ml-16' : 'ml-0'} mt-12 min-w-screen  min-h-screen p-3 bg-gray-50`}>
             {children}
           </div>
         </div>
