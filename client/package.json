@@ -31,6 +31,7 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.1.1",
     "react-select": "^5.9.0",
+    "react-table": "^7.8.0",
     "socket.io-client": "^4.8.1",
     "workbox-build": "^7.3.0"
   },

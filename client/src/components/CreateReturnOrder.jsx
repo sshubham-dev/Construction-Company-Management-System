@@ -7,14 +7,13 @@ import Header from '../components/Header';
 import Select from 'react-select';
 axios.defaults.withCredentials = true;
 
-const CreatePurchaseOrder = () => {
+const CreateReturnOrder = () => {
   const [formData, setFormData] = useState({
     supplier: '',
     site: '',
     purchaseOrderNo: '',
     createdBy: '',
-    requirementFor:'',
-    category: '',
+    materialType: '',
     requirement: [{
       material: '',
       rate: '',
@@ -40,7 +39,7 @@ const CreatePurchaseOrder = () => {
   const [materials, setMaterial] = useState([]);
   const [sites, setSite] = useState([]);
   const [suppliers, setSupplier] = useState([]);
-
+  const [categorys, setCategory] = useState([]);
   const status = ['Delivered', 'Pending', 'Returned'];
   const units = ['SQFT', 'RFT', 'LUMSUM', 'NOS', 'FIXED', 'RMT', 'SQMT', 'CUM', 'BAG', 'KG', 'TONES', 'LITERS'];
   const [requirementToEdit, setRequirementToEdit] = useState({
@@ -245,7 +244,7 @@ const CreatePurchaseOrder = () => {
   if (requirementToEdit.id && requirementToEdit.index) {
     return (
       <div className='m-1.5 md:m-8 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
-        <Header category="Page" title="Dashboard" />
+        <Header category="Page" title="Return Order" />
         <section className="flex items-center justify-center max-h-screen mb-16 mt-4">
           <form
             onSubmit={handleSubmit}
@@ -377,7 +376,7 @@ const CreatePurchaseOrder = () => {
   } else {
     return (
       <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
-        <Header category="Page" title="Create Purchase Order" />
+        <Header category="Page" title="Create Return Order" />
         <div className="container mx-auto mt-4 mb-16">
           <form className="max-w-xl mx-auto " onSubmit={handleSubmit}>
 
@@ -399,7 +398,7 @@ const CreatePurchaseOrder = () => {
               </select>
             </div>
 
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <label htmlFor="contractorName" className="block text-sm font-semibold text-gray-600">
                 Supplier
               </label>
@@ -415,31 +414,18 @@ const CreatePurchaseOrder = () => {
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
 
             <div className="mb-4">
-              <label htmlFor="materialCategory" className="block text-sm font-semibold text-gray-600">
-              Material Category
+              <label htmlFor="materialType" className="block text-sm font-semibold text-gray-600">
+              Material Type
               </label>
               <select
-                name="category"
-                value={formData.category}
-                onChange={(e) => handleChange('category', e.target.value)}
+                name="materialType"
+                value={formData.materialType}
+                onChange={(e) => handleChange('materialType', e.target.value)}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                  <option value="">Select A Category</option>
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="requirementFor" className="block text-sm font-semibold text-gray-600">
-              Requirement For
-              </label>
-              <select
-                name="requirementFor"
-                value={formData.requirementFor}
-                onChange={(e) => handleChange('requirementFor', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option>Requirement For</option>
+                  <option value="">Select A Material Type</option>
               </select>
             </div>
 
@@ -449,7 +435,7 @@ const CreatePurchaseOrder = () => {
 
                 {formData.requirement.map((item, index) => (
                   <div key={index} className="mb-4 p-4 border rounded">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                       <div>
                         <label
@@ -491,7 +477,7 @@ const CreatePurchaseOrder = () => {
                       </div>
                       
                       {/* Rate */}
-                      <div>
+                      {/* <div>
                         <label
                           htmlFor={`work[${index}].rate`}
                           className="block text-sm font-semibold text-gray-600">
@@ -504,7 +490,7 @@ const CreatePurchaseOrder = () => {
                           placeholder="Rate"
                           className="border p-2 rounded w-full"
                         />
-                      </div>
+                      </div> */}
 
                       <div>
                         <label
@@ -530,7 +516,7 @@ const CreatePurchaseOrder = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveWork(index)}
-                            className="bg-red-500 text-white p-2 mt-4 rounded"
+                            className="bg-red-500 text-white p-2 rounded"
                           >
                             Remove
                           </button>
@@ -546,12 +532,12 @@ const CreatePurchaseOrder = () => {
                   onClick={handleAddWork}
                   className="bg-blue-500 text-white p-2 rounded"
                 >
-                  More Requirement
+                  More
                 </button>
               </div>
             }
             <button type="submit" className="bg-green-500 text-white p-2 rounded mt-2">
-              {purchaseOrderToEdit ? 'Update' : 'Create Purchase Order'}
+              {purchaseOrderToEdit ? 'Update' : 'Return'}
             </button>
           </form>
           <Toaster position="top-right" reverseOrder={false} />
@@ -561,6 +547,4 @@ const CreatePurchaseOrder = () => {
   }
 }
 
-export default CreatePurchaseOrder;
-
-
+export default CreateReturnOrder

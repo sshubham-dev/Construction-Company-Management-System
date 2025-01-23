@@ -61,6 +61,10 @@ const siteSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Purchase-Order',
     }],
+    purchaseRequest: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Purchase-Request',
+    }],
     paymentSchedule: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Payment-Schedule',
@@ -83,8 +87,7 @@ const siteSchema = new mongoose.Schema({
     }],
     account: {
         income: {},
-        labourExpenses: {},
-        materialExpenses: {},
+        expenses: {},
         extraWork: {},
         profit: {},
         expenses: {},

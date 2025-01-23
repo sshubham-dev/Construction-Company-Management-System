@@ -19,10 +19,10 @@ const StackedBarChart = React.lazy(() => import('../../components/Graph/StackedB
 const VBarChart = React.lazy(() => import('../../components/Graph/VBarChart'));
 
 
-const OfficeExpenses = () => {
+const Expenses = () => {
     return (
         <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 '>
-            <Header category="Page" title="Office Expenses" />
+            <Header category="Page" title="Expenses" />
             <section className="h-full w-full mb-16 flex justify-center">
                 <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>
                     <Suspense fallback={<div>Loading...</div>}>
@@ -96,4 +96,4 @@ const OfficeExpenses = () => {
     );
 };
 
-export default OfficeExpenses;
+export default Expenses;

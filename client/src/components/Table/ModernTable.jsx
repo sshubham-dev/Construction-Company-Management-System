@@ -2,270 +2,411 @@ import React, { useState } from "react";
 
 const sampleData = [
     { id: 1, name: "Apple iMac 27\"", category: "PC", brand: "Apple", quantity: 300, price: 2999 },
-    { id: 2, name: "Apple iMac 20\"", category: "PC", brand: "Apple", quantity: 200, price: 1499 },
-    { id: 3, name: "Apple iPhone 14", category: "Phone", brand: "Apple", quantity: 1237, price: 999 },
-    { id: 4, name: "Apple iPad Air", category: "Tablet", brand: "Apple", quantity: 4578, price: 1199 },
-    { id: 5, name: "Xbox Series S", category: "Gaming/Console", brand: "Microsoft", quantity: 56, price: 299 },
-    { id: 6, name: "PlayStation 5", category: "Gaming/Console", brand: "Sony", quantity: 78, price: 799 },
-    { id: 7, name: "Xbox Series X", category: "Gaming/Console", brand: "Microsoft", quantity: 200, price: 699 },
-    { id: 8, name: "Apple Watch SE", category: "Watch", brand: "Apple", quantity: 657, price: 399 },
-    { id: 9, name: "NIKON D850", category: "Photo", brand: "Nikon", quantity: 465, price: 599 },
-    { id: 10, name: "Monitor BenQ EX2710Q", category: "TV/Monitor", brand: "BenQ", quantity: 354, price: 499 },
+    { id: 2, name: "Apple iMac 50\"", category: "PC", brand: "Apple", quantity: 200, price: 1499 },
+    { id: 3, name: "Apple iMac 27\"", category: "PC", brand: "Apple", quantity: 300, price: 2999 },
+    { id: 4, name: "Apple iPhone 14", category: "Phone", brand: "Apple", quantity: 1237, price: 999 },
+    { id: 5, name: "Apple iMac 20\"", category: "PC", brand: "Apple", quantity: 200, price: 1499 },
+    { id: 6, name: "Apple 0\"", category: "PC", brand: "Apple", quantity: 200, price: 1499 },
+    { id: 7, name: "Apple iPad Air", category: "Tablet", brand: "Apple", quantity: 4578, price: 1199 },
+    { id: 8, name: "Xbox Series S", category: "Gaming/Console", brand: "Microsoft", quantity: 56, price: 299 },
+    { id: 9, name: "Apple iPhone 14", category: "Phone", brand: "Apple", quantity: 1237, price: 999 },
+    { id: 10, name: "Apple iPad Air", category: "Tablet", brand: "Apple", quantity: 4578, price: 1199 },
+    { id: 11, name: "Apple iMac 20\"", category: "PC", brand: "Apple", quantity: 200, price: 1499 },
+    { id: 12, name: "Xbox Series S", category: "Gaming/Console", brand: "Microsoft", quantity: 56, price: 299 },
 ];
 
-const ModernTable = () => {
-    const [search, setSearch] = useState("");
+const ModernTable = ({ options, feature}) => {
     const [data, setData] = useState(sampleData);
-    const [filters, setFilters] = useState({ category: "", brand: "" }); // State for selected filters
-    const [isFilterOpen, setIsFilterOpen] = useState(false); // Filter dropdown/modal visibility
+    const [search, setSearch] = useState("");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEdit, setIsEdit] = useState(false);
+    const [currentItem, setCurrentItem] = useState(null);
+    const [filters, setFilters] = useState({ category: "", brand: "", minPrice: "", maxPrice: "" });
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 5;
 
-    // Filter data based on search and filters
+    // Filter and sort data
     const filteredData = data.filter(
         (item) =>
             item.name.toLowerCase().includes(search.toLowerCase()) &&
             (filters.category ? item.category === filters.category : true) &&
-            (filters.brand ? item.brand === filters.brand : true)
+            (filters.brand ? item.brand === filters.brand : true) &&
+            (filters.minPrice ? item.price >= filters.minPrice : true) &&
+            (filters.maxPrice ? item.price <= filters.maxPrice : true)
     );
 
     const sortedData = [...filteredData].sort((a, b) => {
         if (sortConfig.key) {
             const valueA = a[sortConfig.key];
             const valueB = b[sortConfig.key];
-
-            if (typeof valueA === "string" && typeof valueB === "string") {
-                return sortConfig.direction === "asc"
-                    ? valueA.localeCompare(valueB)
-                    : valueB.localeCompare(valueA);
-            }
-
-            return sortConfig.direction === "asc" ? valueA - valueB : valueB - valueA;
+            return sortConfig.direction === "asc"
+                ? valueA > valueB
+                    ? 1
+                    : -1
+                : valueA < valueB
+                    ? 1
+                    : -1;
         }
         return 0;
     });
 
-    // Pagination logic
     const indexOfLastRow = currentPage * rowsPerPage;
     const indexOfFirstRow = indexOfLastRow - rowsPerPage;
     const currentRows = sortedData.slice(indexOfFirstRow, indexOfLastRow);
-
     const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
-    // Sorting handler
-    const handleSort = (key) => {
-        let direction = "asc";
-        if (sortConfig.key === key && sortConfig.direction === "asc") {
-            direction = "desc";
-        } else if (sortConfig.key === key && sortConfig.direction === "desc") {
-            direction = null;
+    // Handle adding a new item
+    const handleAdd = (newItem) => {
+        setData((prevData) => [...prevData, { id: Date.now(), ...newItem }]);
+        setIsModalOpen(false);
+    };
+
+    // Handle editing an item
+    const handleEditSave = (updatedItem) => {
+        setData((prevData) =>
+            prevData.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+        );
+        setIsModalOpen(false);
+        setCurrentItem(null);
+    };
+
+    const handleEdit = (item) => {
+        setIsEdit(true);
+        setCurrentItem(item);
+        setIsModalOpen(true);
+    };
+
+    const handleDelete = (id) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this item?");
+        if (confirmDelete) {
+            setData((prevData) => prevData.filter((item) => item.id !== id));
         }
+    };
+
+    const handleSort = (key) => {
+        const direction =
+            sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
         setSortConfig({ key, direction });
     };
 
-
-    // Handle applying filters
-    const applyFilter = (newFilters) => {
+    // Handle filters
+    const applyFilters = (newFilters) => {
         setFilters(newFilters);
         setIsFilterOpen(false);
     };
 
     return (
         <div className="p-4">
-            {/* Header with Search and Actions */}
-            <div className="flex flex-col sm:flex-row justify-between mb-4 gap-4">
-                {/* Search Input */}
+            {/* Header with Search and Add */}
+            <div className="flex justify-between mb-4">
                 <input
                     type="text"
-                    className="p-2 border rounded w-full sm:w-1/3 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     placeholder="Search"
+                    className="border rounded p-2 w-1/3"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                 />
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                    <button className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                <div className="flex flex-row gap-6">
+                    <button
+                        className="bg-blue-500 text-white py-2 px-4 rounded"
+                        onClick={() => {
+                            setIsEdit(false);
+                            setIsModalOpen(true);
+                            setCurrentItem(null);
+                        }}
+                    >
                         + Add Product
                     </button>
-                    {/* <button className="bg-gray-200 text-gray-700 p-2 rounded hover:bg-gray-300">
-            Sort
-          </button> */}
                     <button
-                        className="bg-gray-200 text-gray-700 p-2 rounded hover:bg-gray-300"
-                        onClick={() => setIsFilterOpen(!isFilterOpen)}
+                        className="bg-gray-500 text-white py-2 px-4 rounded"
+                        onClick={() => setIsFilterOpen(true)}
                     >
                         Filter
                     </button>
                 </div>
             </div>
 
-            {/* Filter Dropdown */}
-            {isFilterOpen && (
-                <div className="mb-4 bg-white border rounded shadow-lg p-4 w-full sm:w-1/3">
-                    <h3 className="font-semibold mb-2">Filter Options</h3>
+            {/* Table */}
+            <div className="overflow-x-auto shadow-lg">
+                <table className="w-full border-collapse bg-white">
+                    <thead>
+                        <tr className="bg-gray-100">
+                            <th onClick={() => handleSort("name")} className="p-3">
+                                Name {sortConfig.key === "name" && (sortConfig.direction === "asc" ? "▲" : "▼")}
+                            </th>
+                            <th onClick={() => handleSort("category")} className="p-3">
+                                Category {sortConfig.key === "category" && (sortConfig.direction === "asc" ? "▲" : "▼")}
+                            </th>
+                            <th onClick={() => handleSort("brand")} className="p-3">
+                                Brand {sortConfig.key === "brand" && (sortConfig.direction === "asc" ? "▲" : "▼")}
+                            </th>
+                            <th onClick={() => handleSort("quantity")} className="p-3">
+                                Quantity {sortConfig.key === "quantity" && (sortConfig.direction === "asc" ? "▲" : "▼")}
+                            </th>
+                            <th onClick={() => handleSort("price")} className="p-3">
+                                Price {sortConfig.key === "price" && (sortConfig.direction === "asc" ? "▲" : "▼")}
+                            </th>
+                            <th className="p-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {currentRows.map((item) => (
+                            <tr key={item.id} className="border-b hover:bg-gray-100">
+                                <td className="p-3">{item.name}</td>
+                                <td className="p-3">{item.category}</td>
+                                <td className="p-3">{item.brand}</td>
+                                <td className="p-3">{item.quantity}</td>
+                                <td className="p-3">${item.price}</td>
+                                <td className="p-3 flex gap-2">
+                                    <button
+                                        className="bg-yellow-500 text-white p-2 rounded"
+                                        onClick={() => handleEdit(item)}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        className="bg-red-500 text-white p-2 rounded"
+                                        onClick={() => handleDelete(item.id)}
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex justify-between mt-4">
+                <span>Page {currentPage} of {totalPages}</span>
+                <div className="flex gap-2">
+                    <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        className="bg-gray-300 text-gray-700 p-2 rounded"
+                    >
+                        Previous
+                    </button>
+                    <button
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        className="bg-gray-300 text-gray-700 p-2 rounded"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
+
+            {/* Filter Modal */}
+            {isFilterOpen && <FilterModal filters={filters} setFilters={applyFilters} onClose={() => setIsFilterOpen(false)} />}
+
+            {/* Add/Edit Modal */}
+            {isModalOpen && (
+                <Modal
+                    onClose={() => setIsModalOpen(false)}
+                    onSave={isEdit ? handleEditSave : handleAdd}
+                    item={currentItem}
+                    isEdit={isEdit}
+                />
+            )}
+        </div>
+    );
+};
+
+const FilterModal = ({ filters, setFilters, onClose }) => {
+    const [newFilters, setNewFilters] = useState(filters);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setNewFilters((prev) => ({ ...prev, [name]: value }));
+    };
+
+    return (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+            <div className="bg-white p-4 rounded shadow-lg w-1/3">
+                <h2 className="text-lg font-semibold mb-4">Filter Products</h2>
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        setFilters(newFilters);
+                    }}
+                >
                     <div className="mb-2">
-                        <label className="block text-sm font-medium mb-1">Category:</label>
-                        <select
-                            className="p-2 border rounded w-full focus:outline-none"
-                            value={filters.category}
-                            onChange={(e) =>
-                                setFilters({ ...filters, category: e.target.value })
-                            }
-                        >
-                            <option value="">All Categories</option>
-                            <option value="PC">PC</option>
-                            <option value="Phone">Phone</option>
-                            <option value="Tablet">Tablet</option>
-                            <option value="Gaming/Console">Gaming/Console</option>
-                            <option value="Watch">Watch</option>
-                            <option value="Photo">Photo</option>
-                            <option value="TV/Monitor">TV/Monitor</option>
-                        </select>
+                        <label htmlFor="category" className="block text-sm font-medium">
+                            Category
+                        </label>
+                        <input
+                            type="text"
+                            id="category"
+                            name="category"
+                            value={newFilters.category}
+                            onChange={handleChange}
+                            className="border rounded p-2 w-full"
+                        />
                     </div>
                     <div className="mb-2">
-                        <label className="block text-sm font-medium mb-1">Brand:</label>
-                        <select
-                            className="p-2 border rounded w-full focus:outline-none"
-                            value={filters.brand}
-                            onChange={(e) =>
-                                setFilters({ ...filters, brand: e.target.value })
-                            }
-                        >
-                            <option value="">All Brands</option>
-                            <option value="Apple">Apple</option>
-                            <option value="Microsoft">Microsoft</option>
-                            <option value="Sony">Sony</option>
-                            <option value="Nikon">Nikon</option>
-                            <option value="BenQ">BenQ</option>
-                        </select>
+                        <label htmlFor="brand" className="block text-sm font-medium">
+                            Brand
+                        </label>
+                        <input
+                            type="text"
+                            id="brand"
+                            name="brand"
+                            value={newFilters.brand}
+                            onChange={handleChange}
+                            className="border rounded p-2 w-full"
+                        />
+                    </div>
+                    <div className="mb-2">
+                        <label htmlFor="minPrice" className="block text-sm font-medium">
+                            Minimum Price
+                        </label>
+                        <input
+                            type="number"
+                            id="minPrice"
+                            name="minPrice"
+                            value={newFilters.minPrice}
+                            onChange={handleChange}
+                            className="border rounded p-2 w-full"
+                        />
+                    </div>
+                    <div className="mb-2">
+                        <label htmlFor="maxPrice" className="block text-sm font-medium">
+                            Maximum Price
+                        </label>
+                        <input
+                            type="number"
+                            id="maxPrice"
+                            name="maxPrice"
+                            value={newFilters.maxPrice}
+                            onChange={handleChange}
+                            className="border rounded p-2 w-full"
+                        />
                     </div>
                     <div className="flex justify-end gap-2">
                         <button
-                            className="p-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                            onClick={() => setFilters({ category: "", brand: "" })}
+                            type="button"
+                            onClick={onClose}
+                            className="bg-gray-500 text-white p-2 rounded"
                         >
-                            Clear
+                            Cancel
                         </button>
                         <button
-                            className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                            onClick={() => applyFilter(filters)}
+                            type="submit"
+                            className="bg-blue-500 text-white p-2 rounded"
                         >
                             Apply
                         </button>
                     </div>
-                </div>
-            )}
-
-            {/* Table */}
-            <div className="overflow-x-auto rounded-lg shadow-lg">
-                <table className="min-w-full bg-white">
-                    <thead>
-                        <tr className="bg-gray-100 border-b">
-                            <th
-                                className="p-3 text-left font-semibold cursor-pointer"
-                                onClick={() => handleSort("name")}
-                            >
-                                PRODUCT NAME
-                                {sortConfig.key === "name" &&
-                                    (sortConfig.direction === "asc"
-                                        ? " ▲"
-                                        : sortConfig.direction === "desc"
-                                            ? " ▼"
-                                            : "")}
-                            </th>
-                            <th
-                                className="p-3 text-left font-semibold cursor-pointer"
-                                onClick={() => handleSort("category")}
-                            >
-                                CATEGORY
-                                {sortConfig.key === "category" &&
-                                    (sortConfig.direction === "asc"
-                                        ? " ▲"
-                                        : sortConfig.direction === "desc"
-                                            ? " ▼"
-                                            : "")}
-                            </th>
-                            <th
-                                className="p-3 text-left font-semibold cursor-pointer"
-                                onClick={() => handleSort("brand")}
-                            >
-                                BRAND
-                                {sortConfig.key === "brand" &&
-                                    (sortConfig.direction === "asc"
-                                        ? " ▲"
-                                        : sortConfig.direction === "desc"
-                                            ? " ▼"
-                                            : "")}
-                            </th>
-                            <th
-                                className="p-3 text-left font-semibold cursor-pointer"
-                                onClick={() => handleSort("quantity")}
-                            >
-                                QUANTITY
-                                {sortConfig.key === "quantity" &&
-                                    (sortConfig.direction === "asc"
-                                        ? " ▲"
-                                        : sortConfig.direction === "desc"
-                                            ? " ▼"
-                                            : "")}
-                            </th>
-                            <th
-                                className="p-3 text-left font-semibold cursor-pointer"
-                                onClick={() => handleSort("price")}
-                            >
-                                PRICE
-                                {sortConfig.key === "price" &&
-                                    (sortConfig.direction === "asc"
-                                        ? " ▲"
-                                        : sortConfig.direction === "desc"
-                                            ? " ▼"
-                                            : "")}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredData.length > 0 ? (
-                            filteredData.map((item) => (
-                                <tr
-                                    key={item.id}
-                                    className="hover:bg-gray-50 border-b transition duration-150"
-                                >
-                                    <td className="p-3">{item.name}</td>
-                                    <td className="p-3">{item.category}</td>
-                                    <td className="p-3">{item.brand}</td>
-                                    <td className="p-3">{item.quantity}</td>
-                                    <td className="p-3">${item.price}</td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="5" className="text-center p-3 text-gray-500">
-                                    No matching data found.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                </form>
             </div>
-            <div className="flex justify-between items-center mt-4">
-                <button
-                    className="p-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage((prev) => prev - 1)}
+        </div>
+    );
+};
+
+
+const Modal = ({ item, isEdit, onClose, onSave }) => {
+    const [formData, setFormData] = useState(isEdit ? item : { name: "", category: "", brand: "", quantity: "", price: "" });
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    return (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+            <div className="bg-white p-4 rounded shadow-lg w-1/3">
+                <h2 className="text-lg font-semibold mb-4">{isEdit ? "Edit Product" : "Add Product"}</h2>
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        onSave(formData);
+                    }}
                 >
-                    Previous
-                </button>
-                <div className="text-gray-700">
-                    Page {currentPage} of {totalPages}
-                </div>
-                <button
-                    className="p-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage((prev) => prev + 1)}
-                >
-                    Next
-                </button>
+                    <div className="mb-2">
+                        <label htmlFor="name" className="block text-sm font-medium">
+                            Name
+                        </label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            className="border rounded p-2 w-full"
+                        />
+                    </div>
+                    <div className="mb-2">
+                        <label htmlFor="category" className="block text-sm font-medium">
+                            Category
+                        </label>
+                        <input
+                            type="text"
+                            id="category"
+                            name="category"
+                            value={formData.category}
+                            onChange={handleChange}
+                            className="border rounded p-2 w-full"
+                        />
+                    </div>
+                    <div className="mb-2">
+                        <label htmlFor="brand" className="block text-sm font-medium">
+                            Brand
+                        </label>
+                        <input
+                            type="text"
+                            id="brand"
+                            name="brand"
+                            value={formData.brand}
+                            onChange={handleChange}
+                            className="border rounded p-2 w-full"
+                        />
+                    </div>
+                    <div className="mb-2">
+                        <label htmlFor="quantity" className="block text-sm font-medium">
+                            Quantity
+                        </label>
+                        <input
+                            type="number"
+                            id="quantity"
+                            name="quantity"
+                            value={formData.quantity}
+                            onChange={handleChange}
+                            className="border rounded p-2 w-full"
+                        />
+                    </div>
+                    <div className="mb-2">
+                        <label htmlFor="price" className="block text-sm font-medium">
+                            Price
+                        </label>
+                        <input
+                            type="number"
+                            id="price"
+                            name="price"
+                            value={formData.price}
+                            onChange={handleChange}
+                            className="border rounded p-2 w-full"
+                        />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="bg-gray-500 text-white p-2 rounded"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="bg-blue-500 text-white p-2 rounded"
+                        >
+                            {isEdit ? "Save" : "Add"}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );

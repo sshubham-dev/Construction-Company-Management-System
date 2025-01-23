@@ -45,16 +45,15 @@ const CheckList = () => {
     }
   };
   const handleAdd = () => {
-    navigate('/create-site');
+    navigate('/create-checklist');
   };
 
   return (
     <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
       <div className="overflow-x-auto">
         <Header category="Page" title="Checklist's" />
-        <h1 className="text-2xl font-bold text-center">Site List</h1>
         <div className=" mb-4 mr-20 text-right flex justify-between align-center">
-          <h2 className="text-xl text-green-600 ml-8">Total Purchase Orders: </h2>
+          <h2 className="text-xl text-green-600 ml-8">Total CheckList's: </h2>
           <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
                 <MdAdd className='text-xl' />
               </button>

@@ -1,50 +1,80 @@
 const mongoose = require('mongoose');
 
 const checklistSchema = new mongoose.Schema({
-    name: {},
-    date: {},
-    checklistId: {},
+    name: {
+        type: String, // Predefined checklist name
+    },
+    date: {
+        type: Date,
+        default: Date.now, // Selected date
+    },
+    checklistId: {
+        type: String,
+    },
     site: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site',
+        ref: 'Site', // Selected site
     },
-    supervisour: {
+    supervisor: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'User', // Supervisor (selected)
     },
-    checkFor: {},
+    checkFor: {
+        type: String, // Specify which work the checklist is for
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'User', // Person who created the checklist
     },
     checkWork: [{
-        description: {},
-        checkBySuper: {
-            supervisour: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
-            },
-            yes: {},
-            no: {},
-            na: {},
+        work: {
+            type: String, // Predefined works
         },
-        yes: {},
-        no: {},
-        na: {},
-        remark: {},
+        status: {
+            type: String,
+            enum: ['N/A', 'Yes', 'No'], // Filled after work completion
+        },
+        remarks: {
+            type: String, // Filled after work completion
+        },
     }],
-    observation: [{}],
-    authority: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+    observation: {
+        type: String, // Filled after work completion
     },
-    contractor: {},
-    client: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Client',
+    authoritySign: {
+        approved: {
+            type: Boolean,
+            default: false, // Initial approval status
+        },
+        review: String,
     },
-    rating: {},
+    contractorSign: {
+        approved: {
+            type: Boolean,
+            default: false, // Initial approval status
+        },
+        review: String,
+    },
+    clientSign: {
+        approved: {
+            type: Boolean,
+            default: false, // Initial approval status
+        },
+        review: String,
+    },
+    rating: [{
+        work: String, // Work to be rated
+        stars: {
+            type: Number,
+            min: 1,
+            max: 5, // Rating stars
+        },
+        remarks: String, // Remarks on the rating
+        required: true,
+    }],
 }, { timestamps: true });
 
 const CheckList = mongoose.model('Check-List', checklistSchema);
 module.exports = CheckList;
+
+

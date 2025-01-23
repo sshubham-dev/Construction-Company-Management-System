@@ -85,7 +85,7 @@ const PurchaseOrders = () => {
     }
   };
   const handleAdd = () => {
-    navigate('/create-purchaseOrder');
+    navigate('/create-purchaseOrder/site');
   };
   return (
     <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-6 shadow-lg bg-white rounded-3xl'>

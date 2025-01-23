@@ -1,43 +1,41 @@
 const mongoose = require('mongoose');
 
 const accountSchema = new mongoose.Schema({
-    name:{
+    name: {
         type: String,
         required: true,
     },
-    accountNo:{
+    accountNo: {
         type: Number,
         required: true,
         unique: true,
     },
-    mode:{
+    mode: {
         type: String,
-        enum: ['cash', 'cheque', 'account'] 
+        enum: ['cash', 'cheque', 'account']
     },
-    isGST:{
+    isGST: {
         type: Boolean
     },
-    GSTNo:{
+    GSTNo: {
         Type: String
     },
-    status:{
+    status: {
         type: String,
         enum: ['active', 'cleared', 'pending']
     },
-    transaction:{
-        Dr: [{
+    Dr: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Transaction'
-        }],
-        Cr: [{
+    }],
+    Cr: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Transaction'
-        }],
-        balance:{
-            type: Number
-        }
+    }],
+    balance: {
+        type: Number
     },
-},{timestamps:true});
+}, { timestamps: true });
 
 // accountSchema.pre('save', function (next) {
 //     const PaymentDetails = this.paymentDetails;

@@ -16,9 +16,6 @@ const supplierSchema = new mongoose.Schema({
     gst: {
         type: String,
     },
-    pan: {
-        type: String,
-    },
     bank: {
         type: String,
     },
@@ -33,10 +30,6 @@ const supplierSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     },
-    site: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site'
-    }],
     purchaseOrder: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Purchase-Order',

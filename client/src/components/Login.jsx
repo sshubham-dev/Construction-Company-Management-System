@@ -37,7 +37,7 @@ const Login = () => {
       } else {
         dispatch(login(response.data.user));
         sessionStorage.setItem("token", response.data.accessToken);
-        navigate('/');  // Redirect here
+        navigate('/dashboard');  // Redirect here
         console.log('first')
       }
       setFormData({

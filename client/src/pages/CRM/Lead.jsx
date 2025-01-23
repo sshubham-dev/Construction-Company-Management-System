@@ -35,7 +35,7 @@ const Lead = () => {
             {/* Statistics */}
             <div className="grid grid-cols-3 gap-6 mb-8">
               <div className="bg-white shadow-md rounded-lg p-6">
-                <p className="text-gray-600">Total Customers</p>
+                <p className="text-gray-600">Total Leads</p>
                 <h2 className="text-3xl font-bold">5,423</h2>
                 <p className="text-green-500 text-sm mt-2">↑ 16% this month</p>
               </div>

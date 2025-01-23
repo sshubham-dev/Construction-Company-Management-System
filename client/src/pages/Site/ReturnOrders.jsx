@@ -85,7 +85,7 @@ const ReturnOrders = () => {
     }
   };
   const handleAdd = () => {
-    navigate('/create-purchaseOrder');
+    navigate('/create-returnOrder');
   };
   return (
     <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-6 shadow-lg bg-white rounded-3xl'>
@@ -94,7 +94,7 @@ const ReturnOrders = () => {
         <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>
         <div className="w-full mx-auto mb-6 text-gray-700 p-1 flex flex-row justify-between items-center">
           <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
-            Total Purchase Orders: {purchaseOrders?.length}
+            Total Return Orders: {purchaseOrders?.length}
           </h2>
           {user.department === 'Account Head' && (
           <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
