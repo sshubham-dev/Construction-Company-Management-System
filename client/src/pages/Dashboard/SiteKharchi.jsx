@@ -13,7 +13,7 @@ const SiteKharchi = () => {
       navigate(`/record-site-kharchi/${id}`);
     };
     return (
-        <div className='m-1.5 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
+        <div >
             <Header category="Page" title="Expenses" />
             <section className='container mx-auto mt-4 mb-16'>
             <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>

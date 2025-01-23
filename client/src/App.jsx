@@ -90,6 +90,9 @@ import PurchaseRequest from './pages/Site/PurchaseRequest.jsx';
 import CreatePurchaseRequest from './components/CreatePurchaseRequest.jsx';
 import CreateChecklist from './components/CreateChecklist.jsx';
 import Inventory from './pages/ERP/Inventory.jsx';
+import UserScreen from './screen/UserScreen.jsx';
+import MorePage from './components/MorePage.jsx';
+import Report from './pages/Site/Report.jsx';
 
 const App = () => {
 
@@ -115,12 +118,13 @@ const App = () => {
       <Routes>
         <Route path='/' element={<Login />} />
         <Route path='/dashboard' element={<Dashboard />} />
+        <Route path='/more' element={<MorePage />} />
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
         <Route path='/resetpasswd' element={<ResetPasswd />} />
         <Route path='/profile' element={<Profile />} />
         <Route path='/account' element={<Profile />} />
-        
+
         <Route path='/admin' element={<Admin />} />
         <Route path='/ceo' element={<Admin />} />
         <Route path='/client' element={<Client />} />
@@ -132,18 +136,18 @@ const App = () => {
         <Route path='/design-engineer' element={<Design_Engineer />} />
         <Route path='/accountant' element={<Accountant />} />
         <Route path='/account-head' element={<Account_Head />} />
-        
+
         <Route path='/attendance' element={<Attendance />} />
         <Route path='/create-leave' element={<CreateLeave />} />
         <Route path='/edit-leave/:id' element={<CreateLeave />} />
 
         <Route path='/tasks' element={<Task />} />
-        
-        <Route path='/hr/employee/dashboard' element={<Employee />} />
-        <Route path='/hr/dashboard' element={<Employee />} />
+
+        <Route path='/employee' element={<Employee />} />
         <Route path='/create-employee' element={<CreateEmployee />} />
-        
+
         <Route path='/user' element={<UserManagement />} />
+        <Route path='/user/:id' element={<UserScreen />} />
         <Route path='/create-user' element={<CreateUser />} />
         <Route path='/edit-user/:id' element={<CreateUser />} />
 
@@ -151,66 +155,63 @@ const App = () => {
         <Route path='/create-contractors' element={<CreateContractor />} />
         <Route path='/contractor/:id' element={<ContractorScreen />} />
         <Route path='/edit-contractor/:id' element={<CreateContractor />} />
-        
-        <Route path='/site' element={<SitesDashboard />} />
-        <Route path='/sites/dashboard' element={<Sites />} />
-        <Route path='/site/:id' element={<SiteScreen />} />
-        <Route path='/create-site' element={<CreateSite />} />
-        <Route path='/edit-site/:id' element={<CreateSite />} />
-        
-        <Route path='/sites/clients' element={<Clients />} />
-        <Route path='/client/:id' element={<ClientScreen />} />
-        <Route path='/create-client' element={<CreateClient />} />
-        <Route path='/edit-client/:id' element={<CreateClient />} />
-        
-        <Route path='/sites/work-orders' element={<WorkOrders />} />
-        <Route path='/work-order/:id' element={<WorkOrderScreen />} />
-        <Route path='/create-work-order' element={<CreateWorkOrder />} />
-        <Route path='/edit-workOrder/:id' element={<CreateWorkOrder />} />
-        <Route path='/edit-workOrder/:id/work/:index' element={<CreateWorkOrder />} />
-        
-        <Route path='/work-details' element={<WorkDetails />} />
-        <Route path='/create-work-details' element={<CreateWorkDetails />} />
-        <Route path='/edit-work-detail/:id' element={<CreateWorkDetails />} />
-        <Route path='/edit-work-detail/:id/:index' element={<CreateWorkDetails />} />
-        
-        <Route path='/sites/project-schedules' element={<ProjectSchedules />} />
-        <Route path='/project-schedule/:id' element={<Project_ScheduleScreen />} />
-        <Route path='/create-project-schedule' element={<CreateProjectSchedule />} />
-        <Route path='/edit-projectSchedule/:id/:index' element={<CreateProjectSchedule />} />
-        
-        <Route path='/sites/quality-schedules' element={<QualitySchedules />} />
-        <Route path='/quality-schedule/:id' element={<QualityScheduleScreen />} />
-        <Route path='/create-quality-schedule' element={<CreateQualitySchedule />} />
-        <Route path='/edit-projectSchedule/:id' element={<CreateProjectSchedule />} />
-        <Route path='/edit-qualitySchedule/:id/:index' element={<CreateQualitySchedule />} />
-        <Route path='/edit-qualitySchedule/:id' element={<CreateQualitySchedule />} />
-        
-        <Route path='/sites/payment-schedules' element={<PaymentSchedules />} />
-        <Route path='/payment-schedule/:id' element={<Payment_SchedulScreen />} />
-        <Route path='/create-payment-schedule' element={<CreatePaymentSchedule />} />
-        <Route path='/edit-paymentSchedule/:id' element={<CreatePaymentSchedule />} />
-        <Route path='/edit-paymentSchedule/:id/:index' element={<CreatePaymentSchedule />} />
-        
-        <Route path='/sites/bills' element={<Bills />} />
-        <Route path='/bill/:id' element={<BillScreen />} />
-        <Route path='/create-bill' element={<CreateBill />} />
-        <Route path='/edit-bill/:id' element={<CreateBill />} />
-        
-        <Route path='/sites/extra-work' element={<ExtraWork />} />
-        <Route path='/extra-work/:id' element={<ExtraWorkScreen />} />
-        <Route path='/create-extra-work' element={<CreateExtraWork />} />
-        <Route path='/edit-extra-work/:id' element={<CreateExtraWork />} />
-        <Route path='/edit-extra-work/:id/work/:index' element={<CreateExtraWork />} />
-        
-        <Route path='/sites/checklists' element={<CheckList />} />
-        <Route path='/create-checklist' element={<CreateChecklist />} />
-        
-        <Route path='/sites/suppliers' element={<Suppliers />} />
+
+          <Route path='/site' element={<SitesDashboard />} />
+          <Route path='/site/report' element={<Report />} />
+          <Route path='/sites' element={<Sites />} />
+          <Route path='/site/:id' element={<SiteScreen />} />
+          <Route path='/create-site' element={<CreateSite />} />
+          <Route path='/edit-site/:id' element={<CreateSite />} />
+
+          <Route path='/sites/clients' element={<Clients />} />
+          <Route path='/client/:id' element={<ClientScreen />} />
+          <Route path='/create-client' element={<CreateClient />} />
+          <Route path='/edit-client/:id' element={<CreateClient />} />
+
+          <Route path='/sites/work-orders' element={<WorkOrders />} />
+          <Route path='/work-order/:id' element={<WorkOrderScreen />} />
+          <Route path='/create-work-order' element={<CreateWorkOrder />} />
+          <Route path='/edit-workOrder/:id' element={<CreateWorkOrder />} />
+          <Route path='/edit-workOrder/:id/work/:index' element={<CreateWorkOrder />} />
+
+
+          <Route path='/sites/project-schedules' element={<ProjectSchedules />} />
+          <Route path='/project-schedule/:id' element={<Project_ScheduleScreen />} />
+          <Route path='/create-project-schedule' element={<CreateProjectSchedule />} />
+          <Route path='/edit-projectSchedule/:id/:index' element={<CreateProjectSchedule />} />
+
+          <Route path='/sites/quality-schedules' element={<QualitySchedules />} />
+          <Route path='/quality-schedule/:id' element={<QualityScheduleScreen />} />
+          <Route path='/create-quality-schedule' element={<CreateQualitySchedule />} />
+          <Route path='/edit-projectSchedule/:id' element={<CreateProjectSchedule />} />
+          <Route path='/edit-qualitySchedule/:id/:index' element={<CreateQualitySchedule />} />
+          <Route path='/edit-qualitySchedule/:id' element={<CreateQualitySchedule />} />
+
+          <Route path='/sites/payment-schedules' element={<PaymentSchedules />} />
+          <Route path='/payment-schedule/:id' element={<Payment_SchedulScreen />} />
+          <Route path='/create-payment-schedule' element={<CreatePaymentSchedule />} />
+          <Route path='/edit-paymentSchedule/:id' element={<CreatePaymentSchedule />} />
+          <Route path='/edit-paymentSchedule/:id/:index' element={<CreatePaymentSchedule />} />
+
+          <Route path='/sites/bills' element={<Bills />} />
+          <Route path='/bill/:id' element={<BillScreen />} />
+          <Route path='/create-bill' element={<CreateBill />} />
+          <Route path='/edit-bill/:id' element={<CreateBill />} />
+
+          <Route path='/sites/extra-work' element={<ExtraWork />} />
+          <Route path='/extra-work/:id' element={<ExtraWorkScreen />} />
+          <Route path='/create-extra-work' element={<CreateExtraWork />} />
+          <Route path='/edit-extra-work/:id' element={<CreateExtraWork />} />
+          <Route path='/edit-extra-work/:id/work/:index' element={<CreateExtraWork />} />
+
+          <Route path='/sites/checklists' element={<CheckList />} />
+          <Route path='/create-checklist' element={<CreateChecklist />} />
+
+        <Route path='/suppliers' element={<Suppliers />} />
         <Route path='/create-supplier' element={<CreateSupplier />} />
         <Route path='/supplier/:id' element={<SupplierScreen />} />
         <Route path='/edit-supplier/:id' element={<CreateSupplier />} />
-        
+
         <Route path='/site/purchase-request' element={<PurchaseRequest />} />
         <Route path='/erp/purchase-order' element={<PurchaseOrders />} />
         <Route path='/purchase-order/:id' element={<PurchaseOrderScreen />} />
@@ -218,13 +219,13 @@ const App = () => {
         <Route path='/create-purchaseRequest' element={<CreatePurchaseRequest />} />
         <Route path='/edit-purchaseOrder/:id' element={<CreatePurchaseOrder />} />
         <Route path='/edit-purchaseOrder/:id/material/:index' element={<CreatePurchaseOrder />} />
-        
+
         <Route path='/return-order/:from' element={<ReturnOrders />} />
-        <Route path='/return-order/:id'  />
+        <Route path='/return-order/:id' />
         <Route path='/create-returnOrder' element={<CreateReturnOrder />} />
-        <Route path='/edit-returnOrder/:id' element={<CreateReturnOrder/>}  />
-        <Route path='/edit-returnOrder/:id/material/:index' element={<CreateReturnOrder/>}  />
-        
+        <Route path='/edit-returnOrder/:id' element={<CreateReturnOrder />} />
+        <Route path='/edit-returnOrder/:id/material/:index' element={<CreateReturnOrder />} />
+
         <Route path='/erp' element={<ERP />} />
         <Route path='/erp/account' element={<AccountManagement />} />
         <Route path='/erp/expenses' element={<Expenses />} />
@@ -241,20 +242,25 @@ const App = () => {
         <Route path='/erp/inventory/return' element={<Return />} />
         <Route path='/erp/inventory/suppliers' element={<Suppliers />} />
         <Route path='/erp/inventory/record-inventory' element={<RecordInventory />} />
-        
+
         <Route path='/crm' element={<CRM />} />
         <Route path='/crm/lead' element={<Lead />} />
         <Route path='/crm/client' element={<Clients />} />
         <Route path='/crm/project' element={<Project />} />
         <Route path='/crm/Invoice' element={<Invoice />} />
-        
+
         <Route path='/site-kharchi' element={<SiteKharchi />} />
         <Route path='/record-site-kharchi/:userId' element={<CreateRecord />} />
 
+        <Route path='/work-details' element={<WorkDetails />} />
+        <Route path='/create-work-details' element={<CreateWorkDetails />} />
+        <Route path='/edit-work-detail/:id' element={<CreateWorkDetails />} />
+        <Route path='/edit-work-detail/:id/:index' element={<CreateWorkDetails />} />
+
         <Route path='/setting' element={<Profile />} />
-        
+
         <Route path='/approval' element={<Approval />} />
-        
+
 
       </Routes>
     </>

@@ -52,7 +52,7 @@ const UserManagement = () => {
   };
 
   return (
-    <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
+    <div >
       <Header category="Page" title="User's" />
       <section className="h-full w-full flex justify-center ">
         <div className="overflow-x-auto w-full max-w-screen-xl mx-auto">
@@ -100,9 +100,9 @@ const UserManagement = () => {
                       <p className="text-gray-500 text-sm font-semibold tracking-wide">{user.department}</p>
                     </td>
                     <td className="px-6 py-4 text-center">
-                    <button onClick={() => handleRedirect(user._id)} className="mr-2">
+                    {/* <button onClick={() => handleRedirect(user._id)} className="mr-2">
                         <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                      </button>
+                      </button> */}
                       <button onClick={() => handleEdit(user._id)} className='ml-1'>
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>

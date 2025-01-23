@@ -34,7 +34,9 @@ const Layout = ({ children }) => {
           <div
             className={`${isLoggedIn ? 'ml-0 md:ml-16 lg:ml-16 xl:ml-20' : 'ml-0'} my-14 min-w-screen min-h-screen p-3 bg-gray-50`}
           >
+            <div className='m-1 md:my-3 mx-2 p-4 min-w-screen min-h-screen md:p-6 rounded-3xl'>
             {children}
+            </div>
           </div>
           {/* Bottom Navigation */}
           <div className="block md:hidden lg:hidden xl:hidden"> 

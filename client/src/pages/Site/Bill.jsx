@@ -101,7 +101,7 @@ const Bills = () => {
   };
 
   return (
-    <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-xl'>
+    <div >
       <Header category="Page" title="Bill's" />
       <section className="h-full w-full overflow-x-auto ">
         <div className="w-full mx-auto text-gray-700 flex justify-end items-center">

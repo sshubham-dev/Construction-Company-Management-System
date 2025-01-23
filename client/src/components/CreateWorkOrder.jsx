@@ -8,7 +8,7 @@ import Select from 'react-select';
 axios.defaults.withCredentials = true;
 
 
-const WorkOrderForm = () => {
+const CreateWorkOrder = () => {
   const [formData, setFormData] = useState({
     workOrderName: '',
     workOrderNo: '',
@@ -637,4 +637,4 @@ const WorkOrderForm = () => {
   }
 };
 
-export default WorkOrderForm;
+export default CreateWorkOrder;

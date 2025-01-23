@@ -84,7 +84,7 @@ const Project_ScheduleScreen = () => {
   };
 
   return (
-    <div className='m-0.8 md:m-5 p-3 min-w-screen min-h-screen md:p-8 bg-white rounded-lg md:rounded-3xl lg:rounded-3xl xl:rounded-3xl'>
+    <div >
       <section className='mb-10 h-full w-full'>
       <Header category="Page" title={`${projectSchedule.site?.name} Project Schedule`} />
         <div className=" mb-4 text-right">

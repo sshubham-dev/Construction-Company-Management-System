@@ -49,7 +49,7 @@ const CheckList = () => {
   };
 
   return (
-    <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
+    <div>
       <div className="overflow-x-auto">
         <Header category="Page" title="Checklist's" />
         <div className=" mb-4 mr-20 text-right flex justify-between align-center">

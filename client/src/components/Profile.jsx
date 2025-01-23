@@ -99,7 +99,7 @@ const Profile = () => {
   };
 
   return (
-    <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl shadow-xl'>
+    <div >
       <Header category="Page" title="Profile" />
       <div className='grid grid-cols-1 lg:grid-cols-2 pb-6'>
         <section className='w-full lg:w-3/5 h-fit mb-10 px-4 lg:mb-0'>

@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { useSelector } from 'react-redux';
-import { MdPerson, MdInventory, MdDateRange, MdWarehouse, MdWorkHistory, MdTrolley, MdMessage, MdOutlineCancel, MdLocationOn, MdBusiness, MdPeople, MdReceipt, MdConstruction, MdApproval, MdBuild, MdDesignServices, MdMoney, MdAssignment, MdWork, MdManageAccounts, MdAccountBalance } from "react-icons/md";
+import { MdPerson, MdInventory, MdDateRange, MdWarehouse, MdWorkHistory, MdTrolley, MdMessage, MdOutlineCancel, MdLocationOn, MdBusiness, MdPeople, MdReceipt, MdConstruction, MdApproval, MdBuild, MdDesignServices, MdMoney, MdAssignment, MdWork, MdManageAccounts, MdAccountBalance, MdOutlineMoreHoriz } from "react-icons/md";
 import { AiFillNotification, AiFillPieChart, AiOutlineMenu, AiOutlineProject } from "react-icons/ai";
 import { CgProfile } from 'react-icons/cg'
 import { GiExpense } from "react-icons/gi";
@@ -9,23 +9,17 @@ import { RiCustomerService2Fill } from "react-icons/ri";
 import { FcManager, FcApproval } from "react-icons/fc";
 import { FaWallet, FaBalanceScale, FaFileInvoiceDollar, FaBusinessTime } from "react-icons/fa";
 import { AiTwotoneAccountBook } from "react-icons/ai";
+import { FaHome } from "react-icons/fa";
 
 const BottomNavigation = () => {
   const { user } = useSelector((state) => state.auth);
   const navItems = [
-    {
-      to: '/dashboard',
-      name: 'Dashboard',
-      icon: <AiFillPieChart />,
-      role: ['Admin', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
-    },
-
     /* ERP */
     {
       to: '/erp',
       name: 'ERP',
       icon: <AiTwotoneAccountBook />,
-      role: ['Admin', 'Ceo', 'Accountant', 'Account Head'],
+      role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
     },
 
     /* Customer Management*/
@@ -33,15 +27,23 @@ const BottomNavigation = () => {
       to: '/crm',
       name: 'CRM',
       icon: <RiCustomerService2Fill />,
-      role: ['Admin', 'Marketing', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
+      role: ['Admin', 'Company', 'Marketing', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
     },
 
     /* Site Management*/
     {
-      to: '/sites/dashboard',
+      to: '/site',
       name: 'Site',
       icon: <MdLocationOn />,
-      role: ['Admin', 'Accountant', 'Ceo', 'Site Incharge', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head'],
+      role: ['Admin', 'Company', 'Accountant', 'Ceo', 'Site Incharge', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head'],
+    },
+
+    /* Site Management*/
+    {
+      to: '/more',
+      name: 'more',
+      icon: <MdOutlineMoreHoriz />,
+      role:  ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
     },
 
   ];

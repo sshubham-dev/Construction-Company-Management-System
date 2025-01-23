@@ -67,7 +67,7 @@ const BillScreen = () => {
   }
 
   return (
-    <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-6 rounded-2xl bg-white'>
+    <div>
       <Header category="Page" title="Bill" />
       {viewPdf === true ? <BillPdf bill={bill} /> :
         <section className="h-full w-full bg-white overflow-x-auto p-2">

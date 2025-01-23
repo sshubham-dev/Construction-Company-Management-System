@@ -82,7 +82,7 @@ const Register = () => {
     };
 
     return (
-        <div className='m-1 md:m-6 p-3 min-w-screen min-h-screen md:p-8'>
+        <div>
             {/* <Header category="Page" title="Register" /> */}
             <section className='mx-auto w-full md:w-3/4 lg:w-2/5 h-fit bg-white px-6 py-10 rounded-2xl shadow-xl'>
                 <div className='mb-2 py-2'>

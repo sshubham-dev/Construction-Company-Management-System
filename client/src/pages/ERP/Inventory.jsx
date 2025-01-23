@@ -112,7 +112,7 @@ const Inventory = () => {
   });
 
   return (
-    <div className="p-4">
+    <div>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-2">
           <FaSearch className="h-4 w-4" />

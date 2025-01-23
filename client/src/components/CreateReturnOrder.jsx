@@ -243,7 +243,7 @@ const CreateReturnOrder = () => {
 
   if (requirementToEdit.id && requirementToEdit.index) {
     return (
-      <div className='m-1.5 md:m-8 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
+      <div >
         <Header category="Page" title="Return Order" />
         <section className="flex items-center justify-center max-h-screen mb-16 mt-4">
           <form
@@ -375,7 +375,7 @@ const CreateReturnOrder = () => {
     )
   } else {
     return (
-      <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
+      <div >
         <Header category="Page" title="Create Return Order" />
         <div className="container mx-auto mt-4 mb-16">
           <form className="max-w-xl mx-auto " onSubmit={handleSubmit}>

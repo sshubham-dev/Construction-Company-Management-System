@@ -88,7 +88,7 @@ const ReturnOrders = () => {
     navigate('/create-returnOrder');
   };
   return (
-    <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-6 shadow-lg bg-white rounded-3xl'>
+    <div>
         <Header category="Page" title="Return Order's" />
       <section className="overflow-x-auto">
         <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>

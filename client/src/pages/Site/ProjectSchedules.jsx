@@ -70,7 +70,7 @@ const ProjectSchedules = () => {
   };
 
   return (
-    <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
+    <div >
       <section className="overflow-x-auto">
         <Header category="Page" title="Project Schedule's" />
         <div className="w-full mx-auto mb-6 text-gray-700 p-1 flex flex-row justify-between items-center">

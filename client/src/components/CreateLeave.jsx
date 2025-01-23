@@ -42,7 +42,7 @@ const CreateLeave = () => {
     };
 
     return (
-        <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
+        <div >
             <Header category="Page" title="Apply for Leave" />
             <section className="flex items-center justify-center h-full mb-16 mt-4">
                 <form

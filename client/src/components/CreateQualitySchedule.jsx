@@ -191,7 +191,7 @@ const CreateQualitySchedule = () => {
 
   if (workToEdit.index && workToEdit.id) {
     return (
-      <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
+      <div >
         <Header category="Page" title="Dashboard" />
         <section className="flex items-center justify-center max-h-screen mb-24 mt-10">
           <form

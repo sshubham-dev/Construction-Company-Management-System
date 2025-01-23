@@ -215,7 +215,7 @@ const SiteScreen = () => {
   };
 
   return (
-    <div className='m-1 md:m-6 p-6 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
+    <div >
       <Header category="Page" title="Site Detail's" />
       <section className='py-6 mb-16 h-full w-full'>
         <div className="w-full">

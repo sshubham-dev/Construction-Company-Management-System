@@ -91,7 +91,7 @@ const ExtraWorkScreen = () => {
   };
 
   return (
-    <div className='m-1 md:m-6 p-3 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
+    <div >
     <Header category="Page" title="Work-Orders" />
     <div className="grid grid-cols-1 md:grid-cols-2 w-full lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {extraWork.WorkDetail?.map((detail, index) => (

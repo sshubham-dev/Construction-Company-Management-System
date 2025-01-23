@@ -98,3 +98,12 @@ body {
 .sidebar-container::-webkit-scrollbar {
   display: none; /* Hide scrollbar for Chrome, Safari, and other webkit browsers */
 }
+
+/* Add this in your global CSS or Tailwind config */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}

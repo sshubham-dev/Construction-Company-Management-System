@@ -53,7 +53,7 @@ const WorkOrderScreen = () => {
   };
 
   return (
-    <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-6 rounded-3xl bg-white'>
+    <div >
       <Header category="Page" title="Work Order Work Detail" />
       <section className='mb-12 h-full w-full'>
         <div className=" w-full flex flex-row justify-end items-end mb-6">

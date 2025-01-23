@@ -69,7 +69,7 @@ const ExtraWork = () => {
   };
 
   return (
-    <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
+    <div >
       <section className="overflow-x-auto"
         style={{
           scrollbarWidth: 'none',

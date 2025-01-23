@@ -56,7 +56,7 @@ const CreateTask = ({ socket }) => {
         <>
             <form
                 onSubmit={sendMessage}
-                className="w-full flex gap-4 mx-auto px-8 bg-white py-4 rounded-md shadow-md ">
+            >
 
                     <input
                         type="text"

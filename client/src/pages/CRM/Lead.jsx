@@ -16,7 +16,7 @@ const Lead = () => {
   ];
 
   return (
-    <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-gray-100 rounded-3xl'>
+    <div >
       <Header category="Page" title="Lead Management" />
       <section className="h-full w-full mb-16 flex justify-center">
         <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>
