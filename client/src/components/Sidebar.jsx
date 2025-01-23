@@ -311,7 +311,7 @@ const Sidebar = () => {
             </NavLink>
             <div
               className={`transition-all duration-300 ${
-                openDropdowns[item.name] ? "max-h-screen" : "max-h-0"
+                openDropdowns[item.name] ? "max-h-fit" : "max-h-0"
               }`}
             >
               {item.children.map(

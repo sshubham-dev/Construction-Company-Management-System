@@ -4,31 +4,33 @@ import { FaPersonCircleQuestion, FaPersonCircleCheck } from 'react-icons/fa6';
 import { AiOutlineProject } from 'react-icons/ai';
 import { TbInvoice } from 'react-icons/tb';
 import toast, { Toaster } from 'react-hot-toast';
-import Header from '../../components/Header';
-import { Route, Routes} from 'react-router-dom';
+import Lead from './Lead.jsx';
+import Clients from './Clients.jsx';
+import Project from './Project.jsx';
+import Invoice from './Invoice.jsx';
 
 const CRM = () => {
     const menu = [
         {
-            to: '/crm/lead',
+            to: <Lead />,
             name: 'Lead',
             icon: <FaPersonCircleQuestion />,
             role: ['Admin', 'Company', 'Marketing', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
         },
         {
-            to: '/crm/client',
+            to: <Clients />,
             name: 'Client',
             icon: <FaPersonCircleCheck />,
             role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
         },
         {
-            to: '/crm/project',
+            to: <Project />,
             name: 'Project',
             icon: <AiOutlineProject />,
             role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
         },
         {
-            to: '/crm/invoice',
+            to: <Invoice/>,
             name: 'Invoice',
             icon: <TbInvoice />,
             role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
@@ -61,6 +63,11 @@ const CRM = () => {
     
                 {/* Tab Content */}
                 <div className="w-full max-w-screen-xl">
+                    {menu.map((item, index) =>
+                        activeTab === item.name ? (
+                            item.to
+                        ) : null
+                    )}
                 </div>
             <Toaster position="top-right" reverseOrder={false} />
             </section>
