@@ -16,24 +16,17 @@ const Lead = () => {
   ];
 
   return (
-    <div >
+    <div>
       <Header category="Page" title="Lead Management" />
-      <section className="h-full w-full mb-16 flex justify-center">
-        <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>
+      <section className="h-full w-full mb-16 flex justify-center px-4 sm:px-6 lg:px-8">
+        <div className='overflow-x-hidden w-full mx-auto'>
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-2xl font-bold">Hello Evano 👋</h1>
-              {/* <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="bg-white border border-gray-300 rounded-full px-4 py-2 focus:outline-none"
-                />
-              </div> */}
             </div>
 
             {/* Statistics */}
-            <div className="grid grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               <div className="bg-white shadow-md rounded-lg p-6">
                 <p className="text-gray-600">Total Leads</p>
                 <h2 className="text-3xl font-bold">5,423</h2>
@@ -62,7 +55,7 @@ const Lead = () => {
                   />
                 </div>
               </div>
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse overflow-auto">
                 <thead>
                   <tr className="border-b">
                     <th className="py-2 px-4">Customer Name</th>
@@ -114,4 +107,4 @@ const Lead = () => {
   )
 }
 
-export default Lead
+export default Lead;

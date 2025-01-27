@@ -25,10 +25,12 @@ const accountSchema = new mongoose.Schema({
         enum: ['active', 'cleared', 'pending']
     },
     Dr: [{
+        name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Transaction'
     }],
     Cr: [{
+        name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Transaction'
     }],

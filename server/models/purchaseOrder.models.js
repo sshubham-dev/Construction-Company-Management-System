@@ -1,10 +1,13 @@
 const mongoose = require('mongoose');
 
 const requirementSchema = new mongoose.Schema({
-    material: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Stock',
-        required: true,
+    item: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Stock',
+            required: true,
+        }
     },
     unit: {
         type: String,
@@ -25,21 +28,39 @@ const requirementSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const purchaseOrderSchema = new mongoose.Schema({
-    site: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site',
+    orderNo: {
+        type: String,
+        required: true,
+        unique: true
     },
-    date: {
+    site: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
+    },
+    orderDate: {
         type: Date,
         default: Date.now,
+        required: true
+    },
+    deliveryDate: {
+        type: Date
     },
     supplier: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Supplier',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Supplier',
+        }
     },
     createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }
     },
     requirement: [requirementSchema],
     supplierApprove: {
@@ -77,12 +98,15 @@ const purchaseOrderSchema = new mongoose.Schema({
     },
     paymentStatus: {
         type: String,
-        required: true,
+        default: 'Due',
         enum: ['Due', 'Paid'],
     },
     paymentMode: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Account'
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Account',
+        }
     }
 }, { timestamps: true });
 
@@ -116,5 +140,5 @@ purchaseOrderSchema.pre('save', function (next) {
     next();
 });
 
-const PurchaseOrder = mongoose.model('Purchase-Order', purchaseOrderSchema);
-module.exports = PurchaseOrder;
+const Purchase_Order = mongoose.model('Purchase_Order', purchaseOrderSchema);
+module.exports = Purchase_Order;

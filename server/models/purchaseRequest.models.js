@@ -1,8 +1,13 @@
 const mongoose = require('mongoose');
 
 const requirementSchema = new mongoose.Schema({
-    material: {
-        type: String,
+    item: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Stock',
+            required: true,
+        }
     },
     reqQuantity: {
         type: Number,
@@ -21,18 +26,31 @@ const requirementSchema = new mongoose.Schema({
 
 const purchaseRequestSchema = new mongoose.Schema({
     site: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
     },
     date: {
         type: Date,
         default: Date.now,
     },
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+    to:{
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Inventory',
+        }
     },
-    requirementFor:{
+    createdBy: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }
+    },
+    requirementFor: {
         type: String,
     },
     category: {

@@ -2,10 +2,12 @@ const mongoose = require('mongoose');
 
 const agreementSchema = new mongoose.Schema({
     client:{
+        name: String,
         type:mongoose.Schema.Types.ObjectId,
         ref:'Client',
     },
     clientDetails:{
+        name: String,
         type:mongoose.Schema.Types.ObjectId,
         ref:'Customer',
     },
@@ -34,7 +36,8 @@ const agreementSchema = new mongoose.Schema({
         }],
     }],
     site:{
-        type:mongoose.Schema.Types.ObjectId,
+        name: String,
+        siteId:mongoose.Schema.Types.ObjectId,
         ref:'Site',
     }
 },{timestamps:true});

@@ -1,29 +1,68 @@
 const mongoose = require('mongoose');
 
 const workSchema = new mongoose.Schema({
-    work:{
-        type:String,
-        required:true,
+    work: {
+        type: String,
+        required: true,
     },
-    unit:{
-        type:String,
+    unit: {
+        type: String,
     },
-    rate:{
-        type:Number,
+    rate: {
+        type: Number,
     },
-    area:{
-        type:Number,
+    area: {
+        type: Number,
     },
-    amount:{
-        type:String,
+    amount: {
+        type: String,
     },
-    date:{
-        type:Date,
-        default:Date.now,
+    date: {
+        type: Date,
+        default: Date.now,
     },
-    status:{
+    status: {
         type: String,
         default: 'Pending',
+    },
+    detail: String,
+})
+
+const extraWorkSchema = new mongoose.Schema({
+    extraFor: {
+        type: String,
+        default: null,
+    },
+    site: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
+    },
+    client: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Client',
+        }
+    },
+    contractor: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Contractor',
+        }
+    },
+    WorkDetail: [workSchema],
+    totalAmount: {
+        type: String,
+    },
+    paid: {
+        type: String,
+    },
+    due: {
+        type: String,
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -41,41 +80,11 @@ const workSchema = new mongoose.Schema({
         type: String,
         default: 'Pending'
     },
-    contractorApprove:{
+    contractorApprove: {
         type: String,
-        default:'Pending'
+        default: 'Pending'
     },
-})
-
-const extraWorkSchema = new mongoose.Schema({
-    extraFor:{
-        type:String,
-        default: null,
-    },
-    site:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'Site',
-    },
-    client:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'Client',
-    },
-    contractor:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'Contractor',
-    },
-    WorkDetail:[workSchema],
-    totalAmount:{
-        type: String,
-    },
-    paid:{
-        type:String,
-    },
-    due:{
-        type:String,
-    }
-},
-    {timestamps:true});
+}, { timestamps: true });
 
 const ExtraWork = mongoose.model('Extra-Work', extraWorkSchema);
 module.exports = ExtraWork;

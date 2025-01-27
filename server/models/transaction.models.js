@@ -2,8 +2,9 @@ const mongoose = require('mongoose');
 
 const transactionSchema = new mongoose.Schema({
     site: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site'
+        name: String,
+        siteId: mongoose.Schema.Types.ObjectId,
+        ref: 'Site',
     },
     from: {
         type: mongoose.Schema.Types.ObjectId,
@@ -12,7 +13,8 @@ const transactionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
     },
     modeOfPayment: {
-        type: mongoose.Schema.Types.ObjectId,
+        name: String,
+        accountId: mongoose.Schema.Types.ObjectId,
         ref: 'Account'
     },
     date: {

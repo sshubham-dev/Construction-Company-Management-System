@@ -156,8 +156,8 @@ const App = () => {
         <Route path='/contractor/:id' element={<ContractorScreen />} />
         <Route path='/edit-contractor/:id' element={<CreateContractor />} />
 
-          <Route path='/site' element={<SitesDashboard />} />
-          <Route path='/site/report' element={<Report />} />
+          <Route path='/site/report' element={<SitesDashboard />} />
+          {/* <Route path='/site/report' element={<Report />} /> */}
           <Route path='/sites' element={<Sites />} />
           <Route path='/site/:id' element={<SiteScreen />} />
           <Route path='/create-site' element={<CreateSite />} />
@@ -215,6 +215,7 @@ const App = () => {
         <Route path='/site/purchase-request' element={<PurchaseRequest />} />
         <Route path='/erp/purchase-order' element={<PurchaseOrders />} />
         <Route path='/purchase-order/:id' element={<PurchaseOrderScreen />} />
+        <Route path='/purchase-request/:id' element={<PurchaseOrderScreen />} />
         <Route path='/create-purchaseOrder' element={<CreatePurchaseOrder />} />
         <Route path='/create-purchaseRequest' element={<CreatePurchaseRequest />} />
         <Route path='/edit-purchaseOrder/:id' element={<CreatePurchaseOrder />} />

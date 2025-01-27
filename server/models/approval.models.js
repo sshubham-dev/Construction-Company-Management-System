@@ -10,11 +10,13 @@ const approvalSchema = new mongoose.Schema({
         default: Date.now,
     },
     to: {
+        name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
     by: {
+        name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
@@ -38,6 +40,7 @@ const approvedSchema = new mongoose.Schema({
         default: Date.now,
     },
     by: {
+        name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
@@ -60,6 +63,7 @@ const rejectSchema = new mongoose.Schema({
         type: String,
     },
     by: {
+        name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },

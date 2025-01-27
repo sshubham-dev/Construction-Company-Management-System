@@ -15,12 +15,18 @@ const todoSchema = new mongoose.Schema({
         default: 'Pending',
     },
     to: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        name: String,
+        id:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
     },
     by:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        name: String,
+        id:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
     },
     isReminded: Boolean,
     remindAt: Date,

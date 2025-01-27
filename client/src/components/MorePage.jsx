@@ -9,7 +9,7 @@ import { FcManager, FcApproval } from "react-icons/fc";
 import { FaBusinessTime } from "react-icons/fa";
 
 
-const MorePage = () => {
+const MorePage = ({options}) => {
   const { user } = useSelector((state) => state.auth);
   const MoreOptions = [
     {
@@ -88,7 +88,7 @@ const MorePage = () => {
     <div className="container mx-auto px-4 py-6">
       <h1 className="text-3xl font-semibold mb-4">More Options</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {MoreOptions.map((option, index) =>
+        {(options || MoreOptions).map((option, index) =>
           option.role.includes(user.department) && (
             <div key={index} className="bg-white shadow-lg p-4 rounded-md hover:bg-gray-100 transition-all">
               <NavLink to={option.to} className="flex items-center space-x-2 text-lg text-gray-700">

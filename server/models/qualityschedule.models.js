@@ -24,8 +24,11 @@ const workDetailSchema = new mongoose.Schema({
 
 const qualityScheduleSchema = new mongoose.Schema({
     site: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
     },
     date: {
         type: Date,
@@ -37,8 +40,11 @@ const qualityScheduleSchema = new mongoose.Schema({
         trim: true,
     },
     createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }
     },
     workDetails: [workDetailSchema],
     qualityApprove: {

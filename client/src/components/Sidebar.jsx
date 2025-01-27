@@ -223,8 +223,8 @@ const Sidebar = () => {
           role: ['Admin', 'Company', 'Supplier', 'Contractor', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },
         {
-          to: '/sites/purchase-order',
-          name: 'Purchase-Orders',
+          to: '/site/purchase-request',
+          name: 'Purchase-Request',
           icon: <BiSolidPurchaseTag />,
           role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },

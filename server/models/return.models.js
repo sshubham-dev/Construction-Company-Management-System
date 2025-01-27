@@ -1,24 +1,27 @@
 const mongoose = require('mongoose');
 
 const returnableSchema = new mongoose.Schema({
-    item:{
+    item: {
         type: String,
         required: true,
     },
-    quantity:{
+    quantity: {
         type: Number,
     },
-    receivedQuantity:{
+    receivedQuantity: {
         type: Number,
     },
-    unit:{
+    unit: {
         type: String,
     },
 })
 const returnSchema = new mongoose.Schema({
-    site:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site',
+    site: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
     },
     materialType: {
         type: String,
@@ -26,11 +29,11 @@ const returnSchema = new mongoose.Schema({
         enum: ['New', 'Used', 'Scrap']
     },
     date: Date,
-    returnable:[returnableSchema],
-    status:[{
-        type: String,
+    returnable: [returnableSchema],
+    status: [{
+        name: String,
         date: Date,
     }]
-}, { timestamps: true});
+}, { timestamps: true });
 
 const Return = mongoose.model('Return', returnSchema);

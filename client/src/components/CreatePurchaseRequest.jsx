@@ -197,6 +197,14 @@ const CreatePurchaseRequest = () => {
                             onChange={(e) => handleChange('category', e.target.value)}
                             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                             <option value="">Select A Category</option>
+                            <option value="hardware">Hardware</option>
+                            <option value="plumbing pipe">Plumbing Pipe</option>
+                            <option value="plumbing pipe">Plumbing</option>
+                            <option value="electrical pipe">Electrical Pipe</option>
+                            <option value="electrical pipe">Electrical</option>
+                            <option value="cememt">Cement</option>
+                            <option value="steel">Steel</option>
+                            <option value="shuttering">Shuttering Material</option>
                         </select>
                     </div>
 

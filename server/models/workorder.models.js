@@ -27,8 +27,10 @@ const workDetailSchema = new mongoose.Schema({
         type: Number,
     },
     bill: [{
+        name: String,
+        id: {   
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Bill',
+        ref: 'Bill',}
     }],
 }, { timestamps: true });
 
@@ -43,10 +45,12 @@ const workOrderSchema = new mongoose.Schema({
         index: true
     },
     contractor: {
+        // name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Contractor',
     },
     site: {
+        // name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Site',
     },
@@ -55,8 +59,11 @@ const workOrderSchema = new mongoose.Schema({
         default: Date.now,
     },
     createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        name: String,
+        id:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
     },
     work: [workDetailSchema],
     workOrderValue: {

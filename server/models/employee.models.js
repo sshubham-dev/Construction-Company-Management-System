@@ -2,13 +2,12 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
 const employeeSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-    },
     name: {
-        type: String,
-        trim: true
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        },
     },
     email: {
         type: String,
@@ -35,29 +34,29 @@ const employeeSchema = new mongoose.Schema({
     address: {
         type: String,
     },
-    addhar:{ 
-        type:String,
+    addhar: {
+        type: String,
     },
-    pan: { 
-        type:String,
+    pan: {
+        type: String,
     },
-    cv: { 
-        type:String,
+    cv: {
+        type: String,
     },
-    offerletter: { 
-        type:String,
+    offerletter: {
+        type: String,
     },
-    bank: { 
-        type:String,
+    bank: {
+        type: String,
     },
-    certificates: { 
-        type:[{ 
-            type:String,
+    certificates: {
+        type: [{
+            type: String,
         }],
     },
-    joinDate: { 
-        type:Date,
-        default:Date.now,
+    joinDate: {
+        type: Date,
+        default: Date.now,
     },
     department: {
         type: String,
@@ -76,16 +75,16 @@ const employeeSchema = new mongoose.Schema({
 
 employeeSchema.pre('save', async function (next) {
     if (this.isModified('password')) {
-      try {
-        const hashedPassword = await bcrypt.hash(this.password, 10);
-        this.password = hashedPassword;
-      } catch (error) {
-        return next(error);
-      }
+        try {
+            const hashedPassword = await bcrypt.hash(this.password, 10);
+            this.password = hashedPassword;
+        } catch (error) {
+            return next(error);
+        }
     }
     next();
-  });
-  
+});
+
 
 const Employee = mongoose.model('Employee', employeeSchema);
 module.exports = Employee;

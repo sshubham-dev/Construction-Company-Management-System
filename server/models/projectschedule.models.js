@@ -4,17 +4,17 @@ const projectDetailSchema = new mongoose.Schema({
     workDetail: {
         type: String,
     },
-    toStart: {
-        type: Date,
+    startingStatus: {
+        toStart: Date,
+        startedAt: Date,
+        difference: String,
+        reason: String,
     },
-    startedAt: {
-        type: Date,
-    },
-    difference: {
-        type: String,
-    },
-    reason: {
-        type: String,
+    completingStatus: {
+        toComplete: Date,
+        completedAt: Date,
+        difference: String,
+        reason: String,
     },
     status: {
         type: String,
@@ -24,21 +24,27 @@ const projectDetailSchema = new mongoose.Schema({
 
 const projectScheduleSchema = new mongoose.Schema({
     site: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
     },
     date: {
         type: Date,
         default: Date.now,
     },
-    projectScheduleId: {
+    scheduleId: {
         type: String,
         unique: true,
         trim: true,
     },
     createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }
     },
     projectDetail: [projectDetailSchema],
     clientApprove: {

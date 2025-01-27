@@ -8,8 +8,11 @@ const siteSchema = new mongoose.Schema({
         trim: true,
     },
     client: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Client',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Client',
+        }
     },
     siteId: {
         type: String,
@@ -22,20 +25,29 @@ const siteSchema = new mongoose.Schema({
     },
     floors: String,
     area: Number,
-    address:{
+    address: {
         type: String,
-    }, 
+    },
     incharge: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }
     },
     qualityEngineer: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }
     },
     supervisor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }
     },
     agreement: {
         type: String,
@@ -46,44 +58,74 @@ const siteSchema = new mongoose.Schema({
         default: 'Pending'
     },
     checklist: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Check-List',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Checklist',
+        }
     }],
     bill: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Bill',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Bill',
+        }
     }],
     workOrder: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Work-Order',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Work_Order',
+        }
     }],
     purchaseOrder: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Purchase-Order',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Purchase_Order',
+        }
     }],
     purchaseRequest: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Purchase-Request',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Purchase_Request',
+        }
     }],
     paymentSchedule: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Payment-Schedule',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Payment_Schedule',
+        }
     },
     projectSchedule: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Project-Schedule',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Project_Schedule',
+        }
     },
     contractor: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Contractor',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Contractor',
+        }
     }],
     supplier: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Supplier',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Supplier',
+        }
     }],
     extraWork: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Extra-Work',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Extra_Work',
+        }
     }],
     account: {
         income: {},

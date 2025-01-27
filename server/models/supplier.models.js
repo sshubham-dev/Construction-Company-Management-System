@@ -27,16 +27,25 @@ const supplierSchema = new mongoose.Schema({
         type: String,
     },
     createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        },
     },
     purchaseOrder: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Purchase-Order',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Purchase-Order',
+        },
     }],
     bill: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Bill',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Bill',
+        }
     }],
 }, { timestamps: true })
 

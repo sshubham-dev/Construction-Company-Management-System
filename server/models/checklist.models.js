@@ -74,7 +74,7 @@ const checklistSchema = new mongoose.Schema({
     }],
 }, { timestamps: true });
 
-const CheckList = mongoose.model('Check-List', checklistSchema);
-module.exports = CheckList;
+const Checklist = mongoose.model('Checklist', checklistSchema);
+module.exports = Checklist;
 
 

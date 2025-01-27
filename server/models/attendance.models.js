@@ -1,10 +1,13 @@
 const mongoose = require('mongoose');
 
 const attendanceSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
+    user: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        }
     },
     date: {
         type: Date,
@@ -20,10 +23,13 @@ const attendanceSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const leaveSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
+    user: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        }
     },
     reason: {
         type: String,

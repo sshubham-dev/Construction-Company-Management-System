@@ -50,22 +50,27 @@ const userSchema = new mongoose.Schema({
         ref: 'Attendance'
     }],
     leave:[{
+        //  name: String,
         type:mongoose.Schema.Types.ObjectId,
         ref:'Leave'
     }],
     pending:[{
+        // name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Pending-Approval',
     }],
     rejected:[{
+        // name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Rejected-Items'
     }],
     deleted:[{
+        // name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Deleted-Items'
     }],
     draft:[{
+        name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Draft-Items'
     }],
@@ -84,8 +89,11 @@ const userSchema = new mongoose.Schema({
         date: Date,
     }],
     site: [{ 
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site',
+        name: String,
+        id:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
     }],
 },
     { timestamps: true });

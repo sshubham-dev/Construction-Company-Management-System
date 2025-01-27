@@ -8,6 +8,7 @@ const paymentDetailSchema = new mongoose.Schema({
     paymentDate: {
         type: Date,
     },
+    dueDate: Date,
     status: {
         type: String,
         default: 'Pending',
@@ -22,16 +23,22 @@ const paymentDetailSchema = new mongoose.Schema({
 
 const paymentScheduleSchema = new mongoose.Schema({
     site: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
     },
     date: {
         type: Date,
         default: Date.now,
     },
     client: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Client',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Client',
+        }
     },
     adminApproved: {
         type: String,
@@ -44,18 +51,25 @@ const paymentScheduleSchema = new mongoose.Schema({
     amountPaid: {
         type: Number,
     },
-    remaningAmount: {
+    amountdue: {
         type: Number,
     },
     createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }
     },
     clientApprove: {
         type: String,
         default: 'Pending'
     },
     adminApprove: {
+        type: String,
+        default: 'Pending'
+    },
+    approvalStatus: {
         type: String,
         default: 'Pending'
     },
@@ -101,13 +115,13 @@ paymentScheduleSchema.pre('save', function (next) {
     // Check if payment is a valid number
     if (!isNaN(payment) && isFinite(payment)) {
         // Set dueAmount to a positive value or 0
-        this.remaningAmount = Math.max(0, payment.toFixed(2));
+        this.amountdue = Math.max(0, payment.toFixed(2));
     } else {
-        this.remaningAmount = null;
+        this.amountdue = null;
     }
 
     next();
 });
 
-const PaymentSchedule = mongoose.model('Payment-Schedule', paymentScheduleSchema);
-module.exports = PaymentSchedule;
+const Payment_Schedule = mongoose.model('Payment_Schedule', paymentScheduleSchema);
+module.exports = Payment_Schedule;
