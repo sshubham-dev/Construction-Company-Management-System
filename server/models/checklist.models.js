@@ -12,12 +12,18 @@ const checklistSchema = new mongoose.Schema({
         type: String,
     },
     site: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site', // Selected site
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site', // Selected site
+        }
     },
     supervisor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Supervisor (selected)
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User', // Supervisor (selected)
+        }
     },
     checkFor: {
         type: String, // Specify which work the checklist is for
@@ -63,7 +69,7 @@ const checklistSchema = new mongoose.Schema({
         review: String,
     },
     rating: [{
-        work: String, // Work to be rated
+        category: String, // category to be rated
         stars: {
             type: Number,
             min: 1,

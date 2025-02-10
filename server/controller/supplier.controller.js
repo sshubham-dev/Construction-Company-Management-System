@@ -27,7 +27,7 @@ const getSupplier = async (req, res) => {
 
 const createSupplier = async (req, res) => {
     try {
-        const { name, contactNo, whatsapp, address, gst, pan, bank } = req.body;
+        const { name, contactNo, whatsapp, address, gst, bank } = req.body;
         console.log(req.body)
         const newSupplier = new Supplier({
             name,

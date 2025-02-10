@@ -19,7 +19,7 @@ const ReturnOrders = () => {
   useEffect(() => {
     const fetchPurchaseOrders = async () => {
       try {
-        const purchaseOrdersData = await axios.get('/api/v1/purchase-order');
+        const purchaseOrdersData = await axios.get('/api/v1/return-order');
         if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
           const sites = user?.site;
           let PurchaseOrders=[];
@@ -38,7 +38,7 @@ const ReturnOrders = () => {
     };
     const getDraftOrders = async () => {
       try {
-        const orderData = await axios.get(`/api/v1/purchase-order/draft/${user?._id}`);
+        const orderData = await axios.get(`/api/v1/return-order/draft/${user?._id}`);
         const orders = orderData.data;
         if (user.department === 'Site Supervisor' || user.department === 'Site Incharge' && isLoggedIn) {
           const sites = user?.site;
@@ -60,14 +60,14 @@ const ReturnOrders = () => {
     getDraftOrders();
   }, [])
   const handleEdit = (id) => {
-    navigate(`/edit-purchaseOrder/${id}`);
+    navigate(`/edit-returnOrder/${id}`);
   };
   const handleRedirect = (id) => {
-    navigate(`/purchase-order/${id}`);
+    navigate(`/return-order/${id}`);
   };
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/v1/purchase-order/${id}`);
+      await axios.delete(`/api/v1/return-order/${id}`);
       setPurchaseOrder(purchaseOrders.filter((purchaseOrder) => purchaseOrder._id !== id));
       setDraftOrder(draftOrder.filter((order) => order._id !== id));
     } catch (error) {
@@ -76,7 +76,7 @@ const ReturnOrders = () => {
   };
   const handleSave = async (id) => {
     try {
-      const response = await axios.put(`/api/v1/purchase-order/save/${id}`);
+      const response = await axios.put(`/api/v1/return-order/save/${id}`);
       setDraftOrder(draftOrder.filter((purchaseOrder) => purchaseOrder._id !== id));
       toast.success(response.data?.message);
     } catch (error) {

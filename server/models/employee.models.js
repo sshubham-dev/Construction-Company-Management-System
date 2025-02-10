@@ -26,11 +26,12 @@ const employeeSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    employeeId: {
+    employeeNo: {
         type: String,
         unique: true,
         index: true
     },
+    gender:String,
     address: {
         type: String,
     },
@@ -71,7 +72,17 @@ const employeeSchema = new mongoose.Schema({
         type: String,
         content: String
     }],
-}, { timestamps: { createdAt: 'joinDate', updatedAt: 'updatedAt' }, touch: true })
+    pf:{
+        type: String,
+    },
+    esi:{
+        type: String,
+    },
+    uan:{
+        type: String,
+    },
+    taxRegime: String,
+}, { timestamps: true })
 
 employeeSchema.pre('save', async function (next) {
     if (this.isModified('password')) {
@@ -84,7 +95,6 @@ employeeSchema.pre('save', async function (next) {
     }
     next();
 });
-
 
 const Employee = mongoose.model('Employee', employeeSchema);
 module.exports = Employee;

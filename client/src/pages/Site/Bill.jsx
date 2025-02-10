@@ -105,10 +105,11 @@ const Bills = () => {
       <Header category="Page" title="Bill's" />
       <section className="h-full w-full overflow-x-auto ">
         <div className="w-full mx-auto text-gray-700 flex justify-end items-center">
-        {user.department === 'Site Incharge' && (
+        {/* {user.department === 'Site Incharge' && ( */}
           <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
             <MdAdd className='text-xl' />
-          </button>)}
+          </button>
+        {/* // )} */}
         </div>
 
         <Tabs defaultActiveKey='contractor' tabPosition='top' className="w-full">

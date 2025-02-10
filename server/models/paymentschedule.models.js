@@ -13,9 +13,13 @@ const paymentDetailSchema = new mongoose.Schema({
         type: String,
         default: 'Pending',
     },
-    paid: {
-        type: Number,
-    },
+    received: [{
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Receipt'
+        },
+        amount: Number,
+    }],
     due: {
         type: Number,
     },
@@ -79,12 +83,19 @@ paymentScheduleSchema.pre('save', function (next) {
     const PaymentDetails = this.paymentDetails;
     console.log('PaymentDetails:', PaymentDetails)
 
+    function total(amount, value) {
+        return amount + value
+    };
     PaymentDetails.map((detail) => {
-        const amount = parseFloat(detail.amount) || 0;
-        const paidAmount = parseFloat(detail.paid) || 0;
+        const amount = parseFloat(detail?.amount) || 0;
+        const receivedAmount = detail?.received.map((receive) => {
+            const payment = parseInt(receive.amount);
+            return payment || parseInt(receive.amount);
+        })
+        const received = receivedAmount.reduce(total) || 0;
         console.log('amount:', amount)
-        console.log('paid:', paidAmount)
-        const payment = amount - paidAmount;
+        console.log('received:', received)
+        const payment = amount - received;
 
         // Check if payment is a valid number
         if (!isNaN(payment) && isFinite(payment)) {
@@ -96,9 +107,7 @@ paymentScheduleSchema.pre('save', function (next) {
         console.log('due:', detail.due)
     })
 
-    function total(amount, value) {
-        return amount + value
-    };
+
     const TotalAmount = PaymentDetails.map((detail) => {
         return detail.amount;
     });
@@ -107,10 +116,16 @@ paymentScheduleSchema.pre('save', function (next) {
     // console.log('totalValue:', this.totalValue)
 
     const amount = parseFloat(this.totalValue) || 0;
-    const paidAmount = parseFloat(this.amountPaid) || 0;
+    const paidAmount = PaymentDetails.map((detail) => {
+        return detail?.received.map((receive) => {
+            return parseInt(receive.amount);
+        })
+    })
+    const received = paidAmount.reduce(total) || 0;
     console.log('Totalamount:', amount)
     console.log('Totalpaid:', paidAmount)
-    const payment = amount - paidAmount;
+    console.log('Totalreceived:', received)
+    const payment = amount - received;
 
     // Check if payment is a valid number
     if (!isNaN(payment) && isFinite(payment)) {

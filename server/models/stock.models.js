@@ -52,6 +52,10 @@ const stockSchema = new mongoose.Schema({
         type: String,
         enum: ['In Stock', 'Out Of Stock', 'Low Stock'],
     },
+    typeOfSupply:{
+        type: String,
+        enum: ['Goods', 'Services', 'Capital Goods'],
+    },
     valuationMethod: {
         type: String,
         enum: ['FIFO', 'LIFO', 'Weighted Average'],

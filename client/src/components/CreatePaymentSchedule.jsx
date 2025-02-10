@@ -7,9 +7,16 @@ import Header from '../components/Header';
 import Select from 'react-select';
 axios.defaults.withCredentials = true;
 const CreatePaymentSchedule = () => {
+  const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
-    site: '',
-    client: '',
+    site: {
+      site:'',
+      id:'',
+    },
+    client: {
+      name:'',
+      id:'',
+    },
     paymentDetails: [{
       workDescription: '',
       amount: '',
@@ -151,46 +158,40 @@ const CreatePaymentSchedule = () => {
       siteData = sites.filter((site) => site._id === siteId);
     }
     setClient(siteData[0]?.client || '');
+    formData.client.name = client.name;
+    formData.client.id = client.id;
   }, [formData.site]);
-  formData.client = client.name;
 
-  const handleAddWork = () => {
-    setFormData((prevData) => ({
-      ...prevData,
-      paymentDetails: [
-        ...prevData.paymentDetails,
-        {
-          workDescription: '',
-          unit: '',
-          paymentDate: '',
-          billNo: '',
-          amount: '',
-        },
-      ],
-    }));
+  const handleNext = () => {
+    if (step < formData.paymentDetails.length) {
+      setStep(step + 1);
+    } else {
+      setFormData({
+        ...formData,
+        paymentDetails: [...formData.paymentDetails, { workDescription: '', amount: '', paymentDate: '' }],
+      });
+      setStep(step + 1);
+    }
   };
 
-  const handleRemoveWork = (index) => {
-    setFormData((prevData) => {
-      const updatedWork = [...prevData.paymentDetails];
-      updatedWork.splice(index, 1);
-      return {
-        ...prevData,
-        paymentDetails: updatedWork,
-      };
+  const handlePrevious = () => {
+    if (step > 0) setStep(step - 1);
+  };
+
+  const handleWorkChange = (field, value) => {
+    setFormData(prevState => {
+      let updatedwork = [...prevState.paymentDetails];
+
+      if (!updatedwork[step - 1]) {
+        updatedwork[step - 1] = { material: '', reqQuantity: '', unit: '' };
+      }
+
+      updatedwork[step - 1] = { ...updatedwork[step - 1], [field]: value };
+
+      return { ...prevState, paymentDetails: updatedwork };
     });
   };
 
-  const handleWorkChange = (index, field, value) => {
-    setFormData((prevData) => {
-      const updatedWork = [...prevData.paymentDetails];
-      updatedWork[index][field] = value;
-      return {
-        ...prevData,
-        paymentDetails: updatedWork,
-      };
-    });
-  };
 
   const handleUpdate = (field, value) => {
     setPaymentDetail({
@@ -201,16 +202,12 @@ const CreatePaymentSchedule = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const updatedFormData = {
-      ...formData,
-      client: client._id,
-    };
+    console.log(formData);
 
 
     try {
       if (scheduleIdToEdit) {
-        const response = await axios.put(`/api/v1/payment-schedule/${scheduleIdToEdit}`, updatedFormData);
+        const response = await axios.put(`/api/v1/payment-schedule/${scheduleIdToEdit}`, formData);
         if (response.data) {
           console.log('Project Schedule Edited Successfully!');
           toast.success(response.data.message);
@@ -222,7 +219,7 @@ const CreatePaymentSchedule = () => {
         toast.success(response.data.message);
         navigate(-1);
       } else {
-        const response = await axios.post('/api/v1/payment-schedule', updatedFormData);
+        const response = await axios.post('/api/v1/payment-schedule', formData);
         console.log(response.data);
         toast.success(response.data.message);
         navigate(-1);
@@ -255,21 +252,6 @@ const CreatePaymentSchedule = () => {
                 options={workDetails.map(workDetail => ({ value: workDetail.work, label: workDetail.work }))}
                 placeholder={paymentDetail ? paymentDetail.workDescription : 'Work Detail'}
               />
-              {/* <select
-                value={paymentDetail.workDescription}
-                onChange={(e) => handleUpdate('workDescription', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              >
-                <option>
-                  {paymentDetail ? paymentDetail.workDescription : 'Work Detail' }
-                </option>
-                {workDetails.map((workDetail) => (
-                  <option key={workDetail._id} value={workDetail.work}>
-                    {workDetail.work}
-                  </option>
-                ))}
-
-              </select> */}
             </div>
 
             <div className="mb-4">
@@ -367,39 +349,89 @@ const CreatePaymentSchedule = () => {
         <section className="container mx-auto mt-4 mb-16">
           <form className="max-w-md mx-auto " onSubmit={handleSubmit}>
 
-            <div className="mb-4">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-600">
-                Select a Site
-              </label>
-              <select
-                name="site"
-                value={formData.site}
-                onChange={(e) => handleChange('site', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              >
-                <option>{scheduleIdToEdit ? data.site : 'Site'}</option>
-                {sites.map((site) => (
-                  <option key={site._id} value={site._id}>
-                    {site.name}
-                  </option>
-                ))}
-              </select>
+            {step === 0 && (
+              <>
+                <div className="mb-4">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-600">
+                    Select a Site
+                  </label>
+                  <select
+                    name="site"
+                    value={formData.site}
+                    onChange={(e) => handleChange('site', e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  >
+                    <option>{scheduleIdToEdit ? data.site : 'Site'}</option>
+                    {sites.map((site) => (
+                      <option key={site._id} value={site._id}>
+                        {site.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <p htmlFor="name" className="block text-md font-medium text-gray-600">
+                    Client: {formData.client.name}
+                  </p>
+                </div>
+              </>)}
+
+            <div className="my-4">
+              <h2 className="text-lg font-semibold mb-2">Work Details</h2>
+              {step > 0 && (
+                <div>
+                  <label
+                    htmlFor='workDescription'
+                    className="block text-sm font-semibold text-gray-600 mt-3"
+                  >
+                    Work Detail
+                  </label>
+                  <Select
+                    value={{ value: formData.paymentDetails[step - 1]?.workDescription, label: formData.paymentDetails[step - 1]?.workDescription }}
+                    onChange={(selectedOption) => handleWorkChange('workDescription', selectedOption.value)}
+                    options={workDetails.map(workDetail => ({ value: workDetail.work, label: workDetail.work }))}
+                    placeholder="Select Work Detail"
+                  />
+                  <label htmlFor='amount' className="block text-sm font-semibold text-gray-600 mt-4">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    name='amount'
+                    value={formData.paymentDetails[step - 1]?.amount || ''}
+                    onChange={(e) => handleWorkChange('amount', e.target.value)}
+                    placeholder="Amount"
+                    className="border p-2 rounded w-full"
+                  />
+                  <label htmlFor='paymentDate' className="block text-sm font-semibold text-gray-600 mt-4">
+                    Date of Payment
+                  </label>
+                  <input
+                    type="date"
+                    name='paymentDate'
+                    value={formData.paymentDetails[step - 1].paymentDate}
+                    onChange={(e) => handleWorkChange('paymentDate', e.target.value)}
+                    className="border p-2 rounded w-full"
+                  />
+                </div>
+              )}
+              <div className="mt-4 flex justify-between">
+                {step > 0 && (
+                  <button type="button" onClick={handlePrevious} className="bg-gray-500 text-white p-2 rounded">
+                    Previous
+                  </button>
+                )}
+                <button type="submit" className="bg-green-500 text-white p-2 rounded">
+                  Submit
+                </button>
+                <button type="button" onClick={handleNext} className="bg-blue-500 text-white p-2 rounded">
+                  Next
+                </button>
+              </div>
             </div>
 
-            <div className="mb-4">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-600">
-                Client
-              </label>
-              <input
-                name="client"
-                value={formData.client || ''}
-                readOnly
-                onChange={(e) => handleChange('client', e.target.value)}
-                className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <h2 className="text-lg font-semibold mb-2">Work Details</h2>
               {formData.paymentDetails.map((work, index) => (
                 <div key={index} className="mb-4 p-3 border rounded">
@@ -418,21 +450,6 @@ const CreatePaymentSchedule = () => {
                         options={workDetails.map(workDetail => ({ value: workDetail.work, label: workDetail.work }))}
                         placeholder="Select Work Detail"
                       />
-                      {/* <select
-                        value={work.workDescription}
-                        onChange={(e) => handleWorkChange(index, 'workDescription', e.target.value)}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      >
-                        <option value=''>
-                          Select Work Detail
-                        </option>
-                        {workDetails.map((workDetail) => (
-                          <option key={workDetail._id} value={workDetail.work}>
-                            {workDetail.work}
-                          </option>
-                        ))}
-
-                      </select> */}
                     </div>
 
                     <div className='md:col-span-1 col-span-2'>
@@ -485,15 +502,7 @@ const CreatePaymentSchedule = () => {
               >
                 More Work
               </button>
-            </div>
-
-            <div className="text-center">
-              <button
-                type="submit"
-                className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-300">
-                Create Project Schedule
-              </button>
-            </div>
+            </div> */}
 
           </form>
         </section>

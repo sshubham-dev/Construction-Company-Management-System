@@ -21,6 +21,10 @@ import { TbTruckReturn } from "react-icons/tb";
 import { FaPersonCircleQuestion, FaPersonCircleCheck, FaPersonShelter, FaTruckArrowRight, FaTruckMedical } from "react-icons/fa6";
 import { HiUserGroup } from "react-icons/hi2";
 import { AiTwotoneAccountBook } from "react-icons/ai";
+import { FaReceipt } from "react-icons/fa";
+import { FaMoneyBillTransfer } from "react-icons/fa6";
+import { PiNoteFill } from "react-icons/pi";
+import { TbReportAnalytics } from "react-icons/tb";
 
 const Sidebar = () => {
   const { activeMenu } = useStateContext();
@@ -80,6 +84,42 @@ const Sidebar = () => {
           role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
         },
         {
+          to: '/erp/report/account',
+          name: 'Report',
+          icon: <TbReportAnalytics />,
+          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
+        },
+        {
+          to: '/erp/receipt_payment',
+          name: 'Receipt & Payment',
+          icon: <FaReceipt />,
+          role: ['Admin', 'Company', 'Ceo', 'Account Head'],
+        },
+        {
+          to: '/erp/contra',
+          name: 'Contra',
+          icon: <FaMoneyBillTransfer />,
+          role: ['Admin', 'Company', 'Ceo', 'Account Head'],
+        },
+        // {
+        //   to: '/erp/journal',
+        //   name: 'Journal',
+        //   icon: <IoIosJournal />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
+        // },
+        // {
+        //   to: '/erp/stock/journal',
+        //   name: 'Stock Journal',
+        //   icon: <IoIosJournal />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
+        // },
+        // {
+        //   to: '/erp/credit-note',
+        //   name: 'Credit / Debit Note',
+        //   icon: <PiNoteFill />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
+        // },
+        {
           to: '/erp/balance-sheet',
           name: 'Balance Sheet',
           icon: <FaBalanceScale />,
@@ -100,12 +140,12 @@ const Sidebar = () => {
           icon: <MdWarehouse />,
           role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
         },
-        // {
-        //   to: '/erp/inventory/item',
-        //   name: 'Item',
-        //   icon: <MdInventory />,
-        //   role: ['Admin', 'Ceo', 'Accountant', 'Account Head'],
-        // },
+        {
+          to: '/erp/report/inventory',
+          name: 'Report',
+          icon: <TbReportAnalytics />,
+          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
+        },
         {
           to: '/erp/inventory/stock',
           name: 'Stock',
@@ -164,16 +204,16 @@ const Sidebar = () => {
           icon: <FaPersonCircleCheck />,
           role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
         },
-        {
-          to: '/crm/project',
-          name: 'Project',
-          icon: <AiOutlineProject />,
-          role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
-        },
+        // {
+        //   to: '/crm/project',
+        //   name: 'Project',
+        //   icon: <AiOutlineProject />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
+        // },
         {
           to: '/crm/invoice',
           name: 'Invoice',
-          icon: <TbInvoice  />,
+          icon: <TbInvoice />,
           role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
         },
       ],
@@ -182,12 +222,12 @@ const Sidebar = () => {
 
     /* Site Management*/
     {
-      to: '/site',
+      to: '/sites',
       name: 'Site Management',
       icon: <MdLocationOn />,
       children: [
         {
-          to: '/report',
+          to: '/site/report',
           name: 'Sites Report',
           icon: <FaPersonShelter />,
           role: ['Admin', 'Company', 'Ceo', 'Account Head']
@@ -310,9 +350,8 @@ const Sidebar = () => {
               <span className="text-lg">{item.name}</span>
             </NavLink>
             <div
-              className={`transition-all duration-300 ${
-                openDropdowns[item.name] ? "max-h-fit" : "max-h-0"
-              }`}
+              className={`transition-all duration-300 ${openDropdowns[item.name] ? "max-h-fit" : "max-h-0"
+                }`}
             >
               {item.children.map(
                 (child, idx) =>

@@ -17,7 +17,7 @@ const CreateChecklist = () => {
       status: '',                 // Status
       remarks: '',                // Remarks
     }],
-    ratings: categories.map(category => ({ category, score: 0 })), // Ratings for categories
+    ratings: categories.map(category => ({ category, stars: 0, remarks: '' })), // Ratings for categories
     observation: '',              // Additional observations
   });
   const [sites, setSite] = useState([]);                      // Selected site
@@ -77,11 +77,11 @@ const CreateChecklist = () => {
     }));
   };
 
-  const updateRating = (category, score) => {
+  const updateRating = (category, stars, remarks) => {
     setFormData(prevData => ({
       ...prevData,
       ratings: prevData.ratings.map(rating =>
-        rating.category === category ? { ...rating, score } : rating
+        rating.category === category ? { ...rating, stars, remarks } : rating
       ),
     }));
   };
@@ -117,7 +117,7 @@ const CreateChecklist = () => {
     <div >
       <Header category="Page" title="Checklist's" />
       <section className='container mx-auto mt-4 mb-16'>
-        <div className="p-8 max-w-2xl mx-auto">
+        <div className=" max-w-3xl mx-auto">
           {!showChecklist ? (
             <div>
               <h1 className="text-3xl font-bold mb-4">Checklist Setup</h1>
@@ -206,24 +206,31 @@ const CreateChecklist = () => {
               {isAllChecked && (
                 <div className="mt-8">
                   <h2 className="text-2xl font-bold mb-4">Rating</h2>
-                  <div className="space-y-4">
+                  <div className="space-y-4 ">
                     {formData.ratings.map(rating => (
-                      <div key={rating.category} className="flex items-center justify-between">
-                        <label className="font-semibold">{rating.category}</label>
-                        <div className="flex items-center space-x-2">
-                          {[1, 2, 3, 4, 5].map(score => (
-                            <svg
-                              key={score}
-                              className={`w-4 h-4 cursor-pointer ${score <= rating.score ? 'text-yellow-400' : 'text-gray-300'}`}
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                              onClick={() => updateRating(rating.category, score)}
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.517 4.674a1 1 0 00.95.69h4.905c.969 0 1.371 1.24.588 1.81l-3.97 2.884a1 1 0 00-.364 1.118l1.517 4.674c.3.921-.755 1.688-1.54 1.118l-3.97-2.884a1 1 0 00-1.175 0l-3.97 2.884c-.784.57-1.838-.197-1.54-1.118l1.517-4.674a1 1 0 00-.364-1.118L2.539 10.1c-.783-.57-.38-1.81.588-1.81h4.905a1 1 0 00.95-.69l1.517-4.674z" />
-                            </svg>
-                          ))}
+                      <div key={rating.category} className="flex items-center justify-between flex-col md:flex-row lg:flex-row gap-8 ">
+                        <div className="grid grid-cols-2 gap-4 md:gap-8 lg:gap-12">
+                          <label className="font-semibold text-sm">{rating.category}</label>
+                          <div className="flex items-center space-x-2">
+                            {[1, 2, 3, 4, 5].map(stars => (
+                              <svg
+                                key={stars}
+                                className={`w-4 h-4 cursor-pointer ${stars <= rating.stars ? 'text-yellow-400' : 'text-gray-300'}`}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg"
+                                onClick={() => updateRating(rating.category, stars, rating.remarks)}
+                              >
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.517 4.674a1 1 0 00.95.69h4.905c.969 0 1.371 1.24.588 1.81l-3.97 2.884a1 1 0 00-.364 1.118l1.517 4.674c.3.921-.755 1.688-1.54 1.118l-3.97-2.884a1 1 0 00-1.175 0l-3.97 2.884c-.784.57-1.838-.197-1.54-1.118l1.517-4.674a1 1 0 00-.364-1.118L2.539 10.1c-.783-.57-.38-1.81.588-1.81h4.905a1 1 0 00.95-.69l1.517-4.674z" />
+                              </svg>
+                            ))}
+                          </div>
                         </div>
+                        <input
+                          value={rating.remarks}
+                          onChange={(e) => updateRating(rating.category, rating.stars, e.target.value)}
+                          placeholder="Enter remarks"
+                          className="border p-2 rounded w-40" />
                       </div>
                     ))}
                   </div>

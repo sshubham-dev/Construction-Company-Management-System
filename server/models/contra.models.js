@@ -10,10 +10,7 @@ const contraSchema = new mongoose.Schema({
         type: Date,
         required: true
     }, // Transaction date
-    description: {
-        type: String
-    }, // Optional narration/remarks
-    fromAccount: {
+    from: {
         name: String,
         id: {
             type: mongoose.Schema.Types.ObjectId,
@@ -21,7 +18,7 @@ const contraSchema = new mongoose.Schema({
             required: true
         }
     }, // Source account (e.g., cash, bank)
-    toAccount: {
+    to: {
         name: String,
         id: {
             type: mongoose.Schema.Types.ObjectId,
@@ -33,6 +30,9 @@ const contraSchema = new mongoose.Schema({
         type: Number,
         required: true
     }, // Transfer amount
+    description: {
+        type: String
+    }, // Optional narration/remarks
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'

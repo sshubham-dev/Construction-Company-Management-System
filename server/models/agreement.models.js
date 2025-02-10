@@ -1,46 +1,47 @@
 const mongoose = require('mongoose');
 
 const agreementSchema = new mongoose.Schema({
-    client:{
+    grnNo:{
+        type: String,
+    },
+    clientDetails: {
         name: String,
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'Client',
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'lead'
+        },
+        address: String,
+        plotDetail: String,
     },
-    clientDetails:{
-        name: String,
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'Customer',
+    date: {
+        type: Date,
+        default: Date.now,
     },
-    date:{
-        type:Date,
-        default:Date.now,
-    },
-    workDetails:[{
+    workDetails: [{
         workDescription: {
-            type:String,
+            type: String,
         },
         unit: String,
         area: Number,
+        actualArea: Number,
         rate: Number,
         amount: Number,
     }],
-    totalValue:{
-        type:String,
+    totalValue: {
+        type: String,
     },
-    itemsDetails:[{
-        itemTitle:{
-            type:String,
+    itemsDetails: [{
+        itemTitle: {
+            type: String,
         },
-        item:[{
-            type:String,
+        item: [{
+            type: String,
         }],
     }],
-    site:{
-        name: String,
-        siteId:mongoose.Schema.Types.ObjectId,
-        ref:'Site',
-    }
-},{timestamps:true});
+    terms:[{
+        type: String,
+    }],
+}, { timestamps: true });
 
 const Agreement = mongoose.model("Agreement", agreementSchema);
 module.exports = Agreement;

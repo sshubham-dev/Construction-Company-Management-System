@@ -47,6 +47,17 @@ const supplierSchema = new mongoose.Schema({
             ref: 'Bill',
         }
     }],
+    accounts:{
+        payable:{
+            type: Number,
+        },
+        paid:{
+            type: Number,
+        },
+        due:{
+            type: Number,
+        },
+    }
 }, { timestamps: true })
 
 const Supplier = mongoose.model('Supplier', supplierSchema);

@@ -14,6 +14,7 @@ const returnableSchema = new mongoose.Schema({
     unit: {
         type: String,
     },
+    remarks: String,
 })
 const returnSchema = new mongoose.Schema({
     site: {

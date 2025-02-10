@@ -29,6 +29,7 @@ const salesSchema = new mongoose.Schema({
                 required: true,
             }
         },
+        unit: String,
         quantity: {
             type: Number,
             required: true
@@ -70,8 +71,14 @@ const salesSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Account',
         }
-    }
+    },
+    purchaseRequest:{
+        type:String
+    },
 }, { timeseries: true });
+
+
+
 
 const SalesOrder = mongoose.model('SalesOrder', salesSchema);
 module.exports = SalesOrder;

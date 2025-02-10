@@ -5,12 +5,12 @@ const clientSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     },
-    name:{
-        type:String,
-        required:true,
+    name: {
+        type: String,
+        required: true,
         trim: true,
     },
-    email:{
+    email: {
         type: String,
         unique: true,
         lowercase: true,
@@ -29,18 +29,48 @@ const clientSchema = new mongoose.Schema({
         district: String,
         state: String,
     },
-    site:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'Site',
+    site: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
     },
-    gstNo:{
-        type:String,
+    gstNo: {
+        type: String,
     },
     extraWork: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Extra-Work',
     }],
-},{timestamps:true})
+    agreement: {
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Agreement'
+        },
+        totalValue: Number,
+    },
+    account: {
+        receivable: {
+            type: Number,
+        },
+        recived: {
+            type: Number,
+        },
+        expenses: {
+            type: Number,
+        },
+        balance: {
+            type: Number,
+        },
+    },
+}, { timestamps: true });
+
+clientSchema.pre('save', function (next) {
+    const totalValue = this.agreement.totalValue;
+    this.receivable = totalValue || 0;
+    next()
+})
 
 const Client = mongoose.model('Client', clientSchema);
 module.exports = Client;

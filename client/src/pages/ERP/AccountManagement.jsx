@@ -37,7 +37,7 @@ const AccountManagement = () => {
             <ReactTable/>
           </div> */}
           <div className="bg-white p-4 rounded-lg shadow col-span-2">
-            <ModernTable />
+            {/* <ModernTable /> */}
           </div>
         </div>
         <Toaster

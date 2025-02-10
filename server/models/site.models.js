@@ -23,7 +23,11 @@ const siteSchema = new mongoose.Schema({
         default: 'Residential',
         index: true,
     },
-    floors: String,
+    floors: [{
+        name: String,
+        area: Number,
+        unit: String,
+    }],
     area: Number,
     address: {
         type: String,
@@ -50,13 +54,17 @@ const siteSchema = new mongoose.Schema({
         }
     },
     agreement: {
-        type: String,
-        content: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'Agreement'
     },
-    adminApprove: {
-        type: String,
-        default: 'Pending'
-    },
+    approval:[{
+        for:String,
+        by:String,
+        status:{
+            type: String,
+            default: "Pending"
+        },
+    }],
     checklist: [{
         name: String,
         id: {
@@ -128,12 +136,21 @@ const siteSchema = new mongoose.Schema({
         }
     }],
     account: {
-        income: {},
-        expenses: {},
-        extraWork: {},
-        profit: {},
-        expenses: {},
-        balance: {},
+        receivable: {
+            type: Number,
+        },
+        income: {
+            type: Number,
+        },
+        expenses: {
+            type: Number,
+        },
+        profit: {
+            type: Number,
+        },
+        balance: {
+            type: Number,
+        },
     },
 }, { timestamps: true });
 

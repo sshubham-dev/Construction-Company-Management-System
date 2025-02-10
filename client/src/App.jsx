@@ -93,6 +93,14 @@ import Inventory from './pages/ERP/Inventory.jsx';
 import UserScreen from './screen/UserScreen.jsx';
 import MorePage from './components/MorePage.jsx';
 import Report from './pages/Site/Report.jsx';
+import ReturnOrderScreen from './screen/ReturnOrderScreen.jsx';
+import SalesForm from './pages/ERP/SalesForm.jsx';
+import Receipt_Payment from './pages/ERP/Receipt_Payment.jsx';
+import JournalEntryForm from './pages/ERP/Journal.jsx';
+import Contra from './pages/ERP/Contra.jsx';
+import ERPReport from './pages/ERP/ERPReport.jsx';
+import CreateLead from './components/CreateLead.jsx';
+import Journal from './pages/ERP/Journal.jsx';
 
 const App = () => {
 
@@ -222,7 +230,7 @@ const App = () => {
         <Route path='/edit-purchaseOrder/:id/material/:index' element={<CreatePurchaseOrder />} />
 
         <Route path='/return-order/:from' element={<ReturnOrders />} />
-        <Route path='/return-order/:id' />
+        <Route path='/return-order/:id' element={<ReturnOrderScreen />} />
         <Route path='/create-returnOrder' element={<CreateReturnOrder />} />
         <Route path='/edit-returnOrder/:id' element={<CreateReturnOrder />} />
         <Route path='/edit-returnOrder/:id/material/:index' element={<CreateReturnOrder />} />
@@ -233,19 +241,30 @@ const App = () => {
         <Route path='/erp/balance-sheet' element={<BalanceSheet />} />
         <Route path='/erp/create-record' element={<CreateRecord />} />
         <Route path='/erp/create-account' element={<CreateAccount />} />
-
         <Route path='/erp/inventory' element={<Store />} />
-        <Route path='/erp/inventory/stock' element={<Inventory />} />
-        <Route path='/erp/inventory/item' element={<Stock />} />
+        <Route path='/erp/report/:of' element={<ERPReport />} />
+        <Route path='/erp/inventory/stock' element={<Stock />} />
         <Route path='/erp/inventory/sales' element={<Sales />} />
+        <Route path='/erp/inventory/create-sales' element={<Sales />} />
         <Route path='/erp/inventory/purchase' element={<Purchase />} />
         <Route path='/erp/inventory/order' element={<Order />} />
+        {/* <Route path='/erp/journal' element={<Journal />} /> */}
+        <Route path='/erp/receipt_payment' element={<Receipt_Payment />} />
+        <Route path='/erp/contra' element={<Contra />} />
+        <Route path='/erp/stock/journal' element={<Order />} />
+        <Route path='/erp/:note' element={<Order />} />
+        <Route path='/erp/summary' element={<Order />} />
+        <Route path='/erp/balance-sheet' element={<Order />} />
+        <Route path='/erp/p&l' element={<Order />} />
+        <Route path='/erp/stock/summary' element={<Order />} />
+        <Route path='/erp/ration-analysis' element={<Order />} />
+        <Route path='/erp/trial-balance' element={<Order />} />
         <Route path='/erp/inventory/return' element={<Return />} />
         <Route path='/erp/inventory/suppliers' element={<Suppliers />} />
         <Route path='/erp/inventory/record-inventory' element={<RecordInventory />} />
 
         <Route path='/crm' element={<CRM />} />
-        <Route path='/crm/lead' element={<Lead />} />
+        <Route path='/crm/lead' element={<CreateLead />} />
         <Route path='/crm/client' element={<Clients />} />
         <Route path='/crm/project' element={<Project />} />
         <Route path='/crm/Invoice' element={<Invoice />} />

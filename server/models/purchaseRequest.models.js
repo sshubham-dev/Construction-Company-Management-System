@@ -9,19 +9,21 @@ const requirementSchema = new mongoose.Schema({
             required: true,
         }
     },
-    reqQuantity: {
-        type: Number,
+    request: {
+        quantity: Number,
+        unit: String,
+        remarks: String,
     },
-    approvedQuantity: {
-        type: Number,
+    approved: {
+        quantity: Number,
+        unit: String,
+        remarks: String,
     },
-    unit: {
-        type: String,
-    },
-    slip: {
-        type: String,
-        content: String,
-    },
+    delivered:{
+        quantity: Number,
+        unit: String,
+        remarks: String,
+    }
 }, { timestamps: true });
 
 const purchaseRequestSchema = new mongoose.Schema({
@@ -58,6 +60,11 @@ const purchaseRequestSchema = new mongoose.Schema({
         required: true,
     },
     requirement: [requirementSchema],
+    status:{
+        type: String,
+        default: 'request',
+        enum: ['request', 'approved', 'delivery', 'delivered']
+    },
     reqDate: Date,
     adminApprove: {
         type: String,
@@ -80,3 +87,5 @@ const purchaseRequestSchema = new mongoose.Schema({
 
 const PurchaseRequest = mongoose.model('Purchase-Request', purchaseRequestSchema);
 module.exports = PurchaseRequest;
+
+

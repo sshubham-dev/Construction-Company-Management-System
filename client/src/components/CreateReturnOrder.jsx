@@ -8,59 +8,54 @@ import Select from 'react-select';
 axios.defaults.withCredentials = true;
 
 const CreateReturnOrder = () => {
+  const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     supplier: '',
     site: '',
-    purchaseOrderNo: '',
+    returnOrderNo: '',
     createdBy: '',
-    materialType: '',
-    requirement: [{
-      material: '',
-      rate: '',
+    itemType: '',
+    returnable: [{
+      item: '',
       quantity: '',
       unit: '',
-      amount: '',
     }],
   });
-  const [requirement, setRequirement] = useState({
-    material: '',
-    rate: '',
+  const [returnable, setReturnable] = useState({
+    item: '',
     quantity: '',
     unit: '',
-    amount: '',
-    status: '',
-    slip: '',
   });
   const [data, setData] = useState({
     supplier: '',
     site: '',
     createdBy: '',
   });
-  const [materials, setMaterial] = useState([]);
+  const [items, setitem] = useState([]);
   const [sites, setSite] = useState([]);
   const [suppliers, setSupplier] = useState([]);
   const [categorys, setCategory] = useState([]);
   const status = ['Delivered', 'Pending', 'Returned'];
   const units = ['SQFT', 'RFT', 'LUMSUM', 'NOS', 'FIXED', 'RMT', 'SQMT', 'CUM', 'BAG', 'KG', 'TONES', 'LITERS'];
-  const [requirementToEdit, setRequirementToEdit] = useState({
+  const [returnableToEdit, setReturnableToEdit] = useState({
     id: '',
     index: '',
   });
-  const [purchaseOrderToEdit, setPurchaseOrderToEdit] = useState(null);
+  const [returnOrderToEdit, setreturnOrderToEdit] = useState(null);
   const navigate = useNavigate();
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const { id } = useParams();
   const { index } = useParams();
   const { from } = useParams();
   console.log(from)
-  
+
 
   useEffect(() => {
     if (id && index) {
-      setRequirementToEdit({ id, index })
+      setReturnableToEdit({ id, index })
       fetchPurchaseOrder(id, index);
     } else if (id && !index) {
-      setPurchaseOrderToEdit(id)
+      setreturnOrderToEdit(id)
       fetchPurchaseOrder(id)
     }
   }, [id, index]);
@@ -96,19 +91,19 @@ const CreateReturnOrder = () => {
       }
     }
 
-    const fetchMaterial = async () => {
+    const fetchitem = async () => {
       try {
         const title = 'Purchase Order';
         const data = await axios.post('/api/v1/work-details/name', {
           title
         });
         // console.log(data.data)
-        let material = [];
+        let item = [];
         for (let i = 0; i < data.data.description.length; i++) {
-          material = material.concat(data.data.description[i]);
+          item = item.concat(data.data.description[i]);
         }
-        console.log(material)
-        setMaterial(material)
+        console.log(item)
+        setitem(item)
       } catch (error) {
         console.error(error.message)
       }
@@ -116,39 +111,9 @@ const CreateReturnOrder = () => {
 
     fetchSite();
     fetchSupplier();
-    fetchMaterial();
+    fetchitem();
   }, []);
 
-  const fetchPurchaseOrder = async (id, index) => {
-    try {
-      const response = await axios.get(`/api/v1/purchase-order/${id}`);
-      if (id && index) {
-        const require = response.data.requirement[index];
-        console.log(require)
-        setRequirement({
-          material: require.material,
-          rate: require.rate,
-          quantity: require.quantity,
-          unit: require.unit,
-          amount: require.amount,
-          status: require.status,
-        })
-      } else if (id && !index) {
-        setData({
-          site: response.data?.site.name,
-          supplier: response.data?.supplier.name,
-        });
-        setFormData({
-          supplier: response.data?.supplier._id,
-          site: response.data?.site._id,
-          purchaseOrderNo: response.data?.purchaseOrderNo,
-          createdBy: response.data?.createdBy?._id,
-        })
-      }
-    } catch (error) {
-      toast.error(error.message)
-    }
-  };
 
   const handleChange = (field, value) => {
     setFormData({
@@ -158,80 +123,59 @@ const CreateReturnOrder = () => {
   };
 
   const handleUpdate = (field, value) => {
-    setRequirement({
-      ...requirement,
+    setReturnable({
+      ...returnable,
       [field]: value
     })
   }
 
-  const handleAddWork = () => {
-    setFormData({
-      ...formData,
-      requirement: [
-        ...formData.requirement,
-        {
-          material: '',
-          rate: '',
-          quantity: '',
-          unit: '',
-        },
-      ],
-    });
+  const handleNext = () => {
+    if (step < formData.returnable.length) {
+      setStep(step + 1);
+    } else {
+      setFormData({
+        ...formData,
+        returnable: [...formData.returnable, { item: '', quantity: '', unit: '' }],
+      });
+      setStep(step + 1);
+    }
   };
 
-  const handleRemoveWork = (index) => {
-    const updatedRequirement = [...formData.requirement];
-    updatedRequirement.splice(index, 1);
-    setFormData({
-      ...formData,
-      requirement: updatedRequirement,
-    });
+  const handlePrevious = () => {
+    if (step > 0) setStep(step - 1);
   };
 
-  const handleWorkChange = (index, field, value) => {
-    const updatedRequirement = [...formData.requirement];
-    updatedRequirement[index][field] = value;
-    setFormData({
-      ...formData,
-      requirement: updatedRequirement,
+  const handleReturnableChange = (field, value) => {
+    setFormData(prevState => {
+        let updatedReturnable = [...prevState.returnable];
+
+        // Ensure the current requirement entry exists
+        if (!updatedReturnable[step - 1]) {
+          updatedReturnable[step - 1] = { material: '', reqQuantity: '', unit: '' };
+        }
+
+        updatedReturnable[step - 1] = { ...updatedReturnable[step - 1], [field]: value };
+
+        return { ...prevState, returnable: updatedReturnable };
     });
-  };
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const updatedFormData = {
-      ...formData,
-      requirement: formData?.requirement?.map((detail) => {
-        const amount = parseFloat(detail.quantity) * parseFloat(detail.rate);
-        return {
-          ...detail,
-          amount: isNaN(amount) ? '' : amount.toFixed(2),
-        };
-      }),
-    };
-    setFormData(updatedFormData)
-
-    const amount = parseFloat(requirement.quantity) * parseFloat(requirement.rate);
-    const updatedDetail = {
-      ...requirement,
-      amount: isNaN(amount) ? '' : amount.toFixed(2),
-    }
-
     try {
-      if (purchaseOrderToEdit) {
-        console.log(updatedFormData)
-        const response = await axios.put(`/api/v1/purchase-order/${purchaseOrderToEdit}`, formData);
+      if (returnOrderToEdit) {
+        const response = await axios.put(`/api/v1/purchase-order/${returnOrderToEdit}`, formData);
         toast.success(response.data.message)
         navigate(-1)
-      } else if (requirementToEdit.id && requirementToEdit.index) {
-        console.log(updatedDetail)
-        const response = await axios.put(`/api/v1/purchase-order/${requirementToEdit.id}/requirement/${requirementToEdit.index}`, updatedDetail);
+      } else if (returnableToEdit.id && returnableToEdit.index) {
+        console.log(returnable)
+        const response = await axios.put(`/api/v1/purchase-order/${returnableToEdit.id}/returnable/${returnableToEdit.index}`, returnable);
         toast.success(response.data.message)
         navigate(-1)
       } else {
-        console.log(updatedFormData)
-        const response = await axios.post('/api/v1/purchase-order/create', updatedFormData);
+        console.log(formData)
+        const response = await axios.post('/api/v1/purchase-order/create', formData);
         toast.success(response.data.message)
         navigate(-1)
       }
@@ -241,7 +185,7 @@ const CreateReturnOrder = () => {
     }
   };
 
-  if (requirementToEdit.id && requirementToEdit.index) {
+  if (returnableToEdit.id && returnableToEdit.index) {
     return (
       <div >
         <Header category="Page" title="Return Order" />
@@ -252,46 +196,15 @@ const CreateReturnOrder = () => {
 
             <div className='mb-4'>
               <label
-                htmlFor='material'
+                htmlFor='item'
                 className="block text-sm font-semibold text-gray-600 mb-1">
-                Material
+                Item
               </label>
               <Select
-                value={{ value: requirement.material, label: requirement.material }}
-                onChange={(selectedOption) => handleUpdate('material', selectedOption.value)}
-                options={materials.map(material => ({ value: material.work, label: material.work }))}
-                placeholder={requirementToEdit ? requirement.material : 'Material'}
-              />
-              {/* <select
-                value={requirement.material}
-                onChange={(e) => handleUpdate('material', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="">{requirementToEdit ? requirement.material : 'Material'}</option>
-                {materials.map((material, index) => (
-                  <option key={index} value={material.work}>{material.work}</option>
-                ))}
-              </select> */}
-            </div>
-            {/* <input
-                type="text"
-                value={requirement.material}
-                onChange={(e) => handleUpdate('material', e.target.value)}
-                placeholder="Material"
-                className="border p-2 rounded w-full"
-              /> */}
-
-            <div className='mb-4'>
-              <label
-                htmlFor='rate'
-                className="block text-sm font-semibold text-gray-600 mb-1">
-                Rate
-              </label>
-              <input
-                type="number"
-                value={requirement.rate}
-                onChange={(e) => handleUpdate('rate', e.target.value)}
-                placeholder="Rate"
-                className="border p-2 rounded w-full"
+                value={{ value: returnable.item, label: returnable.item }}
+                onChange={(selectedOption) => handleUpdate('item', selectedOption.value)}
+                options={items.map(item => ({ value: item.work, label: item.work }))}
+                placeholder={returnableToEdit ? returnable.item : 'item'}
               />
             </div>
 
@@ -303,7 +216,7 @@ const CreateReturnOrder = () => {
               </label>
               <input
                 type="number"
-                value={requirement.quantity}
+                value={returnable.quantity}
                 onChange={(e) => handleUpdate('quantity', e.target.value)}
                 placeholder="Quantity"
                 className="border p-2 rounded w-full"
@@ -317,11 +230,11 @@ const CreateReturnOrder = () => {
                 Unit
               </label>
               <select
-                value={requirement.unit}
+                value={returnable.unit}
                 onChange={(e) => handleUpdate('unit', e.target.value)}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               >
-                <option>{requirementToEdit ? requirement.unit : 'Select a Unit'}</option>
+                <option>{returnableToEdit ? returnable.unit : 'Select a Unit'}</option>
                 {units.map((unit, index) => (
                   <option key={index} value={unit}>
                     {unit}
@@ -330,43 +243,11 @@ const CreateReturnOrder = () => {
               </select>
             </div>
 
-            <div className='mb-4'>
-              <label
-                htmlFor='status'
-                className="block text-sm font-semibold text-gray-600 mb-1">
-                Status
-              </label>
-              <select
-                value={requirement.status}
-                onChange={(e) => handleUpdate('status', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option>{requirementToEdit ? requirement.status : 'Status'}</option>
-                {status.map((status, index) => (
-                  <option key={index} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* <div className='mb-4'>
-              <label
-                htmlFor='slip'
-                className="block text-sm font-semibold text-gray-600 mb-1">
-                Slip
-              </label>
-              <input
-                type="file"
-                onChange={(e) => handleUpdate('slip', e.target.files[0])}
-                className="border p-2 rounded w-full"
-              />
-            </div> */}
-
             <button
               type="submit"
               className="bg-blue-500 hover:bg-blue-700 mt-4 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             >
-              Update Requirement
+              Update returnable
             </button>
 
           </form>
@@ -376,173 +257,112 @@ const CreateReturnOrder = () => {
   } else {
     return (
       <div >
-        <Header category="Page" title="Create Return Order" />
+        <Header category="Page" title="Create Request Order" />
         <div className="container mx-auto mt-4 mb-16">
           <form className="max-w-xl mx-auto " onSubmit={handleSubmit}>
+            {step === 0 && (
+              <>
+                <div className="mb-4">
+                  <label htmlFor="site" className="block text-sm font-semibold text-gray-600">
+                    Site
+                  </label>
+                  <select
+                    name="site"
+                    value={formData.site}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    onChange={(e) => handleChange('site', e.target.value)}>
+                    <option>{returnOrderToEdit ? data?.site : 'Site'}</option>
+                    {sites.map((site) => (
+                      <option key={site._id} value={site._id}>
+                        {site.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="mb-4">
-              <label htmlFor="site" className="block text-sm font-semibold text-gray-600">
-                Site
-              </label>
-              <select
-                name="site"
-                value={formData.site}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                onChange={(e) => handleChange('site', e.target.value)}>
-                <option>{purchaseOrderToEdit ? data?.site : 'Site'}</option>
-                {sites.map((site) => (
-                  <option key={site._id} value={site._id}>
-                    {site.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div className="mb-4">
+                  <label
+                    htmlFor='reqDate'
+                    className="block text-sm font-semibold text-gray-600">
+                    Required Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.reqDate}
+                    onChange={(e) => handleChange('reqDate', e.target.value)}
+                    className="border p-2 rounded w-full"
+                  />
+                </div>
 
-            {/* <div className="mb-4">
-              <label htmlFor="contractorName" className="block text-sm font-semibold text-gray-600">
-                Supplier
-              </label>
-              <select
-                name="supplier"
-                value={formData.supplier}
-                onChange={(e) => handleChange('supplier', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option>{purchaseOrderToEdit ? data?.supplier : 'Supplier'}</option>
-                {suppliers?.map((supplier) => (
-                  <option key={supplier._id} value={supplier._id}>
-                    {supplier.name}
-                  </option>
-                ))}
-              </select>
-            </div> */}
+                <div className="mb-4">
+                  <label htmlFor="itemCategory" className="block text-sm font-semibold text-gray-600">
+                    Item Category
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={(e) => handleChange('category', e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="">Select A Category</option>
+                    <option value="hardware">Hardware</option>
+                    <option value="plumbing pipe">Plumbing Pipe</option>
+                    <option value="plumbing pipe">Plumbing</option>
+                    <option value="electrical pipe">Electrical Pipe</option>
+                    <option value="electrical pipe">Electrical</option>
+                    <option value="cememt">Cement</option>
+                    <option value="steel">Steel</option>
+                    <option value="shuttering">Shuttering item</option>
+                  </select>
+                </div>
+              </>)}
 
-            <div className="mb-4">
-              <label htmlFor="materialType" className="block text-sm font-semibold text-gray-600">
-              Material Type
-              </label>
-              <select
-                name="materialType"
-                value={formData.materialType}
-                onChange={(e) => handleChange('materialType', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                  <option value="">Select A Material Type</option>
-              </select>
-            </div>
-
-            {purchaseOrderToEdit ? '' :
-              <div className="mt-4">
-                <h2 className="text-lg font-semibold mb-2">Material Details</h2>
-
-                {formData.requirement.map((item, index) => (
-                  <div key={index} className="mb-4 p-4 border rounded">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                      <div>
-                        <label
-                          htmlFor={`work[${index}].material`}
-                          className="block text-sm font-semibold text-gray-600">
-                          Material
-                        </label>
-                        <Select
-                          value={{ value: item.material, label: item.material }}
-                          onChange={(selectedOption) => handleWorkChange(index, 'material', selectedOption.value)}
-                          options={materials.map(material => ({ value: material.work, label: material.work }))}
-                          placeholder="Material"
-                        />
-                        {/* <select
-                          value={item.material}
-                          onChange={(e) => handleWorkChange(index, 'material', e.target.value)}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                          <option value="">Material</option>
-                          {materials.map((material, index) => (
-                            <option key={index} value={material.work}>{material.work}</option>
-                          ))}
-                        </select> */}
-                      </div>
-
-                      {/* Quantity */}
-                      <div>
-                        <label
-                          htmlFor={`work[${index}].quantity`}
-                          className="block text-sm font-semibold text-gray-600">
-                          Quantity
-                        </label>
-                        <input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => handleWorkChange(index, 'quantity', e.target.value)}
-                          placeholder="Quantity"
-                          className="border p-2 rounded w-full"
-                        />
-                      </div>
-                      
-                      {/* Rate */}
-                      {/* <div>
-                        <label
-                          htmlFor={`work[${index}].rate`}
-                          className="block text-sm font-semibold text-gray-600">
-                          Rate
-                        </label>
-                        <input
-                          type="number"
-                          value={item.rate}
-                          onChange={(e) => handleWorkChange(index, 'rate', e.target.value)}
-                          placeholder="Rate"
-                          className="border p-2 rounded w-full"
-                        />
-                      </div> */}
-
-                      <div>
-                        <label
-                          htmlFor={`work[${index}].unit`}
-                          className="block text-sm font-semibold text-gray-600">
-                          Unit
-                        </label>
-                        <select
-                          value={item.unit}
-                          onChange={(e) => handleWorkChange(index, 'unit', e.target.value)}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                          <option>Select a Unit</option>
-                          {units.map((unit, index) => (
-                            <option key={index} value={unit}>
-                              {unit}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {formData.requirement.length > 1 && (
-                        <div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveWork(index)}
-                            className="bg-red-500 text-white p-2 rounded"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      )}
-
-                    </div>
-                  </div>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={handleAddWork}
-                  className="bg-blue-500 text-white p-2 rounded"
+            {step > 0 && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mt-4">Item</label>
+                <Select
+                  value={{ value: formData.returnable[step - 1]?.item, label: formData.returnable[step - 2]?.item }}
+                  onChange={(selectedOption) => handleReturnableChange('item', selectedOption.value)}
+                  options={items.map(item => ({ value: item.work, label: item.work }))}
+                  placeholder="Select item"
+                />
+                <label className="block text-sm font-semibold text-gray-600 mt-4">Quantity</label>
+                <input
+                  type="number"
+                  value={formData.returnable[step - 1]?.reqQuantity || ''}
+                  onChange={(e) => handleReturnableChange('reqQuantity', e.target.value)}
+                  className="border p-2 rounded w-full"
+                />
+                <label className="block text-sm font-semibold text-gray-600 mt-4">Unit</label>
+                <select
+                  value={formData.returnable[step - 1]?.unit || ''}
+                  onChange={(e) => handleReturnableChange('unit', e.target.value)}
+                  className="border p-2 rounded w-full"
                 >
-                  More
-                </button>
+                  <option value="">Select a Unit</option>
+                  {units.map((unit, index) => (
+                    <option key={index} value={unit}>{unit}</option>
+                  ))}
+                </select>
               </div>
-            }
-            <button type="submit" className="bg-green-500 text-white p-2 rounded mt-2">
-              {purchaseOrderToEdit ? 'Update' : 'Return'}
-            </button>
+            )}
+            <div className="mt-5 flex justify-between">
+              {step > 0 && (
+                <button type="button" onClick={handlePrevious} className="bg-gray-500 text-white p-2 rounded">
+                  Previous
+                </button>
+              )}
+              <button type="submit" className="bg-green-500 text-white p-2 rounded">
+                Submit
+              </button>
+              <button type="button" onClick={handleNext} className="bg-blue-500 text-white p-2 rounded">
+                Next
+              </button>
+            </div>
+
           </form>
           <Toaster position="top-right" reverseOrder={false} />
         </div>
-      </div>
+      </div >
     );
   }
 }
