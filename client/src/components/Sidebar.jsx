@@ -119,12 +119,12 @@ const Sidebar = () => {
         //   icon: <PiNoteFill />,
         //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
         // },
-        {
-          to: '/erp/balance-sheet',
-          name: 'Balance Sheet',
-          icon: <FaBalanceScale />,
-          role: ['Admin', 'Company', 'Ceo', 'Account Head'],
-        },
+        // {
+        //   to: '/erp/balance-sheet',
+        //   name: 'Balance Sheet',
+        //   icon: <FaBalanceScale />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
+        // },
         {
           to: '/erp/expenses',
           name: 'Expenses',
@@ -163,6 +163,12 @@ const Sidebar = () => {
           name: 'Purchase',
           icon: <FaTruckMedical />,
           role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+        },
+        {
+          to: '/erp/inventory/purchase-request',
+          name: 'Purchase-Request',
+          icon: <BiSolidPurchaseTag />,
+          role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },
         {
           to: '/erp/inventory/return',

@@ -101,12 +101,12 @@ const Stock = () => {
   return (
     <div >
       <Header category="Page" title="Stock Management" />
-      <section className='container mx-auto mt-4 mb-16'>
-        <div className='overflow-x-auto w-full mx-auto bg-white p-6 rounded-lg shadow'>
+      <section className='container mx-auto mt-4'>
+        <div className='overflow-x-auto w-full mx-auto  p-6 '>
             {/* Header with Search and Add */}
             <div className="flex justify-between mb-6 space-x-2">
               <input
-                type="text"
+                type="search"
                 placeholder="Search"
                 className="border rounded p-2 w-2/3 md:w-1/3 lg:w-1/3 shadow-lg "
                 value={search}
@@ -133,7 +133,7 @@ const Stock = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto scrollbar-hide">
+            <div className=" bg-white rounded-lg shadow overflow-x-auto scrollbar-hide">
               <table className="w-full border-collapse  overflow-x-auto">
                 <thead>
                   <tr className="bg-gray-100">
@@ -152,8 +152,8 @@ const Stock = () => {
                       <th  onClick={() => handleSort("name")} className="p-3">
                         Price {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
                       </th>
-                      <th  onClick={() => handleSort("name")} className="p-3">
-                        Action {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
+                      <th className="p-3">
+                        Action 
                       </th>
                   </tr>
                 </thead>
@@ -191,7 +191,7 @@ const Stock = () => {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(currentPage - 1)}
-                className="bg-gray-300 text-gray-700 p-2.5 rounded-4xl shadow-lg "
+                className="p-2.5 bg-gray-300 rounded-4xl shadow-lg disabled:opacity-50"
               >
                 <GrLinkPrevious size={18} color="blue" />
               </button>
@@ -199,7 +199,7 @@ const Stock = () => {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(currentPage + 1)}
-                className="bg-gray-300 text-gray-700 p-2.5 rounded-4xl shadow-lg "
+                className="bg-gray-300 p-2.5 rounded-4xl shadow-lg "
               >
                 <GrLinkNext size={18} color="blue" />
               </button>

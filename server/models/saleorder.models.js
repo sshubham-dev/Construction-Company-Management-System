@@ -17,8 +17,9 @@ const salesSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
-    deliveryDate: {
-        type: Date
+    deliveryDate:{
+        type: Date,
+        required: true
     },
     items: [{
         item: {
@@ -45,15 +46,18 @@ const salesSchema = new mongoose.Schema({
     }],
     totalAmount: {
         type: Number,
-        required: true,
+    },
+    taxAmount: { 
+        type: Number
+    },
+    grandTotal: { 
+        type: Number
     },
     totalPaid: {
         type: Number,
-        required: true,
     },
     totalDue: {
         type: Number,
-        required: true,
     },
     status: {
         type: String,
@@ -72,8 +76,8 @@ const salesSchema = new mongoose.Schema({
             ref: 'Account',
         }
     },
-    purchaseRequest:{
-        type:String
+    purchaseRequest: {
+        type: String
     },
 }, { timeseries: true });
 

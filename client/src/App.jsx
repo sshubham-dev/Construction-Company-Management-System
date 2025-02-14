@@ -221,6 +221,7 @@ const App = () => {
         <Route path='/edit-supplier/:id' element={<CreateSupplier />} />
 
         <Route path='/site/purchase-request' element={<PurchaseRequest />} />
+        <Route path='/erp/inventory/purchase-request' element={<PurchaseRequest />} />
         <Route path='/erp/purchase-order' element={<PurchaseOrders />} />
         <Route path='/purchase-order/:id' element={<PurchaseOrderScreen />} />
         <Route path='/purchase-request/:id' element={<PurchaseOrderScreen />} />

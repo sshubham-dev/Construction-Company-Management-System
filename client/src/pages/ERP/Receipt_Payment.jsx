@@ -12,7 +12,7 @@ const Receipt_Payment = () => {
 
 
   return (
-    <div className="p-5">
+    <div className="">
       <Header category="Page" title="Receipt & Payment Manager" />
       <section className="h-full w-full mb-16 flex justify-center">
         <div className='overflow-x-auto w-full max-w-screen-xl mx-auto bg-white rounded-xl shadow p-6'>

@@ -54,11 +54,16 @@ const ERP = () => {
             </div>
             <div className="flex flex-col gap-2 justify-center items-center">
               <h1 className='text-xl'>Inventory</h1>
-              <div>
+              <div className="flex flex-col gap-2 justify-center items-center">
                 <button
                   className=" "
                   onClick={() => setGroupModalOpen(true)}>
-                  Stock Group
+                  Stock Item
+                </button>
+                <button
+                  className=" "
+                  onClick={() => setGroupModalOpen(true)}>
+                 Stock Group
                 </button>
               </div>
             </div>
@@ -87,17 +92,17 @@ const ERP = () => {
             <div className="flex flex-col gap-2 justify-center items-center">
               <h1 className='text-xl'>Report</h1>
               <div className="flex flex-col gap-2 justify-center items-center">
-                <NavLink to='/erp/summary'>Summary</NavLink>
+                {/* <NavLink to='/erp/summary'>Summary</NavLink> */}
                 <NavLink to='/erp/balance-sheet'>Balance Sheet</NavLink>
-                <NavLink to='/erp/p&l'>Profit & Loss A/c</NavLink>
+                {/* <NavLink to='/erp/p&l'>Profit & Loss A/c</NavLink>
                 <NavLink to='/erp/stock/summary'>Stock Summary</NavLink>
                 <NavLink to='/erp/ration-analysis'>Ratio Analysis</NavLink>
-                <NavLink to='/erp/trial-balance'>Trial Balance</NavLink>
+                <NavLink to='/erp/trial-balance'>Trial Balance</NavLink> */}
               </div>
             </div>
-            <div className="flex flex-col gap-2 justify-center items-center">
+            {/* <div className="flex flex-col gap-2 justify-center items-center">
               <h1 className='text-xl'>Utilities</h1>
-            </div>
+            </div> */}
           </div>
           <div className="bg-orange-200 h-full p-8 md:p-10 lg:p-12 col-span-1 flex flex-col gap-2">
             <h1 className="text-xl mb-2">List of Accounts</h1>

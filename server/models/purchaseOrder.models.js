@@ -46,6 +46,10 @@ const purchaseOrderSchema = new mongoose.Schema({
         required: true
     },
     deliveryDate: {
+        type: Date,
+        required: true
+    },
+    deliveredDate: {
         type: Date
     },
     supplier: {
@@ -142,3 +146,5 @@ purchaseOrderSchema.pre('save', function (next) {
 
 const Purchase_Order = mongoose.model('Purchase_Order', purchaseOrderSchema);
 module.exports = Purchase_Order;
+
+

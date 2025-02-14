@@ -1,127 +1,140 @@
-import React from 'react'
-import toast, { Toaster } from 'react-hot-toast';
-import Header from '../../components/Header';
-import { Bar, Line } from "react-chartjs-2";
+import { FaMoneyBillWave, FaFileInvoiceDollar, FaChartLine, FaBoxOpen } from 'react-icons/fa';
+import { useState } from 'react';
+import { Pie } from 'react-chartjs-2';
+import Chart from 'chart.js/auto'; // Automatically registers all necessary components
 
-const BalanceSheet = () => {
-  const accountsChartData = {
-    labels: ["2020", "2021", "2022", "2023", "2024", "2025"],
-  datasets: [
-  {
-    label: "Accounts Receivable Turnover",
-  data: [1.37, 1.73, 1.60, 1.56, 1.57, 1.56],
-  backgroundColor: "#4f46e5",
-},
-  {
-    label: "Accounts Payable Turnover",
-  data: [2.23, 2.80, 2.51, 2.50, 2.45, 2.46],
-  backgroundColor: "#f59e0b",
-},
-  ],
-};
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 
-const debtRatiosData = {
-  labels: ["2020", "2021", "2022", "2023", "2024", "2025"],
-datasets: [
-{
-  label: "Debt-to-Asset Ratio",
-data: [0.57, 0.54, 0.65, 0.58, 0.62, 0.62],
-borderColor: "#4f46e5",
-fill: false,
-},
-{
-  label: "Debt-to-Equity Ratio",
-data: [1.35, 1.19, 1.82, 1.36, 1.61, 1.61],
-borderColor: "#f59e0b",
-fill: false,
-},
-],
-};
+export default function BalanceSheet() {
+  const [showAssets, setShowAssets] = useState(true);
+  const [showLiabilities, setShowLiabilities] = useState(true);
 
-const cashByYearData = {
-  labels: ["2020", "2021", "2022", "2023", "2024", "2025"],
-datasets: [
-{
-  label: "Overall Cash",
-data: [12600, 24220, 26660, 25940, 25650, 27430],
-backgroundColor: "#991b1b",
-},
-],
-};
+  const assets = [
+    { name: "Cash", amount: 5000, details: [], icon: <FaMoneyBillWave /> },
+    { name: "Accounts Receivable", amount: 3000, details: [
+        { name: "Client A", amount: 1200 },
+        { name: "Client B", amount: 800 },
+        { name: "Client C", amount: 1000 }
+      ], icon: <FaFileInvoiceDollar /> },
+    { name: "Inventory", amount: 7000, details: [
+        { name: "Product X", amount: 4000 },
+        { name: "Product Y", amount: 3000 }
+      ], icon: <FaBoxOpen /> },
+    { name: "Investments", amount: 15000, details: [
+        { name: "Stocks", amount: 10000 },
+        { name: "Bonds", amount: 5000 }
+      ], icon: <FaChartLine /> }
+  ];
+  
+  const liabilities = [
+    { name: "Loans Payable", amount: 4000, details: [] },
+    { name: "Accounts Payable", amount: 2000, details: [] },
+    { name: "Accrued Expenses", amount: 1000, details: [] },
+    { name: "Deferred Revenue", amount: 3000, details: [] }
+  ];
+  
+  const equity = [
+    { name: "Owner's Equity", amount: 8000, details: [] },
+    { name: "Retained Earnings", amount: 5000, details: [] }
+  ];
+
+  const totalAssets = assets.reduce((sum, item) => sum + item.amount, 0);
+  const totalLiabilities = liabilities.reduce((sum, item) => sum + item.amount, 0);
+  const totalEquity = equity.reduce((sum, item) => sum + item.amount, 0);
+
+  // Prepare data for the pie chart
+  const chartData = {
+    labels: ['Assets', 'Liabilities', "Owner's Equity"],
+    datasets: [
+      {
+        data: [totalAssets, totalLiabilities, totalEquity],
+        backgroundColor: COLORS,
+        hoverOffset: 4,
+      },
+    ],
+  };
 
   return (
-    <div >
-      <Header category="Page" title="Balance Sheet" />
-      <section className="h-full w-full mb-16 flex justify-center">
-        <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>
-          
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Quick Ratio */}
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h2 className="text-sm text-gray-600">Quick Ratio</h2>
-                <p className="text-2xl font-bold">1.43</p>
-              </div>
-
-              {/* Current Ratio */}
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h2 className="text-sm text-gray-600">Current Ratio</h2>
-                <p className="text-2xl font-bold">1.71</p>
-              </div>
-
-              {/* Inventory Turnover Ratio */}
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h2 className="text-sm text-gray-600">Inventory Turnover Ratio</h2>
-                <p className="text-2xl font-bold">9.20</p>
-              </div>
-
-              {/* Inventory-to-Sales Ratio */}
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h2 className="text-sm text-gray-600">Inventory-to-Sales Ratio</h2>
-                <p className="text-2xl font-bold">0.06</p>
-              </div>
-
-              {/* Working Capital */}
-              <div className="bg-white p-4 rounded-lg shadow col-span-2 md:col-span-1">
-                <h2 className="text-sm text-gray-600">Working Capital</h2>
-                <p className="text-2xl font-bold">$63.28K</p>
-              </div>
-
-              {/* Cash Balance */}
-              <div className="bg-white p-4 rounded-lg shadow col-span-2 md:col-span-1">
-                <h2 className="text-sm text-gray-600">Cash Balance</h2>
-                <p className="text-2xl font-bold">$2.32M</p>
-                <div className="flex justify-between mt-2 text-sm text-gray-600">
-                  <p>Inflow: $3.10M</p>
-                  <p>Outflow: $785.35K</p>
+    <div className="max-w-4xl mx-auto p-8 bg-gray-50 shadow-lg rounded-lg">
+      <h2 className="text-4xl font-bold mb-6 text-center text-blue-600">Balance Sheet</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <h3 className="text-2xl font-semibold border-b pb-2 text-blue-500 flex justify-between items-center">
+            <span>Assets</span>
+            <button onClick={() => setShowAssets(!showAssets)} className="text-blue-500">
+              {showAssets ? 'Hide' : 'Show'}
+            </button>
+          </h3>
+          {showAssets && assets.map((asset, index) => (
+            <details key={index} className="p-2 border-b hover:bg-gray-100 transition duration-200">
+              <summary className="flex justify-between font-semibold cursor-pointer list-none">
+                <span className="flex items-center">
+                  {asset.icon}
+                  <span className="ml-2">{asset.name}</span>
+                </span>
+                <span>${asset.amount.toLocaleString()}</span>
+              </summary>
+              {asset.details.length > 0 && (
+                <div className="ml-4 mt-2 text-sm text-gray-600">
+                  {asset.details.map((detail, i) => (
+                    <div key={i} className="flex justify-between">
+                      <span>{detail.name}</span>
+                      <span>${detail.amount.toLocaleString()}</span>
+                    </div>
+                  ))}
                 </div>
-              </div>
-
-              {/* Accounts Receivable vs Payable Chart */}
-              <div className="bg-white p-4 rounded-lg shadow col-span-2 md:col-span-2">
-                <h2 className="text-sm text-gray-600">Accounts Receivable Turnover vs. Accounts Payable Turnover</h2>
-                <Bar data={accountsChartData} options={{ responsive: true, maintainAspectRatio: true }} />
-              </div>
-
-              {/* Debt Ratios Chart */}
-              <div className="bg-white p-4 rounded-lg shadow col-span-2 md:col-span-2">
-                <h2 className="text-sm text-gray-600">Debt Ratios</h2>
-                <Line data={debtRatiosData} options={{ responsive: true, maintainAspectRatio: true }} />
-              </div>
-
-              {/* Overall Cash by Year Chart */}
-              <div className="bg-white p-4 rounded-lg shadow col-span-2 md:col-span-2">
-                <h2 className="text-sm text-gray-600">Overall Cash by Year</h2>
-                <Bar data={cashByYearData} options={{ responsive: true, maintainAspectRatio: true }} />
-              </div>
-            </div>
+              )}
+            </details>
+          ))}
+          <div className="flex justify-between font-bold p-2 border-t">
+            <span>Total Assets</span>
+            <span>${totalAssets.toLocaleString()}</span>
+          </div>
+          </div>
         </div>
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-        />
-      </section>
+
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <h3 className="text-2xl font-semibold border-b pb-2 text-blue-500 flex justify-between items-center">
+            <span>Liabilities & Equity</span>
+            <button onClick={() => setShowLiabilities(!showLiabilities)} className="text-blue-500">
+              {showLiabilities ? 'Hide' : 'Show'}
+            </button>
+          </h3>
+          {showLiabilities && [...liabilities, ...equity].map((item, index) => (
+            <details key={index} className="p-2 border-b hover:bg-gray-100 transition duration-200">
+              <summary className="flex justify-between font-semibold cursor-pointer list-none">
+                <span>{item.name}</span>
+                <span>${item.amount.toLocaleString()}</span>
+              </summary>
+              {item.details.length > 0 && (
+                <div className="ml-4 mt-2 text-sm text-gray-600">
+                  {item.details.map((detail, i) => (
+                    <div key={i} className="flex justify-between">
+                      <span>{detail.name}</span>
+                      <span>${detail.amount.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </details>
+          ))}
+          <div className="flex justify-between font-bold p-2 border-t">
+            <span>Total Liabilities + Equity</span>
+            <span>${(totalLiabilities + totalEquity).toLocaleString()}</span>
+          </div>
+        </div>
+
+
+      <div className="mt-8">
+        <h3 className="text-2xl font-semibold text-blue-500 mb-4">Distribution Chart</h3>
+        <Pie data={chartData} width={400} height={400} />
+      </div>
+
+      <footer className="mt-8 text-center text-gray-600">
+        <p>Balance Sheet as of {new Date().toLocaleDateString()}</p>
+      </footer>
     </div>
-  )
+  );
 }
 
-export default BalanceSheet
