@@ -27,7 +27,7 @@ const Layout = ({ children }) => {
 
           {/* Sidebar */}
           <div className={` ${activeMenu ? 'w-80' : 'w-16'} pt-16 px-2 fixed z-50 sidebar border-r-1 bg-white transition-all delay-100 ease-in duration-200 text-nowrap hidden md:block lg:block xl:block`}>
-          {isLoggedIn && <Sidebar />}
+            {isLoggedIn && <Sidebar />}
           </div>
 
           {/* Main */}
@@ -35,12 +35,12 @@ const Layout = ({ children }) => {
             className={`${isLoggedIn ? 'ml-0 md:ml-16 lg:ml-16 xl:ml-20' : 'ml-0'} mt-20 mb-4 min-w-screen min-h-screen p-2 bg-gray-50`}
           >
             <div className='m-1 md:my-3 mx-2 p-2 min-w-screen min-h-screen md:p-4 rounded-3xl'>
-            {children}
+              {children}
             </div>
           </div>
           {/* Bottom Navigation */}
-          <div className="block md:hidden lg:hidden xl:hidden"> 
-          {isLoggedIn && <BottomNavigation />}
+          <div className="block md:hidden lg:hidden xl:hidden">
+            {isLoggedIn && <BottomNavigation />}
           </div>
         </div>
       </BrowserRouter>

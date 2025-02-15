@@ -17,7 +17,7 @@ const Attendance = () => {
   const [selectedMonth, setSelectedMonth] = useState('');
   const navigate = useNavigate();
   const [markAttendance, setMarkAttendance] = useState({
-    date: moment(),
+    date: moment().format('YYYY-MM-DD'),
     timeIn: moment().format('HH:mm'),
     status: '',
   });
@@ -188,7 +188,6 @@ const Attendance = () => {
             Leave
           </button>
         </form>
-        <Toaster position="top-right" reverseOrder={false} />
       </div>
       {/* Display Attendance */}
       <section className="h-full w-full overflow-x-auto">

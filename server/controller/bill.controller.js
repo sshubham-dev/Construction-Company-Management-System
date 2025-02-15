@@ -19,7 +19,7 @@ const getBills = async (req, res) => {
     try {
         const bills = await Bill.find()
             .where('approvalStatus').equals('Approved')
-            .populate('site')
+            .populate('site.id')
             .populate('contractor')
             .populate('supplier')
             .populate('createdBy')

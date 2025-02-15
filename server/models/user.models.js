@@ -41,6 +41,7 @@ const userSchema = new mongoose.Schema({
     avatar: {
         type:String,
     },
+    notificationPreference: Boolean,
     refreshToken: String,
     approved:[{
         type:mongoose.Schema.Types.ObjectId,

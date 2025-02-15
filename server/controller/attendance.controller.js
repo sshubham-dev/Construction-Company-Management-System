@@ -1,3 +1,4 @@
+// controllers/attendance.controller.js
 const { Attendance, Leave } = require('../models/attendance.models');
 const User = require('../models/user.models.js');
 const {
@@ -8,8 +9,8 @@ const getAttendance = async (req, res) => {
     try {
         const user = req.user;
         const attendance = await Attendance.find()
-            .where('userId').equals(user._id)
-            .populate('userId')
+            .where('user.id').equals(user._id)
+            .populate('user.id')
             .exec();
         if (attendance.length === 0) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json(attendance)
@@ -22,8 +23,8 @@ const getAttendanceByUser = async (req, res) => {
     try {
         const id = req.id;
         const attendance = await Attendance.find()
-            .where('userId').equals(id)
-            .populate('userId')
+            .where('user.id').equals(id)
+            .populate('user.id')
             .exec();
         if (attendance.length === 0) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json(attendance)
@@ -35,7 +36,7 @@ const getAttendanceByUser = async (req, res) => {
 const getAttendances = async (req, res) => {
     try {
         const attendance = await Attendance.find()
-            .populate('userId')
+            .populate('user.id')
             .exec();
         if (attendance.length === 0) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json(attendance)
@@ -48,8 +49,8 @@ const getLeave = async (req, res) => {
     try {
         const user = req.user;
         const leaves = await Leave.find()
-            .where('userId').equals(user._id)
-            .populate('userId')
+            .where('user.id').equals(user._id)
+            .populate('user.id')
             .exec();
         if (leaves.length === 0) return res.status(404).json({ message: 'No Leaves Found' })
         return res.status(201).json(leaves)
@@ -62,8 +63,8 @@ const getLeaveByUser = async (req, res) => {
     try {
         const id = req.id;
         const leaves = await Leave.find()
-            .where('userId').equals(id)
-            .populate('userId')
+            .where('user.id').equals(id)
+            .populate('user.id')
             .exec();
         if (leaves.length === 0) return res.status(404).json({ message: 'No Leaves Found' })
         return res.status(201).json(leaves)
@@ -75,7 +76,7 @@ const getLeaveByUser = async (req, res) => {
 const getLeaves = async (req, res) => {
     try {
         const leaves = await Leave.find()
-            .populate('userId')
+            .populate('user.id')
             .exec();
         if (leaves.length === 0) return res.status(404).json({ message: 'No Leaves Found' })
         return res.status(201).json(leaves)
@@ -84,61 +85,81 @@ const getLeaves = async (req, res) => {
         return res.status(501).json({ message: error.message })
     }
 };
+
 const createAttendance = async (req, res) => {
     try {
         const { date, timeIn, status } = req.body;
-        const user = req.user;
-        // console.log(user)
-        // console.log(req.body)
+        const user = req.user; // Ensure this is populated by your authentication middleware
+        console.log(date);
+
+        // Fetch the existing user without sensitive information
         const existingUser = await User.findById(user._id)
             .select('-password -refreshToken')
             .exec();
+
+        // Check if attendance already exists for the user on the given date
         const existAttendance = await Attendance.findOne()
-            .where('userId').equals(existingUser._id)
+            .where('user.id').equals(existingUser._id)
             .where('date').equals(date)
             .exec();
-        // console.log(existAttendance)
-        if (existAttendance) return res.status(404).json({ message: 'Attendance is already marked' });
 
+        if (existAttendance) {
+            console.log('Attendance is already marked for this date')
+            return res.status(400).json({ message: 'Attendance is already marked for this date.' });
+        }
+
+        // Create a new attendance record
         const newAttendance = new Attendance({
-            userId: existingUser._id,
-            date,
+            user: {
+                name: existingUser.userName,
+                id: existingUser._id
+            },
+            date: date,
             timeIn,
             status,
         });
-        // console.log("newAttendance:", newAttendance)
+
+        // Save the new attendance record
         const attendance = await newAttendance.save();
+
+        // Update the existing user's attendance array
         existingUser.attendance.push(attendance._id);
         await existingUser.save({ validateBeforeSave: false });
-        return res.status(201).json({ message: 'Attendance Marked Successfuly' });
+
+        return res.status(201).json({ message: 'Attendance marked successfully.' });
     } catch (error) {
-        console.log(error);
-        return res.status(501).json({ message: error.message })
+        console.error('Error creating attendance:', error); // More specific logging
+        return res.status(500).json({ message: 'Internal server error.' }); // Use 500 for internal errors
     }
 };
+
 const createLeave = async (req, res) => {
     try {
         const { reason, from, reportingDate } = req.body;
         const user = req.user;
         const newLeave = new Leave({
-            userId: user._id,
+            user: {
+                name: existingUser.name,
+                id: existingUser._id
+            },
             reason,
             from,
             reportingDate,
         })
         const existLeave = await newLeave.save();
         sendApproveByAdmin(existLeave, 'Leave', user._id)
-        return res.status(201).json({message: 'Successfuly created and send for approval'})
+        return res.status(201).json({ message: 'Successfuly created and send for approval' })
     } catch (error) {
         console.log(error);
         return res.status(501).json({ message: error.message })
     }
 };
+
 const updateAttendance = async (req, res) => {
     try {
         const id = req.params.id;
         const existingAttendance = await Attendance.findById(id)
-            .populate('userId')
+            .populate('user.id')
             .exec();
         if (!existingAttendance) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json({ message: 'Updated Successfuly' })
@@ -147,11 +168,12 @@ const updateAttendance = async (req, res) => {
         return res.status(501).json({ message: error.message })
     }
 };
+
 const updateLeave = async (req, res) => {
     try {
         const id = req.params.id;
         const existingLeave = await Leave.findById(id)
-            .populate('userId')
+            .populate('user.id')
             .exec();
         if (!existingLeave) return res.status(404).json({ message: 'No Leave Found' })
         return res.status(201).json({ message: 'Updated Successfuly' })

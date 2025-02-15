@@ -31,8 +31,8 @@ const ERP = () => {
     <div>
       <Header category="Page" title="ERP" />
       <section className="h-full w-full mb-16 flex justify-center">
-        <div className='overflow-x-auto w-full max-w-screen-xl mx-auto grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2'>
-          <div className="bg-slate-200 h-full p-12 grid justify-center col-span-1 items-center gap-6">
+        <div className='overflow-x-auto w-full max-w-screen-xl mx-auto grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-4'>
+          <div className="bg-slate-200 h-full p-12 grid justify-center col-span-1 items-center gap-6 rounded-lg">
             <div className="flex flex-col gap-2 justify-center items-center">
               <h1 className='text-xl' >Accounting</h1>
               <div className="flex flex-col gap-2 justify-center items-center">
@@ -68,7 +68,7 @@ const ERP = () => {
               </div>
             </div>
             <div className="flex flex-col gap-2 justify-center items-center">
-              <h1 className='text-xl'>Transactions / Voucher</h1>
+              <h1 className='text-xl text-center'>Transactions / Voucher</h1>
               <div className="flex flex-col gap-2 justify-center items-center">
                 {/* <NavLink to='/erp/journal'>Journal</NavLink> */}
                 <button
@@ -104,7 +104,7 @@ const ERP = () => {
               <h1 className='text-xl'>Utilities</h1>
             </div> */}
           </div>
-          <div className="bg-orange-200 h-full p-8 md:p-10 lg:p-12 col-span-1 flex flex-col gap-2">
+          <div className="bg-orange-200 h-full p-8 md:p-10 lg:p-12 col-span-1 flex flex-col gap-2 rounded-lg">
             <h1 className="text-xl mb-2">List of Accounts</h1>
             <details>
               <summary className='text-lg'>Assets</summary>

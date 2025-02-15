@@ -11,13 +11,13 @@ const port = process.env.PORT || 4000;
 
 // Connect to the database
 connectDB()
- .then(() => {
+  .then(() => {
     // Start the server
     app.listen(port, () => {
       console.log(`Server is listening on port ${port}`);
     });
   })
- .catch((err) => {
+  .catch((err) => {
     // Handle database connection error
     console.error("MongoDB connection failed!!!", err);
   });
