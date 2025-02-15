@@ -1,207 +1,268 @@
-import React, { useEffect, useState } from 'react';
-import Header from '../../components/Header';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Tabs, Select } from 'antd';
 import moment from 'moment';
-import toast, { Toaster } from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
-import { GrEdit } from "react-icons/gr";
-import { MdDelete } from "react-icons/md";
-
-axios.defaults.withCredentials = true;
-const { Option } = Select;
+import CreateLeave from '../../components/CreateLeave';
+import Header from '../../components/Header';
 
 const Attendance = () => {
-  const [attendances, setAttendance] = useState([]);
-  const [leaves, setleave] = useState([]);
-  const [selectedMonth, setSelectedMonth] = useState('');
-  const navigate = useNavigate();
+  const [attendances, setAttendances] = useState([]);
+  const [leaves, setLeaves] = useState([]);
+  const [attendanceMarked, setAttendanceMarked] = useState(false);
+  const [leaveModal, setLeaveModal] = useState(false);
+  const [filterModal, setFilterModal] = useState(false);
+  const [year, setYear] = useState(moment().year());
+  const [month, setMonth] = useState(moment().month());
+  const [attendanceStatus, setAttendanceStatus] = useState('present');
   const [markAttendance, setMarkAttendance] = useState({
     date: moment().format('YYYY-MM-DD'),
     timeIn: moment().format('HH:mm'),
     status: '',
   });
+  const [activeTab, setActiveTab] = useState('attendance'); // State for active tab
 
-  const fetchAttendance = async () => {
-    try {
-      const response = await axios.get('/api/v1/attendance');
-      setAttendance(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  // Fetch attendance and leave data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [attendanceResponse, leaveResponse] = await Promise.all([
+          axios.get('/api/v1/attendance'),
+          axios.get('/api/v1/leave'),
+        ]);
+        setAttendances(attendanceResponse.data);
+        setLeaves(leaveResponse.data);
 
-  const fetchLeave = async () => {
-    try {
-      const response = await axios.get('/api/v1/leave');
-      setleave(response.data);
-    } catch (error) {
-      console.error(error);
-    }
+        // Check if today's attendance is marked
+        const todayAttendance = attendanceResponse.data.find(attendance =>
+          moment(attendance.date).isSame(moment(), 'day')
+        );
+        setAttendanceMarked(todayAttendance !== undefined);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleStatusChange = (e) => {
+    setAttendanceStatus(e.target.value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      console.log(markAttendance);
       const response = await axios.post('/api/v1/attendance', markAttendance);
-      toast.success(response.data.message);
-      fetchAttendance();
+      console.log(response.data);
+      setAttendanceMarked(true);
     } catch (error) {
       console.error(error);
     }
   };
 
-  useEffect(() => {
-    fetchAttendance();
-    fetchLeave();
-  }, []);
-
-  const handleEdit = (id) => {
-    navigate(`/edit-leave/${id}`);
+  const handleYearChange = (e) => {
+    setYear(e.target.value);
   };
 
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`/api/v1/leave/${id}`);
-      setleave(leaves.filter((leave) => leave._id !== id));
-    } catch (error) {
-      toast.error(error.message);
-    }
+  const handleMonthChange = (e) => {
+    setMonth(e.target.value);
   };
 
-  // Group attendance data by month
-  const groupedAttendances = {};
-  attendances.forEach(attendance => {
-    const month = moment(attendance.date).format('MMMM YYYY');
-    if (!groupedAttendances[month]) {
-      groupedAttendances[month] = [];
-    }
-    groupedAttendances[month].push(attendance);
+  // Filter attendance data based on selected year and month
+  const filteredAttendance = attendances.filter(record => {
+    const recordDate = moment(record.date);
+    return recordDate.year() === year && recordDate.month() === month;
   });
 
-  // Handle month selection
-  const handleMonthSelect = (value) => {
-    setSelectedMonth(value);
-  };
-
-  const attendanceTable = (monthAttendances) => (
-    <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
-      <thead className="bg-gray-800">
-        <tr className="text-white text-left">
-          <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Date</th>
-          <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Time</th>
-          <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Status</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-gray-200">
-        {monthAttendances.map(attendance => (
-          <tr key={attendance._id} className='border-b border-blue-gray-200'>
-            <td className="px-6 py-4">{moment(attendance.date).format('DD-MM-YYYY')}</td>
-            <td className="px-6 py-4">{attendance.timeIn}</td>
-            <td className="px-6 py-4 text-center">{attendance.status}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-
-  const leaveTable = () => (
-    <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
-      <thead className="bg-gray-800">
-        <tr className="text-white text-left">
-          <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Reason</th>
-          <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">From - To</th>
-          <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Approval Status</th>
-          <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Reported At</th>
-          <th scope="col" className="px-6 py-4"></th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-gray-200">
-        {leaves?.map((leave) => (
-          <tr key={leave._id} className='border-b border-blue-gray-200'>
-            <td className="px-6 py-4">{leave?.reason}</td>
-            <td className="px-6 py-4 text-center">{moment(leave?.from).format('DD-MM-YYYY')} - {moment(leave?.reportingDate).format('DD-MM-YYYY')}</td>
-            <td className="px-6 py-4 text-center">{leave?.approval}</td>
-            <td className="px-6 py-4">{leave?.reportedAt ? moment(leave?.reportedAt).format('DD-MM-YYYY') : ''}</td>
-            <td className="px-6 py-4">
-              <button onClick={() => handleEdit(leave._id)} className="mr-2">
-                <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-              </button>
-              <button onClick={() => handleDelete(leave._id)} className="">
-                <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-
-  const items = [
-    {
-      key: 'attendance',
-      label: 'Attendance',
-      children: (
-        <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', '-ms-overflow-style': 'none' }}>
-          {selectedMonth === '' ? (
-            Object.entries(groupedAttendances).map(([month, monthAttendances]) => (
-              <React.Fragment key={month}>
-                <h2 className="text-lg font-semibold mt-6 mb-2">{month}</h2>
-                {attendanceTable(monthAttendances)}
-              </React.Fragment>
-            ))
-          ) : (
-            <React.Fragment>
-              <h2 className="text-lg font-semibold mt-6 mb-2">{selectedMonth}</h2>
-              {attendanceTable(groupedAttendances[selectedMonth] || [])}
-            </React.Fragment>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'leave',
-      label: 'Leave',
-      children: (
-        <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', '-ms-overflow-style': 'none' }}>
-          {leaveTable()}
-        </div>
-      ),
-    },
-  ];
+  // Filter leave data based on selected year and month
+  const filteredLeaves = leaves.filter(record => {
+    const recordDate = moment(record.from);
+    return recordDate.year() === year && recordDate.month() === month;
+  });
 
   return (
-    <div >
-      <Header category="Page" title="Attendance" />
-      {/* Mark Attendance */}
-      <div className="w-full h-fit md:w-fit mb-4">
-        <form onSubmit={handleSubmit} className="gap-3 flex flex-row justify-between">
-          <button
-            type="submit"
-            onClick={() => setMarkAttendance({ ...markAttendance, status: 'present' })}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 w-fit h-full rounded-3xl focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
-          >
-            Present
-          </button>
-          <button onClick={() => navigate('/create-leave')} className="bg-green-500 hover:bg-green-600 rounded-3xl text-white px-6 py-2 w-fit h-full">
-            Leave
-          </button>
-        </form>
-      </div>
-      {/* Display Attendance */}
-      <section className="h-full w-full overflow-x-auto">
-        <div className="w-full mx-auto text-gray-700 flex justify-end items-center">
-          {/* Month filter */}
-          <Select defaultValue="" style={{ width: 120 }} onChange={handleMonthSelect}>
-            <Option value="">All Months</Option>
-            {Object.keys(groupedAttendances).map((month, index) => (
-              <Option key={index} value={month}>{month}</Option>
-            ))}
-          </Select>
+    <div className='p-1'>
+      <Header category="Page" title="Attendance Dashboard" />
+      <section className="h-full w-full mb-16 flex justify-center">
+        <div className='overflow-x-auto scrollbar-hide w-full max-w-screen-xl mx-auto'>
+
+          {/* Attendance Marking Section */}
+          <div className="flex flex-col md:flex-row gap-4 mb-2 items-center justify-between">
+            <form onSubmit={handleSubmit} className="flex gap-4">
+              {attendanceMarked !== true && (
+                <>
+                  <select
+                    value={attendanceStatus}
+                    onChange={handleStatusChange}
+                    className="py-2 px-3 border border-gray-300 rounded-lg focus:outline-none bg-white"
+                  >
+                    <option value="present">Present</option>
+                    <option value="absent">Absent</option>
+                  </select>
+                  <button
+                    onClick={() => setMarkAttendance({ ...markAttendance, status: attendanceStatus })}
+                    className={`py-2 px-3 rounded-lg font-semibold ${attendanceMarked ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                      } text-white transition duration-300`}
+                  >
+                    Mark Attendance
+                  </button>
+                </>
+              )}
+            </form>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setFilterModal(true)}
+                className="py-2 px-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg transition duration-300"
+              >
+                Filter
+              </button>
+              <button
+                onClick={() => setLeaveModal(true)}
+                className="py-2 px-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg transition duration-300"
+              >
+                Mark Leave
+              </button>
+            </div>
+          </div>
+
+          {/* Filter Modal */}
+          {filterModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+                <h2 className="text-xl font-bold mb-4">Filter Attendance</h2>
+                <div className="space-y-4">
+                  <select
+                    value={year}
+                    onChange={handleYearChange}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-white"
+                  >
+                    <option value={moment().year()}>Current Year</option>
+                    <option value={moment().year() - 1}>Previous Year</option>
+                    <option value={moment().year() + 1}>Next Year</option>
+                  </select>
+                  <select
+                    value={month}
+                    onChange={handleMonthChange}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-white"
+                  >
+                    <option value={moment().month()}>Current Month</option>
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <option key={i} value={i}>
+                        {moment().month(i).format('MMMM')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mt-6 flex justify-end gap-4">
+                  <button
+                    onClick={() => setFilterModal(false)}
+                    className="p-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => setFilterModal(false)}
+                    className="p-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tabs for Attendance and Leave */}
+          <div className="mb-4">
+            <div className="flex gap-4 border-b border-gray-200">
+              <button
+                onClick={() => setActiveTab('attendance')}
+                className={`py-2 px-4 font-semibold ${
+                  activeTab === 'attendance'
+                    ? 'border-b-2 border-blue-500 text-blue-500'
+                    : 'text-gray-500 hover:text-blue-500'
+                }`}
+              >
+                Attendance
+              </button>
+              <button
+                onClick={() => setActiveTab('leave')}
+                className={`py-2 px-4 font-semibold ${
+                  activeTab === 'leave'
+                    ? 'border-b-2 border-blue-500 text-blue-500'
+                    : 'text-gray-500 hover:text-blue-500'
+                }`}
+              >
+                Leave
+              </button>
+            </div>
+          </div>
+
+          {/* Attendance Table */}
+          {activeTab === 'attendance' && (
+            <div className="overflow-x-auto scrollbar-hide rounded-xl">
+              <table className="w-full overflow-x-auto scrollbar-hide">
+                <thead className="bg-gradient-to-r from-blue-400 to-purple-400">
+                  <tr>
+                    <th className="p-3 text-left text-white font-semibold">Date</th>
+                    <th className="p-3 text-left text-white font-semibold">Time</th>
+                    <th className="p-3 text-left text-white font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody className='bg-gradient-to-br from-blue-50 to-purple-50'>
+                  {filteredAttendance.map(record => (
+                    <tr key={record._id} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
+                      <td className="p-3 text-gray-700">{moment(record.date).format('DD MMM YYYY')}</td>
+                      <td className="p-3 text-gray-700">{record.timeIn || 'N/A'}</td>
+                      <td className="p-3">
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                            record.status === 'present'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {record.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Leave Table */}
+          {activeTab === 'leave' && (
+            <div className="overflow-x-auto scrollbar-hide rounded-xl">
+              <table className="w-full overflow-x-auto scrollbar-hide">
+                <thead className="bg-gradient-to-r from-blue-400 to-purple-400">
+                  <tr>
+                    <th className="p-3 text-left text-white font-semibold">From</th>
+                    <th className="p-3 text-left text-white font-semibold">Reporting Date</th>
+                    <th className="p-3 text-left text-white font-semibold">Reason</th>
+                    <th className="p-3 text-left text-white font-semibold">Approval</th>
+                    <th className="p-3 text-left text-white font-semibold">Reported At</th>
+                  </tr>
+                </thead>
+                <tbody className='bg-gradient-to-br from-blue-50 to-purple-50'>
+                  {filteredLeaves.map(record => (
+                    <tr key={record._id} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
+                      <td className="p-3 text-gray-700">{moment(record.from).format('DD MMM YYYY')}</td>
+                      <td className="p-3 text-gray-700">{moment(record.reportingDate).format('DD MMM YYYY')}</td>
+                      <td className="p-3 text-gray-700">{record.reason || 'N/A'}</td>
+                      <td className="p-3 text-gray-700">{record.approval || 'N/A'}</td>
+                      <td className="p-3 text-gray-700">{moment(record.reportedAt).format('DD MMM YYYY')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Leave Modal */}
+          {leaveModal && (
+            <CreateLeave isOpen={leaveModal} onClose={() => setLeaveModal(false)} />
+          )}
         </div>
-        <Tabs defaultActiveKey='attendance' tabPosition='top' items={items} className="w-full" />
-        <Toaster position="top-right" reverseOrder={false} />
       </section>
     </div>
   );

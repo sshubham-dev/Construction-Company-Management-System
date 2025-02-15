@@ -139,8 +139,8 @@ const createLeave = async (req, res) => {
         const user = req.user;
         const newLeave = new Leave({
             user: {
-                name: existingUser.name,
-                id: existingUser._id
+                name: user.userName,
+                id: user._id
             },
             reason,
             from,
