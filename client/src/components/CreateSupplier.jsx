@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Header from '../components/Header';
 axios.defaults.withCredentials = true;
 
 const CreateSupplier = () => {
@@ -94,8 +93,6 @@ const CreateSupplier = () => {
 
   return (
     <div >
-    <Header category="Page" title="Create Supplier" />
-    <section className='container mx-auto mt-4 mb-16'>
       <form onSubmit={handleSubmit}
         className="max-w-md mx-auto">
 
@@ -201,7 +198,6 @@ const CreateSupplier = () => {
         position="top-right"
         reverseOrder={false}
       />
-    </section>
     </div>
   )
 }

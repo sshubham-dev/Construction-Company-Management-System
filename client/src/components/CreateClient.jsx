@@ -3,11 +3,10 @@ import React, { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { MdOutlineRemoveCircle, MdOutlineAddCircle } from "react-icons/md";
 import { useNavigate, useParams } from 'react-router-dom';
-import Header from '../components/Header';
 import { IoEyeOff, IoEye } from "react-icons/io5";
 axios.defaults.withCredentials = true;
 
-const CreateClient = () => {
+const CreateClient = ({ isOpen, onClose, isEdit }) => {
   const [client, setClient] = useState({
     name: '',
     email: '',
@@ -73,6 +72,23 @@ const CreateClient = () => {
     }
   };
 
+  const handleReset = () => {
+    setClient({
+      name: '',
+      email: '',
+      password: '',
+      contactNo: '',
+      whatsapp: '',
+      address: {
+        street: "",
+        city: "",
+        district: "",
+        state: "",
+      },
+      isUser: '',
+    })
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name.startsWith('address.')) {
@@ -114,11 +130,9 @@ const CreateClient = () => {
   };
 
   return (
-    <div >
-      <Header category="Page" title="Create Client" />
-      <section className='container mx-auto mt-4 mb-16'>
+    <div>
         <form onSubmit={handleSubmit}
-          className="max-w-md mx-auto">
+          className='space-y-4'>
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-600">
@@ -291,19 +305,25 @@ const CreateClient = () => {
             </div>
           </div>
 
-
-          <button
-            type="submit"
-            className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:shadow-outline-blue active:bg-blue-800"
-          >
-            {clientId ? 'Update' : 'Create'} Client
-          </button>
+          <div className="flex justify-end gap-2 mt-6">
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
+              Cancel
+            </button>
+            <button
+              type='submit'
+              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" >
+              {clientId ? 'Update' : 'Create'} Client
+            </button>
+            <button type="button" onClick={handleReset}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
+              Reset
+            </button>
+          </div>
         </form>
         <Toaster
           position="top-right"
           reverseOrder={false}
         />
-      </section>
     </div>
   );
 };

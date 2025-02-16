@@ -8,12 +8,15 @@ import { FaExternalLinkAlt } from "react-icons/fa";
 import moment from 'moment';
 import { useSelector } from 'react-redux';
 import Header from '../../components/Header';
+import CreatePaymentSchedule from '../../components/CreatePaymentSchedule';
+import Modal from '../../components/Modal';
 axios.defaults.withCredentials = true;
 
 const PaymentSchedules = () => {
   const navigate = useNavigate();
   const [paymentSchedules, setpaymentSchedules] = useState([]);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
+  const [createModal, setCreateModal] = useState(false);
 
   useEffect(() => {
     const getpaymentSchedules = async () => {
@@ -59,10 +62,6 @@ const PaymentSchedules = () => {
     }
   };
 
-  const handleAdd = () => {
-    navigate('/create-payment-schedule');
-  };
-
 
   return (
     <div >
@@ -73,9 +72,9 @@ const PaymentSchedules = () => {
             Total Payment Schedules: {paymentSchedules?.length}
           </h2>
           {user.department === 'Account Head' && (
-          <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2 ">
-            <MdAdd className='text-xl' />
-          </button>)}
+            <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2 ">
+              <MdAdd className='text-xl' />
+            </button>)}
         </div>
 
         <div className="overflow-x-auto"
@@ -129,6 +128,12 @@ const PaymentSchedules = () => {
           reverseOrder={false}
         />
       </section>
+      {/* Project Schedule Modal */}
+      {createModal && (
+        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Payment Schedule' >
+          <CreatePaymentSchedule onClose={() => setCreateModal(false)} />
+        </Modal>
+      )}
     </div>
   )
 }

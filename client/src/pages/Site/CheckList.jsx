@@ -8,11 +8,14 @@ import { FaExternalLinkAlt } from "react-icons/fa";
 import { Tabs } from 'antd';
 import { FcApproval } from "react-icons/fc";
 import Header from '../../components/Header';
+import Modal from '../../components/Modal';
+import CreateChecklist from '../../components/CreateChecklist';
 
 const CheckList = () => {
   const navigate = useNavigate();
   const [checkLists, setCheckList] = useState([]);
   const [error, setError] = useState(null);
+    const [createModal, setCreateModal] = useState(false);
 
   useEffect(() => {
     const getcheckLists = async () => {
@@ -44,9 +47,6 @@ const CheckList = () => {
       toast.error(error.message)
     }
   };
-  const handleAdd = () => {
-    navigate('/create-checklist');
-  };
 
   return (
     <div>
@@ -54,7 +54,7 @@ const CheckList = () => {
         <Header category="Page" title="Checklist's" />
         <div className=" mb-4 mr-20 text-right flex justify-between align-center">
           <h2 className="text-xl text-green-600 ml-8">Total CheckList's: </h2>
-          <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
+          <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2">
                 <MdAdd className='text-xl' />
               </button>
         </div>
@@ -106,6 +106,12 @@ const CheckList = () => {
           reverseOrder={false}
         />
       </div>
+            {/* Check List Modal */}
+            {createModal && (
+        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Check List' >
+          <CreateChecklist onClose={() => setCreateModal(false)} />
+        </Modal>
+      )}
     </div>
   )
 }

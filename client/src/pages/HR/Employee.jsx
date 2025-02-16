@@ -7,10 +7,13 @@ import { MdDelete, MdAdd } from "react-icons/md";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import { useSelector } from 'react-redux';
 import Header from '../../components/Header';
+import CreateEmployee from '../../components/CreateEmployee';
+import Modal from '../../components/Modal';
 axios.defaults.withCredentials = true;
 
 const Employee = () => {
   const [employees, setEmployee] = useState([]);
+  const [createModal, setCreateModal] = useState(false);
   const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
@@ -32,10 +35,6 @@ const Employee = () => {
     navigate(`/edit-user?userId=${userId}`);
   };
 
-  const handleRedirect = (id) => {
-    navigate(`/employee/${id}`);
-  }
-
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/api/v1/user/delete/${id}`);
@@ -54,9 +53,9 @@ const Employee = () => {
             Total Employee: {employees.length}
           </h2>
           {user.department === 'H.R' || user.department === 'Account Head' && (
-          <button onClick={() => navigate('/create-employee')} className="bg-green-500 rounded-full text-white px-2 py-2 sm:mt-0">
-            <MdAdd className='text-xl' />
-          </button>)}
+            <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2 sm:mt-0">
+              <MdAdd className='text-xl' />
+            </button>)}
         </div>
 
         <div className="overflow-x-auto"
@@ -115,6 +114,12 @@ const Employee = () => {
         </div>
         <Toaster position="top-right" reverseOrder={false} />
       </div>
+      {/* Employee Modal */}
+      {createModal && (
+        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Employee' >
+          <CreateEmployee onClose={() => setCreateModal(false)} />
+        </Modal>
+      )}
     </div>
   );
 };

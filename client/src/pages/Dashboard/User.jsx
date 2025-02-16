@@ -8,6 +8,8 @@ import { MdDelete, MdAdd } from "react-icons/md";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import image from '../../asset/profile.webp';
 import Header from '../../components/Header';
+import Modal from '../../components/Modal';
+import CreateUser from '../../components/CreateUser';
 axios.defaults.withCredentials = true;
 
 const UserManagement = () => {
@@ -15,6 +17,7 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
   const { user } = useSelector((state) => state.auth);
+  const [createModal, setCreateModal] = useState(false);
 
   useEffect(() => {
     const getUsers = async () => {
@@ -47,19 +50,14 @@ const UserManagement = () => {
     }
   };
 
-  const handleAdd = () => {
-    navigate('/create-user');
-  };
-
   return (
     <div >
       <Header category="Page" title="User's" />
       <section className="h-full w-full flex justify-center ">
         <div className="overflow-x-auto w-full max-w-screen-xl mx-auto">
-          {/* <div className="mx-auto mb-6 w-full sm:w-4/5 "> */}
           <div className="w-full mx-auto mb-6 text-gray-700 py-1 flex flex-row sm:flex-row justify-between items-center">
             <h2 className="text-lg sm:text-xl text-green-600 mb-2 sm:mb-0 sm:mr-4">Total Users: {users.length}</h2>
-            <button onClick={handleAdd} className="bg-green-500 rounded-full text-white p-2 mt-2 sm:mt-0">
+            <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white p-2 mt-2 sm:mt-0">
               <MdAdd className='text-xl' />
             </button>
           </div>
@@ -100,7 +98,7 @@ const UserManagement = () => {
                       <p className="text-gray-500 text-sm font-semibold tracking-wide">{user.department}</p>
                     </td>
                     <td className="px-6 py-4 text-center">
-                    {/* <button onClick={() => handleRedirect(user._id)} className="mr-2">
+                      {/* <button onClick={() => handleRedirect(user._id)} className="mr-2">
                         <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                       </button> */}
                       <button onClick={() => handleEdit(user._id)} className='ml-1'>
@@ -118,7 +116,13 @@ const UserManagement = () => {
         </div>
         <Toaster position="top-right" reverseOrder={false} />
       </section>
-        {error && <p className="text-red-500 mt-2">{error}</p>}
+      {error && <p className="text-red-500 mt-2">{error}</p>}
+      {/* Contractor Modal */}
+      {createModal && (
+        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create User' >
+          <CreateUser onClose={() => setCreateModal(false)} />
+        </Modal>
+      )}
     </div>
   );
 };

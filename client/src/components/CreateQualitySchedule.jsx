@@ -4,10 +4,10 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Select from 'react-select';
+
 axios.defaults.withCredentials = true;
 
 const CreateQualitySchedule = () => {
-
   const [formData, setFormData] = useState({
     site: '',
     qualityScheduleId: '',
@@ -16,15 +16,13 @@ const CreateQualitySchedule = () => {
       checkingDate: '',
     }]
   });
+
   const [workDetails, setWorkDetails] = useState([]);
   const [data, setData] = useState('');
   const [sites, setSite] = useState([]);
   const [scheduleIdToEdit, setScheduleIdToEdit] = useState(null);
   const navigate = useNavigate();
-  const [workToEdit, setWorkToEdit] = useState({
-    id: '',
-    index: '',
-  });
+  const [workToEdit, setWorkToEdit] = useState({ id: '', index: '' });
   const [workDetail, setWorkDetail] = useState({
     work: '',
     checkingDate: '',
@@ -32,29 +30,25 @@ const CreateQualitySchedule = () => {
     difference: '',
     reason: '',
     status: '',
-  })
-  const status = ['Started', 'Completed', 'Pending', 'Partaly Completed'];
-  const { index } = useParams();
-  const { id } = useParams();
+  });
+
+  const statusOptions = ['Started', 'Completed', 'Pending', 'Partially Completed'];
+  const { index, id } = useParams();
 
   useEffect(() => {
     if (id && !index) {
-      fetchProjectSchedule(id)
-      setScheduleIdToEdit(id)
-    } else if (id, index) {
-      fetchProjectDetail(id, index)
-      setWorkToEdit({
-        id,
-        index,
-      })
+      fetchProjectSchedule(id);
+      setScheduleIdToEdit(id);
+    } else if (id && index) {
+      fetchProjectDetail(id, index);
+      setWorkToEdit({ id, index });
     }
-  }, [])
+  }, [id, index]);
 
   const fetchProjectDetail = async (id, index) => {
     try {
       const response = await axios.get(`/api/v1/quality-schedule/${id}/workDetails`);
       const detail = response.data[index];
-      console.log(detail)
       setWorkDetail({
         work: detail.work,
         checkingDate: detail.checkingDate,
@@ -64,7 +58,7 @@ const CreateQualitySchedule = () => {
         status: detail.status,
       });
     } catch (error) {
-      console.log('Error fetching user details:', error);
+      console.log('Error fetching work details:', error);
     }
   };
 
@@ -72,18 +66,14 @@ const CreateQualitySchedule = () => {
     try {
       const response = await axios.get(`/api/v1/quality-schedule/${id}`);
       const data = response.data;
-      console.log(data?.site.name)
       setData(data?.site.name);
       setFormData({
         site: data?.site.id,
         qualityScheduleId: data?.qualityScheduleId,
-        workDetails: [{
-          work: '',
-          checkingDate: '',
-        }]
+        workDetails: [{ work: '', checkingDate: '' }],
       });
     } catch (error) {
-      console.log('Error fetching user details:', error);
+      console.log('Error fetching project schedule:', error);
     }
   };
 
@@ -91,18 +81,16 @@ const CreateQualitySchedule = () => {
     const fetchSite = async () => {
       try {
         const response = await axios.get('/api/v1/site');
-        setSite(response.data)
+        setSite(response.data);
       } catch (error) {
-        toast.error(error.message)
+        toast.error(error.message);
       }
     };
 
     const fetchWork = async () => {
       try {
         const title = 'Project Schedule';
-        const workData = await axios.post('/api/v1/work-details/name', {
-          title
-        });
+        const workData = await axios.post('/api/v1/work-details/name', { title });
         setWorkDetails(workData.data.description);
       } catch (error) {
         console.log('Error fetching work details:', error.message);
@@ -115,327 +103,238 @@ const CreateQualitySchedule = () => {
   }, []);
 
   const handleChange = (field, value) => {
-    setFormData({
-      ...formData,
+    setFormData(prevState => ({
+      ...prevState,
       [field]: value,
-    });
+    }));
   };
 
   const handleUpdate = (field, value) => {
-    setWorkDetail({
-      ...workDetail,
-      [field]: value
-    })
-  }
+    setWorkDetail(prevState => ({
+      ...prevState,
+      [field]: value,
+    }));
+  };
 
   const handleAddWork = () => {
-    setFormData({
-      ...formData,
+    setFormData(prevState => ({
+      ...prevState,
       workDetails: [
-        ...formData.workDetails,
-        {
-          work: '',
-          checkingDate: '',
-        },
+        ...prevState.workDetails,
+        { work: '', checkingDate: '' },
       ],
-    });
+    }));
   };
 
   const handleRemoveWork = (index) => {
     const updatedWork = [...formData.workDetails];
     updatedWork.splice(index, 1);
-    setFormData({
-      ...formData,
+    setFormData(prevState => ({
+      ...prevState,
       workDetails: updatedWork,
-    });
+    }));
   };
 
   const handleWorkChange = (index, field, value) => {
     const updatedWork = [...formData.workDetails];
     updatedWork[index][field] = value;
-    setFormData({
-      ...formData,
+    setFormData(prevState => ({
+      ...prevState,
       workDetails: updatedWork,
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (scheduleIdToEdit) {
-        console.log(formData)
         const response = await axios.put(`/api/v1/quality-schedule/${scheduleIdToEdit}`, formData);
-        if (response.data) {
-          console.log('Project Schedule Edited Successfully!');
-          toast.success(response.data.message);
-          navigate(-1)
-        }
+        toast.success(response.data.message);
+        navigate(-1);
       } else if (workToEdit.id && workToEdit.index) {
-        console.log(workToEdit)
         await axios.put(`/api/v1/quality-schedule/${workToEdit.id}/workDetails/${workToEdit.index}`, workDetail);
         toast.success('Edited successfully');
         navigate(-1);
       } else {
         const response = await axios.post('/api/v1/quality-schedule/create', formData);
-        if (response.data) {
-          console.log('Quality Schedule Created Successfully!');
-          toast.success(response.data.message);
-          navigate(-1)
-        }
+        toast.success(response.data.message);
+        navigate(-1);
       }
     } catch (error) {
-      console.log('Error submitting work order:', error.message);
-      toast.error(error.message)
+      console.log('Error submitting quality schedule:', error.message);
+      toast.error(error.message);
     }
   };
 
-  if (workToEdit.index && workToEdit.id) {
-    return (
-      <div >
-        <Header category="Page" title="Dashboard" />
-        <section className="flex items-center justify-center max-h-screen mb-24 mt-10">
-          <form
-            onSubmit={handleSubmit}
-            className="px-8 pt-6 pb-8 mb-4 w-full max-w-md">
+  return (
+    <div>
+        <form onSubmit={handleSubmit} className="px-8 pt-6 pb-8 mb-4 w-full max-w-md">
+          {workToEdit.id && workToEdit.index ? (
+            <>
+              <div className="mb-4">
+                <label htmlFor="work" className="block text-gray-700 text-sm font-bold mb-2">Work:</label>
+                <Select
+                  onChange={(selectedOption) => handleUpdate('work', selectedOption.value)}
+                  options={workDetails.map(workDetail => ({
+                    value: workDetail.work,
+                    label: workDetail.work
+                  }))}
+                  placeholder={workDetail.work || "Select Work Detail"}
+                />
+              </div>
 
-            <div className="mb-4">
-              <label htmlFor="work" className="block text-gray-700 text-sm font-bold mb-2">
-                Work:
-              </label>
-              <Select
-                onChange={(selectedOption) => handleUpdate('work', selectedOption.value)}
-                options={workDetails.map(workDetail => ({
-                  value: workDetail.work,
-                  label: workDetail.work
-                }))}
-                placeholder={workToEdit ? workDetail.work : "Select Work Detail"}
-              />
+              <div className="mb-4">
+                <label htmlFor="checkingDate" className="block text-gray-700 text-sm font-bold mb-2">Checking Date:</label>
+                <input
+                  type="date"
+                  name="checkingDate"
+                  value={workDetail.checkingDate}
+                  onChange={(e) => handleUpdate('checkingDate', e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
 
-              {/* <select
-                onChange={(e) => handleUpdate('work', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              >
-                <option>
-                  {workToEdit ? workDetail.work :
-                    'Select Work Detail:'
-                  }
-                </option>
-                {workDetails.map((workDetail) => (
-                  <option key={workDetail._id} value={workDetail.work}>
-                    {workDetail.work}
-                  </option>
-                ))}
-              </select> */}
-            </div>
+              <div className="mb-4">
+                <label htmlFor="checkedAt" className="block text-gray-700 text-sm font-bold mb-2">Actual Checked At:</label>
+                <input
+                  type="date"
+                  name="checkedAt"
+                  value={workDetail.checkedAt}
+                  onChange={(e) => handleUpdate('checkedAt', e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
 
-            <div className="mb-4">
-              <label htmlFor="checkingDate" className="block text-gray-700 text-sm font-bold mb-2">
-                Checking Date: {workDetail.checkingDate}
-              </label>
-              <input
-                type="date"
-                name="checkingDate"
-                onChange={(e) => handleUpdate('checkingDate', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              />
-            </div>
+              <div className="mb-4">
+                <label htmlFor="difference" className="block text-gray-700 text-sm font-bold mb-2">Difference:</label>
+                <input
+                  type="text"
+                  name="difference"
+                  value={workDetail.difference}
+                  onChange={(e) => handleUpdate('difference', e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
 
-            <div className="mb-4">
-              <label htmlFor="checkedAt" className="block text-gray-700 text-sm font-bold mb-2">
-                Actual Checked At: {workDetail.checkedAt}
-              </label>
-              <input
-                type="date"
-                name="checkedAt"
-                onChange={(e) => handleUpdate('checkedAt', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              />
-            </div>
+              <div className="mb-4">
+                <label htmlFor="reason" className="block text-gray-700 text-sm font-bold mb-2">Reason:</label>
+                <input
+                  type="text"
+                  name="reason"
+                  value={workDetail.reason}
+                  onChange={(e) => handleUpdate('reason', e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
 
-            <div className="mb-4">
-              <label htmlFor="difference" className="block text-gray-700 text-sm font-bold mb-2">
-                Difference:
-              </label>
-              <input
-                type="text"
-                name="difference"
-                onChange={(e) => handleUpdate('difference', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              />
-            </div>
+              <div className="mb-4">
+                <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">Status:</label>
+                <select
+                  value={workDetail.status}
+                  onChange={(e) => handleUpdate('status', e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                >
+                  <option>{workDetail.status || 'Select Status'}</option>
+                  {statusOptions.map((status, index) => (
+                    <option key={index} value={status}>{status}</option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="mb-4">
-              <label htmlFor="reason" className="block text-gray-700 text-sm font-bold mb-2">
-                Reason
-              </label>
-              <input
-                type="text"
-                onChange={(e) => handleUpdate('reason', e.target.value)}
-                name="reason"
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              />
-            </div>
+              <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Submit</button>
+            </>
+          ) : (
+            <>
+              <div className="mb-4">
+                <label htmlFor="site" className="block text-sm font-semibold text-gray-600">Site:</label>
+                <select
+                  name="site"
+                  value={formData.site}
+                  className="mt-1 p-2 w-full border rounded-md"
+                  onChange={(e) => handleChange('site', e.target.value)}
+                >
+                  <option>{scheduleIdToEdit ? data : 'Select Site'}</option>
+                  {sites.map((site) => (
+                    <option key={site._id} value={site._id}>{site.name}</option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="mb-4">
-              <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">
-                Status
-              </label>
-              <select
-                onChange={(e) => handleUpdate('status', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              >
-                <option>
-                  {workToEdit ? workDetail.status :
-                    'Status'
-                  }
-                </option>
-                {status.map((status, index) => (
-                  <option key={index} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
+              <div className="mb-4">
+                <label htmlFor="qualityScheduleId" className="block text-sm font-medium text-gray-600">Schedule Id:</label>
+                <input
+                  type="text"
+                  name="qualityScheduleId"
+                  value={formData.qualityScheduleId}
+                  onChange={(e) => handleChange('qualityScheduleId', e.target.value)}
+                  className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+                />
+              </div>
 
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-              Submit
-            </button>
-          </form>
-          <Toaster
-            position="top-right"
-            reverseOrder={false}
-          />
-        </section>
-      </div>
-    )
-  } else {
-    return (
-      <div className='m-1 md:m-6 p-4 min-w-screen min-h-screen md:p-8 bg-white rounded-3xl'>
-        <Header category="Page" title="Create Quality Check Schedule" />
-        <section className="container mx-auto mt-4 mb-16">
-          <form className="max-w-md mx-auto " onSubmit={handleSubmit}>
-
-            <div className="mb-4">
-              <label htmlFor="site" className="block text-sm font-semibold text-gray-600">
-                Site:
-              </label>
-              <select
-                name="site"
-                value={formData.site}
-                className="mt-1 p-2 w-full border rounded-md"
-                onChange={(e) => handleChange('site', e.target.value)}
-              >
-                <option>
-                  {scheduleIdToEdit ? data :
-                    'Site'
-                  }
-                </option>
-                {sites.map((site) => (
-                  <option key={site._id} value={site._id}>
-                    {site.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="qualityScheduleId" className="block text-sm font-medium text-gray-600">
-                Schedule Id: {formData.qualityScheduleId}
-              </label>
-              <input
-                type="text"
-                name="qualityScheduleId"
-                value={formData.qualityScheduleId}
-                onChange={(e) => handleChange('qualityScheduleId', e.target.value)}
-                className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div className="mt-4">
-              <h2 className="text-lg font-semibold mb-2">Work Details</h2>
-              {formData.workDetails.map((workItem, index) => (
-                <div key={index} className="mb-4 p-3 border rounded">
-                  <div className="grid grid-cols-2 gap-4">
-
-                    <div >
-                      <label
-                        htmlFor={`work[${index}].work`}
-                        className="block text-sm font-semibold text-gray-600"
-                      >
-                        Work to Check:
-                      </label>
-                      <Select
-                        value={{ value: workItem.work, label: workItem.work }}
-                        onChange={(selectedOption) => handleWorkChange(index, 'work', selectedOption.value)}
-                        options={workDetails.map(workDetail => ({
-                          value: workDetail.work,
-                          label: workDetail.work
-                        }))}
-                        placeholder="Select Work Detail"
-                      />
-                      {/* <select
-                        value={workItem.work}
-                        onChange={(e) => handleWorkChange(index, 'work', e.target.value)}
-                        className="border p-2 rounded w-full"
-                      >
-                        <option>
-                          Select Work Detail:
-                        </option>
-                        {workDetails.map((workDetail) => (
-                          <option key={workDetail._id} value={workDetail.work}>
-                            {workDetail.work}
-                          </option>
-                        ))}
-                      </select> */}
-                    </div>
-
-                    <div>
-                      <label htmlFor={`work[${index}].checkingDate`} className="block text-sm font-semibold text-gray-600">
-                        Starting Date:
-                      </label>
-                      <input
-                        type="date"
-                        value={workItem.checkingDate}
-                        onChange={(e) => handleWorkChange(index, 'checkingDate', e.target.value)}
-                        className="border p-2 rounded w-full"
-                      />
-                    </div>
-
-                    {formData.workDetails.length > 1 && (
+              <div className="mt-4">
+                <h2 className="text-lg font-semibold mb-2">Work Details</h2>
+                {formData.workDetails.map((workItem, index) => (
+                  <div key={index} className="mb-4 p-3 border rounded">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveWork(index)}
-                          className="bg-red-500 text-white p-2 rounded"
-                        >
-                          Remove
-                        </button>
+                        <label htmlFor={`work[${index}].work`} className="block text-sm font-semibold text-gray-600">Work to Check:</label>
+                        <Select
+                          value={{ value: workItem.work, label: workItem.work }}
+                          onChange={(selectedOption) => handleWorkChange(index, 'work', selectedOption.value)}
+                          options={workDetails.map(workDetail => ({
+                            value: workDetail.work,
+                            label: workDetail.work
+                          }))}
+                          placeholder="Select Work Detail"
+                        />
                       </div>
-                    )}
+
+                      <div>
+                        <label htmlFor={`work[${index}].checkingDate`} className="block text-sm font-semibold text-gray-600">Checking Date:</label>
+                        <input
+                          type="date"
+                          value={workItem.checkingDate}
+                          onChange={(e) => handleWorkChange(index, 'checkingDate', e.target.value)}
+                          className="border p-2 rounded w-full"
+                        />
+                      </div>
+
+                      {formData.workDetails.length > 1 && (
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveWork(index)}
+                            className="bg-red-500 text-white p-2 rounded"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-              {scheduleIdToEdit ? "" :
-                <button
-                  type="button"
-                  onClick={handleAddWork}
-                  className="bg-blue-500 text-white p-2 rounded">
-                  More
+                ))}
+                {scheduleIdToEdit ? null : (
+                  <button
+                    type="button"
+                    onClick={handleAddWork}
+                    className="bg-blue-500 text-white p-2 rounded"
+                  >
+                    More
+                  </button>
+                )}
+              </div>
+
+              <div className="text-center">
+                <button type="submit" className="bg-green-500 text-white p-2 rounded mt-4">
+                  {scheduleIdToEdit ? 'Update' : 'Create'}
                 </button>
-              }
-            </div>
+              </div>
+            </>
+          )}
+        </form>
+        <Toaster position="top-right" reverseOrder={false} />
+    </div>
+  );
+};
 
-            <div className="text-center">
-              <button type="submit" className="bg-green-500 text-white p-2 rounded mt-4">
-                {scheduleIdToEdit ? 'Update' : 'Create'}
-              </button>
-            </div>
-            <Toaster position="top-right" reverseOrder={false} />
-          </form>
-        </section>
-      </div>
-    )
-  }
-}
-
-export default CreateQualitySchedule
+export default CreateQualitySchedule;

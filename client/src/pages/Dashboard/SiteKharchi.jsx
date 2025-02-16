@@ -1,38 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import Header from '../../components/Header';
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux';
 import { MdDelete, MdAdd } from "react-icons/md";
+import Modal from '../../components/Modal';
+import CreateRecord from '../../components/CreateRecord';
 
 const SiteKharchi = () => {
-    const { user } = useSelector((state) => state.auth);
-    const navigate = useNavigate();
-    const handleAdd = (id) => {
-      console.log(id)
-      navigate(`/record-site-kharchi/${id}`);
-    };
-    return (
-        <div >
-            <Header category="Page" title="Expenses" />
-            <section className='container mx-auto mt-4 mb-16'>
-            <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>
+  const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const [createModal, setCreateModal] = useState(false);
+  const handleAdd = (id) => {
+    console.log(id)
+    navigate(`/record-site-kharchi/${id}`);
+  };
+
+  return (
+    <div >
+      <Header category="Page" title="Expenses" />
+      <section className='container mx-auto mt-4 mb-16'>
+        <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>
           <div className="w-full mx-auto mb-6 text-gray-700 py-1 flex flex-row sm:flex-row justify-between items-center">
             <h2 className="text-lg sm:text-md md:text-lg lg:text-xl text-green-600 mb-2 sm:mb-0 sm:mr-4">Record Expense </h2>
-              <button 
-              onClick={() => handleAdd(user?._id)}
-               className="bg-green-500 rounded-full text-white px-2 py-2">
-                <MdAdd className='text-xl' />
-              </button>
+            <button
+              onClick={() => setCreateModal(true)}
+              className="bg-green-500 rounded-full text-white px-2 py-2">
+              <MdAdd className='text-xl' />
+            </button>
           </div>
-          </div>
-                <Toaster
-                    position="top-right"
-                    reverseOrder={false}
-                    />
-            </section>
         </div>
-    )
+        <Toaster
+          position="top-right"
+          reverseOrder={false}
+        />
+      </section>
+      {/* Contractor Modal */}
+      {createModal && (
+        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create User' >
+          <CreateRecord onClose={() => setCreateModal(false)} userId={user._id} />
+        </Modal>
+      )}
+    </div>
+  )
 }
 
 export default SiteKharchi

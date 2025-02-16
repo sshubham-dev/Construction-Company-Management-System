@@ -1,72 +1,82 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import Header from '../components/Header';
 import Select from 'react-select';
+
 axios.defaults.withCredentials = true;
 
-const CreateProjectSchedule = () => {
-
+const CreateProjectSchedule = ({ onClose, isEdit }) => {
+  const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     site: '',
     projectScheduleId: '',
     projectDetail: [{
       workDetail: '',
-      toStart: '',
+      startingStatus: {
+        toStart: '',
+        startedAt: '',
+        difference: '',
+        reason: '',
+      },
+      completingStatus: {
+        toComplete: '',
+        completedAt: '',
+        difference: '',
+        reason: '',
+      },
+      status: '',
     }]
   });
   const [workDetails, setWorkDetails] = useState([]);
   const [data, setData] = useState('');
   const [sites, setSite] = useState([]);
   const [scheduleIdToEdit, setScheduleIdToEdit] = useState(null);
-  const navigate = useNavigate();
-  const [projectToEdit, setProjectToEdit] = useState({
-    id: '',
-    index: '',
-  });
-  const [projectDetail, setProjectDetail] = useState({
-    workDetail: '',
-    toStart: '',
-    startedAt: '',
-    difference: '',
-    reason: '',
-    status: '',
-  });
-  const { user, isLoggedIn } = useSelector((state) => state.auth);
-  const status = ['Started', 'Completed', 'Pending', 'Partaly Completed'];
-  const { index } = useParams();
-  const { id } = useParams();
+  const [projectToEdit, setProjectToEdit] = useState({ id: '', index: '' });
+  const { user } = useSelector((state) => state.auth);
+  const statusOptions = ['Started', 'Completed', 'Pending', 'Partially Completed'];
+  const { index, id } = isEdit;
 
   useEffect(() => {
     if (id && !index) {
-      fetchProjectSchedule(id)
-      setScheduleIdToEdit(id)
-    } else if (id, index) {
-      fetchProjectDetail(id, index)
-      setProjectToEdit({
-        id,
-        index,
-      })
+      fetchProjectSchedule(id);
+      setScheduleIdToEdit(id);
+    } else if (id && index) {
+      fetchProjectDetail(id, index);
+      setProjectToEdit({ id, index });
     }
-  }, [])
+  }, [id, index]);
 
   const fetchProjectDetail = async (id, index) => {
     try {
       const response = await axios.get(`/api/v1/project-schedule/${id}/projectDetails`);
       const detail = response.data[index];
-      console.log(detail)
-      setProjectDetail({
-        workDetail: detail.workDetail,
-        toStart: detail.toStart,
-        startedAt: detail.startedAt,
-        difference: detail.difference,
-        reason: detail.reason,
-        status: detail.status,
-      });
+      setFormData(prevState => ({
+        ...prevState,
+        projectDetail: [{
+          ...prevState.projectDetail[0],
+          workDetail: detail.workDetail,
+          startingStatus: {
+            ...prevState.projectDetail[0].startingStatus,
+            toStart: detail.toStart,
+            startedAt: detail.startedAt,
+            difference: detail.difference,
+            reason: detail.reason,
+          },
+          completingStatus: {
+            ...prevState.projectDetail[0].completingStatus,
+            toComplete: detail.toComplete,
+            completedAt: detail.completedAt,
+            difference: detail.difference,
+            reason: detail.reason,
+          },
+          status: detail.status,
+
+        }]
+      }));
     } catch (error) {
-      console.error('Error fetching user details:', error);
+      console.error('Error fetching project details:', error);
+      toast.error('Failed to fetch project details.');
     }
   };
 
@@ -74,18 +84,30 @@ const CreateProjectSchedule = () => {
     try {
       const response = await axios.get(`/api/v1/project-schedule/${id}`);
       const project = response.data;
-      console.log(project?.site.name)
       setData(project?.site.name);
       setFormData({
         site: project?.site.id,
         projectScheduleId: project?.projectScheduleId,
         projectDetail: [{
           workDetail: '',
-          toStart: '',
+          startingStatus: {
+            toStart: '',
+            startedAt: '',
+            difference: '',
+            reason: '',
+          },
+          completingStatus: {
+            toComplete: '',
+            completedAt: '',
+            difference: '',
+            reason: '',
+          },
+          status: '',
         }]
       });
     } catch (error) {
-      console.error('Error fetching user details:', error);
+      console.error('Error fetching project schedule:', error);
+      toast.error('Failed to fetch project schedule.');
     }
   };
 
@@ -93,357 +115,292 @@ const CreateProjectSchedule = () => {
     const fetchSite = async () => {
       try {
         const response = await axios.get('/api/v1/site');
-        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
-          const existingSites = user?.site;
-          let Sites = [];
-          for (let site of response.data) {
-            if (existingSites.includes(site._id)) {
-              Sites.push(site);
-            }
-          }
-          setSite(Sites)
-        } else {
-          setSite(response.data)
-        }
+        const filteredSites = user.department === 'Site Supervisor' || user.department === 'Site Incharge'
+          ? response.data.filter(site => user.site.includes(site._id))
+          : response.data;
+        setSite(filteredSites);
       } catch (error) {
-        console.error(error.message)
+        console.error('Error fetching sites:', error);
+        toast.error('Failed to fetch sites.');
       }
     };
 
     const fetchWork = async () => {
       try {
         const title = 'Project Schedule';
-        const workData = await axios.post('/api/v1/work-details/name', {
-          title
-        });
+        const workData = await axios.post('/api/v1/work-details/name', { title });
         setWorkDetails(workData.data.description);
       } catch (error) {
-        console.error('Error fetching work details:', error.message);
+        console.error('Error fetching work details:', error);
+        toast.error('Failed to fetch work details.');
       }
     };
 
     fetchSite();
     fetchWork();
-  }, []);
+  }, [user]);
 
   const handleChange = (field, value) => {
-    setFormData({
-      ...formData,
+    setFormData(prevState => ({
+      ...prevState,
       [field]: value,
-    });
+    }));
   };
 
   const handleUpdate = (field, value) => {
-    setProjectDetail({
-      ...projectDetail,
-      [field]: value
-    })
-  }
-
-  const handleAddWork = () => {
-    setFormData({
-      ...formData,
-      projectDetail: [
-        ...formData.projectDetail,
-        {
+    setFormData(prevState => {
+      const updatedProjectDetail = [...prevState.projectDetail];
+      if (!updatedProjectDetail[step - 1]) {
+        updatedProjectDetail[step - 1] = {
           workDetail: '',
-          toStart: '',
-        },
-      ],
+          startingStatus: { toStart: '', startedAt: '', difference: '', reason: '' },
+          completingStatus: { toComplete: '', completedAt: '', difference: '', reason: '' },
+          status: '',
+        };
+      }
+
+      if (['toStart', 'startedAt', 'difference', 'reason'].includes(field)) {
+        updatedProjectDetail[step - 1].startingStatus[field] = value;
+      } else if (['toComplete', 'completedAt'].includes(field)) {
+        updatedProjectDetail[step - 1].completingStatus[field] = value;
+      } else {
+        updatedProjectDetail[step - 1][field] = value;
+      }
+
+      return { ...prevState, projectDetail: updatedProjectDetail };
     });
   };
 
-  const handleRemoveWork = (index) => {
-    const updatedWork = [...formData.projectDetail];
-    updatedWork.splice(index, 1);
-    setFormData({
-      ...formData,
-      projectDetail: updatedWork,
-    });
+  const handleNext = (e) => {
+    e.preventDefault();
+    // if (!formData.projectDetail[step].workDetail) {
+    //   toast.error("Please enter work detail before proceeding.");
+    //   return;
+    // }
+    if (step < formData.projectDetail.length - 1) {
+      setStep(step + 1);
+    } else {
+      setFormData((prevState) => ({
+        ...prevState,
+        projectDetail: [
+          ...prevState.projectDetail,
+          {
+            workDetail: '',
+            startingStatus: { toStart: '', startedAt: '', difference: '', reason: '' },
+            completingStatus: { toComplete: '', completedAt: '', difference: '', reason: '' },
+            status: '',
+          },
+        ],
+      }));
+      setStep(step + 1);
+    }
   };
 
-  const handleWorkChange = (index, field, value) => {
-    const updatedWork = [...formData.projectDetail];
-    updatedWork[index][field] = value;
+  const handlePrevious = (e) => {
+    e.preventDefault()
+    if (step > 0) setStep(step - 1);
+  };
+
+  const handleReset = () => {
     setFormData({
-      ...formData,
-      projectDetail: updatedWork,
+      site: '',
+      projectScheduleId: '',
+      projectDetail: [{
+        workDetail: '',
+        startingStatus: { toStart: '', startedAt: '', difference: '', reason: '' },
+        completingStatus: { toComplete: '', completedAt: '', difference: '', reason: '' },
+        status: '',
+      }],
     });
+    setStep(0);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(formData); // Log the form data before submission
+
+    // **Filter out empty project details before submitting**
+    formData.projectDetail = formData.projectDetail.filter(detail =>
+      detail.completingStatus.toComplete || detail.startingStatus.toStart
+    );
+
     try {
       if (scheduleIdToEdit) {
-        console.log(formData)
         const response = await axios.put(`/api/v1/project-schedule/${scheduleIdToEdit}`, formData);
-        if (response.data) {
-          console.log('Project Schedule Edited Successfully!');
-          toast.success(response.data.message);
-          navigate(-1)
-        }
-      } else if (projectToEdit.id && projectToEdit.index) {
-        console.log(projectDetail)
-        await axios.put(`/api/v1/project-schedule/${projectToEdit.id}/projectDetails/${projectToEdit.index}`, projectDetail);
+        toast.success(response.data.message);
+      } else if (projectToEdit.id !== '' && projectToEdit.index !== '') {
+        await axios.put(`/api/v1/project-schedule/${projectToEdit.id}/projectDetails/${projectToEdit.index}`, formData.projectDetail[0]);
         toast.success('Edited successfully');
-        navigate(-1);
       } else {
+        console.log('first', formData)
         const response = await axios.post('/api/v1/project-schedule/create', formData);
-        if (response.data) {
-          console.log('Project Schedule Created Successfully!');
-          toast.success(response.data.message);
-          navigate(-1)
-        }
+        toast.success(response.data.message);
       }
     } catch (error) {
-      console.log('Error submitting work order:', error.message);
-      toast.error(error.message)
+      console.error('Error submitting project schedule:', error);
+      toast.error('Failed to submit project schedule.');
     }
   };
 
-  if (projectToEdit.index && projectToEdit.id) {
-    return (
-      <div >
-        <Header category="Page" title="Dashboard" />
-        <section className="flex items-center justify-center h-full mb-16 mt-4">
-          <form
-            onSubmit={handleSubmit}
-            className="px-8 pt-6 pb-8 mb-4 w-full max-w-md">
-
+  return (
+    <div>
+      <form onSubmit={handleSubmit} className="mb-4 w-full max-w-md">
+        {projectToEdit.index && projectToEdit.id ? (
+          <>
             <div className="mb-4">
-              <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">
-                Work:
-              </label>
+              <label htmlFor="workDetail" className="block text-gray-700 text-sm font-bold mb-2">Work:</label>
               <Select
                 onChange={(selectedOption) => handleUpdate('workDetail', selectedOption.value)}
                 options={workDetails.map(workDetail => ({
                   value: workDetail.work,
                   label: workDetail.work
                 }))}
-                placeholder={projectToEdit ? projectDetail.workDetail : 'Select Work Detail:'}
+                placeholder={formData.projectDetail[step]?.workDetail || 'Select Work Detail:'}
               />
-              {/* <select
-                onChange={(e) => handleUpdate('workDetail', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              >
-                <option>
-                  {projectToEdit ? projectDetail.workDetail :
-                    'Select Work Detail:'
-                  }
-                </option>
-                {workDetails.map((workDetail) => (
-                  <option key={workDetail._id} value={workDetail.work}>
-                    {workDetail.work}
-                  </option>
-                ))}
-              </select> */}
             </div>
 
             <div className="mb-4">
-              <label htmlFor="userMail" className="block text-gray-700 text-sm font-bold mb-2">
-                Starting Date: {projectDetail.toStart}
-              </label>
+              <label htmlFor="toStart" className="block text-gray-700 text-sm font-bold mb-2">Starting Date:</label>
               <input
                 type="date"
                 name="toStart"
+                value={formData.projectDetail[step]?.startingStatus.toStart || ''}
                 onChange={(e) => handleUpdate('toStart', e.target.value)}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               />
             </div>
 
             <div className="mb-4">
-              <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">
-                Actual Starting Date: {projectDetail.startedAt}
-              </label>
+              <label htmlFor="startedAt" className="block text-gray-700 text-sm font-bold mb-2">Actual Starting Date:</label>
               <input
                 type="date"
                 name="startedAt"
+                value={formData.projectDetail[step]?.startingStatus.startedAt || ''}
                 onChange={(e) => handleUpdate('startedAt', e.target.value)}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               />
             </div>
 
             <div className="mb-4">
-              <label htmlFor="phone" className="block text-gray-700 text-sm font-bold mb-2">
-                Difference:
-              </label>
+              <label htmlFor="difference" className="block text-gray-700 text-sm font-bold mb-2">Difference:</label>
               <input
                 type="text"
                 name="difference"
+                value={formData.projectDetail[step]?.startingStatus.difference || ''}
                 onChange={(e) => handleUpdate('difference', e.target.value)}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               />
             </div>
 
             <div className="mb-4">
-              <label htmlFor="phone" className="block text-gray-700 text-sm font-bold mb-2">
-                Reason
-              </label>
+              <label htmlFor="reason" className="block text-gray-700 text-sm font-bold mb-2">Reason:</label>
               <input
                 type="text"
-                onChange={(e) => handleUpdate('reason', e.target.value)}
                 name="reason"
+                value={formData.projectDetail[step]?.startingStatus.reason || ''}
+                onChange={(e) => handleUpdate('reason', e.target.value)}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               />
             </div>
 
             <div className="mb-4">
-              <label htmlFor="phone" className="block text-gray-700 text-sm font-bold mb-2">
-                Status
-              </label>
+              <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">Status:</label>
               <select
                 onChange={(e) => handleUpdate('status', e.target.value)}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               >
-                <option>
-                  {projectToEdit ? projectDetail.status :
-                    'Status'
-                  }
-                </option>
-                {status.map((status, index) => (
+                <option value="">{projectDetail.status || 'Select Status'}</option>
+                {statusOptions.map((status, index) => (
                   <option key={index} value={status}>{status}</option>
                 ))}
               </select>
             </div>
-
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-              Submit
-            </button>
-          </form>
-          <Toaster
-            position="top-right"
-            reverseOrder={false}
-          />
-        </section>
-      </div>
-    )
-  } else {
-    return (
-      <div >
-        <Header category="Page" title="Create Project Schedule" />
-        <section className="container mx-auto mt-4 mb-16">
-          <form className="max-w-md mx-auto" onSubmit={handleSubmit}>
-
-
-            <div className="mb-4">
-              <label htmlFor="site" className="block text-sm font-semibold text-gray-600">
-                Site:
-              </label>
-              <select
-                name="site"
-                value={formData.site}
-                className="mt-1 p-2 w-full border rounded-md"
-                onChange={(e) => handleChange('site', e.target.value)}
-              >
-                <option>
-                  {scheduleIdToEdit ? data :
-                    'Site'
-                  }
-                </option>
-                {sites.map((site) => (
-                  <option key={site._id} value={site._id}>
-                    {site.name}
-                  </option>
-                ))}
-              </select>
+            <div>
+              <button type="button" onClick={handleReset} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600">Reset</button>
+              <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Submit
+              </button>
             </div>
-
-            <div className="mb-4">
-              <label htmlFor="projectScheduleId" className="block text-sm font-medium text-gray-600">
-                Schedule Id: {formData.projectScheduleId}
-              </label>
-              <input
-                type="text"
-                name="projectScheduleId"
-                value={formData.projectScheduleId}
-                onChange={(e) => handleChange('projectScheduleId', e.target.value)}
-                className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div className="mt-4">
-              <h2 className="text-lg font-semibold mb-2">Work Details</h2>
-              {formData.projectDetail.map((workItem, index) => (
-                <div key={index} className="mb-4 p-3 border rounded">
-                  <div className="grid grid-cols-1 gap-4">
-
-                    <div>
-                      <label
-                        htmlFor={`work[${index}].workDetail`}
-                        className="block text-sm font-semibold text-gray-600"
-                      >
-                        Project Work Detail:
-                      </label>
-                      <Select
-                        value={{ value: workItem.workDetail, label: workItem.workDetail }}
-                        onChange={(selectedOption) => handleWorkChange(index, 'workDetail', selectedOption.value)}
-                        options={workDetails.map(workDetail => ({ value: workDetail.work, label: workDetail.work }))}
-                        placeholder="Select Work Detail"
-                      />
-                      {/* <select
-                        value={workItem.workDetail}
-                        onChange={(e) => handleWorkChange(index, 'workDetail', e.target.value)}
-                        className="border p-2 rounded w-full"
-                      >
-                        <option>
-                          Select Work Detail:
-                        </option>
-                        {workDetails.map((workDetail) => (
-                          <option key={workDetail._id} value={workDetail.work}>
-                            {workDetail.work}
-                          </option>
-                        ))}
-                      </select> */}
-                    </div>
-
-                    <div>
-                      <label htmlFor={`work[${index}].toStart`} className="block text-sm font-semibold text-gray-600">
-                        Starting Date:
-                      </label>
-                      <input
-                        type="date"
-                        value={workItem.toStart}
-                        onChange={(e) => handleWorkChange(index, 'toStart', e.target.value)}
-                        className="border p-2 rounded w-full"
-                      />
-                    </div>
-
-                    {formData.projectDetail.length > 1 && (
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveWork(index)}
-                          className="bg-red-500 text-white p-2 rounded"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    )}
-                  </div>
+          </>
+        ) : (
+          <>
+            {step === 0 && (
+              <>
+                <div className="mb-4">
+                  <label htmlFor="site" className="block text-sm font-medium text-gray-600">Select a Site</label>
+                  <select
+                    name="site"
+                    value={formData.site}
+                    onChange={(e) => handleChange('site', e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  >
+                    <option>{scheduleIdToEdit ? data.site : 'Site'}</option>
+                    {sites.map((site) => (
+                      <option key={site._id} value={site._id}>
+                        {site.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ))}
-              <button
-                type="button"
-                onClick={handleAddWork}
-                className="bg-blue-500 text-white p-2 rounded"
-              >
-                More Work
-              </button>
-            </div>
+                <div className="mb-4">
+                  <label htmlFor="projectScheduleId" className="block text-sm font-medium text-gray-600">Schedule Id:</label>
+                  <input
+                    type="text"
+                    name="projectScheduleId"
+                    value={formData.projectScheduleId}
+                    onChange={(e) => handleChange('projectScheduleId', e.target.value)}
+                    className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <button type="button" onClick={() => setStep(step + 1)} className="bg-blue-500 text-white p-2 rounded">Add Work</button>
+              </>
+            )}
+            <div className="my-4">
+              {step > 0 && (
+                <div>
+                  <Select
+                    onChange={(selectedOption) => handleUpdate('workDetail', selectedOption.value)}
+                    options={workDetails.map(workDetail => ({
+                      value: workDetail.work,
+                      label: workDetail.work
+                    }))}
+                    placeholder={formData.projectDetail[step - 1]?.workDetail || 'Select Work Detail:'}
+                  />
 
-            <div className="text-center">
-              <button type="submit" className="bg-green-500 text-white p-2 rounded mt-4">
-                Create Project Schedule
-              </button>
-            </div>
-            <Toaster position="top-right" reverseOrder={false} />
-          </form>
-        </section>
-      </div>
-    )
-  }
-}
+                  <input
+                    type="date"
+                    name="toStart"
+                    value={formData.projectDetail[step - 1]?.startingStatus.toStart || ''}
+                    onChange={(e) => handleUpdate('toStart', e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
 
-export default CreateProjectSchedule
+                  <input
+                    type="date"
+                    name="toComplete"
+                    value={formData.projectDetail[step - 1]?.completingStatus.toComplete || ''}
+                    onChange={(e) => handleUpdate('toComplete', e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </div>
+              )}
+              <div className="mt-4 flex justify-between gap-4">
+                {step > 0 && (
+                  <div className="flex justify-between gap-4">
+                    <button type="button" onClick={handlePrevious} className="bg-gray-500 text-white p-2 rounded">Previous</button>
+                    <button type="submit" className="bg-green-500 text-white p-2 rounded">Submit</button>
+                    <button type="button" onClick={handleReset} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600">Reset</button>
+                    <button type="button" onClick={handleNext} className="bg-blue-500 text-white p-2 rounded">Next</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </form>
+      <Toaster position="top-right" reverseOrder={false} />
+    </div>
+  );
+};
+
+export default CreateProjectSchedule;

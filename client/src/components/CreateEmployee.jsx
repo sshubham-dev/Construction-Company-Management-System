@@ -3,10 +3,9 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { MdOutlineRemoveCircle, MdOutlineAddCircle } from "react-icons/md";
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
 axios.defaults.withCredentials = true;
 
-const CreateEmployee = () => {
+const CreateEmployee = ({ onClose, isEdit }) => {
     const [employee, setEmployee] = useState({
         name: "",
         email: "",
@@ -22,25 +21,46 @@ const CreateEmployee = () => {
         cv: "",
         offerletter: "",
         bank: "",
+        isUser: '',
     });
 
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
-      useEffect(() => {
+    useEffect(() => {
         const getUsers = async () => {
-          try {
-            const userData = await axios.get('/api/v1/user/lists');
-            let users = userData.data;
-            if(userData){
-              setUsers(users.filter((user)=> user.role === 'Employee'));
+            try {
+                const userData = await axios.get('/api/v1/user/lists');
+                let users = userData.data;
+                if (userData) {
+                    setUsers(users.filter((user) => user.role === 'Employee'));
+                }
+            } catch (error) {
+                toast.error(error.message);
             }
-          } catch (error) {
-            toast.error(error.message);
-          }
         }
         getUsers();
-      }, [])
+    }, [])
+
+    const handleReset = () => {
+        setEmployee({
+            name: "",
+            email: "",
+            password: "",
+            contactNo: '',
+            whatsapp: '',
+            employeeId: "",
+            joinDate: "",
+            birthdate: "",
+            address: "",
+            addhar: "",
+            pan: "",
+            cv: "",
+            offerletter: "",
+            bank: "",
+            isUser: '',
+        })
+    }
 
     const inputData = (data, field) => {
         const { name, value, type } = data.target;
@@ -84,141 +104,123 @@ const CreateEmployee = () => {
         }
     };
 
-
-
     return (
-        <div >
-        <Header category="Page" title="Create Employee" />
-            <section className='flex justify-center items-center mb-12'>
-                <form
-                    className='px-8 pt-4 pb-4 mb-12 w-full max-w-md'
-                    onSubmit={formSubmit}>
+        <div>
+            <form
+                className='space-y-4'
+                onSubmit={formSubmit}>
+
+                <div className='mb-4'>
+                    <label className='block text-gray-700 text-sm font-bold mb-1' htmlFor='name'>
+                        Full Name
+                    </label>
+                    <input
+                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                        type='text'
+                        name='name'
+                        placeholder='Enter Full Name here'
+                        autoComplete='off'
+                        value={employee.name}
+                        onChange={inputData}
+                    />
+                </div>
 
 
-                    <div className='mb-4'>
-                        <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='name'>
-                            Full Name
-                        </label>
-                        <select
-                            name="name"
-                            value={employee.name}
-                            onChange={inputData}
-                            required
-                            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500">
-                            <option>Employee</option>
-                            {users.map((user) => (
-                                <option key={user._id} value={user.userName}>
-                                    {user.userName}
-                                </option>
-                            ))}
-                        </select>
-                        {/* <input
-                            className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                            type='text'
-                            name='name'
-                            placeholder='Enter Your Name here'
-                            autoComplete='off'
-                            value={employee.name}
-                            onChange={inputData}
-                        /> */}
-                    </div>
+                <div className='mb-4'>
+                    <label className='block text-gray-700 text-sm font-bold mb-1' htmlFor='email'>
+                        Email
+                    </label>
+                    <input
+                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                        type='email'
+                        name='email'
+                        placeholder='Enter Your Email here'
+                        autoComplete='off'
+                        value={employee.email}
+                        onChange={inputData}
+                    />
+                </div>
 
 
-                    <div className='mb-4'>
-                        <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='email'>
-                            Email
-                        </label>
-                        <input
-                            className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                            type='email'
-                            name='email'
-                            placeholder='Enter Your Email here'
-                            autoComplete='off'
-                            value={employee.email}
-                            onChange={inputData}
-                        />
-                    </div>
+                <div className='mb-4'>
+                    <label htmlFor='phone'
+                        className='block text-gray-700 text-sm font-bold mb-1'>
+                        Contact Number:
+                    </label>
+                    <input
+                        className='py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500'
+                        type='text'
+                        name='contactNo'
+                        id='contactNo'
+                        placeholder='Enter Your Contact Number'
+                        autoComplete='off'
+                        value={employee.contactNo}
+                        onChange={inputData}
+                    />
+                </div>
 
 
-                    <div className='mb-4'>
-                        <label htmlFor='phone'
-                            className='block text-sm font-medium text-gray-600'>
-                            Contact Number:
-                        </label>
-                        <input
-                            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-                            type='text'
-                            name='contactNo'
-                            id='contactNo'
-                            placeholder='Enter Your Contact Number'
-                            autoComplete='off'
-                            value={employee.contactNo}
-                            onChange={inputData}
-                        />
-                    </div>
+                <div className='mb-4'>
+                    <label htmlFor='whatsapp'
+                        className='block text-gray-700 text-sm font-bold mb-1'>
+                        Whatsapp Number:
+                    </label>
+                    <input
+                        className='py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500'
+                        type='text'
+                        name='whatsapp'
+                        id='whatsapp'
+                        placeholder='Enter Your Whatsapp Number'
+                        autoComplete='off'
+                        value={employee.whatsapp}
+                        onChange={inputData}
+                    />
+                </div>
 
 
-                    <div className='mb-4'>
-                        <label htmlFor='whatsapp'
-                            className='block text-sm font-medium text-gray-600'>
-                            Whatsapp Number:
-                        </label>
-                        <input
-                            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-                            type='text'
-                            name='whatsapp'
-                            id='whatsapp'
-                            placeholder='Enter Your Whatsapp Number'
-                            autoComplete='off'
-                            value={employee.whatsapp}
-                            onChange={inputData}
-                        />
-                    </div>
+                <div className='mb-4'>
+                    <label htmlFor='employeeId' className='block text-gray-700 text-sm font-bold mb-1'>Employee ID</label>
+                    <input
+                        type='text'
+                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                        name='employeeId'
+                        placeholder='Enter Your Employee ID here'
+                        autoComplete='off'
+                        value={employee.employeeId}
+                        onChange={inputData}
+                    />
+                </div>
 
 
-                    <div className='mb-4'>
-                        <label htmlFor='employeeId' className='block text-gray-700 text-sm font-bold mb-2'>Employee ID</label>
-                        <input
-                            type='text'
-                            className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                            name='employeeId'
-                            placeholder='Enter Your Employee ID here'
-                            autoComplete='off'
-                            value={employee.employeeId}
-                            onChange={inputData}
-                        />
-                    </div>
+                <div className='mb-4'>
+                    <label htmlFor='Password' className='block text-gray-700 text-sm font-bold mb-1'>Password</label>
+                    <input
+                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                        type='password'
+                        name='password'
+                        placeholder='Enter Your Password here'
+                        autoComplete='off'
+                        value={employee.password}
+                        onChange={inputData}
+                    />
+                </div>
 
+                <div className='mb-4'>
+                    <label htmlFor="address" className="block text-gray-700 text-sm font-bold mb-1">
+                        Address
+                    </label>
+                    <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        placeholder="Address"
+                        value={employee.address}
+                        onChange={inputData}
+                        className="py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500"
+                    />
+                </div>
 
-                    <div className='mb-4'>
-                        <label htmlFor='Password' className='block text-gray-700 text-sm font-bold mb-2'>Password</label>
-                        <input
-                            className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                            type='password'
-                            name='password'
-                            placeholder='Enter Your Password here'
-                            autoComplete='off'
-                            value={employee.password}
-                            onChange={inputData}
-                        />
-                    </div>
-
-                    <div className='mb-4'>
-                        <label htmlFor="address" className="block text-gray-700 text-sm font-bold mb-2">
-                            Address
-                        </label>
-                        <input
-                            type="text"
-                            id="address"
-                            name="address"
-                            placeholder="Address"
-                            value={employee.address}
-                            onChange={inputData}
-                            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* <div className='mb-4'>
+                {/* <div className='mb-4'>
                         <h4 className='mb-2'>Document Name</h4>
 
                         <div className='mb-4'>
@@ -277,51 +279,59 @@ const CreateEmployee = () => {
                         </div>
                     </div> */}
 
-                    <div className='mb-4'>
-                        <label
-                            htmlFor='joining'
-                            className='block text-gray-700 text-sm font-bold mb-2'>
-                            Joining Date
-                        </label>
-                        <input
-                            className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                            type='date'
-                            name='joinDate'
-                            placeholder='Enter Your Joining Date'
-                            autoComplete='off'
-                            value={employee.joinDate}
-                            onChange={inputData}
-                        />
-                    </div>
+                <div className='mb-4'>
+                    <label
+                        htmlFor='joining'
+                        className='block text-gray-700 text-sm font-bold mb-1'>
+                        Joining Date
+                    </label>
+                    <input
+                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                        type='date'
+                        name='joinDate'
+                        placeholder='Enter Your Joining Date'
+                        autoComplete='off'
+                        value={employee.joinDate}
+                        onChange={inputData}
+                    />
+                </div>
 
-                    <div className='mb-4'>
-                        <label htmlFor='birthdate' className='block text-gray-700 text-sm font-bold mb-2'>DOB</label>
-                        <input
-                            className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                            type='date'
-                            name='birthdate'
-                            placeholder='Enter Your Date of Birth'
-                            autoComplete='off'
-                            value={employee.birthdate}
-                            onChange={inputData}
-                        />
-                    </div>
+                <div className='mb-6'>
+                    <label htmlFor='birthdate' className='block text-gray-700 text-sm font-bold mb-1'>DOB</label>
+                    <input
+                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                        type='date'
+                        name='birthdate'
+                        placeholder='Enter Your Date of Birth'
+                        autoComplete='off'
+                        value={employee.birthdate}
+                        onChange={inputData}
+                    />
+                </div>
 
+
+                <div className="flex justify-end gap-2 mt-6">
+                    <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
+                        Cancel
+                    </button>
                     <button
                         type='submit'
-                        className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
-                    >
+                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" >
                         Create
                     </button>
+                    <button type="button" onClick={handleReset}
+                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
+                        Reset
+                    </button>
+                </div>
 
-                    {error && <p className="text-red-500 mt-4">{error}</p>}
-                </form>
-                <Toaster
-                    position="top-right"
-                    reverseOrder={false}
-                />
-            </section>
-       </div>
+                {error && <p className="text-red-500 mt-4">{error}</p>}
+            </form>
+            <Toaster
+                position="top-right"
+                reverseOrder={false}
+            />
+        </div>
     )
 }
 

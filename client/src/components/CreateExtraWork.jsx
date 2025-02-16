@@ -3,7 +3,7 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import Header from '../components/Header';
+
 axios.defaults.withCredentials = true;
 
 const CreateExtraWork = () => {
@@ -281,8 +281,6 @@ const CreateExtraWork = () => {
   if (detailToEdit.id !== '' && detailToEdit.index !== '') {
     return (
       <div >
-        <Header category="Page" title="Update Extra Work Details" />
-        <section className="flex items-center justify-center h-full mb-16 mt-4">
           <form
             onSubmit={handleSubmit}
             className="px-8 pt-6 pb-8 mb-4 w-full max-w-md">
@@ -366,16 +364,12 @@ const CreateExtraWork = () => {
             position="top-right"
             reverseOrder={false}
           />
-        </section>
       </div>
     )
   } else {
     return (
       <div >
-        <Header category="Page" title="Create Extra Work" />
-        <div className="container mx-auto mt-4 mb-16">
           <form className="max-w-xl mx-auto bg-white" onSubmit={handleSubmit}>
-            <h2 className="text-2xl font-semibold mb-4 text-center">Create Extra Work</h2>
 
             <div className="mb-4">
               <label htmlFor="extraFor" className="block text-sm font-medium text-gray-600 mb-2">
@@ -516,7 +510,6 @@ const CreateExtraWork = () => {
             </div>
           </form>
           <Toaster position="top-right" reverseOrder={false} />
-        </div>
       </div>
     );
   }

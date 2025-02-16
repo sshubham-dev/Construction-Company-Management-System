@@ -8,12 +8,15 @@ import { FaExternalLinkAlt } from "react-icons/fa";
 import moment from 'moment';
 import Header from '../../components/Header';
 import { useSelector } from 'react-redux';
+import Modal from '../../components/Modal';
+import CreateQualitySchedule from '../../components/CreateQualitySchedule';
 axios.defaults.withCredentials = true;
 
 const QualitySchedules = () => {
   const navigate = useNavigate();
   const [qualitySchedules, setQualitySchedule] = useState([]);
   const { user } = useSelector((state) => state.auth);
+  const [createModal, setCreateModal] = useState(false);
 
   useEffect(() => {
     const getqualitySchedules = async () => {
@@ -47,9 +50,6 @@ const QualitySchedules = () => {
     navigate(`/quality-schedule/${id}`);
   };
 
-  const handleAdd = () => {
-    navigate('/create-quality-schedule');
-  };
 
   return (
     <div>
@@ -59,7 +59,7 @@ const QualitySchedules = () => {
           <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
             Total Quality Schedules: {qualitySchedules?.length}
           </h2>
-          <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
+          <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2">
             <MdAdd className='text-xl' />
           </button>
         </div>
@@ -114,6 +114,12 @@ const QualitySchedules = () => {
           reverseOrder={false}
         />
       </div>
+      {/* Quality Schedules Modal */}
+      {createModal && (
+        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Quality Schedules' >
+          <CreateQualitySchedule onClose={() => setCreateModal(false)} />
+        </Modal>
+      )}
     </div>
   )
 }

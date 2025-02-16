@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useParams } from 'react-router-dom';
 
 
-const CreateRecord = () => {
+const CreateRecord = ({userId}) => {
   const [sites, setSite] = useState([]);
   const [record, setRecord] = useState({
     recordFor: '',
@@ -28,7 +28,6 @@ const CreateRecord = () => {
   const paymentStatus = ['Paid', 'Due']
   const paymentmode = ['Cash', 'Account']
   const [userid, setUserId] = useState(null)
-  const { userId } = useParams();
 
   useEffect(() => {
     const fetchSite = async () => {
@@ -741,8 +740,6 @@ const CreateRecord = () => {
 
   return (
     <div >
-      <Header category="Page" title={userid ? "Record Site Kharchi" : "Record Transactions"} />
-      <section className='container mx-auto mt-4 mb-16'>
         <form className="max-w-md mx-auto" onSubmit={handleSubmit}>
 
           <div className="mb-4">
@@ -800,7 +797,6 @@ const CreateRecord = () => {
           position="top-right"
           reverseOrder={false}
         />
-      </section>
     </div>
   )
 }

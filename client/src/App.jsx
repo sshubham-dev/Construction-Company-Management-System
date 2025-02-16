@@ -151,7 +151,7 @@ const App = () => {
 
         <Route path='/tasks' element={<Task />} />
 
-        <Route path='/employee' element={<Employee />} />
+        <Route path='/hr/employee/dashboard' element={<Employee />} />
         <Route path='/create-employee' element={<CreateEmployee />} />
 
         <Route path='/user' element={<UserManagement />} />

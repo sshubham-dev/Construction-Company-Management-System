@@ -28,6 +28,7 @@ const contractorSchema = new mongoose.Schema({
     jobWork: {
         type: String,
     },
+    isUser: Boolean,
     adminApprove: {
         type: String,
         default: 'Pending'

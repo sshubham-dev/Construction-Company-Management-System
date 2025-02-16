@@ -33,6 +33,7 @@ const supplierSchema = new mongoose.Schema({
             ref: 'User',
         },
     },
+    isUser: Boolean,
     purchaseOrder: [{
         name: String,
         id: {

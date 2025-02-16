@@ -2,10 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import Header from '../components/Header';
 axios.defaults.withCredentials = true;
 
-function WorkDetailsForm() {
+function WorkDetailsForm({ onClose }) {
 
   const [workDetail, setWorkDetail] = useState({
     title: '',
@@ -132,79 +131,76 @@ function WorkDetailsForm() {
 
   return (
     <div >
-      <Header category="Page" title={`${id ? 'Update' : 'Create'} Work Details`} />
-      <section className="container mx-auto mt-4 mb-16">
-        <form className='max-w-md mx-auto ' onSubmit={createWorkDetails}>
+      <form className='max-w-md mx-auto ' onSubmit={createWorkDetails}>
 
-          <div className="mb-4">
-            <label htmlFor='title' className="block text-sm font-semibold text-gray-600">
-              Work Title
-            </label>
-            <input
-              type='text'
-              name='title'
-              value={workDetail.title}
-              required
-              onChange={handelChange}
-              className="border p-2 rounded w-full"
-            />
-          </div>
+        <div className="mb-4">
+          <label htmlFor='title' className="block text-sm font-semibold text-gray-600">
+            Work Title
+          </label>
+          <input
+            type='text'
+            name='title'
+            value={workDetail.title}
+            required
+            onChange={handelChange}
+            className="border p-2 rounded w-full"
+          />
+        </div>
 
-          <div className="mt-4">
-            <h2 className="text-lg font-semibold mb-2">Work Description</h2>
-            {workDetail?.description?.map((works, index) => (
-              <div className="mb-4" key={index}>
-                <label htmlFor='description' className="block text-sm font-semibold text-gray-600">
-                  Work
-                </label>
-                <div className="flex">
-                  <input
-                    type='text'
-                    name='work'
-                    value={works.work}
-                    required
-                    onChange={(e) => handelChange(e, index)}
-                    className="border p-2 rounded text-pretty w-full"
-                  />
+        <div className="mt-4">
+          <h2 className="text-lg font-semibold mb-2">Work Description</h2>
+          {workDetail?.description?.map((works, index) => (
+            <div className="mb-4" key={index}>
+              <label htmlFor='description' className="block text-sm font-semibold text-gray-600">
+                Work
+              </label>
+              <div className="flex">
+                <input
+                  type='text'
+                  name='work'
+                  value={works.work}
+                  required
+                  onChange={(e) => handelChange(e, index)}
+                  className="border p-2 rounded text-pretty w-full"
+                />
 
-                  {workDetail.description.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeWork(index)}
-                      className="bg-red-500 text-white p-2 rounded ml-2"
-                    >
-                      Remove
-                    </button>
-                  )}
+                {workDetail.description.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeWork(index)}
+                    className="bg-red-500 text-white p-2 rounded ml-2"
+                  >
+                    Remove
+                  </button>
+                )}
 
-                </div>
               </div>
-            ))}
-            {id ? '' :
-              <button
-                type="button"
-                onClick={moreWork}
-                className="bg-blue-500 text-white p-2 rounded mt-4"
-              >
-                Add More
-              </button>
-            }
-          </div>
+            </div>
+          ))}
+          {id ? '' :
+            <button
+              type="button"
+              onClick={moreWork}
+              className="bg-blue-500 text-white p-2 rounded mt-4"
+            >
+              Add More
+            </button>
+          }
+        </div>
 
-          <button
-            type="button"
-            onClick={createWorkDetails}
-            className="bg-green-500 text-white p-2 rounded mt-4"
-          >
-            {id ? 'Update' : 'Create'} Work Detail
-          </button>
+        <button
+          type="button"
+          onClick={createWorkDetails}
+          className="bg-green-500 text-white p-2 rounded mt-4"
+        >
+          {id ? 'Update' : 'Create'} Work Detail
+        </button>
 
-        </form>
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-        />
-      </section>
+      </form>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+      />
     </div>
   );
 }

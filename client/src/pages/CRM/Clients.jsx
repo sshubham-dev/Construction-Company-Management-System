@@ -7,6 +7,8 @@ import { MdDelete, MdAdd } from "react-icons/md";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import { useSelector } from 'react-redux';
 import Header from '../../components/Header';
+import CreateClient from '../../components/CreateClient';
+import Modal from '../../components/Modal';
 axios.defaults.withCredentials = true;
 
 
@@ -15,6 +17,7 @@ const Clients = () => {
   const [clients, setClient] = useState([]);
   const [error, setError] = useState(null);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
+  const [createModal, setCreateModal] = useState(false);
 
   useEffect(() => {
     const getClients = async () => {
@@ -43,10 +46,6 @@ const Clients = () => {
     navigate(`/edit-client/${id}`);
   };
 
-  const handleRedirect = (id) => {
-    navigate(`/client/${id}`);
-  }
-
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/api/v1/client/${id}`);
@@ -56,9 +55,6 @@ const Clients = () => {
     }
   };
 
-  const handleAdd = () => {
-    navigate('/create-client');
-  };
 
   return (
     <div >
@@ -68,10 +64,11 @@ const Clients = () => {
           <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
             Total Client: {clients?.length}
           </h2>
-          {user.department === 'Account Head' || user.department === 'Ceo' && (
-          <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
+          {/* {user.department === 'Account Head' || user.department === 'Ceo' && ( */}
+          <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2">
             <MdAdd className='text-xl' />
-          </button>)}
+          </button>
+          {/* )} */}
         </div>
 
         <div className="overflow-x-auto"
@@ -125,6 +122,12 @@ const Clients = () => {
           reverseOrder={false}
         />
       </section>
+      {/* Client Modal */}
+      {createModal && (
+        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Client' >
+          <CreateClient isOpen={createModal} onClose={() => setCreateModal(false)} />
+        </Modal>
+      )}
     </div>
   );
 }

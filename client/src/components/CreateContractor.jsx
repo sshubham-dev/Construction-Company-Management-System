@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
-import Header from '../components/Header';
+
 axios.defaults.withCredentials = true;
-const CreateContractor = () => {
+const CreateContractor = ({ onClose, isEdit }) => {
   const [contractor, setContractor] = useState({
     name: '',
     contactNo: '',
@@ -13,38 +13,38 @@ const CreateContractor = () => {
     addhar: '',
     pan: '',
     bank: '',
-    jobWork:'',
+    jobWork: '',
   });
   const [contractorToEdit, setContractorToEdit] = useState(null);
-  const {id} = useParams();
-  useEffect(()=>{
-    if(id){
+  const { id } = useParams();
+  useEffect(() => {
+    if (id) {
       console.log(id)
       setContractorToEdit(id)
       fetchContractor(id)
     }
-  },[id])
-const navigate = useNavigate();
+  }, [id])
+  const navigate = useNavigate();
 
-const fetchContractor = async(id)=>{
-  try {
-    const contractorData = await axios.get(`/api/v1/contractor/${id}`);
-    const Contractor = contractorData.data;
-    setContractor({
-      name: Contractor?.name,
-      contactNo: Contractor?.contactNo,
-      whatsapp: Contractor?.whatsapp,
-      address: Contractor?.address,
-      addhar: Contractor?.addhar,
-      pan: Contractor?.pan,
-      bank: Contractor?.bank,
-      jobWork: Contractor?.jobWork,
-    })
-    console.log(Contractor)
-  } catch (error) {
-    toast.error(error.message)
+  const fetchContractor = async (id) => {
+    try {
+      const contractorData = await axios.get(`/api/v1/contractor/${id}`);
+      const Contractor = contractorData.data;
+      setContractor({
+        name: Contractor?.name,
+        contactNo: Contractor?.contactNo,
+        whatsapp: Contractor?.whatsapp,
+        address: Contractor?.address,
+        addhar: Contractor?.addhar,
+        pan: Contractor?.pan,
+        bank: Contractor?.bank,
+        jobWork: Contractor?.jobWork,
+      })
+      console.log(Contractor)
+    } catch (error) {
+      toast.error(error.message)
+    }
   }
-}
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,11 +54,25 @@ const fetchContractor = async(id)=>{
     }));
   };
 
+  const handleReset = () => {
+    setContractor({
+      name: '',
+      contactNo: '',
+      whatsapp: '',
+      address: '',
+      addhar: '',
+      pan: '',
+      bank: '',
+      jobWork: '',
+      isUser: '',
+    })
+}
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log(contractor)
     try {
-      if(contractorToEdit){
+      if (contractorToEdit) {
         const response = await axios.put(`/api/v1/contractor/${contractorToEdit}`, {
           name: contractor.name,
           contactNo: contractor.contactNo,
@@ -92,95 +106,93 @@ const fetchContractor = async(id)=>{
       toast.error('Failed Creating Contractor. Please check your credentials.');
     }
   };
-
   return (
-    <div >
-    <Header category="Page" title="Create Contractor" />
-    <section className='container mx-auto mt-4 mb-16'>
-      <form onSubmit={handleSubmit}
-        className="max-w-md mx-auto">
+    <div>
+        <form
+          className='space-y-4'
+          onSubmit={handleSubmit}>
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-600">
-            Name:
-          </label>
-          <input
-            type="text"
-            name="name"
-            value={contractor.name}
-            onChange={handleChange}
-            placeholder='Name'
-            required
-            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-          />
-        </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-600">
+              Name:
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={contractor.name}
+              onChange={handleChange}
+              placeholder='Name'
+              required
+              className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+            />
+          </div>
 
-        <div className='mb-4'>
-          <label htmlFor='phone'
-            className='block text-sm font-medium text-gray-600'>
-            Contact Number:
-          </label>
-          <input
-            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-            type='text'
-            name='contactNo'
-            id='contactNo'
-            placeholder='Enter Your Contact Number'
-            required
-            autoComplete='off'
-            value={contractor.contactNo}
-            onChange={handleChange}
-          />
-        </div>
+          <div className='mb-4'>
+            <label htmlFor='phone'
+              className='block text-sm font-medium text-gray-600'>
+              Contact Number:
+            </label>
+            <input
+              className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
+              type='text'
+              name='contactNo'
+              id='contactNo'
+              placeholder='Enter Your Contact Number'
+              required
+              autoComplete='off'
+              value={contractor.contactNo}
+              onChange={handleChange}
+            />
+          </div>
 
-        <div className='mb-4'>
-          <label htmlFor='whatsapp'
-            className='block text-sm font-medium text-gray-600'>
-            Whatsapp Number:
-          </label>
-          <input
-            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-            type='text'
-            name='whatsapp'
-            id='whatsapp'
-            placeholder='Enter Your Whatsapp Number'
-            autoComplete='off'
-            value={contractor.whatsapp}
-            onChange={handleChange}
-          />
-        </div>
+          <div className='mb-4'>
+            <label htmlFor='whatsapp'
+              className='block text-sm font-medium text-gray-600'>
+              Whatsapp Number:
+            </label>
+            <input
+              className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
+              type='text'
+              name='whatsapp'
+              id='whatsapp'
+              placeholder='Enter Your Whatsapp Number'
+              autoComplete='off'
+              value={contractor.whatsapp}
+              onChange={handleChange}
+            />
+          </div>
 
-        <div className='mb-4'>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-600">
-            Address
-          </label>
-          <input
-            type="text"
-            id="address"
-            name="address"
-            value={contractor.address}
-            onChange={handleChange}
-            placeholder="Address"
-            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-          />
-        </div>
+          <div className='mb-4'>
+            <label htmlFor="address" className="block text-sm font-medium text-gray-600">
+              Address
+            </label>
+            <input
+              type="text"
+              id="address"
+              name="address"
+              value={contractor.address}
+              onChange={handleChange}
+              placeholder="Address"
+              className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+            />
+          </div>
 
-        <div className='mb-4'>
-          <label htmlFor="jobWork" className="block text-sm font-medium text-gray-600">
-            Work Of Contractor
-          </label>
-          <input
-            type="text"
-            id="jobWork"
-            name="jobWork"
-            value={contractor.jobWork}
-            onChange={handleChange}
-            placeholder="Job Work"
-            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-          />
-        </div>
+          <div className='mb-4'>
+            <label htmlFor="jobWork" className="block text-sm font-medium text-gray-600">
+              Work Of Contractor
+            </label>
+            <input
+              type="text"
+              id="jobWork"
+              name="jobWork"
+              value={contractor.jobWork}
+              onChange={handleChange}
+              placeholder="Job Work"
+              className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+            />
+          </div>
 
-        {/* <div className="mb-5">
+          {/* <div className="mb-5">
           <h4 className="text-lg font-semibold mb-2">Documents</h4>
           <div className="grid grid-cols-2 gap-4">
 
@@ -229,17 +241,26 @@ const fetchContractor = async(id)=>{
           </div>
         </div> */}
 
-        <button
-          type="submit"
-          className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:shadow-outline-blue active:bg-blue-800">
-          Create Contractor
-        </button>
-      </form>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-      />
-    </section>
+          <div className="flex justify-end gap-2 mt-6">
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
+              Cancel
+            </button>
+            <button
+              type='submit'
+              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" >
+              Create
+            </button>
+            <button type="button" onClick={handleReset}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
+              Reset
+            </button>
+          </div>
+
+        </form>
+        <Toaster
+          position="top-right"
+          reverseOrder={false}
+        />
     </div>
   )
 }

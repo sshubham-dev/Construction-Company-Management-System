@@ -6,10 +6,15 @@ import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import Header from '../../components/Header';
+import Modal from '../../components/Modal';
+import WorkDetailsForm from '../../components/CreateWorkDetail';
+
 axios.defaults.withCredentials = true;
+
 const WorkDetails = () => {
   const [workDetails, setWorkDetail] = useState([]);
   const navigate = useNavigate();
+  const [createModal, setCreateModal] = useState(false);
 
   useEffect(() => {
     const fetchWorkDetails = async () => {
@@ -23,10 +28,6 @@ const WorkDetails = () => {
     };
     fetchWorkDetails();
   }, []);
-
-  const handleAdd = () => {
-    navigate('/create-work-details');
-  };
 
   const handleEdit = (id) => {
     navigate(`/edit-work-detail/${id}`);
@@ -63,7 +64,7 @@ const WorkDetails = () => {
       <div className="overflow-x-auto h-full">
         <Header category="Page" title="Work Detail's" />
         <div className="text-sm text-gray-700 py-1 flex flex-row items-center justify-end">
-          <button onClick={handleAdd} className="bg-green-500 rounded-full text-white p-2 mt-2 sm:mt-0">
+          <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white p-2 mt-2 sm:mt-0">
             <MdAdd className='text-xl' />
           </button>
         </div>
@@ -120,6 +121,12 @@ const WorkDetails = () => {
           reverseOrder={false}
         />
       </div>
+      {/* Work Details Modal */}
+      {createModal && (
+        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Work Detail' >
+          <WorkDetailsForm onClose={() => setCreateModal(false)} />
+        </Modal>
+      )}
     </div>
   )
 }

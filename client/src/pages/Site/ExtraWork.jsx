@@ -10,12 +10,15 @@ import moment from 'moment';
 import { useSelector } from 'react-redux';
 import Header from '../../components/Header';
 import { FcApproval } from "react-icons/fc";
+import CreateExtraWork from '../../components/CreateExtraWork';
+import Modal from '../../components/Modal';
 axios.defaults.withCredentials = true;
 
 const ExtraWork = () => {
   const navigate = useNavigate();
   const [clientExtraWorks, setClientExtraWork] = useState([]);
   const [contractorExtraWorks, setContractorExtraWork] = useState([]);
+    const [createModal, setCreateModal] = useState(false);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
 
   useEffect(() => {
@@ -64,10 +67,6 @@ const ExtraWork = () => {
     }
   };
 
-  const handleAdd = () => {
-    navigate('/create-extra-work');
-  };
-
   return (
     <div >
       <section className="overflow-x-auto"
@@ -77,10 +76,9 @@ const ExtraWork = () => {
         }}>
         <Header category="Page" title="Extra Work's" />
         <div className="w-full mx-auto text-gray-700 px-2 flex justify-end items-center">
-        {user.department === 'Site Incharge' && (
-          <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
+          <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2">
             <MdAdd className='text-xl' />
-          </button>)}
+          </button>
         </div>
 
         <Tabs defaultActiveKey='client'>
@@ -371,6 +369,12 @@ const ExtraWork = () => {
           reverseOrder={false}
         />
       </section>
+            {/* Extra Work Modal */}
+            {createModal && (
+        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Extra Work' >
+          <CreateExtraWork onClose={() => setCreateModal(false)} />
+        </Modal>
+      )}
     </div>
   )
 }

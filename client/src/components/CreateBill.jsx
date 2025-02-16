@@ -3,7 +3,7 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import Header from '../components/Header';
+
 axios.defaults.withCredentials = true;
 
 const CreateBill = () => {
@@ -350,10 +350,7 @@ const CreateBill = () => {
 
   return (
     <div >
-      <Header category="Page" title="Create Bill" />
-      <section className='container mx-auto mt-4 mb-16'>
         <form className="max-w-md mx-auto" onSubmit={handleSubmit}>
-          <h1 className="text-2xl font-semibold mb-4 text-center">Bill</h1>
 
           <div className="mb-4">
             <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-2">
@@ -430,7 +427,6 @@ const CreateBill = () => {
           </div>
 
         </form>
-      </section>
       <Toaster
         position="top-right"
         reverseOrder={false}

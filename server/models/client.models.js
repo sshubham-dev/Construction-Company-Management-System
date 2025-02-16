@@ -39,6 +39,7 @@ const clientSchema = new mongoose.Schema({
     gstNo: {
         type: String,
     },
+    isUser: Boolean,
     extraWork: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Extra-Work',

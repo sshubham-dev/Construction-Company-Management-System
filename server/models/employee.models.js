@@ -50,6 +50,7 @@ const employeeSchema = new mongoose.Schema({
     bank: {
         type: String,
     },
+    isUser: Boolean,
     certificates: {
         type: [{
             type: String,
