@@ -324,7 +324,6 @@ const Sidebar = () => {
       role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
     },
 
-
     {
       to: '/approval',
       name: 'Approval',

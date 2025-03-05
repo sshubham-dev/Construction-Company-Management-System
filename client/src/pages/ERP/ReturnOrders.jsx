@@ -145,12 +145,12 @@ const ReturnOrders = () => {
                     <td className="px-6 py-4 text-center">₹ {purchaseOrder?.totalPaid ? purchaseOrder?.totalPaid : ' 0'}</td>
                     <td className="px-6 py-4 text-center">₹ {purchaseOrder?.totalDue ? purchaseOrder?.totalDue : ' 0'}</td>
                     <td className="px-6 py-4 text-center">
-                      <button onClick={() => handleRedirect(purchaseOrder._id)} className="mr-2">
+                      {/* <button onClick={() => handleRedirect(purchaseOrder._id)} className="mr-2">
                         <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                       </button>
                       <button onClick={() => handleEdit(purchaseOrder._id)} className="mr-2">
                         <GrEdit className="text-green-500 hover:text-green-800 text-lg" />
-                      </button>
+                      </button> */}
                       <button onClick={() => handleDelete(purchaseOrder._id)} className="mr-2">
                         <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                       </button>

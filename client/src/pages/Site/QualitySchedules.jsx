@@ -86,14 +86,14 @@ const QualitySchedules = () => {
                   <td className="px-6 py-4">{qualitySchedule.approvalStatus}</td>
                   {/* <td className="px-6 py-4 text-center">{work.startedAt ? moment(work.startedAt).format('DD-MM-YYYY') : '-'}</td> */}
                   <td className="px-6 py-4">
-                    <button onClick={() => handleRedirect(qualitySchedule._id)} className="mr-2">
+                    {/* <button onClick={() => handleRedirect(qualitySchedule._id)} className="mr-2">
                       <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                     </button>
                     <button
                       onClick={() => handleEdit(qualitySchedule._id)}
                       className="mr-2">
                       <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                    </button>
+                    </button> */}
                     <button
                       onClick={() => handleDelete(qualitySchedule._id)}>
                       <MdDelete className='text-red-500 hover:text-red-600 text-xl' />

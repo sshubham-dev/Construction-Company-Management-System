@@ -91,9 +91,9 @@ const Suppliers = () => {
                                         {/* <button onClick={() => handleRedirect(supplier._id)} className="mr-2">
                                             <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                                         </button> */}
-                                        <button onClick={() => handleEdit(supplier._id)} className="mr-2">
+                                        {/* <button onClick={() => handleEdit(supplier._id)} className="mr-2">
                                             <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                                        </button>
+                                        </button> */}
                                         <button onClick={() => handleDelete(supplier._id)} className="mr-2">
                                             <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                                         </button>

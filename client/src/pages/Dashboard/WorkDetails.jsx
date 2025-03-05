@@ -80,12 +80,12 @@ const WorkDetails = () => {
                 <summary className='flex justify-between flex-row text-xl font-large text-color-title cursor-pointer' style={{ padding: '1rem' }}>
                   {workDetail.title}
                   <div>
-                    <button
+                    {/* <button
                       onClick={() => handleEdit(workDetail._id)}
                       className="mr-2"
                     >
                       <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                    </button>
+                    </button> */}
                     <button
                       onClick={() => handleDelete(workDetail._id)}>
                       <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
@@ -97,12 +97,12 @@ const WorkDetails = () => {
                   <ul key={index} className='flex justify-between flex-row my-1.5'>
                     <li className='font-medium text-color-title mx-5 py-2 list-disc text-wrap'>{description?.work}</li>
                     <div className="px-6 py-2">
-                      <button
+                      {/* <button
                         onClick={() => editDetails(workDetail._id, index)}
                         className="mr-2"
                       >
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                      </button>
+                      </button> */}
                       <button
                         onClick={() => DeleteDetail(workDetail._id, index)}>
                         <MdDelete className='text-red-500 hover:text-red-600 text-xl' />

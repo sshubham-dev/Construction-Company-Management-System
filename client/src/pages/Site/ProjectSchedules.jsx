@@ -115,12 +115,12 @@ const ProjectSchedules = () => {
                     <td className="px-6 py-4 text-center">{site.incharge?.userName}</td>
                     <td className="px-6 py-4 text-center">{site.projectType}</td> */}
                   <td className="px-6 py-4 text-center">
-                    <button onClick={() => handleRedirect(projectSchedule._id)} className="mr-2">
+                    {/* <button onClick={() => handleRedirect(projectSchedule._id)} className="mr-2">
                       <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                     </button>
                     <button onClick={() => handleEdit(projectSchedule._id)} className="mr-2">
                       <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                    </button>
+                    </button> */}
                     <button onClick={() => handleDelete(projectSchedule._id)} className="mr-2">
                       <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                     </button>
