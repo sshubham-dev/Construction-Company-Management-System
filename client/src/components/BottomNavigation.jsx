@@ -92,8 +92,8 @@ const BottomNavigation = () => {
           role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },
         {
-          to: '/erp/inventory/return',
-          name: 'Return',
+          to: '/erp/inventory/return-request',
+          name: 'Return-Request',
           icon: <FaTruckArrowRight />,
           role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
         },
@@ -189,8 +189,8 @@ const BottomNavigation = () => {
           role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },
         {
-          to: '/return-order/sites',
-          name: 'Return-Orders',
+          to: '/sites/return',
+          name: 'Return-Request',
           icon: <TbTruckReturn />,
           role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },

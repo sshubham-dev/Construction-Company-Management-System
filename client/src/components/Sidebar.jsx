@@ -172,7 +172,7 @@ const Sidebar = () => {
         },
         {
           to: '/erp/inventory/return-request',
-          name: 'Return',
+          name: 'Return-Request',
           icon: <FaTruckArrowRight />,
           role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
         },
