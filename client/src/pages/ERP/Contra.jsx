@@ -29,51 +29,51 @@ const Contra = () => {
 
     return (
         <div>
-            <Header category="Page" title="Contra Voucher" />
-            <section className="h-full w-full mb-16 flex justify-center">
-                <div className='overflow-x-auto w-full max-w-screen-xl mx-auto bg-white rounded-xl shadow p-6'>
-                    <div className="flex justify-end mb-6 space-x-2">
-                        <button
-                            className="bg-blue-500 text-white py-2 px-2 rounded-4xl shadow-lg "
-                            onClick={() => setIsModalOpen(true)}>
-                            <IoIosAddCircle size={24} />
-                        </button>
-                    </div>
-                    {loading ? (
-                        <div className="text-center py-4">Loading...</div>
-                    ) : (
-                        <table className="min-w-full table-auto border-collapse">
-                            <thead className="bg-gray-100">
-                                <tr>
-                                    <th className="px-4 py-2 text-left border-b">Voucher No</th>
-                                    <th className="px-4 py-2 text-left border-b">Date</th>
-                                    <th className="px-4 py-2 text-left border-b">From Account</th>
-                                    <th className="px-4 py-2 text-left border-b">To Account</th>
-                                    <th className="px-4 py-2 text-left border-b">Amount</th>
-                                    <th className="px-4 py-2 text-left border-b">Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {contraVouchers.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="6" className="px-4 py-2 text-center">No vouchers available.</td>
-                                    </tr>
-                                ) : (
-                                    contraVouchers.map((voucher) => (
-                                        <tr key={voucher._id} className="border-b">
-                                            <td className="px-4 py-2">{voucher.voucherNo}</td>
-                                            <td className="px-4 py-2">{new Date(voucher.date).toLocaleDateString()}</td>
-                                            <td className="px-4 py-2">{voucher.fromAccount.name}</td>
-                                            <td className="px-4 py-2">{voucher.toAccount.name}</td>
-                                            <td className="px-4 py-2">{voucher.amount}</td>
-                                            <td className="px-4 py-2">{voucher.description || "N/A"}</td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    )}
+            <section className="overflow-x-auto">
+                <Header category="Page" title="Contra Voucher" />
+                <div className="w-full mx-auto mb-6 text-gray-700 p-1 flex flex-row justify-end items-center">
+                    <button
+                        className="bg-blue-500 text-white py-2 px-2 rounded-4xl shadow-lg "
+                        onClick={() => setIsModalOpen(true)}>
+                        <IoIosAddCircle size={24} />
+                    </button>
                 </div>
+                {loading ? (
+                    <div className="text-center py-4">Loading...</div>
+                ) : (
+                    <div className="overflow-x-auto scrollbar-hide">
+                    <table className="w-full whitespace-nowrap overflow-x-auto scrollbar-hide">
+                        <thead className="bg-gray-100">
+                            <tr>
+                                <th className="px-4 py-2 text-left border-b">Voucher No</th>
+                                <th className="px-4 py-2 text-left border-b">Date</th>
+                                <th className="px-4 py-2 text-left border-b">From Account</th>
+                                <th className="px-4 py-2 text-left border-b">To Account</th>
+                                <th className="px-4 py-2 text-left border-b">Amount</th>
+                                <th className="px-4 py-2 text-left border-b">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {contraVouchers.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="px-4 py-2 text-center">No vouchers available.</td>
+                                </tr>
+                            ) : (
+                                contraVouchers.map((voucher) => (
+                                    <tr key={voucher._id} className="border-b">
+                                        <td className="px-4 py-2">{voucher.voucherNo}</td>
+                                        <td className="px-4 py-2">{new Date(voucher.date).toLocaleDateString()}</td>
+                                        <td className="px-4 py-2">{voucher.fromAccount.name}</td>
+                                        <td className="px-4 py-2">{voucher.toAccount.name}</td>
+                                        <td className="px-4 py-2">{voucher.amount}</td>
+                                        <td className="px-4 py-2">{voucher.description || "N/A"}</td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                    </div>
+                )}
                 {/* Add/Edit Modal */}
                 {isModalOpen && (
                     <CreateContra onClose={() => setIsModalOpen(false)} isOpen={isModalOpen} />

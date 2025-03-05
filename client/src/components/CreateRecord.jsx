@@ -1,31 +1,27 @@
 import React, { useEffect, useState } from 'react'
-import Header from './Header';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 
 
-const CreateRecord = ({userId}) => {
+const CreateRecord = ({ userId, onClose }) => {
   const [sites, setSite] = useState([]);
   const [record, setRecord] = useState({
     recordFor: '',
     site: '',
-    item: '',
+    purpose: '',
     unit: '',
     amount: '',
     quantity: '',
     rate: '',
-    paymentTo: '',
-    status: '',
+    paidTo: '',
     paymentMode: '',
+    remarks: '',
+    slip: '',
   })
-  const [suppliers, setSupplier] = useState([]);
   const [contractors, setContractor] = useState([]);
-  const [materials, setMaterial] = useState([]);
   const units = ['SQFT', 'RFT', 'LUMSUM', 'NOS', 'FIXED', 'RMT', 'SQMT', 'CUM', '₹', 'BAG', 'KG', 'BUNDLE', 'LOAD', 'HYVA', 'TRACTOR', 'M', 'MM', 'FT', 'INCH'];
-  const recordFor = ['Material Record', 'Labour Payment', 'Extra Work', 'Income Record', 'Other Expenses'];
   const kharchiFor = ['Material Record', 'Labour Payment', 'Extra Work', 'Other Expenses'];
-  const paymentStatus = ['Paid', 'Due']
   const paymentmode = ['Cash', 'Account']
   const [userid, setUserId] = useState(null)
 
@@ -40,15 +36,6 @@ const CreateRecord = ({userId}) => {
       }
     };
 
-    const fetchWorkDetails = async () => {
-      try {
-        const response = await axios.get('/api/v1/work-details')
-        // setWorkName(response.data);
-      } catch (error) {
-        console.error('Error fetching work details:', error.message);
-      }
-    };
-
     const fetchContractor = async () => {
       try {
         const contractorData = await axios.get('/api/v1/contractor');
@@ -58,38 +45,8 @@ const CreateRecord = ({userId}) => {
       }
     };
 
-    const fetchSupplier = async () => {
-      try {
-        const supplierData = await axios.get('/api/v1/Supplier');
-        setSupplier(supplierData.data);
-      } catch (error) {
-        console.error(error.message)
-      }
-    };
-
-    const fetchMaterial = async () => {
-      try {
-        const title = 'Purchase Order';
-        const data = await axios.post('/api/v1/work-details/name', {
-          title
-        });
-        // console.log(data.data)
-        let material = [];
-        for (let i = 0; i < data.data.description.length; i++) {
-          material = material.concat(data.data.description[i]);
-        }
-        console.log(material)
-        setMaterial(material)
-      } catch (error) {
-        console.error(error.message)
-      }
-    }
-
     fetchSite();
     fetchContractor()
-    fetchSupplier();
-    fetchWorkDetails();
-    fetchMaterial();
 
     if (userId) {
       console.log(userId)
@@ -97,35 +54,9 @@ const CreateRecord = ({userId}) => {
     }
   }, [])
 
-  useEffect(() => {
-    const getWorkOrder = async () => {
-      try {
-        const response = await axios.get(`/api/v1/work-order/`);
-      } catch (error) {
-        console.error(error);
-        // toast.error(error.message);
-      }
-    }
-    getWorkOrder();
-  }, [])
-
-  useEffect(() => {
-    const getMaterialOrder = async () => {
-      try {
-        const response = await axios.get(`/api/v1/purchase-order/`);
-        console.log(response.data);
-      } catch (error) {
-        console.error(error);
-        // toast.error(error.message);
-      }
-    };
-    getMaterialOrder()
-  }, [])
-
   const handleChange = (field, value) => {
     setRecord((prev) => ({ ...prev, [field]: value }));
   };
-
 
   const RecordFor = (name) => {
     switch (name) {
@@ -134,37 +65,29 @@ const CreateRecord = ({userId}) => {
           <>
             <div className="mb-4">
               <label
-                htmlFor="paymentTo"
+                htmlFor="paidTo"
                 className="block text-sm font-semibold text-gray-600 mb-2">
                 Supplier
               </label>
-              <select
-                name="paymentTo"
-                onChange={(e) => handleChange('paymentTo', e.target.value)}
+              <input
+                name="paidTo"
+                onChange={(e) => handleChange('paidTo', e.target.value)}
+                placeholder='Supplier'
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                value={record.paymentTo} >
-                <option value="" disabled>Select The Supplier</option>
-                <option value="cash">Cash</option>
-                <option value="account">Account</option>
-                <option value="cheque">Cheque</option>
-              </select>
+                value={record.paidTo} />
             </div>
             <div className="mb-4">
               <label
-                htmlFor="item"
+                htmlFor="purpose"
                 className="block text-sm font-semibold text-gray-600 mb-2">
                 Item
               </label>
-              <select
-                name="item"
-                value={record.item}
-                onChange={(e) => handleChange('item', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled>Select The Item</option>
-                <option value="cash">Cash</option>
-                <option value="account">Account</option>
-                <option value="cheque">Cheque</option>
-              </select>
+              <input
+                name="purpose"
+                value={record.purpose}
+                onChange={(e) => handleChange('purpose', e.target.value)}
+                placeholder='purpose'
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
             </div>
             <div className="mb-4">
               <label htmlFor="unit" className="block text-gray-700 text-sm font-bold mb-2">
@@ -223,23 +146,6 @@ const CreateRecord = ({userId}) => {
                 className="border p-2 rounded w-full" />
             </div>
             <div className="mb-4">
-              <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">
-                Payment Status:
-              </label>
-              <select
-                name="status"
-                value={record.status}
-                onChange={(e) => handleChange('status', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option>Select a Payment Status</option>
-                {paymentStatus.map((status, index) => (
-                  <option key={index} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="mb-4">
               <label htmlFor="paymentMode" className="block text-gray-700 text-sm font-bold mb-2">
                 Payment Mode:
               </label>
@@ -265,16 +171,16 @@ const CreateRecord = ({userId}) => {
           <>
             <div className="mb-4">
               <label
-                htmlFor="paymentTo"
+                htmlFor="paidTo"
                 className="block text-sm font-semibold text-gray-600 mb-2">
                 Contractor
               </label>
               <select
-                name="paymentTo"
-                onChange={(e) => handleChange('paymentTo', e.target.value)}
-                value={record.paymentTo}
+                name="paidTo"
+                onChange={(e) => handleChange('paidTo', e.target.value)}
+                value={record.paidTo}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled>Select The Supplier</option>
+                <option value="" disabled>Select The Contractor</option>
                 <option value="cash">Cash</option>
                 <option value="account">Account</option>
                 <option value="cheque">Cheque</option>
@@ -282,20 +188,16 @@ const CreateRecord = ({userId}) => {
             </div>
             <div className="mb-4">
               <label
-                htmlFor="item"
+                htmlFor="purpose"
                 className="block text-sm font-semibold text-gray-600 mb-2">
-                Work / Item
+                Work
               </label>
-              <select
-                name="item"
-                value={record.item}
-                onChange={(e) => handleChange('item', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled>Select The Item / Work</option>
-                <option value="cash">Cash</option>
-                <option value="account">Account</option>
-                <option value="cheque">Cheque</option>
-              </select>
+              <input
+                name="purpose"
+                value={record.purpose}
+                onChange={(e) => handleChange('purpose', e.target.value)}
+                placeholder='Work'
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
             </div>
             <div className="mb-4">
               <label htmlFor="unit" className="block text-gray-700 text-sm font-bold mb-2">
@@ -377,56 +279,31 @@ const CreateRecord = ({userId}) => {
       case 'Extra Work':
         return (
           <>
-            {/* <div className="mb-4">
-              <label
-                htmlFor="paymentTo"
-                className="block text-sm font-semibold text-gray-600 mb-2">
-                Supplier
-              </label>
-              <select
-                name="paymentTo"
-                onChange={(e) => handleChange('paymentTo', e.target.value)}
-                value={record.paymentTo}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled>Select The Supplier</option>
-                <option value="cash">Cash</option>
-                <option value="account">Account</option>
-                <option value="cheque">Cheque</option>
-              </select>
-            </div> */}
-            {/* <div className="mb-4">
-              <label
-                htmlFor="paymentTo"
-                className="block text-sm font-semibold text-gray-600 mb-2">
-                Contractor
-              </label>
-              <select
-                name="paymentTo"
-                onChange={(e) => handleChange('paymentTo', e.target.value)}
-                value={record.paymentTo}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled>Select The Contractor</option>
-                <option value="cash">Cash</option>
-                <option value="account">Account</option>
-                <option value="cheque">Cheque</option>
-              </select>
-            </div> */}
             <div className="mb-4">
               <label
-                htmlFor="item"
+                htmlFor="paidTo"
                 className="block text-sm font-semibold text-gray-600 mb-2">
-                Work / Item
+                Payment To
               </label>
-              <select
-                name="item"
-                value={record.item}
-                onChange={(e) => handleChange('item', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled>Select The Item / Work</option>
-                <option value="cash">Cash</option>
-                <option value="account">Account</option>
-                <option value="cheque">Cheque</option>
-              </select>
+              <input
+                name="paidTo"
+                onChange={(e) => handleChange('paidTo', e.target.value)}
+                value={record.paidTo}
+                placeholder='Paid To'
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+            </div>
+            <div className="mb-4">
+              <label
+                htmlFor="purpose"
+                className="block text-sm font-semibold text-gray-600 mb-2">
+                Purpose
+              </label>
+              <input
+                name="purpose"
+                value={record.purpose}
+                onChange={(e) => handleChange('purpose', e.target.value)}
+                placeholder='Purpose'
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
             </div>
             <div className="mb-4">
               <label htmlFor="unit" className="block text-gray-700 text-sm font-bold mb-2">
@@ -483,23 +360,6 @@ const CreateRecord = ({userId}) => {
                 placeholder="Enter The Amount"
                 onChange={(e) => handleChange('amount', e.target.value)}
                 className="border p-2 rounded w-full" />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">
-                Payment Status:
-              </label>
-              <select
-                name="status"
-                value={record.status}
-                onChange={(e) => handleChange('status', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option>Select a Payment Status</option>
-                {paymentStatus.map((status, index) => (
-                  <option key={index} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
             </div>
             <div className="mb-4">
               <label htmlFor="paymentMode" className="block text-gray-700 text-sm font-bold mb-2">
@@ -525,39 +385,31 @@ const CreateRecord = ({userId}) => {
       case 'Other Expenses':
         return (
           <>
-            {/* <div className="mb-4">
-              <label
-                htmlFor="paymentTo"
-                className="block text-sm font-semibold text-gray-600 mb-2">
-                Supplier
-              </label>
-              <select
-                name="paymentTo"
-                onChange={(e) => handleChange('paymentTo', e.target.value)}
-                value={record.paymentTo}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled>Select The Supplier</option>
-                <option value="cash">Cash</option>
-                <option value="account">Account</option>
-                <option value="cheque">Cheque</option>
-              </select>
-            </div> */}
             <div className="mb-4">
               <label
-                htmlFor="item"
+                htmlFor="paidTo"
                 className="block text-sm font-semibold text-gray-600 mb-2">
-                Item
+                Payment To
               </label>
-              <select
-                name="item"
-                value={record.item}
-                onChange={(e) => handleChange('item', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled>Select The Item</option>
-                <option value="cash">Cash</option>
-                <option value="account">Account</option>
-                <option value="cheque">Cheque</option>
-              </select>
+              <input
+                name="paidTo"
+                onChange={(e) => handleChange('paidTo', e.target.value)}
+                value={record.paidTo}
+                placeholder='Paid To'
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+            </div>
+            <div className="mb-4">
+              <label
+                htmlFor="purpose"
+                className="block text-sm font-semibold text-gray-600 mb-2">
+                Purpose
+              </label>
+              <input
+                name="purpose"
+                value={record.purpose}
+                placeholder='Purpose'
+                onChange={(e) => handleChange('purpose', e.target.value)}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
             </div>
             <div className="mb-4">
               <label htmlFor="unit" className="block text-gray-700 text-sm font-bold mb-2">
@@ -614,94 +466,6 @@ const CreateRecord = ({userId}) => {
                 placeholder="Enter The Amount"
                 onChange={(e) => handleChange('amount', e.target.value)}
                 className="border p-2 rounded w-full" />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">
-                Payment Status:
-              </label>
-              <select
-                name="status"
-                value={record.status}
-                onChange={(e) => handleChange('status', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option>Select a Payment Status</option>
-                {paymentStatus.map((status, index) => (
-                  <option key={index} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="mb-4">
-              <label htmlFor="paymentMode" className="block text-gray-700 text-sm font-bold mb-2">
-                Payment Mode:
-              </label>
-              <select
-                name="paymentMode"
-                value={record.paymentMode}
-                onChange={(e) => handleChange('paymentMode', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option>Select The Mode of Payment</option>
-                {paymentmode.map((mode, index) => (
-                  <option key={index} value={mode}>
-                    {mode}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </>
-        )
-        break;
-
-      case 'Income Record':
-        return (
-          <>
-            <div className="mb-4">
-              <label
-                htmlFor="item"
-                className="block text-sm font-semibold text-gray-600 mb-2">
-                Work
-              </label>
-              <select
-                name="item"
-                value={record.item}
-                onChange={(e) => handleChange('item', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled>Select The Work Of Payment</option>
-                <option value="cash">Cash</option>
-                <option value="account">Account</option>
-                <option value="cheque">Cheque</option>
-              </select>
-            </div>
-            <div className="mb-4">
-              <label
-                htmlFor="amount"
-                className="block text-sm font-semibold text-gray-600 mb-2">
-                Amount
-              </label>
-              <input
-                type="number"
-                name="amount"
-                onChange={(e) => handleChange('amount', e.target.value)}
-                placeholder="Enter The Amount"
-                className="border p-2 rounded w-full" />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">
-                Payment Status:
-              </label>
-              <select
-                name="status"
-                value={record.status}
-                onChange={(e) => handleChange('status', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option>Select a Payment Status</option>
-                {paymentStatus.map((status, index) => (
-                  <option key={index} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
             </div>
             <div className="mb-4">
               <label htmlFor="paymentMode" className="block text-gray-700 text-sm font-bold mb-2">
@@ -736,67 +500,101 @@ const CreateRecord = ({userId}) => {
     } else {
       console.log(record)
     }
+    onClose()
   }
 
   return (
     <div >
-        <form className="max-w-md mx-auto" onSubmit={handleSubmit}>
+      <form className="max-w-md mx-auto" onSubmit={handleSubmit}>
 
-          <div className="mb-4">
-            <label
-              htmlFor="purpose"
-              className="block text-sm font-semibold text-gray-600 mb-2">
-              Purpose
-            </label>
-            <select
-              name="purpose"
-              value={record.recordFor || ""} // Ensure recordFor has a valid default value
-              onChange={(e) => handleChange("recordFor", e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            >
-              <option value="" disabled>
-                Select The Purpose
+        <div className="mb-4">
+          <label
+            htmlFor="purpose"
+            className="block text-sm font-semibold text-gray-600 mb-2">
+            Purpose
+          </label>
+          <select
+            name="purpose"
+            value={record.recordFor || ""} // Ensure recordFor has a valid default value
+            onChange={(e) => handleChange("recordFor", e.target.value)}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          >
+            <option value="" disabled>
+              Select The Purpose
+            </option>
+            {kharchiFor.map((purpose, index) => (
+              <option key={index} value={purpose}>
+                {purpose}
               </option>
-              {(userid && userid !== "" ? kharchiFor : recordFor).map((item, index) => (
-                <option key={index} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </div>
+            ))}
+          </select>
+        </div>
 
-          <div className="mb-4">
-            <label htmlFor='site' className="block text-sm font-medium text-gray-600 mb-2">Site</label>
-            <select
-              name='site'
-              value={record.site}
-              required
-              onChange={(e) => handleChange('site', e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" >
-              <option>Site</option>
-              {sites?.map((site) => (
-                <option key={site._id} value={site._id}>
-                  {site.name}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="mb-4">
+          <label htmlFor='site' className="block text-sm font-medium text-gray-600 mb-2">Site</label>
+          <select
+            name='site'
+            value={record.site}
+            required
+            onChange={(e) => handleChange('site', e.target.value)}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" >
+            <option>Site</option>
+            {sites?.map((site) => (
+              <option key={site._id} value={site._id}>
+                {site.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          <div>{RecordFor(record.recordFor)}</div>
+        <div>{RecordFor(record.recordFor)}</div>
 
-          <div className="text-center">
-            <button
-              type="submit"
-              className="bg-blue-500 mt-4 text-white px-3 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-300" >
-              Add Expenses
-            </button>
-          </div>
+        {record.recordFor && (
+          <>
+            <div className="mb-4">
+              <label
+                htmlFor="remarks"
+                className="block text-sm font-semibold text-gray-600 mb-2">
+                Remarks
+              </label>
+              <input
+                name="remarks"
+                value={record.remarks}
+                onChange={(e) => handleChange('remarks', e.target.value)}
+                placeholder='Remarks'
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+            </div>
 
-        </form>
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-        />
+            <div className="mb-4">
+              <label
+                htmlFor="slip"
+                className="block text-sm font-semibold text-gray-600 mb-2">
+                Slip
+              </label>
+              <input
+                type='file'
+                name="slip"
+                value={record.slip}
+                onChange={(e) => handleChange('slip', e.target.value)}
+                placeholder='slip'
+                className="appearance-none w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+            </div>
+          </>
+        )}
+
+        <div className="text-center">
+          <button
+            type="submit"
+            className="bg-blue-500 mt-4 text-white px-3 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-300" >
+            Add Expenses
+          </button>
+        </div>
+
+      </form>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+      />
     </div>
   )
 }

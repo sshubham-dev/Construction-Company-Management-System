@@ -2,23 +2,23 @@ const mongoose = require('mongoose');
 
 const ledgerSchema = new mongoose.Schema({
   name: {
-    name: String,
+    type: String,
+  },
+  alias: {
     id: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
     },
     type: {
       type: String,
-      required: true,
       enum: ['client', 'contractor', 'supplier', 'employee'], // Specify the allowed models
     },
   },
-  alias: {
-    type: String,
-  },
   under: {
-    type: String,
-    required: true,
+    name: String,
+    id:{
+      type:mongoose.Schema.Types.ObjectId,
+      ref:'Group'
+    }
   },
   statutoryDetails: {
     isTDSDeductible: {
@@ -80,8 +80,6 @@ const ledgerSchema = new mongoose.Schema({
 
 const Ledger = mongoose.model('Ledger', ledgerSchema);
 
-module.exports = Ledger;
-
 
 const groupSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
@@ -90,7 +88,7 @@ const groupSchema = new mongoose.Schema({
   nature: { type: String, enum: ['assets', 'liabilities', 'income', 'expenses'] }
 }, { timestamps: true });
 
-module.exports = mongoose.model("Group", groupSchema);
+const Group = mongoose.model("Group", groupSchema);
 
 
 const costCenterSchema = new mongoose.Schema({
@@ -103,4 +101,6 @@ const costCenterSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },  // Creation Date
 }, { timestamps: true });
 
-module.exports = mongoose.model("CostCenter", costCenterSchema);
+const CostCenter = mongoose.model("CostCenter", costCenterSchema);
+
+module.exports = {Ledger, Group, CostCenter};

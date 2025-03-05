@@ -2,12 +2,7 @@ const mongoose = require('mongoose');
 
 const requirementSchema = new mongoose.Schema({
     item: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Stock',
-            required: true,
-        }
+        type: String,
     },
     unit: {
         type: String,
@@ -60,11 +55,8 @@ const purchaseOrderSchema = new mongoose.Schema({
         }
     },
     createdBy: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     },
     requirement: [requirementSchema],
     supplierApprove: {
@@ -75,7 +67,7 @@ const purchaseOrderSchema = new mongoose.Schema({
         type: String,
         default: 'Pending'
     },
-    accountApprove: {
+    accountheadApprove: {
         type: String,
         default: 'Pending'
     },

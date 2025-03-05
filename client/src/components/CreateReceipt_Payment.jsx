@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import axios from 'axios'
 
-const CreateReceipt_Payment = ({ onClose, isOpen }) => {
+const CreateReceipt_Payment = ({ onClose }) => {
     const [form, setForm] = useState({
         type: "receipt",
         receiptNo: "",
@@ -19,31 +20,38 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        if (form.type === "receipt") {
-            setReceipts([...receipts, form]);
-        } else {
-            setPayments([...payments, form]);
+        try {
+            if (form.type === "receipt") {
+                setReceipts([...receipts, form]);
+                const response = await axios.post('/api/v1/receipt', form)
+                console.log(response)
+            } else {
+                const response = await axios.post('/api/v1/payment', form)
+                setPayments([...payments, form]);
+                console.log(response)
+            }
+            setForm({
+                type: "receipt",
+                receiptNo: "",
+                paymentNo: "",
+                date: "",
+                from: "",
+                to: "",
+                amount: "",
+                description: "",
+            });
+            onClose()
+        } catch (error) {
+            console.log(error)
         }
-        setForm({
-            type: "receipt",
-            receiptNo: "",
-            paymentNo: "",
-            date: "",
-            from: "",
-            to: "",
-            amount: "",
-            description: "",
-        });
+
     };
 
-    if (!isOpen) return null
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-8">
-            <div className="bg-white py-7 px-5 rounded-lg shadow-lg w-full max-w-lg md:w-3/4 lg:w-1/2 h-[75vh] md:h-[80vh] md:mt-12 overflow-auto">
-                <h2 className="text-2xl font-semibold mb-4">Create {form.type === 'payment' ? 'Payment' : 'Recipt'} Voucher</h2>
+        <div >
                 <form onSubmit={handleSubmit} className="space-y-3 mb-5">
                     <select
                         name="type"
@@ -62,7 +70,7 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                             value={form.receiptNo}
                             onChange={handleChange}
                             className="border p-2 w-full"
-                            required
+                            
                         />
                     ) : (
                         <input
@@ -72,7 +80,7 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                             value={form.paymentNo}
                             onChange={handleChange}
                             className="border p-2 w-full"
-                            required
+                            
                         />
                     )}
                     <input
@@ -81,14 +89,14 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                         value={form.date}
                         onChange={handleChange}
                         className="border p-2 w-full"
-                        required
+                        
                     />
                     <select
                         name="from"
                         value={form.from}
                         onChange={handleChange}
                         className="border p-2 w-full"
-                        required>
+                        >
                         <option value="">From</option>
                     </select>
                     <select
@@ -96,7 +104,7 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                         value={form.to}
                         onChange={handleChange}
                         className="border p-2 w-full"
-                        required>
+                        >
                         <option value="">To</option>
                     </select>
                     <input
@@ -106,7 +114,7 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                         value={form.amount}
                         onChange={handleChange}
                         className="border p-2 w-full"
-                        required
+                        
                     />
                     <textarea
                         name="description"
@@ -114,7 +122,7 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                         value={form.description}
                         onChange={handleChange}
                         className="border p-2 w-full"
-                        required
+                        
                     />
 
                     {/* <div className="grid grid-cols-1 gap-6 mb-4">
@@ -124,7 +132,7 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                         type="text"
                         value={voucherNo}
                         onChange={(e) => setVoucherNo(e.target.value)}
-                        required
+                        
                         className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
                 </div>
@@ -135,7 +143,7 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        required
+                        
                         className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
                 </div>
@@ -146,7 +154,7 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                         name="fromAccount"
                         value={fromAccount}
                         onChange={(e) => setFromAccount(e.target.value)}
-                        required
+                        
                         className="mt-1 block w-full px-2 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">Select Account</option>
                         <option value="">Kotak Account</option>
@@ -161,7 +169,7 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                         name="toAccount"
                         value={toAccount}
                         onChange={(e) => setToAccount(e.target.value)}
-                        required
+                        
                         className="mt-1 block w-full px-2 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">Select Account</option>
                         <option value="">Kotak Account</option>
@@ -176,7 +184,7 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                         type="number"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        required
+                        
                         className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
                 </div>
@@ -209,7 +217,6 @@ const CreateReceipt_Payment = ({ onClose, isOpen }) => {
                         </button>
                     </div>
                 </form>
-            </div>
         </div >
     )
 }

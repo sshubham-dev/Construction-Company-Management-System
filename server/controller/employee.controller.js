@@ -1,15 +1,13 @@
 const Employee = require('../models/employee.models');
 const User = require('../models/user.models');
 const bcrypt = require('bcrypt');
-
+const { convertToUser } = require('./user.controller');
 
 
 const employeeById = async (req, res) => {
     try {
         const _id = req.params.id;
         const employee = await Employee.findOne({ _id })
-            .populate('userId')
-            .exec();
 
         if (!employee) return res.status(500).json({ error: 'Employee not Found' });
         res.status(200).json(employee);
@@ -23,8 +21,6 @@ const employeeById = async (req, res) => {
 const employees = async (req, res) => {
     try {
         const employees = await Employee.find()
-            .populate('userId')
-            .exec();
 
         if (employees.length === 0) return res.status(500).json({ error: 'Employees not Found' });
         res.status(200).json(employees);
@@ -41,10 +37,9 @@ const createEmployee = async (req, res) => {
         const {
             name,
             email,
-            password,
-            contactNo,
+            phone,
             whatsapp,
-            employeeId,
+            employeeNo,
             joinDate,
             birthdate,
             address,
@@ -53,50 +48,44 @@ const createEmployee = async (req, res) => {
             cv,
             offerletter,
             bank,
+            isUser,
+            department,
         } = req.body;
 
-
         const employeeExist = await Employee.findOne({
-            $and: [{ name }, { email }, { employeeId }]
+            $and: [{ name }, { email }, { employeeNo }]
         });
         console.log(employeeExist)
 
         if (employeeExist) return res.status(400).json({ error: 'Validation Error' });
 
-        const existingUser = await User.findOne({
-            $and: [{ userName: name }, { userMail: email }]
-        }).select('-password -refreshToken');
-
-        if (!existingUser) return res.status(400).json({ error: 'User not found' });
-        console.log('exist', existingUser)
-
-        // Hash the password for the employee
-        const hashedPassword = await bcrypt.hash(password, 10);
-
         const newEmployee = new Employee({
-            userId: existingUser._id,
             name,
             email,
-            password: hashedPassword,
             whatsapp,
-            contactNo,
+            phone,
             address,
-            employeeId,
+            employeeNo,
             joinDate,
-            department: existingUser.department,
+            department,
             birthdate,
             addhar,
             pan,
             cv,
             offerletter,
             bank,
+            isUser
         });
 
         const createdEmployee = await newEmployee.save();
 
         if (!createdEmployee) return res.status(500).json({ error: 'Validation Error' });
-        console.log('saved:', createdEmployee)
         res.status(200).json({ message: 'Employee Registration Completed Successfully' });
+        console.log('saved:', createdEmployee)
+        if (isUser === true) {
+            const password = name + '@' + phone
+            convertToUser(createdEmployee._id, 'Employee', password);
+        }
     } catch (error) {
         console.log(error)
         res.status(500).json({ error: 'Something went wrong' });
@@ -126,6 +115,7 @@ const updateEmployeeData = async (req, res) => {
             birthdate,
             salary,
             salarySlip,
+            isUser,
         } = req.body;
 
         // check and update Employee
@@ -150,17 +140,23 @@ const updateEmployeeData = async (req, res) => {
                     birthdate,
                     salary,
                     salarySlip,
+                    isUser,
                 },
-            }, { new: true }).populate('user').exec();
+            }, { new: true })
         if (!updatedEmployeeData) return res.status(404).json({ error: 'Employee not Found' });
 
         res.status(200).json({ message: 'Employee Data Updated Successfuly', updatedEmployeeData });
+        if (isUser === true && updatedEmployeeData.userId == '') {
+            const password = name + '@' + phone
+            convertToUser(updatedEmployeeData._id, 'Employee', password);
+        }
 
     } catch (error) {
         console.log(error)
         res.status(500).json({ error: "Something went wrong" });
     }
 };
+
 
 const deleteEmployee = async (req, res) => {
     try {
@@ -173,5 +169,6 @@ const deleteEmployee = async (req, res) => {
         res.status(500).json({ error: "Something went wrong" });
     }
 };
+
 
 module.exports = { employeeById, employees, createEmployee, updateEmployeeData, deleteEmployee };

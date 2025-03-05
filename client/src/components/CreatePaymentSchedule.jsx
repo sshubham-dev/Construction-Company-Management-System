@@ -3,7 +3,6 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import Header from '../components/Header';
 import Select from 'react-select';
 
 axios.defaults.withCredentials = true;
@@ -11,14 +10,8 @@ axios.defaults.withCredentials = true;
 const CreatePaymentSchedule = () => {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
-    site: {
-      name: '',
-      id: '',
-    },
-    client: {
-      name: '',
-      id: '',
-    },
+    site: '',
+    client: '',
     paymentDetails: [{
       workDescription: '',
       amount: '',
@@ -43,6 +36,21 @@ const CreatePaymentSchedule = () => {
   const { user } = useSelector((state) => state.auth);
   const statusOptions = ['Started', 'Completed', 'Pending', 'Partially Completed'];
   const { id, index } = useParams();
+  const [clients, setClients] = useState([]);
+  const [selectedClient, setSelectedClient] = useState({ name: '', id: '' });
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await axios.get('/api/v1/clients'); // Adjust the endpoint as necessary
+        setClients(response.data);
+      } catch (error) {
+        console.error('Error fetching clients:', error.message);
+      }
+    };
+
+    fetchClients();
+  }, []);
 
   useEffect(() => {
     const fetchSite = async () => {
@@ -118,8 +126,31 @@ const CreatePaymentSchedule = () => {
   const handleChange = (field, value) => {
     setFormData(prevState => ({
       ...prevState,
-      [field]: value,
+      [field]: {
+        ...prevState[field],
+        ...value,
+      },
     }));
+  };
+
+  const handleSiteChange = async (siteId) => {
+    setFormData(prevState => ({
+      ...prevState,
+      site:  siteId,
+    }));
+
+    try {
+      const response = await axios.get(`/api/v1/clients?siteId=${siteId}`);
+      setClients(response.data);
+      if (response.data.length > 0) {
+        setSelectedClient({ id: response.data[0]._id, name: response.data[0].name });
+        handleChange('client', { id: response.data[0]._id, name: response.data[0].name });
+      } else {
+        setSelectedClient({ id: '', name: '' });
+      }
+    } catch (error) {
+      console.error('Error fetching clients:', error.message);
+    }
   };
 
   const handleNext = () => {
@@ -148,8 +179,8 @@ const CreatePaymentSchedule = () => {
 
   const handleReset = () => {
     setFormData({
-      site: { name: '', id: '' },
-      client: { name: '', id: '' },
+      site: '',
+      client: '',
       paymentDetails: [{ workDescription: '', amount: '', paymentDate: '' }],
     });
     setStep(0);
@@ -271,19 +302,19 @@ const CreatePaymentSchedule = () => {
                   <label htmlFor="site" className="block text-sm font-medium text-gray-600">Select a Site</label>
                   <select
                     name="site"
-                    value={formData.site}
-                    onChange={(e) => handleChange('site', e.target.value)}
+                    value={formData.site.id}
+                    onChange={(e) => handleSiteChange(e.target.value)}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   >
-                    <option>{scheduleIdToEdit ? data.site : 'Site'}</option>
+                    <option value="">Select Site</option>
                     {sites.map((site) => (
                       <option key={site._id} value={site._id}>{site.name}</option>
                     ))}
                   </select>
                 </div>
-
                 <div className="mb-4">
-                  <p className="block text-md font-medium text-gray-600">Client: {formData.client.name}</p>
+                  <label htmlFor="client" className="block text-sm font-medium text-gray-600">Client</label>
+                  <p className="block text-md font-medium text-gray-600">{selectedClient.name || 'No client selected'}</p>
                 </div>
                 <button type="button" onClick={() => setStep(step + 1)} className="bg-blue-500 text-white p-2 rounded">Add Work</button>
               </>

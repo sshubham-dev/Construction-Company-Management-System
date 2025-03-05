@@ -9,7 +9,7 @@ const upload = require('../middlewares/Upload');
 UserRouter.post('/register', upload.single('avatar'), register);
 UserRouter.get('/lists', users);
 UserRouter.get('/:id', user);
-UserRouter.post('/create', createUser);
+UserRouter.post('/', createUser);
 UserRouter.post('/login', login);
 UserRouter.post('/logout', userAuth, logout);
 UserRouter.put('/reset', resetPasswd);

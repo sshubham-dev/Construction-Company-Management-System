@@ -9,10 +9,9 @@ const CreateEmployee = ({ onClose, isEdit }) => {
     const [employee, setEmployee] = useState({
         name: "",
         email: "",
-        password: "",
-        contactNo: '',
+        phone: '',
         whatsapp: '',
-        employeeId: "",
+        employeeNo: "",
         joinDate: "",
         birthdate: "",
         address: "",
@@ -22,8 +21,21 @@ const CreateEmployee = ({ onClose, isEdit }) => {
         offerletter: "",
         bank: "",
         isUser: '',
+        department: '',
     });
-
+    const departments = [
+        'Company',
+        'Accountant',
+        'Marketing',
+        'Ceo',
+        'Site Incharge',
+        'Site Supervisor',
+        'Design Engineer',
+        'Quality Engineer',
+        'Store Incharge',
+        'H.R',
+        'Account Head'
+    ];
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
@@ -46,10 +58,9 @@ const CreateEmployee = ({ onClose, isEdit }) => {
         setEmployee({
             name: "",
             email: "",
-            password: "",
-            contactNo: '',
+            phone: '',
             whatsapp: '',
-            employeeId: "",
+            employeeNo: "",
             joinDate: "",
             birthdate: "",
             address: "",
@@ -59,6 +70,7 @@ const CreateEmployee = ({ onClose, isEdit }) => {
             offerletter: "",
             bank: "",
             isUser: '',
+            department:''
         })
     }
 
@@ -88,7 +100,7 @@ const CreateEmployee = ({ onClose, isEdit }) => {
 
         try {
             console.log(employee);
-            const response = await axios.post('/api/v1/employee/create', formData, {
+            const response = await axios.post('/api/v1/employee', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data', // Set content type to multipart/form-data
                 },
@@ -96,8 +108,8 @@ const CreateEmployee = ({ onClose, isEdit }) => {
             if (response.data) {
                 console.log(response.data);
                 toast.success('Employee Created successfully!');
-                navigate(-1)
             }
+            onClose()
         } catch (error) {
             toast.error(error.message);
             setError(error.message);
@@ -125,7 +137,6 @@ const CreateEmployee = ({ onClose, isEdit }) => {
                     />
                 </div>
 
-
                 <div className='mb-4'>
                     <label className='block text-gray-700 text-sm font-bold mb-1' htmlFor='email'>
                         Email
@@ -141,7 +152,6 @@ const CreateEmployee = ({ onClose, isEdit }) => {
                     />
                 </div>
 
-
                 <div className='mb-4'>
                     <label htmlFor='phone'
                         className='block text-gray-700 text-sm font-bold mb-1'>
@@ -150,15 +160,14 @@ const CreateEmployee = ({ onClose, isEdit }) => {
                     <input
                         className='py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500'
                         type='text'
-                        name='contactNo'
-                        id='contactNo'
+                        name='phone'
+                        id='phone'
                         placeholder='Enter Your Contact Number'
                         autoComplete='off'
-                        value={employee.contactNo}
+                        value={employee.phone}
                         onChange={inputData}
                     />
                 </div>
-
 
                 <div className='mb-4'>
                     <label htmlFor='whatsapp'
@@ -177,30 +186,15 @@ const CreateEmployee = ({ onClose, isEdit }) => {
                     />
                 </div>
 
-
                 <div className='mb-4'>
-                    <label htmlFor='employeeId' className='block text-gray-700 text-sm font-bold mb-1'>Employee ID</label>
+                    <label htmlFor='employeeNo' className='block text-gray-700 text-sm font-bold mb-1'>Employee ID</label>
                     <input
                         type='text'
                         className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                        name='employeeId'
+                        name='employeeNo'
                         placeholder='Enter Your Employee ID here'
                         autoComplete='off'
-                        value={employee.employeeId}
-                        onChange={inputData}
-                    />
-                </div>
-
-
-                <div className='mb-4'>
-                    <label htmlFor='Password' className='block text-gray-700 text-sm font-bold mb-1'>Password</label>
-                    <input
-                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                        type='password'
-                        name='password'
-                        placeholder='Enter Your Password here'
-                        autoComplete='off'
-                        value={employee.password}
+                        value={employee.employeeNo}
                         onChange={inputData}
                     />
                 </div>
@@ -309,6 +303,34 @@ const CreateEmployee = ({ onClose, isEdit }) => {
                     />
                 </div>
 
+                <div className="mb-6">
+                    <label htmlFor="access" className="block text-gray-700 text-sm font-bold mb-2">
+                        Department
+                    </label>
+                    <select
+                        name='department'
+                        onChange={inputData}
+                        required
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    >
+                        <option>Department</option>
+                        {departments.map((department, index) => (
+                            <option key={index} value={department}>
+                                {department}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="flex items-center mb-4">
+                    <input
+                        type="checkbox"
+                        name="isUser"
+                        className="border-none rounded-lg focus:outline-none mr-2"
+                        onChange={inputData}
+                        value='true' />
+                    <label htmlFor="isUser" className="block text-md font-medium text-gray-600">Is a User</label>
+                </div>
 
                 <div className="flex justify-end gap-2 mt-6">
                     <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">

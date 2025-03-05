@@ -27,7 +27,7 @@ const CreateLeave = ({ isOpen, onClose }) => {
             console.log(leave);
             const response = await axios.post('/api/v1/leave', leave);
             toast.success(response.data.message);
-            navigate(-1)
+            onClose()
             // Reset form fields after successful submission
             setLeave({
                 reportingDate: moment(),
@@ -39,10 +39,8 @@ const CreateLeave = ({ isOpen, onClose }) => {
             toast.error('Failed to submit leave request');
         }
     };
-    if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-8">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg md:w-3/4 lg:w-1/2 h-[70vh] md:h-[60vh] lg:h-[60vh] md:mt-12 overflow-auto">
+        <div>
                 <form
                     onSubmit={handleSubmit}
                     className="space-y-4">
@@ -98,7 +96,6 @@ const CreateLeave = ({ isOpen, onClose }) => {
                     position="top-right"
                     reverseOrder={false}
                 />
-            </div>
         </div>
     );
 };

@@ -7,13 +7,15 @@ axios.defaults.withCredentials = true;
 const CreateContractor = ({ onClose, isEdit }) => {
   const [contractor, setContractor] = useState({
     name: '',
-    contactNo: '',
+    email: '',
+    phone: '',
     whatsapp: '',
     address: '',
     addhar: '',
     pan: '',
     bank: '',
     jobWork: '',
+    isUser: '',
   });
   const [contractorToEdit, setContractorToEdit] = useState(null);
   const { id } = useParams();
@@ -32,7 +34,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
       const Contractor = contractorData.data;
       setContractor({
         name: Contractor?.name,
-        contactNo: Contractor?.contactNo,
+        phone: Contractor?.phone,
         whatsapp: Contractor?.whatsapp,
         address: Contractor?.address,
         addhar: Contractor?.addhar,
@@ -57,7 +59,8 @@ const CreateContractor = ({ onClose, isEdit }) => {
   const handleReset = () => {
     setContractor({
       name: '',
-      contactNo: '',
+      email: '',
+      phone: '',
       whatsapp: '',
       address: '',
       addhar: '',
@@ -66,7 +69,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
       jobWork: '',
       isUser: '',
     })
-}
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,7 +78,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
       if (contractorToEdit) {
         const response = await axios.put(`/api/v1/contractor/${contractorToEdit}`, {
           name: contractor.name,
-          contactNo: contractor.contactNo,
+          phone: contractor.phone,
           whatsapp: contractor.whatsapp,
           address: contractor.address,
           addhar: contractor.addhar,
@@ -85,11 +88,11 @@ const CreateContractor = ({ onClose, isEdit }) => {
         });
         toast.success(response.data.message);
         console.log('Form data submitted:', contractor);
-        navigate(-1);
+        onClose()
       } else {
         const response = await axios.post('/api/v1/contractor', {
           name: contractor.name,
-          contactNo: contractor.contactNo,
+          phone: contractor.phone,
           whatsapp: contractor.whatsapp,
           address: contractor.address,
           addhar: contractor.addhar,
@@ -99,7 +102,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
         });
         toast.success(response.data.message);
         console.log('Form data submitted:', contractor);
-        navigate(-1);
+        onClose()
       }
     } catch (error) {
       console.error('Error creating contractor:', error);
@@ -108,91 +111,118 @@ const CreateContractor = ({ onClose, isEdit }) => {
   };
   return (
     <div>
-        <form
-          className='space-y-4'
-          onSubmit={handleSubmit}>
+      <form
+        className='space-y-4'
+        onSubmit={handleSubmit}>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-600">
-              Name:
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={contractor.name}
-              onChange={handleChange}
-              placeholder='Name'
-              required
-              className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-            />
-          </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-600">
+            Name:
+          </label>
+          <input
+            type="text"
+            name="name"
+            value={contractor.name}
+            onChange={handleChange}
+            placeholder='Name'
+            required
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+          />
+        </div>
 
-          <div className='mb-4'>
-            <label htmlFor='phone'
-              className='block text-sm font-medium text-gray-600'>
-              Contact Number:
-            </label>
-            <input
-              className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-              type='text'
-              name='contactNo'
-              id='contactNo'
-              placeholder='Enter Your Contact Number'
-              required
-              autoComplete='off'
-              value={contractor.contactNo}
-              onChange={handleChange}
-            />
-          </div>
+        <div className="mb-4">
+          <label
+            htmlFor="UserEmail"
+            className="block text-sm font-medium text-gray-600"
+          >
+            Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={contractor.email}
+            onChange={handleChange}
+            placeholder="Email"
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500" />
+        </div>
 
-          <div className='mb-4'>
-            <label htmlFor='whatsapp'
-              className='block text-sm font-medium text-gray-600'>
-              Whatsapp Number:
-            </label>
-            <input
-              className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-              type='text'
-              name='whatsapp'
-              id='whatsapp'
-              placeholder='Enter Your Whatsapp Number'
-              autoComplete='off'
-              value={contractor.whatsapp}
-              onChange={handleChange}
-            />
-          </div>
+        <div className='mb-4'>
+          <label htmlFor='phone'
+            className='block text-sm font-medium text-gray-600'>
+            Contact Number:
+          </label>
+          <input
+            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
+            type='text'
+            name='phone'
+            id='phone'
+            placeholder='Enter Contact Number'
+            required
+            autoComplete='off'
+            value={contractor.phone}
+            onChange={handleChange}
+          />
+        </div>
 
-          <div className='mb-4'>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-600">
-              Address
-            </label>
-            <input
-              type="text"
-              id="address"
-              name="address"
-              value={contractor.address}
-              onChange={handleChange}
-              placeholder="Address"
-              className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-            />
-          </div>
+        <div className='mb-4'>
+          <label htmlFor='whatsapp'
+            className='block text-sm font-medium text-gray-600'>
+            Whatsapp Number:
+          </label>
+          <input
+            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
+            type='text'
+            name='whatsapp'
+            id='whatsapp'
+            placeholder='Enter Your Whatsapp Number'
+            autoComplete='off'
+            value={contractor.whatsapp}
+            onChange={handleChange}
+          />
+        </div>
 
-          <div className='mb-4'>
-            <label htmlFor="jobWork" className="block text-sm font-medium text-gray-600">
-              Work Of Contractor
-            </label>
-            <input
-              type="text"
-              id="jobWork"
-              name="jobWork"
-              value={contractor.jobWork}
-              onChange={handleChange}
-              placeholder="Job Work"
-              className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-            />
-          </div>
+        <div className='mb-4'>
+          <label htmlFor="address" className="block text-sm font-medium text-gray-600">
+            Address
+          </label>
+          <input
+            type="text"
+            id="address"
+            name="address"
+            value={contractor.address}
+            onChange={handleChange}
+            placeholder="Address"
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+          />
+        </div>
 
-          {/* <div className="mb-5">
+        <div className='mb-4'>
+          <label htmlFor="jobWork" className="block text-sm font-medium text-gray-600">
+            Work Of Contractor
+          </label>
+          <input
+            type="text"
+            id="jobWork"
+            name="jobWork"
+            value={contractor.jobWork}
+            onChange={handleChange}
+            placeholder="Job Work"
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div className="flex items-center mb-4">
+          <input
+            type="checkbox"
+            name="isUser"
+            className="border-none rounded-lg focus:outline-none mr-2"
+            onChange={handleChange}
+            value='true' />
+          <label htmlFor="isUser" className="block text-md font-medium text-gray-600">Is a User</label>
+        </div>
+
+        {/* <div className="mb-5">
           <h4 className="text-lg font-semibold mb-2">Documents</h4>
           <div className="grid grid-cols-2 gap-4">
 
@@ -241,26 +271,26 @@ const CreateContractor = ({ onClose, isEdit }) => {
           </div>
         </div> */}
 
-          <div className="flex justify-end gap-2 mt-6">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
-              Cancel
-            </button>
-            <button
-              type='submit'
-              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" >
-              Create
-            </button>
-            <button type="button" onClick={handleReset}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
-              Reset
-            </button>
-          </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
+            Cancel
+          </button>
+          <button
+            type='submit'
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" >
+            Create
+          </button>
+          <button type="button" onClick={handleReset}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
+            Reset
+          </button>
+        </div>
 
-        </form>
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-        />
+      </form>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+      />
     </div>
   )
 }

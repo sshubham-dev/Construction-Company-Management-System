@@ -32,60 +32,60 @@ const BillPdf = ({ bill }) => {
     },
     text2xl: {
       fontSize: '15rem',
-  },
+    },
     mdtext3: {
-    fontsize: '1875rem',
-  },
+      fontsize: '1875rem',
+    },
     textgray: {
-    color: '#4b5563',
-  },
+      color: '#4b5563',
+    },
     textwhite: {
-    color: '#fff',
-  },
+      color: '#fff',
+    },
     textleft: {
-    textAlign: 'left',
-  },
+      textAlign: 'left',
+    },
     fontsemibold: {
-    fontWeight: '600',
-  },
+      fontWeight: '600',
+    },
     textsm: {
-    fontsize: '0875rem',
-  },
+      fontsize: '0875rem',
+    },
     uppercase: {
-    textTransform: 'uppercase',
-  },
+      textTransform: 'uppercase',
+    },
     px6: {
-    paddingLeft: '15rem',
-    paddingRight: '15rem'
-  },
+      paddingLeft: '15rem',
+      paddingRight: '15rem'
+    },
     py4: {
-    paddingTop: '1rem',
-    paddingBottom: '1rem'
-  },    page: {
-    flexDirection: 'column',
-    padding: 20,
-  },
-  section: {
-    margin: 10,
-    padding: 10,
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  text: {
-    fontSize: 12,
-    marginBottom: 5,
-  },
+      paddingTop: '1rem',
+      paddingBottom: '1rem'
+    }, page: {
+      flexDirection: 'column',
+      padding: 20,
+    },
+    section: {
+      margin: 10,
+      padding: 10,
+    },
+    title: {
+      fontSize: 24,
+      marginBottom: 10,
+      textAlign: 'center',
+    },
+    text: {
+      fontSize: 12,
+      marginBottom: 5,
+    },
   })
 
-return (
-  <Document>
+  return (
+    <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.section}>
           <Text style={styles.title}>Bill To:</Text>
-          <Text style={styles.text}>Name: {bill?.billFor === 'Contractor' ? bill?.contractor?.name : bill?.supplier?.name}</Text>
+          <Text style={styles.text}>Name: {bill?.contractor?.name}</Text>
           <Text style={styles.text}>Site: {bill?.site?.name}</Text>
           <Text style={styles.text}>Date: {moment(bill?.dateOfBill).format('DD-MM-YYYY')}</Text>
           <Text style={styles.text}>Bill No: {bill ? `BHC/${bill?.site?.name}${bill?.billNo}` : '-'}</Text>
@@ -93,7 +93,7 @@ return (
         {/* Add more sections for other bill details */}
       </Page>
     </Document>
-)
+  )
 }
 
 export default BillPdf

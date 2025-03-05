@@ -47,7 +47,7 @@ const leaveSchema = new mongoose.Schema({
     },
     reportedAt: {
         type: Date,
-    }
+    },
 
 }, { timestamps: true });
 

@@ -34,7 +34,12 @@ const returnSchema = new mongoose.Schema({
     status: [{
         name: String,
         date: Date,
-    }]
+    }],
+    createdBy:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'User'
+    }
 }, { timestamps: true });
 
 const Return = mongoose.model('Return', returnSchema);
+module.exports = Return

@@ -62,12 +62,12 @@ const Sidebar = () => {
       role: ['Admin', 'Company', 'Ceo', 'Account Head']
     },
 
-    {
-      to: '/site-kharchi',
-      name: 'Expenses Record',
-      icon: <GiExpense />,
-      role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
-    },
+    // {
+    //   to: '/site-kharchi',
+    //   name: 'Expenses Record',
+    //   icon: <GiExpense />,
+    //   role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
+    // },
 
     /* ERP */
     {
@@ -83,12 +83,12 @@ const Sidebar = () => {
           icon: <MdAccountBalance />,
           role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
         },
-        {
-          to: '/erp/report/account',
-          name: 'Report',
-          icon: <TbReportAnalytics />,
-          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
-        },
+        // {
+        //   to: '/erp/report/account',
+        //   name: 'Report',
+        //   icon: <TbReportAnalytics />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
+        // },
         {
           to: '/erp/receipt_payment',
           name: 'Receipt & Payment',
@@ -125,45 +125,45 @@ const Sidebar = () => {
         //   icon: <FaBalanceScale />,
         //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
         // },
-        {
-          to: '/erp/expenses',
-          name: 'Expenses',
-          icon: <FaWallet />,
-          role: ['Admin', 'Company', 'Ceo', 'Account Head'],
-        },
+        // {
+        //   to: '/erp/expenses',
+        //   name: 'Expenses',
+        //   icon: <FaWallet />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
+        // },
 
 
         /* Inventory Management*/
-        {
-          to: '/erp/inventory',
-          name: 'Inventory Management',
-          icon: <MdWarehouse />,
-          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
-        },
-        {
-          to: '/erp/report/inventory',
-          name: 'Report',
-          icon: <TbReportAnalytics />,
-          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
-        },
+        // {
+        //   to: '/erp/inventory',
+        //   name: 'Inventory Management',
+        //   icon: <MdWarehouse />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+        // },
+        // {
+        //   to: '/erp/report/inventory',
+        //   name: 'Report',
+        //   icon: <TbReportAnalytics />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
+        // },
         {
           to: '/erp/inventory/stock',
           name: 'Stock',
           icon: <MdInventory />,
           role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
         },
-        {
-          to: '/erp/inventory/sales',
-          name: 'Sales',
-          icon: <FaTruckArrowRight style={{ transform: 'rotate(360deg) scaleX(-1)' }} />,
-          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
-        },
-        {
-          to: '/erp/inventory/purchase',
-          name: 'Purchase',
-          icon: <FaTruckMedical />,
-          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
-        },
+        // {
+        //   to: '/erp/inventory/sales',
+        //   name: 'Sales',
+        //   icon: <FaTruckArrowRight style={{ transform: 'rotate(360deg) scaleX(-1)' }} />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+        // },
+        // {
+        //   to: '/erp/inventory/purchase',
+        //   name: 'Purchase',
+        //   icon: <FaTruckMedical />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+        // },
         {
           to: '/erp/inventory/purchase-request',
           name: 'Purchase-Request',
@@ -171,7 +171,7 @@ const Sidebar = () => {
           role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },
         {
-          to: '/erp/inventory/return',
+          to: '/erp/inventory/return-request',
           name: 'Return',
           icon: <FaTruckArrowRight />,
           role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
@@ -216,12 +216,12 @@ const Sidebar = () => {
         //   icon: <AiOutlineProject />,
         //   role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
         // },
-        {
-          to: '/crm/invoice',
-          name: 'Invoice',
-          icon: <TbInvoice />,
-          role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
-        },
+        // {
+        //   to: '/crm/invoice',
+        //   name: 'Invoice',
+        //   icon: <TbInvoice />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
+        // },
       ],
       role: ['Admin', 'Company', 'Marketing', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
     },
@@ -232,12 +232,12 @@ const Sidebar = () => {
       name: 'Site Management',
       icon: <MdLocationOn />,
       children: [
-        {
-          to: '/site/report',
-          name: 'Sites Report',
-          icon: <FaPersonShelter />,
-          role: ['Admin', 'Company', 'Ceo', 'Account Head']
-        },
+        // {
+        //   to: '/site/report',
+        //   name: 'Sites Report',
+        //   icon: <FaPersonShelter />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head']
+        // },
         {
           to: '/sites/project-schedules',
           name: 'Project Schedules',
@@ -275,8 +275,8 @@ const Sidebar = () => {
           role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },
         {
-          to: '/return-order/sites',
-          name: 'Return-Orders',
+          to: '/sites/return',
+          name: 'Return-Request',
           icon: <TbTruckReturn />,
           role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },

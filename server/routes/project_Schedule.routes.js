@@ -9,16 +9,17 @@ const {
     updateProjectDetail,
     deleteProjectDetail,
     getProjectDetails,
+    saveProjectSchedule,
 } = require('../controller/projectschedule.controller');
-
+const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 ProjectSchedule.route('/:id')
     .get(getProjectSchedule)
     .put(updateProjectSchedule)
     .delete(deleteProjectSchedule);
 ProjectSchedule.get('/', getProjectSchedules);
-ProjectSchedule.post('/create', createProjectSchedule);
-
+ProjectSchedule.post('/', userAuth, createProjectSchedule);
+ProjectSchedule.put('/save/:id', userAuth, saveProjectSchedule);
 // ProjectSchedule.put('/updateDetail/:projectId', updateProjectDetail);
 // ProjectSchedule.delete('/removeDetail/:projectId', deleteProjectDetail);
 

@@ -22,6 +22,16 @@ const Todo = require('./routes/todo.routes');
 const Approval = require('./routes/approval.routes');
 const path = require('path');
 const { Attendance, Leave } = require('./routes/attendance.routes');
+const Journal = require('./routes/journal.routes');
+const Contra = require('./routes/contra.routes');
+const Payment = require('./routes/payment.routes');
+const Receipt = require('./routes/receipt.routes');
+const { Stock, Stock_Group } = require('./routes/stock.routes');
+const Return = require('./routes/return.routes');
+const Lead = require('./routes/lead.routes');
+const { Ledger, Group } = require('./routes/ledger.routes');
+const PurchaseRequest = require('./routes/purchaserequest.routes');
+const Expenses = require('./routes/expenses.routes');
 
 // midellware
 const corsOptions = {
@@ -62,12 +72,24 @@ app.use('/api/v1/checklist', Checklist);
 app.use('/api/v1/supplier', Supplier);
 app.use('/api/v1/extra-work', ExtraWork);
 app.use('/api/v1/purchase-order', PurchaseOrder);
+app.use('/api/v1/purchase-request', PurchaseRequest);
 app.use('/api/v1/project-schedule', ProjectSchedule);
 app.use('/api/v1/quality-schedule', QualitySchedule);
 app.use('/api/v1/payment-schedule', PaymentSchedule);
 app.use('/api/v1/approval', Approval);
 app.use('/api/v1/bill', Bill);
 app.use('/api/v1/todo', Todo);
+app.use('/api/v1/journal', Journal);
+app.use('/api/v1/contra', Contra);
+app.use('/api/v1/payment', Payment);
+app.use('/api/v1/receipt', Receipt);
+app.use('/api/v1/stock', Stock);
+app.use('/api/v1/stock-group', Stock_Group);
+app.use('/api/v1/return', Return);
+app.use('/api/v1/lead', Lead);
+app.use('/api/v1/ledger', Ledger);
+app.use('/api/v1/ledger-group', Group);
+app.use('/api/v1/expenses', Expenses);
 app.use((err, req, res, next) => {
   console.error(err.stack);
   console.log(err)

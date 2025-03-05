@@ -23,17 +23,8 @@ const Clients = () => {
     const getClients = async () => {
       try {
         const clientData = await axios.get('/api/v1/client');
-        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
-          const sites = user?.site;
-          let Clients;
-          for (let site of sites) {
-            Clients = clientData.data?.filter((client) => client.site?._id.includes(site))
-          }
-          setClient(Clients)
-        } else {
           setClient(clientData.data);
-        }
-        console.log(clients)
+        console.log(clientData.data)
       } catch (error) {
         console.error(error)
         setError(error.message);
@@ -71,14 +62,14 @@ const Clients = () => {
           {/* )} */}
         </div>
 
-        <div className="overflow-x-auto"
+        <div className="bg-white rounded-lg shadow overflow-x-auto scrollbar-hide"
           style={{
             scrollbarWidth: 'none',
             '-ms-overflow-style': 'none',
           }}>
-          <table className='w-full whitespace-nowrap divide-y divide-gray-300 overflow-hidden'>
-            <thead className="bg-gray-800">
-              <tr className="text-white text-left">
+          <table className='w-full whitespace-nowrap divide-y divide-gray-300 overflow-hidden '>
+            <thead >
+              <tr className="text-left bg-gray-200">
                 <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
                 <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Email </th>
                 <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Contact No. </th>

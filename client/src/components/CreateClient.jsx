@@ -3,15 +3,14 @@ import React, { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { MdOutlineRemoveCircle, MdOutlineAddCircle } from "react-icons/md";
 import { useNavigate, useParams } from 'react-router-dom';
-import { IoEyeOff, IoEye } from "react-icons/io5";
+
 axios.defaults.withCredentials = true;
 
-const CreateClient = ({ isOpen, onClose, isEdit }) => {
+const CreateClient = ({ onClose, isEdit }) => {
   const [client, setClient] = useState({
     name: '',
     email: '',
-    password: '',
-    contactNo: '',
+    phone: '',
     whatsapp: '',
     address: {
       street: "",
@@ -19,28 +18,15 @@ const CreateClient = ({ isOpen, onClose, isEdit }) => {
       district: "",
       state: "",
     },
+    isUser: '',
   });
-  const [users, setUsers] = useState([]);
   const [clientId, setClientId] = useState('');
   const { id } = useParams();
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [data, setData] = useState({
     name: ''
   })
   useEffect(() => {
-    const getUsers = async () => {
-      try {
-        const userData = await axios.get('/api/v1/user/lists');
-        let users = userData.data;
-        if (userData) {
-          setUsers(users.filter((user) => user.role === 'Client'));
-        }
-      } catch (error) {
-        toast.error(error.message);
-      }
-    }
-    getUsers();
     if (id) {
       setClientId(id)
       fetchClient(id)
@@ -57,8 +43,7 @@ const CreateClient = ({ isOpen, onClose, isEdit }) => {
       setClient({
         name: clientData.data?.userId,
         email: clientData.data?.email,
-        password: '',
-        contactNo: clientData.data?.contactNo,
+        phone: clientData.data?.phone,
         whatsapp: clientData.data?.whatsapp,
         address: {
           street: clientData.data?.address.street,
@@ -76,8 +61,7 @@ const CreateClient = ({ isOpen, onClose, isEdit }) => {
     setClient({
       name: '',
       email: '',
-      password: '',
-      contactNo: '',
+      phone: '',
       whatsapp: '',
       address: {
         street: "",
@@ -114,14 +98,14 @@ const CreateClient = ({ isOpen, onClose, isEdit }) => {
         if (response.data) {
           toast.success(response.data.message)
           console.log(response.data)
-          navigate(-1)
+          onClose()
         }
       } else {
         const response = await axios.post('/api/v1/client', client);
         if (response.data) {
           toast.success(response.data.message)
           console.log(response.data)
-          navigate(-1)
+          onClose()
         }
       }
     } catch (error) {
@@ -131,199 +115,171 @@ const CreateClient = ({ isOpen, onClose, isEdit }) => {
 
   return (
     <div>
-        <form onSubmit={handleSubmit}
-          className='space-y-4'>
+      <form onSubmit={handleSubmit}
+        className='space-y-4'>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-600">
-              Name:
-            </label>
-            <select
-              name="name"
-              value={client.name}
-              onChange={handleChange}
-              required
-              className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500">
-              <option>{clientId !== '' ? data.name : 'Client'}</option>
-              {users.map((user) => (
-                <option key={user._id} value={user._id}>
-                  {user.userName}
-                </option>
-              ))}
-            </select>
-
-            {/* <input
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-600">
+            Name:
+          </label>
+          <input
             type="text"
             name="name"
             value={client.name}
             onChange={handleChange}
             required
             className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-          /> */}
-          </div>
+          />
+        </div>
 
-          <div className="mb-4">
-            <label
-              htmlFor="UserEmail"
-              className="block text-sm font-medium text-gray-600"
-            >
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={client.email}
-              onChange={handleChange}
-              placeholder="Email"
-              className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500" />
-          </div>
+        <div className="mb-4">
+          <label
+            htmlFor="UserEmail"
+            className="block text-sm font-medium text-gray-600"
+          >
+            Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={client.email}
+            onChange={handleChange}
+            placeholder="Email"
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500" />
+        </div>
 
-          <div className="mb-4">
-            <label
-              htmlFor="Password"
-              className="block text-sm font-medium text-gray-600"
-            >
-              Password
-            </label>
-            <div className='flex flex-row border rounded-md justify-between items-center '>
+        <div className='mb-4'>
+          <label htmlFor='phone'
+            className='block text-sm font-medium text-gray-600'>
+            Contact Number:
+          </label>
+          <input
+            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
+            type='tel'
+            name='phone'
+            id='phone'
+            placeholder='Enter Your Contact Number'
+            value={client.phone}
+            onChange={handleChange}
+          />
+        </div>
+
+
+        <div className='mb-4'>
+          <label htmlFor='whatsapp'
+            className='block text-sm font-medium text-gray-600'>
+            Whatsapp Number:
+          </label>
+          <input
+            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
+            type='tel'
+            name='whatsapp'
+            id='whatsapp'
+            placeholder='Enter Your Whatsapp Number'
+            autoComplete='off'
+            value={client.whatsapp}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* Address */}
+        <div className="mb-4">
+          <h4 className="text-lg font-semibold mb-2">Address</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div>
+              <label htmlFor="street" className="block text-sm font-medium text-gray-600">
+                Street
+              </label>
               <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={client.password}
+                type="text"
+                id="address.street"
+                name="address.street"
+                placeholder="Street"
+                value={client.address.street}
                 onChange={handleChange}
-                minLength={8}
-                className="my-0.5 p-1.5 w-full border-none focus:outline-none"
+                className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
               />
-              <span
-                className="block text-gray-700 text-xl font-bold cursor-pointer p-2"
-                onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <IoEyeOff /> : <IoEye />}
-              </span>
             </div>
-          </div>
 
-          <div className='mb-4'>
-            <label htmlFor='phone'
-              className='block text-sm font-medium text-gray-600'>
-              Contact Number:
-            </label>
-            <input
-              className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-              type='tel'
-              name='contactNo'
-              id='contactNo'
-              placeholder='Enter Your Contact Number'
-              value={client.contactNo}
-              onChange={handleChange}
-            />
-          </div>
-
-
-          <div className='mb-4'>
-            <label htmlFor='whatsapp'
-              className='block text-sm font-medium text-gray-600'>
-              Whatsapp Number:
-            </label>
-            <input
-              className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-              type='tel'
-              name='whatsapp'
-              id='whatsapp'
-              placeholder='Enter Your Whatsapp Number'
-              autoComplete='off'
-              value={client.whatsapp}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Address */}
-          <div className="mb-4">
-            <h4 className="text-lg font-semibold mb-2">Address</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-              <div>
-                <label htmlFor="street" className="block text-sm font-medium text-gray-600">
-                  Street
-                </label>
-                <input
-                  type="text"
-                  id="address.street"
-                  name="address.street"
-                  placeholder="Street"
-                  value={client.address.street}
-                  onChange={handleChange}
-                  className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-600">
-                  City
-                </label>
-                <input
-                  type="text"
-                  id="address.city"
-                  name="address.city"
-                  value={client.address.city}
-                  placeholder="City"
-                  onChange={handleChange}
-                  className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="district" className="block text-sm font-medium text-gray-600">
-                  District
-                </label>
-                <input
-                  type="text"
-                  id="address.district"
-                  name="address.district"
-                  value={client.address.district}
-                  placeholder="District"
-                  onChange={handleChange}
-                  className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="state" className="block text-sm font-medium text-gray-600">
-                  State
-                </label>
-                <input
-                  type="text"
-                  id="address.state"
-                  name="address.state"
-                  value={client.address.state}
-                  placeholder="State"
-                  onChange={handleChange}
-                  className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium text-gray-600">
+                City
+              </label>
+              <input
+                type="text"
+                id="address.city"
+                name="address.city"
+                value={client.address.city}
+                placeholder="City"
+                onChange={handleChange}
+                className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+              />
             </div>
-          </div>
 
-          <div className="flex justify-end gap-2 mt-6">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
-              Cancel
-            </button>
-            <button
-              type='submit'
-              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" >
-              {clientId ? 'Update' : 'Create'} Client
-            </button>
-            <button type="button" onClick={handleReset}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
-              Reset
-            </button>
+            <div>
+              <label htmlFor="district" className="block text-sm font-medium text-gray-600">
+                District
+              </label>
+              <input
+                type="text"
+                id="address.district"
+                name="address.district"
+                value={client.address.district}
+                placeholder="District"
+                onChange={handleChange}
+                className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="state" className="block text-sm font-medium text-gray-600">
+                State
+              </label>
+              <input
+                type="text"
+                id="address.state"
+                name="address.state"
+                value={client.address.state}
+                placeholder="State"
+                onChange={handleChange}
+                className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
           </div>
-        </form>
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-        />
+        </div>
+
+        <div className="flex items-center mb-4">
+          <input
+            type="checkbox"
+            name="isUser"
+            className="border-none rounded-lg focus:outline-none mr-2"
+            onChange={handleChange}
+            value='true' />
+          <label htmlFor="isUser" className="block text-md font-medium text-gray-600">Is a User</label>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-6">
+          <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
+            Cancel
+          </button>
+          <button
+            type='submit'
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" >
+            {clientId ? 'Update' : 'Create'} Client
+          </button>
+          <button type="button" onClick={handleReset}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
+            Reset
+          </button>
+        </div>
+      </form>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+      />
     </div>
   );
 };

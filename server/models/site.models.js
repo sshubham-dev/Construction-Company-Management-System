@@ -55,64 +55,48 @@ const siteSchema = new mongoose.Schema({
     },
     agreement: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:'Agreement'
+        ref: 'Agreement'
     },
-    approval:[{
-        for:String,
-        by:String,
-        status:{
+    approval: [{
+        for: String,
+        by: String,
+        status: {
             type: String,
             default: "Pending"
         },
     }],
     checklist: [{
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Checklist',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Checklist',
     }],
     bill: [{
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Bill',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Bill',
     }],
     workOrder: [{
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Work_Order',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Work_Order',
     }],
     purchaseOrder: [{
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Purchase_Order',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Purchase_Order',
     }],
     purchaseRequest: [{
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Purchase_Request',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Purchase_Request',
+
     }],
     paymentSchedule: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Payment_Schedule',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Payment_Schedule',
     },
+    qualitySchedule: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'QualitySchedule',
+    }],
     projectSchedule: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Project_Schedule',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ProjectSchedule',
     },
     contractor: [{
         name: String,
@@ -121,19 +105,27 @@ const siteSchema = new mongoose.Schema({
             ref: 'Contractor',
         }
     }],
-    supplier: [{
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Supplier',
-        }
-    }],
     extraWork: [{
-        name: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Extra_Work',
+    }],
+    expenses: [{
         id: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Extra_Work',
-        }
+        },
+        amount: Number,
+        name: String,
+        type: {
+            type: String,
+            enum: ['Payment', 'Expenses']
+        },
+    }],
+    income: [{
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Receipt'
+        },
+        amount: Number,
     }],
     account: {
         receivable: {

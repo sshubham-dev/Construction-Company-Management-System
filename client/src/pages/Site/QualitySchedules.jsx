@@ -53,7 +53,7 @@ const QualitySchedules = () => {
 
   return (
     <div>
-      <div className="overflow-x-auto">
+      <section className="overflow-x-auto scrollbar-hide">
         <Header category="Page" title="Quality Check Schedule's" />
         <div className="w-full mx-auto mb-6 text-gray-700 p-1 flex flex-row justify-between items-center">
           <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
@@ -64,18 +64,14 @@ const QualitySchedules = () => {
           </button>
         </div>
 
-        <div className="overflow-x-auto"
-          style={{
-            scrollbarWidth: 'none',
-            '-ms-overflow-style': 'none',
-          }}>
+        <div className="overflow-x-auto scrollbar-hide">
           <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
-            <thead className="bg-gray-800">
-              <tr className="text-white text-left">
+            <thead className="bg-gray-300">
+              <tr className=" text-left">
                 <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Site</th>
-                {/* <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Starting Date</th>
-                      <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Status</th>
-                      <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Actual Date</th> */}
+                <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Date</th>
+                <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Approval Status</th>
+                {/* <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Actual Date</th> */}
                 <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
               </tr>
             </thead>
@@ -86,9 +82,9 @@ const QualitySchedules = () => {
                   <td className="px-6 py-4">
                     {qualitySchedule.site?.name}
                   </td>
-                  {/* <td className="px-6 py-4">{moment(work.toStart).format('DD-MM-YYYY')}</td>
-                        <td className="px-6 py-4">{work.status}</td>
-                        <td className="px-6 py-4 text-center">{work.startedAt ? moment(work.startedAt).format('DD-MM-YYYY') : '-'}</td> */}
+                  <td className="px-6 py-4">{moment(qualitySchedule.date).format('DD-MM-YYYY')}</td>
+                  <td className="px-6 py-4">{qualitySchedule.approvalStatus}</td>
+                  {/* <td className="px-6 py-4 text-center">{work.startedAt ? moment(work.startedAt).format('DD-MM-YYYY') : '-'}</td> */}
                   <td className="px-6 py-4">
                     <button onClick={() => handleRedirect(qualitySchedule._id)} className="mr-2">
                       <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
@@ -113,7 +109,7 @@ const QualitySchedules = () => {
           position="top-right"
           reverseOrder={false}
         />
-      </div>
+      </section>
       {/* Quality Schedules Modal */}
       {createModal && (
         <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Quality Schedules' >

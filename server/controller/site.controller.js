@@ -13,18 +13,6 @@ const uploadOnCloudinary = require('../utils/cloudinary.js');
 const getSites = async (req, res) => {
     try {
         const sites = await Site.find()
-            .populate('client')
-            .populate('incharge')
-            .populate('supervisor')
-            .populate('qualityEngineer')
-            .populate('contractor')
-            .populate('supplier')
-            .populate('bill')
-            .populate('purchaseOrder')
-            .populate('projectSchedule')
-            .populate('paymentSchedule')
-            .populate('workOrder')
-            .exec();
         if (sites.length === 0) return res.status(404).json({ error: 'Sites Not Found' });
         res.status(200).json(sites);
     } catch (error) {
@@ -37,12 +25,6 @@ const getSite = async (req, res) => {
     try {
         const id = req.params.id;
         const site = await Site.findById(id)
-            .populate('client')
-            .populate('incharge')
-            .populate('supervisor')
-            .populate('qualityEngineer')
-            .populate('contractor')
-            .populate('supplier')
             .populate('bill')
             .populate('purchaseOrder')
             .populate('projectSchedule')
@@ -63,13 +45,7 @@ const siteByUser = async (req, res) => {
         const user = await User.findById(id);
         if (user && user.department === 'Site Incharge') {
             const inchargeSite = await Site.find()
-                .where('incharge').equals(user?._id)
-                .populate('client')
-                .populate('incharge')
-                .populate('supervisor')
-                .populate('qualityEngineer')
-                .populate('contractor')
-                .populate('supplier')
+                .where('incharge.id').equals(user?._id)
                 .populate('bill')
                 .populate('purchaseOrder')
                 .populate('projectSchedule')
@@ -82,13 +58,7 @@ const siteByUser = async (req, res) => {
 
         } else if (user.department === 'Site Supervisor') {
             const supervisorSite = await Site.find()
-                .where('supervisor').equals(user?._id)
-                .populate('client')
-                .populate('incharge')
-                .populate('supervisor')
-                .populate('qualityEngineer')
-                .populate('contractor')
-                .populate('supplier')
+                .where('supervisor.id').equals(user?._id)
                 .populate('bill')
                 .populate('purchaseOrder')
                 .populate('projectSchedule')
@@ -100,13 +70,7 @@ const siteByUser = async (req, res) => {
 
         } else if (user.department === 'Client') {
             const existingClient = await Client.findOne({ userId: user?._id });
-            const clientSite = await Site.find({ _id: existingClient?.site })
-                .populate('client')
-                .populate('incharge')
-                .populate('supervisor')
-                .populate('contractor')
-                .populate('qualityEngineer')
-                .populate('supplier')
+            const clientSite = await Site.find({ _id: existingClient?.site.id })
                 .populate('bill')
                 .populate('purchaseOrder')
                 .populate('projectSchedule')
@@ -142,7 +106,7 @@ const createSite = async (req, res) => {
         // console.log('req.body:', req.body);
         const agreementLocalPath = req.file?.path;
         // console.log(agreementLocalPath)
-        const site = await Site.findOne({ $and: [{ name }, { client }] });
+        const site = await Site.findOne({ $and: [{ name }, { client: { id: client } }] });
         if (site) return res.status(500).json({ message: 'Site already exists' });
         const upload = await uploadOnCloudinary(agreementLocalPath);
         // console.log(upload);
@@ -159,13 +123,13 @@ const createSite = async (req, res) => {
 
         const newSite = new Site({
             name,
-            client: existingClient?._id,
+            client: { id: existingClient?._id, name: existingClient.name },
             siteId,
             floors,
             area,
-            incharge: existingIncharge?._id,
-            supervisor: existingSupervisor?._id,
-            qualityEngineer: existingQuality?._id,
+            incharge: { id: existingIncharge?._id, name: existingIncharge.name },
+            supervisor: { id: existingSupervisor?._id, name: existingSupervisor.name },
+            qualityEngineer: { id: existingQuality?._id, name: existingQuality.name },
             projectType,
             address,
             agreement: upload?.url || null,
@@ -178,22 +142,22 @@ const createSite = async (req, res) => {
             return res.status(500).json({ error: 'Site Not Created' });
         }
 
-        existingClient.site = savedSite._id;
+        existingClient.site = { id: savedSite._id, name: savedSite.name };
         await existingClient.save();
 
         if (supervisor !== '') {
-            if (!existingSupervisor?.site.includes(savedSite._id)) {
-                existingSupervisor.site.push(savedSite._id);
+            if (!existingSupervisor?.site.id.includes(savedSite._id)) {
+                existingSupervisor.site.push({ id: savedSite._id, name: savedSite.name });
                 await existingSupervisor.save();
             }
         }
 
-        existingIncharge.site.push(savedSite._id);
+        existingIncharge.site.push({ id: savedSite._id, name: savedSite.name });
         await existingIncharge.save();
 
         if (qualityEngineer !== '') {
-            if (!existingQuality?.site.includes(savedSite._id)) {
-                existingQuality.site.push(savedSite._id);
+            if (!existingQuality?.site.id.includes(savedSite._id)) {
+                existingQuality.site.push({ id: savedSite._id, name: savedSite.name });
                 await existingQuality.save();
             }
         }
@@ -226,30 +190,30 @@ const updateSite = async (req, res) => {
         existingSite.value = value || existingSite.value;
         existingSite.area = area || existingSite.area;
         existingSite.address = address || existingSite.address;
-        existingSite.client = existingClient?._id || existingSite.client;
+        existingSite.client = { id: existingClient?._id, name: existingClient.name } || existingSite.client;
         existingSite.projectType = projectType || existingSite.projectType;
-        existingSite.incharge = existingIncharge?._id || existingSite.incharge;
-        existingSite.supervisor = existingSupervisor?._id || existingSite.supervisor;
-        existingSite.qualityEngineer = existingQuality?._id || existingSite.qualityEngineer;
+        existingSite.incharge = { id: existingIncharge?._id, name: existingIncharge.name } || existingSite.incharge;
+        existingSite.supervisor = { id: existingSupervisor?._id, name: existingSupervisor.name } || existingSite.supervisor;
+        existingSite.qualityEngineer = { id: existingQuality?._id, name: existingQuality.name } || existingSite.qualityEngineer;
         await existingSite.save();
 
-        if (existingClient?.site !== existingSite._id) {
-            existingClient.site = existingSite._id;
+        if (existingClient?.site.id !== existingSite._id) {
+            existingClient.site = { id: existingSite._id, name: existingSite.name };
             await existingClient.save({ validateBeforeSave: false });
         }
 
-        if (!existingSupervisor?.site.includes(existingSite._id)) {
-            existingSupervisor?.site.push(existingSite._id);
+        if (!existingSupervisor?.site.id.includes(existingSite._id)) {
+            existingSupervisor?.site.push({ id: existingSite._id, name: existingSite.name });
             await existingSupervisor.save();
         }
 
-        if (!existingIncharge?.site.includes(existingSite._id)) {
-            existingIncharge?.site.push(existingSite._id);
+        if (!existingIncharge?.site.id.includes(existingSite._id)) {
+            existingIncharge?.site.push({ id: existingSite._id, name: existingSite.name });
             await existingIncharge.save();
         }
 
-        if (!existingQuality?.site.includes(existingSite._id)) {
-            existingQuality.site.push(existingSite._id);
+        if (!existingQuality?.site.id.includes(existingSite._id)) {
+            existingQuality.site.push({ id: existingSite._id, name: existingSite.name });
             await existingQuality.save();
         }
 
@@ -268,34 +232,34 @@ const deleteSite = async (req, res) => {
         if (!deletedSite) return res.status(404).json({ error: 'Site not Found' });
         console.log('deletedSite:', deletedSite)
 
-        const existingClient = await Client.findById(deletedSite.client);
-        const existingIncharge = await User.findById(deletedSite.incharge);
+        const existingClient = await Client.findById(deletedSite.client.id);
+        const existingIncharge = await User.findById(deletedSite.incharge.id);
         let existingSupervisor;
         if (deletedSite.supervisor !== '') {
-            existingSupervisor = await User.findById(deletedSite.supervisor);
+            existingSupervisor = await User.findById(deletedSite.supervisor.id);
         }
         let existingQuality;
         if (deletedSite.qualityEngineer !== '') {
-            existingQuality = await User.findById(deletedSite.qualityEngineer);
+            existingQuality = await User.findById(deletedSite.qualityEngineer.id);
         }
         const existingContractors = await Contractor.find();
         const existingWorkOrders = await WorkOrder.find()
-            .where('site').equals(deleteSite._id)
+            .where('site.id').equals(deleteSite._id)
             .exec();
         const existingBills = await Bill.find()
-            .where('site').equals(deleteSite._id)
+            .where('site.id').equals(deleteSite._id)
             .exec();
         const existingPurchaseOrder = await PurchaseOrder.find()
-            .where('site').equals(deleteSite._id)
+            .where('site.id').equals(deleteSite._id)
             .exec();
         const existingPaymentSchedule = await PaymentSchedule.findOneAndDelete()
-            .where('site').equals(deleteSite._id)
+            .where('site.id').equals(deleteSite._id)
             .exec();
         const existingExtraWork = await ExtraWork.find()
-            .where('site').equals(deleteSite._id)
+            .where('site.id').equals(deleteSite._id)
             .exec();
         const existingProjectSchedule = await ProjectSchedule.findOneAndDelete()
-            .where('site').equals(deleteSite._id)
+            .where('site.id').equals(deleteSite._id)
             .exec();
 
         // console.log('existingWorkOrders:', existingWorkOrders);
@@ -333,7 +297,7 @@ const deleteSite = async (req, res) => {
 
         // console.log('existingContractor:', existingContractors);
         for (const contractor of existingContractors) {
-            const index = contractor.site.indexOf(deletedSite._id);
+            const index = contractor?.site?.id.indexOf(deletedSite._id);
             if (index !== -1) {
                 contractor.site.splice(index, 1);
                 await contractor.save();
@@ -345,17 +309,17 @@ const deleteSite = async (req, res) => {
 
         if (deletedSite.supervisor !== '') {
             if (existingSupervisor !== '') {
-                existingSupervisor?.site.splice(deletedSite._id, 1);
+                existingSupervisor?.site.id.splice(deletedSite._id, 1);
                 await existingSupervisor.save();
             }
         }
 
-        existingIncharge?.site.splice(deletedSite._id, 1);
+        existingIncharge?.site.id.splice(deletedSite._id, 1);
         await existingIncharge.save();
 
         if (deletedSite.qualityEngineer !== '') {
             if (existingQuality !== '') {
-                existingQuality.site.splice(deletedSite._id, 1);
+                existingQuality.site.id.splice(deletedSite._id, 1);
                 await existingQuality.save();
             }
         }

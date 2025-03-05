@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import Header from '../components/Header';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Select from 'react-select';
 import axios from 'axios';
 
-const CreatePurchaseRequest = () => {
+const CreatePurchaseRequest = ({ onClose }) => {
     const [step, setStep] = useState(0);
     const [formData, setFormData] = useState({
         site: '',
@@ -15,9 +14,17 @@ const CreatePurchaseRequest = () => {
         requirementFor: '',
         category: '',
         requirement: [{
-            material: '',
-            reqQuantity: '',
-            unit: '',
+            item: '',
+            request: {
+                quantity: '',
+                unit: '',
+                remarks: '',
+            },
+            approved: {
+                quantity: '',
+                unit: '',
+                remarks: '',
+            },
         }],
     });
     const [materials, setMaterial] = useState([]);
@@ -92,16 +99,32 @@ const CreatePurchaseRequest = () => {
     };
 
     const handleNext = () => {
-        if (step < formData.requirement.length) {
-            setStep(step + 1);
-        } else {
-            setFormData(prevState => ({
-                ...prevState,
-                requirement: [...prevState.requirement, { material: '', reqQuantity: '', unit: '' }],
-            }));
-            setStep(step + 1);
-        }
+        setFormData((prevState) => {
+            const updatedRequirement = [...prevState.requirement];
+    
+            // If current step is a new one, push an empty object
+            if (step === updatedRequirement.length) {
+                updatedRequirement.push({
+                    item: '',
+                    request: {
+                        quantity: '',
+                        unit: '',
+                        remarks: '',
+                    },
+                    approved: {
+                        quantity: '',
+                        unit: '',
+                        remarks: '',
+                    },
+                });
+            }
+    
+            return { ...prevState, requirement: updatedRequirement };
+        });
+    
+        setStep((prevStep) => prevStep + 1);
     };
+    
 
     const handlePrevious = () => {
         if (step > 0) setStep(step - 1);
@@ -114,22 +137,66 @@ const CreatePurchaseRequest = () => {
     const handleRequirementChange = (field, value) => {
         setFormData(prevState => {
             const updatedRequirement = [...prevState.requirement];
-            updatedRequirement[step] = { ...updatedRequirement[step], [field]: value };
+    
+            // Determine if the field is inside "request" or "approved"
+            if (field.includes('.')) {
+                const [parent, key] = field.split('.');
+                updatedRequirement[step - 1] = {
+                    ...updatedRequirement[step - 1],
+                    [parent]: {
+                        ...updatedRequirement[step - 1][parent],
+                        [key]: value,
+                    },
+                };
+            } else {
+                updatedRequirement[step - 1] = {
+                    ...updatedRequirement[step - 1],
+                    [field]: value,
+                };
+            }
+    
             return { ...prevState, requirement: updatedRequirement };
         });
+    };
+    
+    
+
+    const handleReset = () => {
+        setFormData({
+            site: '',
+            reqDate: '',
+            createdBy: '',
+            requirementFor: '',
+            category: '',
+            requirement: [{
+                item: '',
+                request: {
+                    quantity: '',
+                    unit: '',
+                    remarks: '',
+                },
+                approved: {
+                    quantity: '',
+                    unit: '',
+                    remarks: '',
+                },
+            }],
+        });
+        setStep(0);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log(formData)
         try {
             if (purchaseReqToEdit) {
                 const response = await axios.put(`/api/v1/purchase-request/${purchaseReqToEdit}`, formData);
                 toast.success(response.data.message);
-                navigate(-1);
+                onClose()
             } else {
-                const response = await axios.post('/api/v1/purchase-request/create', formData);
+                const response = await axios.post('/api/v1/purchase-request', formData);
                 toast.success(response.data.message);
-                navigate(-1);
+                onClose()
             }
         } catch (error) {
             console.error('Error submitting purchase request:', error.message);
@@ -193,6 +260,7 @@ const CreatePurchaseRequest = () => {
                                 <option>Requirement For</option>
                             </select>
                         </div>
+                        <button type="button" onClick={() => setStep(step + 1)} className="bg-blue-500 text-white p-2 rounded">Add Requirement</button>
                     </>
                 )}
 
@@ -200,22 +268,23 @@ const CreatePurchaseRequest = () => {
                     <div>
                         <label className="block text-sm font-semibold text-gray-600 mt-4">Material</label>
                         <Select
-                            value={{ value: formData.requirement[step - 1]?.material, label: formData.requirement[step - 1]?.material }}
-                            onChange={(selectedOption) => handleRequirementChange('material', selectedOption.value)}
+                            value={{ value: formData.requirement[step - 1]?.item, label: formData.requirement[step - 1]?.item }}
+                            onChange={(selectedOption) => handleRequirementChange('item', selectedOption.value)}
                             options={materials.map(material => ({ value: material.work, label: material.work }))}
                             placeholder="Select Material"
                         />
                         <label className="block text-sm font-semibold text-gray-600 mt-4">Quantity</label>
                         <input
                             type="number"
-                            value={formData.requirement[step - 1]?.reqQuantity || ''}
-                            onChange={(e) => handleRequirementChange('reqQuantity', e.target.value)}
+
+                            value={formData.requirement[step - 1]?.request.quantity || ''}
+                            onChange={(e) => handleRequirementChange('request.quantity', e.target.value)}
                             className="border p-2 rounded w-full"
                         />
                         <label className="block text-sm font-semibold text-gray-600 mt-4">Unit</label>
                         <select
-                            value={formData.requirement[step - 1]?.unit || ''}
-                            onChange={(e) => handleRequirementChange('unit', e.target.value)}
+                            value={formData.requirement[step - 1]?.request.unit || ''}
+                            onChange={(e) => handleRequirementChange('request.unit', e.target.value)}
                             className="border p-2 rounded w-full"
                         >
                             <option value="">Select a Unit</option>
@@ -223,21 +292,19 @@ const CreatePurchaseRequest = () => {
                                 <option key={index} value={unit}>{unit}</option>
                             ))}
                         </select>
+
                     </div>
                 )}
 
-                <div className="mt-5 flex justify-between">
+                <div className="mt-5">
                     {step > 0 && (
-                        <button type="button" onClick={handlePrevious} className="bg-gray-500 text-white p-2 rounded">
-                            Previous
-                        </button>
+                        <div className='flex justify-between '>
+                            <button type="button" onClick={handlePrevious} className="bg-gray-500 text-white p-2 rounded">Previous</button>
+                            <button type="button" onClick={handleReset} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600">Reset</button>
+                            <button type="submit" className="bg-green-500 text-white p-2 rounded">Submit</button>
+                            <button type="button" onClick={handleNext} className="bg-blue-500 text-white p-2 rounded">Next</button>
+                        </div>
                     )}
-                    <button type="submit" className="bg-green-500 text-white p-2 rounded">
-                        Submit
-                    </button>
-                    <button type="button" onClick={handleNext} className="bg-blue-500 text-white p-2 rounded">
-                        Next
-                    </button>
                 </div>
             </form>
             <Toaster position="top-right" reverseOrder={false} />

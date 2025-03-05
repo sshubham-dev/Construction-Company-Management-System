@@ -228,13 +228,16 @@ const CreateProjectSchedule = ({ onClose, isEdit }) => {
       if (scheduleIdToEdit) {
         const response = await axios.put(`/api/v1/project-schedule/${scheduleIdToEdit}`, formData);
         toast.success(response.data.message);
+        onClose()
       } else if (projectToEdit.id !== '' && projectToEdit.index !== '') {
         await axios.put(`/api/v1/project-schedule/${projectToEdit.id}/projectDetails/${projectToEdit.index}`, formData.projectDetail[0]);
         toast.success('Edited successfully');
+        onClose()
       } else {
         console.log('first', formData)
-        const response = await axios.post('/api/v1/project-schedule/create', formData);
+        const response = await axios.post('/api/v1/project-schedule', formData);
         toast.success(response.data.message);
+        onClose()
       }
     } catch (error) {
       console.error('Error submitting project schedule:', error);

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import Header from './Header';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
@@ -536,11 +535,11 @@ const RecordInventory = () => {
         } else {
             console.log(record)
         }
+        onClose()
     }
 
     return (
         <div >
-            <Header category="Page" title="Record Inventory" />
             <section className='container mx-auto mt-4 mb-16'>
                 <form className="max-w-md mx-auto" onSubmit={handleSubmit}>
 

@@ -114,15 +114,15 @@ function WorkDetailsForm({ onClose }) {
         console.log(workDetail)
         const response = await axios.put(`/api/v1/work-details/${workDetailsToEdit}`, workDetail);
         toast.success(response.data.message)
-        navigate(-1);
+        onClose()
       } else if (workToEdit.id !== '' && workToEdit.index !== '') {
         const response = await axios.put(`/api/v1/work-details/${workToEdit.id}/${workToEdit.index}`, workDetail);
         toast.success(response.data.message)
-        navigate(-1);
+        onClose()
       } else {
-        const response = await axios.post('/api/v1/work-details/create', workDetail);
+        const response = await axios.post('/api/v1/work-details', workDetail);
         toast.success(response.data.message)
-        navigate(-1);
+        onClose()
       }
     } catch (error) {
       toast.error(error.message)

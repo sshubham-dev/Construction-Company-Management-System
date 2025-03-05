@@ -1,20 +1,21 @@
 const express = require('express');
-const router = express.Router();
-const contraController = require('../controllers/contraController');
+const Contra = express.Router();
+const { createContra, getAllContra, getContraByVoucherNo, updateContra, deleteContra } = require('../controller/contra.controller');
+const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 // Create Contra voucher
-router.post('/create', contraController.createContra);
+Contra.post('/', userAuth, createContra);
 
 // Get all Contra vouchers
-router.get('/', contraController.getAllContra);
+Contra.get('/', getAllContra);
 
 // Get Contra voucher by voucherNo
-router.get('/:voucherNo', contraController.getContraByVoucherNo);
+Contra.get('/:voucherNo', getContraByVoucherNo);
 
 // Update Contra voucher
-router.put('/:voucherNo', contraController.updateContra);
+Contra.put('/:voucherNo', updateContra);
 
 // Delete Contra voucher
-router.delete('/:voucherNo', contraController.deleteContra);
+Contra.delete('/:voucherNo', deleteContra);
 
-module.exports = router;
+module.exports = Contra;

@@ -1,13 +1,14 @@
-const Stock = require('../models/Stock');
-const Stock_Group = require('../models/StockGroup');
+const { Stock, Stock_Group } = require('../models/stock.models');
 
 // Create Stock
 const createStock = async (req, res) => {
     try {
+        console.log(req.body)
         const stock = new Stock(req.body);
         await stock.save();
         res.status(201).json(stock);
     } catch (err) {
+        console.log(err)
         res.status(400).json({ error: err.message });
     }
 };
@@ -91,6 +92,7 @@ const getStockGroupById = async (req, res) => {
         }
         res.status(200).json(stockGroup);
     } catch (err) {
+        console.log(err)
         res.status(400).json({ error: err.message });
     }
 };
@@ -121,15 +123,4 @@ const deleteStockGroup = async (req, res) => {
     }
 };
 
-module.exports = {
-    createStock,
-    getStocks,
-    getStockById,
-    updateStock,
-    deleteStock,
-    createStockGroup,
-    getStockGroups,
-    getStockGroupById,
-    updateStockGroup,
-    deleteStockGroup
-};
+module.exports = { createStock, getStockById, getStocks, updateStock, deleteStock, createStockGroup, getStockGroupById, getStockGroups, updateStockGroup, deleteStockGroup };

@@ -1,8 +1,7 @@
-const Journal = require('../models/Journal');
-const StockJournal = require('../models/StockJournal');
+const { Journal, StockJournal } = require('../models/journal.models');
 
 // Create a new journal entry
-exports.createJournal = async (req, res) => {
+const createJournal = async (req, res) => {
     try {
         const { voucherNo, date, narration, entries, createdBy } = req.body;
         const newJournal = new Journal({
@@ -21,7 +20,7 @@ exports.createJournal = async (req, res) => {
 };
 
 // Get all journals
-exports.getAllJournals = async (req, res) => {
+const getAllJournals = async (req, res) => {
     try {
         const journals = await Journal.find().populate('createdBy', 'name');
         res.status(200).json({ journals });
@@ -31,7 +30,7 @@ exports.getAllJournals = async (req, res) => {
 };
 
 // Get a specific journal by voucherNo
-exports.getJournalByVoucherNo = async (req, res) => {
+const getJournalByVoucherNo = async (req, res) => {
     try {
         const journal = await Journal.findOne({ voucherNo: req.params.voucherNo }).populate('createdBy', 'name');
         if (!journal) {
@@ -44,7 +43,7 @@ exports.getJournalByVoucherNo = async (req, res) => {
 };
 
 // Update a journal entry
-exports.updateJournal = async (req, res) => {
+const updateJournal = async (req, res) => {
     try {
         const updatedJournal = await Journal.findOneAndUpdate(
             { voucherNo: req.params.voucherNo },
@@ -61,7 +60,7 @@ exports.updateJournal = async (req, res) => {
 };
 
 // Delete a journal entry
-exports.deleteJournal = async (req, res) => {
+const deleteJournal = async (req, res) => {
     try {
         const deletedJournal = await Journal.findOneAndDelete({ voucherNo: req.params.voucherNo });
         if (!deletedJournal) {
@@ -75,7 +74,7 @@ exports.deleteJournal = async (req, res) => {
 
 
 // Create a new stock journal entry
-exports.createStockJournal = async (req, res) => {
+const createStockJournal = async (req, res) => {
     try {
         const { voucherNumber, date, items, narration, createdBy } = req.body;
         const newStockJournal = new StockJournal({
@@ -94,7 +93,7 @@ exports.createStockJournal = async (req, res) => {
 };
 
 // Get all stock journals
-exports.getAllStockJournals = async (req, res) => {
+const getAllStockJournals = async (req, res) => {
     try {
         const stockJournals = await StockJournal.find().populate('createdBy', 'name');
         res.status(200).json({ stockJournals });
@@ -104,7 +103,7 @@ exports.getAllStockJournals = async (req, res) => {
 };
 
 // Get a specific stock journal by voucherNumber
-exports.getStockJournalByVoucherNumber = async (req, res) => {
+const getStockJournalByVoucherNumber = async (req, res) => {
     try {
         const stockJournal = await StockJournal.findOne({ voucherNumber: req.params.voucherNumber }).populate('createdBy', 'name');
         if (!stockJournal) {
@@ -117,7 +116,7 @@ exports.getStockJournalByVoucherNumber = async (req, res) => {
 };
 
 // Update a stock journal entry
-exports.updateStockJournal = async (req, res) => {
+const updateStockJournal = async (req, res) => {
     try {
         const updatedStockJournal = await StockJournal.findOneAndUpdate(
             { voucherNumber: req.params.voucherNumber },
@@ -134,7 +133,7 @@ exports.updateStockJournal = async (req, res) => {
 };
 
 // Delete a stock journal entry
-exports.deleteStockJournal = async (req, res) => {
+const deleteStockJournal = async (req, res) => {
     try {
         const deletedStockJournal = await StockJournal.findOneAndDelete({ voucherNumber: req.params.voucherNumber });
         if (!deletedStockJournal) {
@@ -145,3 +144,5 @@ exports.deleteStockJournal = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
+module.exports = { createJournal, getAllJournals, getJournalByVoucherNo, updateJournal, deleteJournal }

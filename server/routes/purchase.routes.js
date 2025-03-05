@@ -1,20 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const purchaseController = require('../controllers/purchaseController');
+const {
+    createPurchase, getAllPurchases, getPurchaseById, updatePurchase, deletePurchase
+} = require('../controller/purchase.controller');
+const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 // Create purchase
-router.post('/', purchaseController.createPurchase);
+router.post('/', createPurchase);
 
 // Get all purchases
-router.get('/', purchaseController.getAllPurchases);
+router.get('/', getAllPurchases);
 
 // Get purchase by ID
-router.get('/:id', purchaseController.getPurchaseById);
+router.get('/:id', getPurchaseById);
 
 // Update purchase by ID
-router.put('/:id', purchaseController.updatePurchase);
+router.put('/:id', updatePurchase);
 
 // Delete purchase by ID
-router.delete('/:id', purchaseController.deletePurchase);
+router.delete('/:id', deletePurchase);
 
 module.exports = router;

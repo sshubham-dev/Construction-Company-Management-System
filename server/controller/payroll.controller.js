@@ -1,11 +1,7 @@
-const Payroll = require('../models/Payroll');
-const Deduction = require('../models/Deduction');
-const Bonus = require('../models/Bonus');
-const PaymentHistory = require('../models/PaymentHistory');
-const Tax = require('../models/Tax');
+const { Payroll, Deduction, Bonus, PaymentHistory, Tax } = require('../models/payroll.models');
 
 // Create Payroll
-exports.createPayroll = async (req, res) => {
+const createPayroll = async (req, res) => {
     try {
         const payroll = new Payroll(req.body);
         await payroll.save();
@@ -16,7 +12,7 @@ exports.createPayroll = async (req, res) => {
 };
 
 // Get Payrolls
-exports.getPayrolls = async (req, res) => {
+const getPayrolls = async (req, res) => {
     try {
         const payrolls = await Payroll.find().populate('employee');
         res.status(200).json(payrolls);
@@ -26,7 +22,7 @@ exports.getPayrolls = async (req, res) => {
 };
 
 // Get Payroll by ID
-exports.getPayrollById = async (req, res) => {
+const getPayrollById = async (req, res) => {
     try {
         const payroll = await Payroll.findById(req.params.id).populate('employee');
         if (!payroll) return res.status(404).json({ error: 'Payroll not found' });
@@ -37,7 +33,7 @@ exports.getPayrollById = async (req, res) => {
 };
 
 // Update Payroll
-exports.updatePayroll = async (req, res) => {
+const updatePayroll = async (req, res) => {
     try {
         const payroll = await Payroll.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!payroll) return res.status(404).json({ error: 'Payroll not found' });
@@ -48,7 +44,7 @@ exports.updatePayroll = async (req, res) => {
 };
 
 // Delete Payroll
-exports.deletePayroll = async (req, res) => {
+const deletePayroll = async (req, res) => {
     try {
         const payroll = await Payroll.findByIdAndDelete(req.params.id);
         if (!payroll) return res.status(404).json({ error: 'Payroll not found' });
@@ -59,7 +55,7 @@ exports.deletePayroll = async (req, res) => {
 };
 
 // Create Deduction
-exports.createDeduction = async (req, res) => {
+const createDeduction = async (req, res) => {
     try {
         const deduction = new Deduction(req.body);
         await deduction.save();
@@ -70,7 +66,7 @@ exports.createDeduction = async (req, res) => {
 };
 
 // Get Deductions
-exports.getDeductions = async (req, res) => {
+const getDeductions = async (req, res) => {
     try {
         const deductions = await Deduction.find();
         res.status(200).json(deductions);
@@ -80,7 +76,7 @@ exports.getDeductions = async (req, res) => {
 };
 
 // Create Bonus
-exports.createBonus = async (req, res) => {
+const createBonus = async (req, res) => {
     try {
         const bonus = new Bonus(req.body);
         await bonus.save();
@@ -91,7 +87,7 @@ exports.createBonus = async (req, res) => {
 };
 
 // Get Bonuses
-exports.getBonuses = async (req, res) => {
+const getBonuses = async (req, res) => {
     try {
         const bonuses = await Bonus.find();
         res.status(200).json(bonuses);
@@ -101,7 +97,7 @@ exports.getBonuses = async (req, res) => {
 };
 
 // Create Payment History
-exports.createPaymentHistory = async (req, res) => {
+const createPaymentHistory = async (req, res) => {
     try {
         const paymentHistory = new PaymentHistory(req.body);
         await paymentHistory.save();
@@ -112,7 +108,7 @@ exports.createPaymentHistory = async (req, res) => {
 };
 
 // Get Payment History
-exports.getPaymentHistory = async (req, res) => {
+const getPaymentHistory = async (req, res) => {
     try {
         const paymentHistory = await PaymentHistory.find().populate('payroll');
         res.status(200).json(paymentHistory);
@@ -122,7 +118,7 @@ exports.getPaymentHistory = async (req, res) => {
 };
 
 // Create Tax
-exports.createTax = async (req, res) => {
+const createTax = async (req, res) => {
     try {
         const tax = new Tax(req.body);
         await tax.save();
@@ -133,7 +129,7 @@ exports.createTax = async (req, res) => {
 };
 
 // Get Taxes
-exports.getTaxes = async (req, res) => {
+const getTaxes = async (req, res) => {
     try {
         const taxes = await Tax.find();
         res.status(200).json(taxes);
@@ -141,3 +137,7 @@ exports.getTaxes = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+module.exports = {
+    createBonus, createDeduction, createPaymentHistory, createPayroll, createTax, getBonuses, getTaxes, getPaymentHistory, getDeductions, getPayrolls, getPayrollById, updatePayroll, deletePayroll
+}

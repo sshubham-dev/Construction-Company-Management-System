@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const {
     sendApproveByAdmin,
     sendApproveByAccountant,
+    sendApproveByAccountHead,
     sendApproveByIncharge,
     sendApproveByContractor
 } = require('./approval.controller.js')
@@ -15,7 +16,6 @@ const getWorkorders = async (req, res) => {
         const workOrders = await WorkOrder.find()
             .where('adminApprove').equals('Approved')
             .where('approvalStatus').equals('Approved')
-            .populate('site contractor')
             .exec();
         if (workOrders.length === 0) {
             return res.status(404).json({ error: 'No Work-Orders Found' });
@@ -33,7 +33,6 @@ const getDraftWorkorders = async (req, res) => {
         const workOrders = await WorkOrder.find()
             .where('approvalStatus').equals("Pending")
             .where('createdBy').equals(user?.id)
-            .populate('site contractor')
             .exec();
         if (workOrders.length === 0) {
             return res.status(404).json({ error: 'No Work-Orders Found' });
@@ -49,9 +48,6 @@ const getWorkorder = async (req, res) => {
     try {
         const id = req.params.id;
         const workOrder = await WorkOrder.findById(id)
-            .populate('site')
-            .populate('contractor')
-            .exec();
         if (!workOrder) {
             return res.status(404).json({ error: 'Work-Order not Found' });
         }
@@ -65,11 +61,10 @@ const getWorkorder = async (req, res) => {
 const siteWorkOrder = async (req, res) => {
     try {
         const id = req.params.id;
-        const workOrders = await WorkOrder.find({ site: id })
+        const workOrders = await WorkOrder.find()
             .where('adminApprove').equals('Approved')
             .where('approvalStatus').equals('Approved')
-            .populate('site')
-            .populate('contractor')
+            .where('site.id').equals(id)
             .exec();
         if (workOrders.length === 0) {
             return res.status(404).json({ error: 'No Work-Orders Found' });
@@ -89,10 +84,8 @@ const getBySiteAndContractor = async (req, res) => {
         const workOrders = await WorkOrder.find()
             .where('adminApprove').equals('Approved')
             .where('approvalStatus').equals('Approved')
-            .where('site').equals(site)
-            .where('contractor').equals(contractor)
-            .populate('site')
-            .populate('contractor')
+            .where('site.id').equals(site)
+            .where('contractor.id').equals(contractor)
             .exec();
         if (workOrders.length === 0) {
             return res.status(404).json({ error: 'No Work-Orders Found' });
@@ -108,11 +101,10 @@ const getBySiteAndContractor = async (req, res) => {
 const contractorWorkOrder = async (req, res) => {
     try {
         const id = req.params.id;
-        const workOrders = await WorkOrder.find({ contractor: id })
+        const workOrders = await WorkOrder.find()
             .where('adminApprove').equals('Approved')
             .where('approvalStatus').equals('Approved')
-            .populate('site')
-            .populate('contractor')
+            .where('contractor.id').equals(id)
             .exec();
         if (workOrders.length === 0) {
             return res.status(404).json({ error: 'No Work-Orders Found' });
@@ -155,8 +147,8 @@ const createWorkorder = async (req, res) => {
         }
 
         const existingWorkOrder = await WorkOrder.findOne()
-            .where('site').equals(site)
-            .where('contractor').equals(contractor)
+            .where('site.id').equals(site)
+            .where('contractor.id').equals(contractor)
             .exec();
         if (existingWorkOrder) {
             // console.log(existingWorkOrder)
@@ -167,8 +159,8 @@ const createWorkorder = async (req, res) => {
                 workOrderName: workName.title,
                 workOrderNo,
                 createdBy: user?._id,
-                contractor: existingContractor._id,
-                site: existingSite._id,
+                contractor: { id: existingContractor._id, name: existingContractor.name },
+                site: { id: existingSite._id, name: existingSite.name },
                 work,
                 startdate,
                 duration,
@@ -176,6 +168,8 @@ const createWorkorder = async (req, res) => {
 
             const savedWorkOrder = await newWorkOrder.save();
             sendApproveByAdmin(savedWorkOrder, "Work Order", user._id)
+            sendApproveByAccountHead(savedWorkOrder, 'Work Order', user._id)
+            sendApproveByIncharge(saveWorkOrder, 'Work Order', user._id)
 
             res.status(201).json({ message: 'Work Order Created Successfully' });
         }
@@ -191,17 +185,16 @@ const saveWorkOrder = async (req, res) => {
         const user = req.user;
         const workOrder = await WorkOrder.findById(id)
             .where('createdBy').equals(user?._id)
-            .populate('site contractor')
             .exec();
         // console.log(workOrder)
         if (!workOrder) {
             return res.status(404).json({ message: 'Purchase order not found' });
         }
-        if (workOrder.adminApprove === 'Approved') {
+        if (workOrder.adminApprove === 'Approved' && workOrder.accountheadApprove === 'Approved' && workOrder.inchargeApprove == 'Approved') {
             workOrder.approvalStatus = 'Approved'
             await workOrder.save();
-            const existingSite = await Site.findById(workOrder?.site._id);
-            const existingContractor = await Contractor.findById(workOrder?.contractor._id);
+            const existingSite = await Site.findById(workOrder?.site.id);
+            const existingContractor = await Contractor.findById(workOrder?.contractor.id);
             if (!existingSite.workOrder.includes(workOrder._id)) {
                 existingSite.workOrder.push(workOrder._id);
                 existingSite.contractor.push(existingContractor._id);
@@ -293,11 +286,11 @@ const deleteWorkOrder = async (req, res) => {
             .where('createdBy').equals(user?._id)
             .exec();
         if (!workOrder) return res.status(500).json({ error: 'Something went wrong' });
-        const existingSite = await Site.findById({ _id: workOrder.site });
+        const existingSite = await Site.findById({ _id: workOrder.site.id });
         if (!existingSite) {
             return res.status(400).json({ error: 'Site not found' });
         }
-        const existingContractor = await Contractor.findOne({ _id: workOrder.contractor });
+        const existingContractor = await Contractor.findOne({ _id: workOrder.contractor.id });
         if (!existingContractor) {
             return res.status(400).json({ error: 'Contractor not found' });
         }
@@ -319,9 +312,6 @@ const getWorks = async (req, res) => {
         const id = req.params.id;
         // console.log(id)
         const workOrder = await WorkOrder.findById(id)
-        .populate('site')
-        .populate('contractor')
-        .exec();
         // console.log(workOrder)
         if (!workOrder && workOrder.work.length === 0) {
             return res.status(404).json({ error: 'No Work Order & Work Details Found' });

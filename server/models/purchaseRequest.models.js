@@ -2,12 +2,11 @@ const mongoose = require('mongoose');
 
 const requirementSchema = new mongoose.Schema({
     item: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Stock',
-            required: true,
-        }
+        type: String,
+        // id: {
+        //     type: mongoose.Schema.Types.ObjectId,
+        //     ref: 'Stock',
+        // }
     },
     request: {
         quantity: Number,
@@ -19,7 +18,7 @@ const requirementSchema = new mongoose.Schema({
         unit: String,
         remarks: String,
     },
-    delivered:{
+    delivered: {
         quantity: Number,
         unit: String,
         remarks: String,
@@ -38,19 +37,16 @@ const purchaseRequestSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    to:{
+    to: {
         name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Inventory',
-        }
+        // id: {
+        //     type: mongoose.Schema.Types.ObjectId,
+        //     ref: 'Inventory',
+        // }
     },
     createdBy: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     },
     requirementFor: {
         type: String,
@@ -60,7 +56,7 @@ const purchaseRequestSchema = new mongoose.Schema({
         required: true,
     },
     requirement: [requirementSchema],
-    status:{
+    status: {
         type: String,
         default: 'request',
         enum: ['request', 'approved', 'delivery', 'delivered']
@@ -70,11 +66,15 @@ const purchaseRequestSchema = new mongoose.Schema({
         type: String,
         default: 'Pending'
     },
-    accountApprove: {
+    accountantApprove: {
         type: String,
         default: 'Pending'
     },
-    storeApprove: {
+    accountheadApprove: {
+        type: String,
+        default: 'Pending'
+    },
+    inchargeApprove: {
         type: String,
         default: 'Pending'
     },

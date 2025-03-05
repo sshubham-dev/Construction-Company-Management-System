@@ -7,7 +7,7 @@ import Select from 'react-select';
 
 axios.defaults.withCredentials = true;
 
-const CreateWorkOrder = () => {
+const CreateWorkOrder = ({onClose}) => {
   const [formData, setFormData] = useState({
     workOrderName: '',
     workOrderNo: '',
@@ -153,15 +153,16 @@ const CreateWorkOrder = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(formData)
     try {
       if (workOrderToEdit) {
         const response = await axios.put(`/api/v1/work-order/${workOrderToEdit}`, formData);
         toast.success(response.data.message);
-        navigate(-1);
+        onClose()
       } else {
-        const response = await axios.post('/api/v1/work-order/create', formData);
+        const response = await axios.post('/api/v1/work-order', formData);
         toast.success(response.data.message);
-        navigate(-1);
+        onClose()
       }
     } catch (error) {
       console.error('Error submitting work order:', error.message);

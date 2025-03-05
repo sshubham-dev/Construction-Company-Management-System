@@ -2,12 +2,12 @@ const Contractor = require('../models/contractor.models');
 const WorkOrder = require('../models/workorder.models');
 const Bill = require('../models/bill.models.js');
 const Site = require('../models/site.models');
-const ExtraWork = require('../models/extrawork.models.js')
+const ExtraWork = require('../models/extrawork.models.js');
+const { convertToUser } = require('./user.controller.js');
 
 const getContractors = async (req, res) => {
     try {
         const contractors = await Contractor.find()
-            .populate('site')
             .populate('bill')
             .populate('workOrder')
             .populate('extraWork')
@@ -24,7 +24,6 @@ const getContractor = async (req, res) => {
     try {
         const id = req.params.id;
         const contractor = await Contractor.findOne(id)
-            .populate('site')
             .populate('bill')
             .populate('workOrder')
             .populate('extraWork')
@@ -48,6 +47,7 @@ const createContractor = async (req, res) => {
             pan,
             bank,
             jobWork,
+            isUser,
         } = req.body;
 
         const newContractor = new Contractor({
@@ -59,6 +59,7 @@ const createContractor = async (req, res) => {
             pan,
             bank,
             jobWork,
+            isUser,
         });
 
         const existingContractor = await Contractor.findOne({ name });
@@ -66,8 +67,12 @@ const createContractor = async (req, res) => {
 
         const savedContractor = await newContractor.save();
         if (!savedContractor) return res.status(500).json({ error: 'Internal Server Error' });
+        res.status(200).json({ message: 'Contractor Created Successfuly', savedContractor });
+        if (isUser === true) {
+            const password = name + '@' + phone
+            convertToUser(savedContractor._id, 'Contractor', password);
+        }
 
-        return res.status(200).json({ message: 'Contractor Created Successfuly', savedContractor });
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: 'Something went wrong' });
@@ -86,6 +91,7 @@ const updateContractor = async (req, res) => {
             pan,
             bank,
             jobWork,
+            isUser,
         } = req.body;
         const updatedContractor = await Contractor.findOneAndUpdate({ _id: id },
             {
@@ -98,11 +104,15 @@ const updateContractor = async (req, res) => {
                     pan,
                     bank,
                     jobWork,
+                    isUser
                 }
             }, { new: true });
         if (!updatedContractor) return res.status(404).json({ error: 'Contractor not found' });
-
-        return res.status(200).json(updatedContractor);
+        res.status(200).json(updatedContractor);
+        if (isUser === true && updatedContractor.userId == '') {
+            const password = name + '@' + phone
+            convertToUser(updatedContractor._id, 'Contractor', password);
+        }
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: 'Something went wrong' });
@@ -118,17 +128,17 @@ const deleteContractor = async (req, res) => {
         console.log("deletedContractor:", deletedContractor)
         const existingSite = await Site.find();
         const existingWorkOrders = await WorkOrder.find()
-            .where('contractor').equals(deletedContractor?._id)
+            .where('contractor.id').equals(deletedContractor?._id)
             .exec();
         const existingBills = await Bill.find()
-            .where('contractor').equals(deletedContractor?._id)
+            .where('contractor.id').equals(deletedContractor?._id)
             .exec();
         const existingExtraWork = await ExtraWork.find()
-            .where('contractor').equals(deletedContractor?._id)
+            .where('contractor.id').equals(deletedContractor?._id)
             .exec();
 
         for (const site of existingSite) {
-            const index = site.contractor.indexOf(deletedContractor._id);
+            const index = site.contractor.id.indexOf(deletedContractor._id);
             if (index !== -1) {
                 site.contractor.splice(index, 1);
                 await site.save();

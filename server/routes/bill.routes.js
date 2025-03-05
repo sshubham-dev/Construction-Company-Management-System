@@ -15,7 +15,7 @@ const { userAuth } = require('../middlewares/auth.middleware');
 Bill.get('/', getBills);
 Bill.get('/site/:id', userAuth, siteBill);
 Bill.get('/draft/:id', getDraftBills);
-Bill.post('/create', userAuth, createBill);
+Bill.post('/', userAuth, createBill);
 Bill.route('/:id')
 .get(getBill)
 .put(userAuth, updateBill)

@@ -76,8 +76,11 @@ const checklistSchema = new mongoose.Schema({
             max: 5, // Rating stars
         },
         remarks: String, // Remarks on the rating
-        required: true,
     }],
+    approvalStatus: {
+        type: String,
+        default: 'Pending',
+    }
 }, { timestamps: true });
 
 const Checklist = mongoose.model('Checklist', checklistSchema);

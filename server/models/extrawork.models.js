@@ -32,6 +32,7 @@ const extraWorkSchema = new mongoose.Schema({
     extraFor: {
         type: String,
         default: null,
+        enum: ['Client', 'Contractor']
     },
     site: {
         name: String,
@@ -84,6 +85,14 @@ const extraWorkSchema = new mongoose.Schema({
         type: String,
         default: 'Pending'
     },
+    accountheadApprove: {
+        type: String,
+        default: 'Pending'
+    },
+    approvalStatus: {
+        type: String,
+        default: 'Pending',
+    }
 }, { timestamps: true });
 
 const ExtraWork = mongoose.model('Extra-Work', extraWorkSchema);

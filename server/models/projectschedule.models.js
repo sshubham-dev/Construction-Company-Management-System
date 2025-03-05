@@ -40,11 +40,8 @@ const projectScheduleSchema = new mongoose.Schema({
         trim: true,
     },
     createdBy: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     },
     projectDetail: [projectDetailSchema],
     clientApprove: {
@@ -52,6 +49,10 @@ const projectScheduleSchema = new mongoose.Schema({
         default: 'Pending'
     },
     adminApprove: {
+        type: String,
+        default: 'Pending'
+    },
+    accountheadApprove: {
         type: String,
         default: 'Pending'
     },

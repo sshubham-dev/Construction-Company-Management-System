@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
-import Header from '../components/Header';
 import { IoEyeOff, IoEye } from "react-icons/io5";
 axios.defaults.withCredentials = true;
 
@@ -71,10 +70,10 @@ const CreateUser = ({ onClose, isEdit }) => {
         await axios.put(`/api/v1/user/${userIdToEdit}`, userData);
         toast.success('User edited successfully');
       } else {
-        await axios.post('/api/v1/user/create', userData);
+        await axios.post('/api/v1/user', userData);
         toast.success('User created successfully');
       }
-      navigate(-1);
+      onClose()
     } catch (error) {
       console.log('Error submitting user data:', error);
       toast.error(error.response?.data?.message || 'An error occurred');

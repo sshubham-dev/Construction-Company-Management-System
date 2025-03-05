@@ -1,7 +1,7 @@
-const SalesOrder = require('../models/SalesOrder');
+const SalesOrder = require('../models/saleorder.models');
 
 // Create a new sales order
-exports.createSalesOrder = async (req, res) => {
+const createSalesOrder = async (req, res) => {
     try {
         const salesOrder = new SalesOrder(req.body);
         await salesOrder.save();
@@ -12,7 +12,7 @@ exports.createSalesOrder = async (req, res) => {
 };
 
 // Get all sales orders
-exports.getAllSalesOrders = async (req, res) => {
+const getAllSalesOrders = async (req, res) => {
     try {
         const salesOrders = await SalesOrder.find();
         res.status(200).json(salesOrders);
@@ -22,7 +22,7 @@ exports.getAllSalesOrders = async (req, res) => {
 };
 
 // Get a specific sales order by ID
-exports.getSalesOrderById = async (req, res) => {
+const getSalesOrderById = async (req, res) => {
     try {
         const salesOrder = await SalesOrder.findById(req.params.id);
         if (!salesOrder) {
@@ -35,7 +35,7 @@ exports.getSalesOrderById = async (req, res) => {
 };
 
 // Update a sales order by ID
-exports.updateSalesOrder = async (req, res) => {
+const updateSalesOrder = async (req, res) => {
     try {
         const updatedSalesOrder = await SalesOrder.findByIdAndUpdate(
             req.params.id,
@@ -52,7 +52,7 @@ exports.updateSalesOrder = async (req, res) => {
 };
 
 // Delete a sales order by ID
-exports.deleteSalesOrder = async (req, res) => {
+const deleteSalesOrder = async (req, res) => {
     try {
         const deletedSalesOrder = await SalesOrder.findByIdAndDelete(req.params.id);
         if (!deletedSalesOrder) {
@@ -63,3 +63,11 @@ exports.deleteSalesOrder = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+module.exports = {
+    createSalesOrder,
+    getAllSalesOrders, 
+    getSalesOrderById,
+    updateSalesOrder,
+    deleteSalesOrder
+}

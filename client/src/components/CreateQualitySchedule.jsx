@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
-import Header from '../components/Header';
 import Select from 'react-select';
 
 axios.defaults.withCredentials = true;
 
-const CreateQualitySchedule = () => {
+const CreateQualitySchedule = ({onClose}) => {
   const [formData, setFormData] = useState({
     site: '',
     qualityScheduleId: '',
@@ -146,19 +145,20 @@ const CreateQualitySchedule = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(formData)
     try {
       if (scheduleIdToEdit) {
         const response = await axios.put(`/api/v1/quality-schedule/${scheduleIdToEdit}`, formData);
         toast.success(response.data.message);
-        navigate(-1);
+        onClose()
       } else if (workToEdit.id && workToEdit.index) {
         await axios.put(`/api/v1/quality-schedule/${workToEdit.id}/workDetails/${workToEdit.index}`, workDetail);
         toast.success('Edited successfully');
-        navigate(-1);
+        onClose()
       } else {
-        const response = await axios.post('/api/v1/quality-schedule/create', formData);
+        const response = await axios.post('/api/v1/quality-schedule', formData);
         toast.success(response.data.message);
-        navigate(-1);
+        onClose()
       }
     } catch (error) {
       console.log('Error submitting quality schedule:', error.message);
@@ -168,7 +168,7 @@ const CreateQualitySchedule = () => {
 
   return (
     <div>
-        <form onSubmit={handleSubmit} className="px-8 pt-6 pb-8 mb-4 w-full max-w-md">
+        <form onSubmit={handleSubmit} >
           {workToEdit.id && workToEdit.index ? (
             <>
               <div className="mb-4">

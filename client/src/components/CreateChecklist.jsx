@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
-import Header from './Header';
 
 const categories = ['Housekeeping', 'Safety'];
 
-const CreateChecklist = () => {
+const CreateChecklist = ({onClose, onEdit}) => {
   const [formData, setFormData] = useState({
     site: '',                    // Selected site
     date: new Date().toISOString().slice(0, 10), // Selected date
@@ -17,7 +16,7 @@ const CreateChecklist = () => {
       status: '',                 // Status
       remarks: '',                // Remarks
     }],
-    ratings: categories.map(category => ({ category, stars: 0, remarks: '' })), // Ratings for categories
+    rating: categories.map(category => ({ category, stars: 0, remarks: '' })), // rating for categories
     observation: '',              // Additional observations
   });
   const [sites, setSite] = useState([]);                      // Selected site
@@ -80,14 +79,14 @@ const CreateChecklist = () => {
   const updateRating = (category, stars, remarks) => {
     setFormData(prevData => ({
       ...prevData,
-      ratings: prevData.ratings.map(rating =>
+      rating: prevData.rating.map(rating =>
         rating.category === category ? { ...rating, stars, remarks } : rating
       ),
     }));
   };
 
   const handleSubmit = () => {
-    if (formData.site && formData.date && formData.name) {
+    if (!formData.site && formData.date && !formData.name) {
       setShowChecklist(true);
     }
     if (formData.name) {
@@ -103,10 +102,16 @@ const CreateChecklist = () => {
     console.log('first', formData)
   };
 
-  const handleChecklistSubmit = () => {
-    localStorage.setItem('formData', JSON.stringify(formData));
-    alert('Checklist submitted successfully!');
-    console.log(formData)
+  const handleChecklistSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      console.log(formData)
+      const response = await axios.post('/api/v1/checklist', formData);
+      console.log(response)
+      onClose()
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   useEffect(() => {
@@ -115,12 +120,10 @@ const CreateChecklist = () => {
 
   return (
     <div >
-      <Header category="Page" title="Checklist's" />
       <section className='container mx-auto mt-4 mb-16'>
         <div className=" max-w-3xl mx-auto">
           {!showChecklist ? (
             <div>
-              <h1 className="text-3xl font-bold mb-4">Checklist Setup</h1>
               <div className="mb-4">
                 <label htmlFor="site" className="block mb-1">Site</label>
                 <select
@@ -163,7 +166,7 @@ const CreateChecklist = () => {
             </div>
           ) : (
             <div>
-              <h1 className="text-3xl font-bold mb-4">Checklist</h1>
+              <h1 className="text-xl font-bold mb-4">Checklist</h1>
               <div className="mb-4">
                 <div className="flex items-center justify-between">
                   <label className="font-semibold">Checklist Id:</label>
@@ -207,7 +210,7 @@ const CreateChecklist = () => {
                 <div className="mt-8">
                   <h2 className="text-2xl font-bold mb-4">Rating</h2>
                   <div className="space-y-4 ">
-                    {formData.ratings.map(rating => (
+                    {formData.rating.map(rating => (
                       <div key={rating.category} className="flex items-center justify-between flex-col md:flex-row lg:flex-row gap-8 ">
                         <div className="grid grid-cols-2 gap-4 md:gap-8 lg:gap-12">
                           <label className="font-semibold text-sm">{rating.category}</label>

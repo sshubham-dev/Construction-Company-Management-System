@@ -2,15 +2,17 @@ const ExtraWork = require('../models/extrawork.models.js');
 const Site = require('../models/site.models');
 const Contractor = require('../models/contractor.models');
 const Client = require('../models/client.models');
+const {
+    sendApproveByAdmin,
+    sendApproveByIncharge,
+    sendApproveByContractor,
+    sendApproveByAccountHead,
+} = require('./approval.controller.js');
 
 
 const getExtraWorks = async (req, res) => {
     try {
         const extraWork = await ExtraWork.find()
-            .populate('site')
-            .populate('client')
-            .populate('contractor')
-            .exec();
         if (extraWork.length === 0) return res.status(401).json({ message: 'No Extra Work Found' });
         res.status(201).json(extraWork);
     } catch (error) {
@@ -21,12 +23,8 @@ const getExtraWorks = async (req, res) => {
 
 const getExtraWork = async (req, res) => {
     try {
-        const id = req.params.id;
-        const extraWork = await ExtraWork.findById(id)
-            .populate('site')
-            .populate('client')
-            .populate('contractor')
-            .exec();
+        const _id = req.params.id;
+        const extraWork = await ExtraWork.findById(_id)
         if (!extraWork) return res.status(401).json({ message: 'No Extra Work Found' });
         res.status(201).json(extraWork);
     } catch (error) {
@@ -39,10 +37,7 @@ const siteExtraWork = async (req, res) => {
     try {
         const id = req.params.id;
         const extraWork = await ExtraWork.find()
-        .where('site').equals(id)
-            .populate('site')
-            .populate('client')
-            .populate('contractor')
+            .where('site.id').equals(id)
             .exec();
         if (!extraWork) return res.status(401).json({ message: 'No Extra Work Found' });
         res.status(201).json(extraWork);
@@ -54,6 +49,7 @@ const siteExtraWork = async (req, res) => {
 
 const createExtraWork = async (req, res, next) => {
     try {
+        const user = req.user;
         const {
             contractor,
             site,
@@ -64,21 +60,25 @@ const createExtraWork = async (req, res, next) => {
         const existingSite = await Site.findById(site)
         if (site && WorkDetail && contractor === '') {
             console.log('site:', existingSite)
-            const existingClient = await Client.findById(existingSite.client)
+            const existingClient = await Client.findById(existingSite.client.id)
             const newExtraWork = new ExtraWork({
-                site: existingSite._id,
-                client: existingClient._id,
+                site: {
+                    name: existingSite.name,
+                    id: existingSite._id
+                },
+                client: {
+                    id: existingClient._id,
+                    name: existingClient.name
+                },
                 extraFor,
                 WorkDetail,
+                createdBy: user._id,
             });
             const clientExtraWork = await newExtraWork.save();
             if (!clientExtraWork) return res.status(401).json({ message: 'Extra Work not created' });
 
-            existingSite.extraWork.push(clientExtraWork._id);
-            await existingSite.save({ validateBeforeSave: false });
-
-            existingClient.extraWork.push(clientExtraWork._id);
-            await existingClient.save({ validateBeforeSave: false });
+            sendApproveByAdmin(clientExtraWork, 'Extra Work', user._id)
+            sendApproveByAccountHead(clientExtraWork, 'Extra Work', user._id)
 
             res.status(201).json({ message: 'Extra Work Created Successfuly', clientExtraWork });
             next();
@@ -86,20 +86,24 @@ const createExtraWork = async (req, res, next) => {
         else if (contractor && WorkDetail) {
             const existingContractor = await Contractor.findOne({ _id: contractor })
             const newExtraWork = new ExtraWork({
-                site: existingSite._id,
-                contractor: existingContractor._id,
+                site: {
+                    name: existingSite.name,
+                    id: existingSite._id
+                },
+                contractor: {
+                    id: existingContractor._id,
+                    name: existingContractor.name,
+                },
                 extraFor,
                 WorkDetail,
+                createdBy: user._id,
             });
             const contractorExtraWork = await newExtraWork.save();
             if (!contractorExtraWork) return res.status(401).json({ message: 'Extra Work not created' });
             console.log(contractorExtraWork)
 
-            existingContractor.extraWork.push(contractorExtraWork._id);
-            await existingContractor.save({ validateBeforeSave: false });
-
-            existingSite.extraWork.push(contractorExtraWork._id);
-            await existingSite.save({ validateBeforeSave: false });
+            sendApproveByAdmin(contractorExtraWork, 'Extra Work', user._id)
+            sendApproveByAccountHead(contractorExtraWork, 'Extra Work', user._id)
             res.status(201).json({ message: 'Extra Work Created Successfuly', contractorExtraWork })
         }
         else return res.status(401).json({ message: 'All fields are mandantory' });
@@ -109,9 +113,52 @@ const createExtraWork = async (req, res, next) => {
     }
 };
 
-const updateExtraWork = async (req, res) => {
+const saveExtraWork = async (req, res) => {
     try {
         const id = req.params.id;
+        const user = req.user;
+        // console.log(user)
+        const extraWork = await ExtraWork.findById(id)
+            .where('createdBy').equals(user?._id)
+            .exec();
+        if (!extraWork) return res.status(404).json({ message: 'No extraWork Found' });
+        const existingSite = await Site.findById(extraWork?.site?.id);
+        if (extraWork.createdBy.toString() === user?._id.toString()) {
+            if (extraWork.adminApprove === 'Approved' && extraWork.accountheadApprove === 'Approved') {
+                extraWork.approvalStatus = 'Approved'
+                await extraWork.save();
+                existingSite.extraWork.push(extraWork._id);
+                await existingSite.save({ validateBeforeSave: false });
+
+                if (extraWork.extraFor == 'Client') {
+                    const existingClient = await Client.findById(extraWork.client?.id);
+                    existingClient.extraWork.push(extraWork._id);
+                    await existingClient.save({ validateBeforeSave: false });
+                } else {
+                    const existingContractor = await Contractor.findById(extraWork?.contractor?.id);
+                    existingContractor.extraWork.push(extraWork._id);
+                    await existingContractor.save({ validateBeforeSave: false });
+                }
+
+                console.log('extraWork:', extraWork)
+                return res.status(201).json({ message: 'extraWork Saved Successfuly' })
+            } else {
+                console.log('extraWork is Not Approved By Every One')
+                return res.status(400).json({ message: 'extraWork is Not Approved By Every One' });
+            }
+        } else {
+            console.log('Unauthorized Request')
+            return res.status(401).json({ message: 'Unauthorized Request' })
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ message: 'Internal Server Error', error });
+    }
+};
+
+const updateExtraWork = async (req, res) => {
+    try {
+        const _id = req.params.id;
         const {
             contractor,
             site,
@@ -123,15 +170,18 @@ const updateExtraWork = async (req, res) => {
                 unit,
                 amount,
             }
-         } = req.body;
-        const existingExtraWork = await ExtraWork.findById(id)
+        } = req.body;
+        const existingSite = await Site.findById({ _id: site });
+        const existingExtraWork = await ExtraWork.findById(_id)
         if (!existingExtraWork) return res.status(401).json({ message: 'No Extra Work Found' });
-        const existingClient = await Client.findOne({ site });
+        const existingClient = await Client.findOne()
+            .where('site.id').equals(site)
+            .exec();
 
-        existingExtraWork.site = site || existingExtraWork.site
-        existingExtraWork.contractor = contractor || existingExtraWork.contractor
+        existingExtraWork.site = { id: existingSite._id || existingExtraWork.site, name: existingSite.name || existingExtraWork.site.name }
+        existingExtraWork.contractor = { id: existingSite?.contractor.id || existingExtraWork.contractor.id, name: existingSite?.contractor.name || existingExtraWork.contractor.name }
         existingExtraWork.extraFor = extraFor || existingExtraWork.extraFor
-        existingExtraWork.client = existingClient || existingExtraWork.client
+        existingExtraWork.client = { id: existingSite?.client.id || existingExtraWork.client.id, name: existingSite?.client.name || existingExtraWork?.client.name }
         const newExtraWork = {
             work,
             rate,
@@ -153,8 +203,8 @@ const updateExtraWork = async (req, res) => {
 
 const deleteExtraWork = async (req, res) => {
     try {
-        const id = req.params.id;
-        const extraWork = await ExtraWork.findByIdAndDelete(id);
+        const _id = req.params.id;
+        const extraWork = await ExtraWork.findByIdAndDelete(_id);
         if (!extraWork) return res.status(401).json({ message: 'No Extra Work Found' });
         res.status(201).json({ message: 'Extra Work Deleted Successfully' });
     } catch (error) {
@@ -165,8 +215,8 @@ const deleteExtraWork = async (req, res) => {
 
 const getWork = async (req, res) => {
     try {
-        const { id } = req.params;
-        const extraWork = await ExtraWork.findById(id)
+        const { _id } = req.params;
+        const extraWork = await ExtraWork.findById(_id)
         if (!extraWork) return res.status(401).json({ message: 'No Extra Work Found' });
         const workDetails = extraWork.WorkDetail;
         res.status(201).json(workDetails);
@@ -178,7 +228,7 @@ const getWork = async (req, res) => {
 
 const updateWork = async (req, res) => {
     try {
-        const { id, index } = req.params;
+        const { _id, index } = req.params;
         const {
             work,
             rate,
@@ -187,7 +237,7 @@ const updateWork = async (req, res) => {
             amount,
             status,
         } = req.body;
-        const extraWork = await ExtraWork.findById(id)
+        const extraWork = await ExtraWork.findById(_id)
         if (!extraWork) return res.status(401).json({ message: 'No Extra Work Found' });
         extraWork.WorkDetail[index] = {
             work,
@@ -207,16 +257,12 @@ const updateWork = async (req, res) => {
 
 const deleteWork = async (req, res) => {
     try {
-        const { id, index } = req.params;
-        const extraWork = await ExtraWork.findById(id)
+        const { _id, index } = req.params;
+        const extraWork = await ExtraWork.findById(_id)
         if (!extraWork) return res.status(401).json({ message: 'No Extra Work Found' });
         extraWork.WorkDetail.splice(index, 1);
         await extraWork.save();
         const existingExtraWork = await ExtraWork.find()
-            .populate('site')
-            .populate('client')
-            .populate('contractor')
-            .exec();
         res.status(201).json({ message: 'Work deleted Successfully', existingExtraWork, extraWork })
     } catch (error) {
         console.log(error);
@@ -234,4 +280,5 @@ module.exports = {
     deleteExtraWork,
     deleteWork,
     siteExtraWork,
+    saveExtraWork,
 }

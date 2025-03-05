@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 
 axios.defaults.withCredentials = true;
 
-const CreateExtraWork = () => {
+const CreateExtraWork = ({ onClose}) => {
   const [formData, setFormData] = useState({
     extraFor: '',
     contractor: '',
@@ -211,17 +211,17 @@ const CreateExtraWork = () => {
         console.log(updatedFormData)
         const response = await axios.put(`/api/v1/extra-work/${workToEdit}`, updatedFormData);
         toast.success(response.data.message)
-        navigate(-1)
+        onClose()
       } else if (detailToEdit.id !== '' && detailToEdit.index !== '') {
         const response = await axios.put(`/api/v1/extra-work/${detailToEdit.id}/work/${detailToEdit.index}`, updatedDetail);
         toast.success(response.data.message)
-        navigate(-1)
+        onClose()
       } else {
         console.log('updatedFormData:', updatedFormData)
-        const response = await axios.post('/api/v1/extra-work/create', updatedFormData);
+        const response = await axios.post('/api/v1/extra-work', updatedFormData);
         console.log(response.data);
         toast.success(response.data.message)
-        navigate(-1)
+        onClose()
       }
     } catch (error) {
       console.error('Error submitting extra work:', error.message);

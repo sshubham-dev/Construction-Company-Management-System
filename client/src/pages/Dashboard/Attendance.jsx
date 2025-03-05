@@ -3,6 +3,7 @@ import axios from 'axios';
 import moment from 'moment';
 import CreateLeave from '../../components/CreateLeave';
 import Header from '../../components/Header';
+import Modal from '../../components/Modal';
 
 const Attendance = () => {
   const [attendances, setAttendances] = useState([]);
@@ -259,9 +260,9 @@ const Attendance = () => {
           )}
 
           {/* Leave Modal */}
-          {leaveModal && (
-            <CreateLeave isOpen={leaveModal} onClose={() => setLeaveModal(false)} />
-          )}
+            <Modal isOpen={leaveModal} onClose={() => setLeaveModal(false)} head='Create Leave'>
+            <CreateLeave onClose={() => setLeaveModal(false)} />
+            </Modal>
         </div>
       </section>
     </div>

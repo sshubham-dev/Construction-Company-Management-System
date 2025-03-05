@@ -3,10 +3,9 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import Header from '../components/Header';
 axios.defaults.withCredentials = true;
 
-const CreateSite = () => {
+const CreateSite = ({ onClose}) => {
   const [site, setSite] = useState({
     name: '',
     client: '',
@@ -116,6 +115,22 @@ const CreateSite = () => {
     getemployees();
   }, [])
 
+  const handleReset = () => {
+    setSite({
+      name: '',
+      client: '',
+      siteId: '',
+      floors: '',
+      area: '',
+      incharge: '',
+      supervisor: '',
+      qualityEngineer: '',
+      projectType: '',
+      agreement: '',
+      address: '',
+    })
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -133,13 +148,13 @@ const CreateSite = () => {
         console.log(site)
         await axios.put(`/api/v1/site/${siteIdToEdit}`, formData);
         toast.success('User edited successfully');
-        navigate(-1);
+        onClose()
       } else {
-        const siteData = await axios.post('/api/v1/site/create', formData);
+        const siteData = await axios.post('/api/v1/site', formData);
         if (siteData.data) {
           console.log(siteData.data);
           toast.success('Site created successfully');
-          navigate(-1);
+          onClose()
         }
       }
     } catch (error) {
@@ -150,8 +165,6 @@ const CreateSite = () => {
 
   return (
     <div >
-    <Header category="Page" title="Create Site" />
-    <section className="container mx-auto mt-4 mb-16">
       <form className="max-w-md mx-auto " onSubmit={handleSubmit}>
 
         {/* Site Name */}
@@ -343,11 +356,14 @@ const CreateSite = () => {
           >
             Submit
           </button>
+          <button type="button" onClick={handleReset}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
+            Reset
+          </button>
         </div>
 
       </form>
       <Toaster position="top-right" reverseOrder={false} />
-    </section>
     </div>
   )
 }

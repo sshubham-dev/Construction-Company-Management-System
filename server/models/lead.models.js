@@ -42,8 +42,9 @@ const leadSchema = new mongoose.Schema({
         type: String,
     },
     contactAgent:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:'User'
+        // type: mongoose.Schema.Types.ObjectId,
+        // ref:'User'
+        type:String
     },
     quotation:{
         type:String,

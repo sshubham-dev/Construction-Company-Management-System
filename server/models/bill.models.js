@@ -2,20 +2,18 @@ const mongoose = require('mongoose');
 
 const billSchema = new mongoose.Schema({
     site: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site',
-    },
-    billFor: {
-        type: String,
-        default: null
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
     },
     contractor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Contractor',
-    },
-    supplier: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Supplier',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Contractor',
+        }
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -32,10 +30,10 @@ const billSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    toPay:{
+    toPay: {
         type: String,
     },
-    amount:{
+    amount: {
         type: Number,
     },
     paymentStatus: {
@@ -62,13 +60,9 @@ const billSchema = new mongoose.Schema({
         type: String,
         default: 'Pending'
     },
-    contractorApprove:{
+    contractorApprove: {
         type: String,
-        default:'Pending'
-    },
-    supplierApprove:{
-        type: String,
-        default:'Pending'
+        default: 'Pending'
     },
     dateOfPayment: {
         type: Date,
@@ -83,8 +77,8 @@ const billSchema = new mongoose.Schema({
     reason: {
         type: String,
     },
-    approvalStatus:{
-        type:String,
+    approvalStatus: {
+        type: String,
         default: 'Pending',
     }
 }, { timestamps: true });

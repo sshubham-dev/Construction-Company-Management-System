@@ -1,11 +1,12 @@
 const express = require('express');
-const router = express.Router();
-const receiptController = require('../controllers/receiptController');  // Adjust path as needed
+const Receipt = express.Router();
+const { createReceipt, getAllReceipts, getReceiptById, updateReceipt, deleteReceipt } = require('../controller/receipt.controller');  // Adjust path as needed
+const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
-router.post('/receipts', receiptController.createReceipt);
-router.get('/receipts', receiptController.getAllReceipts);
-router.get('/receipts/:id', receiptController.getReceiptById);
-router.put('/receipts/:id', receiptController.updateReceipt);
-router.delete('/receipts/:id', receiptController.deleteReceipt);
+Receipt.post('/', createReceipt);
+Receipt.get('/', getAllReceipts);
+Receipt.get('/:id', getReceiptById);
+Receipt.put('/:id', updateReceipt);
+Receipt.delete('/:id', deleteReceipt);
 
-module.exports = router;
+module.exports = Receipt;

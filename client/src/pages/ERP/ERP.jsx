@@ -10,6 +10,9 @@ import CostCenterPage from './CostCenter';
 import CreateContra from '../../components/CreateContra';
 import CreateReceipt_Payment from '../../components/CreateReceipt_Payment';
 import CreateJournal from '../../components/CreateJournal';
+import Modal from '../../components/Modal';
+import CreateStock from '../../components/CreateStock';
+import CreateStockGroup from '../../components/CreateStockGroup';
 
 
 const ERP = () => {
@@ -18,6 +21,8 @@ const ERP = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLedgerModalOpen, setLedgerModalOpen] = useState(false);
   const [isGroupModalOpen, setGroupModalOpen] = useState(false);
+  const [isStockModalOpen, setStockModalOpen] = useState(false);
+  const [isStockGroupModalOpen, setStockGroupModalOpen] = useState(false);
   const [isContraModalOpen, setContraModalOpen] = useState(false);
   const [isReceiptPaymentModalOpen, setReceiptPaymentModalOpen] = useState(false);
   const [isJournalModalOpen, setJournalModalOpen] = useState(false);
@@ -57,13 +62,13 @@ const ERP = () => {
               <div className="flex flex-col gap-2 justify-center items-center">
                 <button
                   className=" "
-                  onClick={() => setGroupModalOpen(true)}>
+                  onClick={() => setStockModalOpen(true)}>
                   Stock Item
                 </button>
                 <button
                   className=" "
-                  onClick={() => setGroupModalOpen(true)}>
-                 Stock Group
+                  onClick={() => setStockGroupModalOpen(true)}>
+                  Stock Group
                 </button>
               </div>
             </div>
@@ -164,23 +169,30 @@ const ERP = () => {
         </div>
         {/* Add/Edit Modal */}
         {isModalOpen && (
-          <Modal onClose={() => setIsModalOpen(false)} />
+          <Create onClose={() => setIsModalOpen(false)} />
         )}
-        {isJournalModalOpen && (
-          <CreateJournal onClose={() => setJournalModalOpen(false)} isOpen={isJournalModalOpen}/>
-        )}
-        {isContraModalOpen && (
-          <CreateContra isOpen={isContraModalOpen} onClose={() => setContraModalOpen(false)} />
-        )}
-        {isLedgerModalOpen && (
-          <LedgerModal isOpen={isLedgerModalOpen} onClose={() => setLedgerModalOpen(false)} />
-        )}
-        {isGroupModalOpen && (
-          <GroupModal isOpen={isGroupModalOpen} onClose={() => setGroupModalOpen(false)} />
-        )}
-        {isReceiptPaymentModalOpen && (
-          <CreateReceipt_Payment isOpen={isReceiptPaymentModalOpen} onClose={() => setReceiptPaymentModalOpen(false)} />
-        )}
+        <Modal onClose={() => setJournalModalOpen(false)} isOpen={isJournalModalOpen}>
+          <CreateJournal onClose={() => setJournalModalOpen(false)} />
+        </Modal>
+        <Modal isOpen={isContraModalOpen} onClose={() => setContraModalOpen(false)}>
+          <CreateContra onClose={() => setContraModalOpen(false)} />
+        </Modal>
+        <Modal isOpen={isLedgerModalOpen} onClose={() => setLedgerModalOpen(false)}>
+          <LedgerModal onClose={() => setLedgerModalOpen(false)} />
+        </Modal>
+        <Modal isOpen={isGroupModalOpen} onClose={() => setGroupModalOpen(false)}>
+          <GroupModal onClose={() => setGroupModalOpen(false)} />
+        </Modal>
+        <Modal isOpen={isStockModalOpen} onClose={() => setStockModalOpen(false)}>
+          <CreateStock onClose={() => setStockModalOpen(false)} />
+        </Modal>
+        <Modal onClose={() => setStockGroupModalOpen(false)} isOpen={isStockGroupModalOpen}>
+          <CreateStockGroup
+            onClose={() => setStockGroupModalOpen(false)} />
+        </Modal>
+        <Modal isOpen={isReceiptPaymentModalOpen} onClose={() => setReceiptPaymentModalOpen(false)}>
+          <CreateReceipt_Payment onClose={() => setReceiptPaymentModalOpen(false)} />
+        </Modal>
         <Toaster
           position="top-right"
           reverseOrder={false}
@@ -195,7 +207,7 @@ export default ERP;
 
 
 
-const Modal = ({ data, onClose, onSave }) => {
+const Create = ({ data, onClose, onSave }) => {
   const [formData, setFormData] = useState({ name: "", category: "", brand: "", quantity: "", price: "" });
 
   const handleChange = (e) => {

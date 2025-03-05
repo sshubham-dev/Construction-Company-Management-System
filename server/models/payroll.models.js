@@ -45,15 +45,14 @@ const payrollSchema = new mongoose.Schema({
     paymentDate: { type: Date },
 }, { timestamps: true });
 
-const Payroll = mongoose.model('Payroll', payrollSchema);
-module.exports = Payroll;
-
 payrollSchema.pre('save', function (next) {
     // Calculate the net salary: basic salary + bonuses - total deductions
     const totalDeductions = this.deductions.reduce((sum, deduction) => sum + deduction.amount, 0);
     this.netSalary = this.basicSalary + this.bonuses - totalDeductions;
     next();
 });
+
+const Payroll = mongoose.model('Payroll', payrollSchema);
 
 
 const deductionSchema = new mongoose.Schema({
@@ -64,7 +63,7 @@ const deductionSchema = new mongoose.Schema({
 });
 
 const Deduction = mongoose.model('Deduction', deductionSchema);
-module.exports = Deduction;
+
 
 
 const bonusSchema = new mongoose.Schema({
@@ -77,7 +76,7 @@ const bonusSchema = new mongoose.Schema({
 });
 
 const Bonus = mongoose.model('Bonus', bonusSchema);
-module.exports = Bonus;
+
 
 
 const paymentHistorySchema = new mongoose.Schema({
@@ -89,10 +88,8 @@ const paymentHistorySchema = new mongoose.Schema({
 });
 
 const PaymentHistory = mongoose.model('PaymentHistory', paymentHistorySchema);
-module.exports = PaymentHistory;
 
 
-const mongoose = require('mongoose');
 
 const taxSchema = new mongoose.Schema({
     taxType: { type: String, enum: ['Income Tax', 'Other Tax'], required: true },
@@ -103,4 +100,5 @@ const taxSchema = new mongoose.Schema({
 });
 
 const Tax = mongoose.model('Tax', taxSchema);
-module.exports = Tax;
+
+module.exports = { Payroll, Deduction, Bonus, PaymentHistory, Tax };

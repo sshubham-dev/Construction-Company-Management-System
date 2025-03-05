@@ -4,16 +4,18 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
 axios.defaults.withCredentials = true;
 
-const CreateSupplier = () => {
+const CreateSupplier = ({ onClose }) => {
 
   const [supplier, setSupplier] = useState({
     name: '',
-    contactNo: '',
+    email: '',
+    phone: '',
     whatsapp: '',
     gst: '',
     address: '',
     pan: '',
     bank: '',
+    isUser: '',
   });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -35,7 +37,8 @@ const CreateSupplier = () => {
       const supplier = response.data;
       setSupplier({
         name: supplier.name,
-        contactNo: supplier.contactNo,
+        email: supplier?.email,
+        phone: supplier.phone,
         whatsapp: supplier.whatsapp,
         gst: supplier.gst,
         address: supplier.address,
@@ -62,6 +65,21 @@ const CreateSupplier = () => {
     }
   };
 
+  const handleReset = () => {
+    setSupplier({
+      name: '',
+      email: '',
+      phone: '',
+      whatsapp: '',
+      gst: '',
+      address: '',
+      pan: '',
+      bank: '',
+      isUser: '',
+    })
+  }
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -74,16 +92,16 @@ const CreateSupplier = () => {
       }
     });
 
-    try{
-    if (supplierIdToEdit) {
+    try {
+      if (supplierIdToEdit) {
         await axios.put(`/api/v1/supplier/${supplierIdToEdit}`, formData);
         toast.success('User edited successfully');
-        navigate(-1)
-    } else {
-      console.log('Form data submitted:', supplier);
-        const response = await axios.post('/api/v1/supplier/create', supplier);
+        onClose()
+      } else {
+        console.log('Form data submitted:', supplier);
+        const response = await axios.post('/api/v1/supplier', supplier);
         toast.success(response.data.message);
-        navigate(-1)
+        onClose()
       }
     } catch (error) {
       console.error('Error creating contractor:', error);
@@ -108,6 +126,23 @@ const CreateSupplier = () => {
           />
         </div>
 
+        <div className="mb-4">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-600"
+          >
+            Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={supplier.email}
+            onChange={handleChange}
+            placeholder="Email"
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500" />
+        </div>
+
         <div className='mb-4'>
           <label htmlFor='phone'
             className='block text-sm font-medium text-gray-600'>
@@ -116,7 +151,7 @@ const CreateSupplier = () => {
           <input
             className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
             type='text'
-            name='contactNo'
+            name='phone'
             placeholder='Enter Your Contact Number'
             onChange={handleChange}
           />
@@ -186,12 +221,32 @@ const CreateSupplier = () => {
           />
         </div>
 
-        <button
-          type="submit"
-          className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:shadow-outline-blue active:bg-blue-800"
-        >
-          Create Supplier
-        </button>
+        <div className="flex items-center mb-4">
+          <input
+            type="checkbox"
+            name="isUser"
+            className="border-none rounded-lg focus:outline-none mr-2"
+            onChange={handleChange}
+            value='true' />
+          <label htmlFor="isUser" className="block text-md font-medium text-gray-600">Is a User</label>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-6">
+          <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:shadow-outline-blue active:bg-blue-800"
+          >
+            Create
+          </button>
+          <button type="button" onClick={handleReset}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
+            Reset
+          </button>
+        </div>
+
       </form>
       {error && <p className="text-red-500">{error}</p>}
       <Toaster

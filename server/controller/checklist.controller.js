@@ -1,20 +1,90 @@
-const Checklist = require('../models/Checklist');
+const Checklist = require('../models/checklist.models');
+const {
+    sendApproveByAdmin,
+    sendApproveByIncharge,
+} = require('./approval.controller.js');
+const Site = require('../models/site.models');
 
 // Create a new checklist
-exports.createChecklist = async (req, res) => {
+const createChecklist = async (req, res) => {
     try {
-        const checklist = new Checklist(req.body);
-        await checklist.save();
-        res.status(201).json(checklist);
+        const user = req.user;
+        const {
+            site,
+            date,
+            checklistId,
+            checkFor,
+            name,
+            checkWork,
+            rating,
+            observation,
+        } = req.body;
+
+        const existingSite = await Site.findById(site);
+        if (!existingSite) {
+            return res.status(400).json({ message: 'Site not found' });
+        }
+
+        const newChecklist = new Checklist({
+            site: { id: existingSite._id, name: existingSite.name },
+            date,
+            checklistId,
+            checkFor,
+            name,
+            checkWork,
+            rating,
+            observation,
+            createdBy: user._id,
+            supervisor: existingSite.supervisor,
+        });
+
+        const savedChecklist = await newChecklist.save();
+        existingSite.checklist.push(savedChecklist._id);
+        await existingSite.save();
+        // sendApproveByAdmin(savedChecklist, 'CheckList', user._id)
+        // sendApproveByIncharge(savedChecklist, 'CheckList', user._id)
+        res.status(201).json(savedChecklist);
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 };
 
-// Get all checklists
-exports.getAllChecklists = async (req, res) => {
+const saveChecklist = async (req, res) => {
     try {
-        const checklists = await Checklist.find().populate('site supervisor createdBy');
+        const id = req.params.id;
+        const user = req.user;
+        // console.log(user)
+        const checklist = await Checklist.findById(id)
+            .where('createdBy').equals(user?._id)
+            .exec();
+        if (!checklist) return res.status(404).json({ message: 'No checklist Found' });
+        const existingSite = await Site.findById(checklist?.site?.id);
+        if (checklist.createdBy.toString() === user?._id.toString()) {
+            if (checklist.adminApprove === 'Approved' && checklist.inchargeApprove === 'Approved') {
+                checklist.approvalStatus = 'Approved'
+                await checklist.save();
+                existingSite.checklist.push(checklist._id);
+                await existingSite.save();
+                console.log('checklist:', checklist)
+                return res.status(201).json({ message: 'checklist Saved Successfuly' })
+            } else {
+                console.log('checklist is Not Approved By Every One')
+                return res.status(400).json({ message: 'checklist is Not Approved By Every One' });
+            }
+        } else {
+            console.log('Unauthorized Request')
+            return res.status(401).json({ message: 'Unauthorized Request' })
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ message: 'Internal Server Error', error });
+    }
+};
+
+// Get all checklists
+const getAllChecklists = async (req, res) => {
+    try {
+        const checklists = await Checklist.find().populate('createdBy');
         res.status(200).json(checklists);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -22,9 +92,9 @@ exports.getAllChecklists = async (req, res) => {
 };
 
 // Get a single checklist by ID
-exports.getChecklistById = async (req, res) => {
+const getChecklistById = async (req, res) => {
     try {
-        const checklist = await Checklist.findById(req.params.id).populate('site supervisor createdBy');
+        const checklist = await Checklist.findById(req.params.id).populate('createdBy');
         if (!checklist) {
             return res.status(404).json({ message: 'Checklist not found' });
         }
@@ -35,7 +105,7 @@ exports.getChecklistById = async (req, res) => {
 };
 
 // Update a checklist by ID
-exports.updateChecklist = async (req, res) => {
+const updateChecklist = async (req, res) => {
     try {
         const checklist = await Checklist.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
         if (!checklist) {
@@ -48,7 +118,7 @@ exports.updateChecklist = async (req, res) => {
 };
 
 // Delete a checklist by ID
-exports.deleteChecklist = async (req, res) => {
+const deleteChecklist = async (req, res) => {
     try {
         const checklist = await Checklist.findByIdAndDelete(req.params.id);
         if (!checklist) {
@@ -59,3 +129,5 @@ exports.deleteChecklist = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+module.exports = { createChecklist, getChecklistById, getAllChecklists, updateChecklist, deleteChecklist }

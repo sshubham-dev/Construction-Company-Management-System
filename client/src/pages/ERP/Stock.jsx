@@ -6,14 +6,18 @@ import { IoIosAddCircle } from "react-icons/io";
 import { GrLinkNext, GrLinkPrevious } from "react-icons/gr";
 import { MdDeleteForever } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
+import Modal from '../../components/Modal';
+import CreateStock from '../../components/CreateStock';
+import CreateStockGroup from '../../components/CreateStockGroup';
 
 const Stock = () => {
   const [data, setData] = useState([{
-    id:'1',
-    name:'Product',
+    id: '1',
+    name: 'Product',
   }]);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGroupModalOpen, setGroupModalOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
   const [filters, setFilters] = useState({ category: "", brand: "", minPrice: "", maxPrice: "" });
@@ -82,7 +86,7 @@ const Stock = () => {
   const handleDelete = (id) => {
     // const confirmDelete = window.confirm("Are you sure you want to delete this item?");
     // if (confirmDelete) {
-      setData((prevData) => prevData.filter((item) => item.id !== id));
+    setData((prevData) => prevData.filter((item) => item.id !== id));
     // }
   };
 
@@ -102,119 +106,122 @@ const Stock = () => {
     <div >
       <Header category="Page" title="Stock Management" />
       <section className='container mx-auto mt-4'>
-        <div className='overflow-x-auto w-full mx-auto  p-6 '>
-            {/* Header with Search and Add */}
-            <div className="flex justify-between mb-6 space-x-2">
-              <input
-                type="search"
-                placeholder="Search"
-                className="border rounded p-2 w-2/3 md:w-1/3 lg:w-1/3 shadow-lg "
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <div className="flex flex-row gap-4">
-                <button
-                  className="bg-blue-500 text-white py-2 px-2 rounded-4xl shadow-lg "
-                  onClick={() => {
-                    setIsEdit(false);
-                    setIsModalOpen(true);
-                    setCurrentItem(null);
-                  }}
-                >
-                  <IoIosAddCircle size={24} />
-                </button>
-                <button
-                  className="bg-slate-400 text-white py-2 px-3 rounded-4xl shadow-lg "
-                  onClick={() => setIsFilterOpen(true)}
-                >
-                  <FaFilter size={16} />
-                </button>
-              </div>
+        <div className='overflow-x-auto w-full mx-auto  '>
+          {/* Header with Search and Add */}
+          <div className="flex justify-between mb-6 space-x-2">
+            <input
+              type="search"
+              placeholder="Search"
+              className="border rounded p-2 w-2/3 md:w-1/3 lg:w-1/3 shadow-lg "
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <div className="flex flex-row gap-4">
+              <button
+                className="bg-blue-500 text-white py-2 px-2 rounded-4xl shadow-lg "
+                onClick={() => {
+                  setIsEdit(false);
+                  setIsModalOpen(true);
+                  setCurrentItem(null);
+                }}
+              >
+                <IoIosAddCircle size={24} />
+              </button>
+              <button
+                className="bg-slate-400 text-white py-2 px-3 rounded-4xl shadow-lg "
+                onClick={() => setIsFilterOpen(true)}
+              >
+                <FaFilter size={16} />
+              </button>
             </div>
+          </div>
 
-            {/* Table */}
-            <div className=" bg-white rounded-lg shadow overflow-x-auto scrollbar-hide">
-              <table className="w-full border-collapse  overflow-x-auto">
-                <thead>
-                  <tr className="bg-gray-100">
-                      <th  onClick={() => handleSort("name")} className="p-3">
-                        Product Id {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
-                      </th>
-                      <th  onClick={() => handleSort("name")} className="p-3">
-                        Name {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
-                      </th>
-                      <th  onClick={() => handleSort("name")} className="p-3">
-                        Category {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
-                      </th>
-                      <th  onClick={() => handleSort("name")} className="p-3">
-                        Quantity {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
-                      </th>
-                      <th  onClick={() => handleSort("name")} className="p-3">
-                        Price {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
-                      </th>
-                      <th className="p-3">
-                        Action 
-                      </th>
+          {/* Table */}
+          <div className=" bg-white rounded-lg shadow overflow-x-auto scrollbar-hide">
+            <table className="w-full border-collapse  overflow-x-auto">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th onClick={() => handleSort("name")} className="p-3">
+                    Product Id {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th onClick={() => handleSort("name")} className="p-3">
+                    Name {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th onClick={() => handleSort("name")} className="p-3">
+                    Category {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th onClick={() => handleSort("name")} className="p-3">
+                    Quantity {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th onClick={() => handleSort("name")} className="p-3">
+                    Price {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
+                  </th>
+                  <th className="p-3">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentRows.map((item) => (
+                  <tr key={item.id} className="border-b hover:bg-gray-100">
+                    <td className="p-3">{item.id}</td>
+                    <td className="p-3">{item.name}</td>
+                    <td className="p-3">{item.category}</td>
+                    {/* <td className="p-3">{item.brand}</td> */}
+                    <td className="p-3">{item.quantity}</td>
+                    <td className="p-3">${item.price}</td>
+                    <td className="p-4 flex items-center gap-4">
+                      <button
+                        className=""
+                        onClick={() => handleEdit(item)}
+                      >
+                        {<FaEdit /> ? <FaEdit size={22} color="green" /> : "Edit"}
+                      </button>
+                      <button
+                        className=""
+                        onClick={() => handleDelete(item.id)}
+                      >
+                        {<MdDeleteForever /> ? <MdDeleteForever size={26} color="red" /> : "Delete"}
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {currentRows.map((item) => (
-                    <tr key={item.id} className="border-b hover:bg-gray-100">
-                      <td className="p-3">{item.id}</td>
-                      <td className="p-3">{item.name}</td>
-                      <td className="p-3">{item.category}</td>
-                      {/* <td className="p-3">{item.brand}</td> */}
-                      <td className="p-3">{item.quantity}</td>
-                      <td className="p-3">${item.price}</td>
-                      <td className="p-4 flex items-center gap-4">
-                        <button
-                          className=""
-                          onClick={() => handleEdit(item)}
-                        >
-                          {<FaEdit /> ? <FaEdit size={22} color="green" /> : "Edit"}
-                        </button>
-                        <button
-                          className=""
-                          onClick={() => handleDelete(item.id)}
-                        >
-                          {<MdDeleteForever /> ? <MdDeleteForever size={26} color="red" /> : "Delete"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-            {/* Pagination */}
-            <div className="flex justify-between items-center mt-4 py-4 px-6">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(currentPage - 1)}
-                className="p-2.5 bg-gray-300 rounded-4xl shadow-lg disabled:opacity-50"
-              >
-                <GrLinkPrevious size={18} color="blue" />
-              </button>
-              <span>Page {currentPage} of {totalPages}</span>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(currentPage + 1)}
-                className="bg-gray-300 p-2.5 rounded-4xl shadow-lg "
-              >
-                <GrLinkNext size={18} color="blue" />
-              </button>
-            </div>
+          {/* Pagination */}
+          <div className="flex justify-between items-center mt-4 py-4 px-6">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              className="p-2.5 bg-gray-300 rounded-4xl shadow-lg disabled:opacity-50"
+            >
+              <GrLinkPrevious size={18} color="blue" />
+            </button>
+            <span>Page {currentPage} of {totalPages}</span>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+              className="bg-gray-300 p-2.5 rounded-4xl shadow-lg "
+            >
+              <GrLinkNext size={18} color="blue" />
+            </button>
+          </div>
 
           {/* Filter Modal */}
           {isFilterOpen && <FilterModal filters={filters} setFilters={applyFilters} onClose={() => setIsFilterOpen(false)} />}
-          {isModalOpen && (
-            <Modal
+          <Modal onClose={() => setIsModalOpen(false)} isOpen={isModalOpen}>
+            <CreateStock
               onClose={() => setIsModalOpen(false)}
               onSave={isEdit ? handleEditSave : handleAdd}
               item={currentItem}
-              isEdit={isEdit}
-            />
-          )}
+              isEdit={isEdit} />
+          </Modal>
+          <Modal onClose={() => setGroupModalOpen(false)} isOpen={isGroupModalOpen}>
+            <CreateStockGroup
+              onClose={() => setIsModalOpen(false)} />
+          </Modal>
         </div>
         <Toaster
           position="top-right"
@@ -235,7 +242,7 @@ const FilterModal = ({ filters, setFilters, onClose }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-8">
-            <div className="bg-white px-5 py-8 rounded-lg shadow-lg w-full max-w-lg md:w-3/4 lg:w-1/2 h-[75vh] md:h-[80vh] md:mt-12 overflow-auto">
+      <div className="bg-white px-5 py-8 rounded-lg shadow-lg w-full max-w-lg md:w-3/4 lg:w-1/2 h-[75vh] md:h-[80vh] md:mt-12 overflow-auto">
         <h2 className="text-lg font-semibold mb-4">Filter Products</h2>
         <form
           onSubmit={(e) => {
@@ -325,109 +332,4 @@ const FilterModal = ({ filters, setFilters, onClose }) => {
   );
 };
 
-
-const Modal = ({ item, isEdit, onClose, onSave }) => {
-  const [formData, setFormData] = useState(isEdit ? item : { name: "", category: "", brand: "", quantity: "", price: "" });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-8">
-            <div className="bg-white px-5 py-8 rounded-lg shadow-lg w-full max-w-lg md:w-3/4 lg:w-1/2 h-[75vh] md:h-[80vh] md:mt-12 overflow-auto">
-        <h2 className="text-lg font-semibold mb-4">{isEdit ? "Edit Product" : "Add Product"}</h2>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSave(formData);
-          }}
-          className='space-y-4'
-        >
-          <div className="mb-2">
-            <label htmlFor="name" className="block text-sm font-medium">
-              Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="border rounded p-2 w-full"
-            />
-          </div>
-          <div className="mb-2">
-            <label htmlFor="category" className="block text-sm font-medium">
-              Category
-            </label>
-            <input
-              type="text"
-              id="category"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="border rounded p-2 w-full"
-            />
-          </div>
-          <div className="mb-2">
-            <label htmlFor="brand" className="block text-sm font-medium">
-              Brand
-            </label>
-            <input
-              type="text"
-              id="brand"
-              name="brand"
-              value={formData.brand}
-              onChange={handleChange}
-              className="border rounded p-2 w-full"
-            />
-          </div>
-          <div className="mb-2">
-            <label htmlFor="quantity" className="block text-sm font-medium">
-              Quantity
-            </label>
-            <input
-              type="number"
-              id="quantity"
-              name="quantity"
-              value={formData.quantity}
-              onChange={handleChange}
-              className="border rounded p-2 w-full"
-            />
-          </div>
-          <div className="mb-2">
-            <label htmlFor="price" className="block text-sm font-medium">
-              Price
-            </label>
-            <input
-              type="number"
-              id="price"
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              className="border rounded p-2 w-full"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="bg-gray-500 text-white p-2 rounded"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="bg-blue-500 text-white p-2 rounded"
-            >
-              {isEdit ? "Save" : "Add"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
 export default Stock

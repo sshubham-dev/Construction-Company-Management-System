@@ -1,4 +1,4 @@
-const Sales = require('../models/Sales');
+const Sales = require('../models/sales.models');
 
 // Create a new sale
 const createSale = async (req, res) => {
@@ -57,10 +57,4 @@ const deleteSale = async (req, res) => {
   }
 };
 
-module.exports = {
-  createSale,
-  getSales,
-  getSaleById,
-  updateSale,
-  deleteSale,
-};
+module.exports = { createSale, getSaleById, getSales, updateSale, deleteSale };

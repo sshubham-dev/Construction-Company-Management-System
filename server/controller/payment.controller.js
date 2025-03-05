@@ -1,8 +1,9 @@
-const Payment = require('../models/paymentModel');
+const Payment = require('../models/payment.models');
 
 // Create a payment
-exports.createPayment = async (req, res) => {
+const createPayment = async (req, res) => {
   try {
+    console.log(req.body)
     const payment = new Payment(req.body);
     await payment.save();
     res.status(201).json({
@@ -19,7 +20,7 @@ exports.createPayment = async (req, res) => {
 };
 
 // Get all payments
-exports.getPayments = async (req, res) => {
+const getPayments = async (req, res) => {
   try {
     const payments = await Payment.find().populate('from.id to.id invoice.id');
     res.status(200).json({
@@ -35,7 +36,7 @@ exports.getPayments = async (req, res) => {
 };
 
 // Get a single payment by ID
-exports.getPaymentById = async (req, res) => {
+const getPaymentById = async (req, res) => {
   try {
     const payment = await Payment.findById(req.params.id).populate('from.id to.id invoice.id');
     if (!payment) {
@@ -57,7 +58,7 @@ exports.getPaymentById = async (req, res) => {
 };
 
 // Update a payment
-exports.updatePayment = async (req, res) => {
+const updatePayment = async (req, res) => {
   try {
     const payment = await Payment.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -83,7 +84,7 @@ exports.updatePayment = async (req, res) => {
 };
 
 // Delete a payment
-exports.deletePayment = async (req, res) => {
+const deletePayment = async (req, res) => {
   try {
     const payment = await Payment.findByIdAndDelete(req.params.id);
     if (!payment) {
@@ -103,3 +104,11 @@ exports.deletePayment = async (req, res) => {
     });
   }
 };
+
+module.exports = {
+  createPayment, 
+  getPaymentById,
+  getPayments,
+  updatePayment,
+  deletePayment
+}

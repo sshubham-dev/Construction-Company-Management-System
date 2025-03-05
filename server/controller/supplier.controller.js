@@ -1,9 +1,11 @@
 const Supplier = require('../models/supplier.models.js');
+const User = require('../models/user.models.js');
+const { convertToUser } = require('./user.controller.js');
 
 const getSuppliers = async (req, res) => {
     try {
         const suppliers = await Supplier.find();
-        if(suppliers.length === '0') return res.status(404).json({ error: 'No Suppliers found' }); 
+        if (suppliers.length === '0') return res.status(404).json({ error: 'No Suppliers found' });
         res.status(200).json(suppliers);
     } catch (error) {
         console.log(error);
@@ -13,7 +15,7 @@ const getSuppliers = async (req, res) => {
 
 const getSupplier = async (req, res) => {
     try {
-        const  id  = req.params.id;
+        const id = req.params.id;
         const supplier = await Supplier.findById(id);
         if (!supplier) {
             return res.status(404).json({ error: 'Supplier not found' });
@@ -27,18 +29,24 @@ const getSupplier = async (req, res) => {
 
 const createSupplier = async (req, res) => {
     try {
-        const { name, contactNo, whatsapp, address, gst, bank } = req.body;
+        const { name, email, phone, whatsapp, address, gst, bank, isUser } = req.body;
         console.log(req.body)
         const newSupplier = new Supplier({
             name,
-            contactNo,
+            email,
+            phone,
             whatsapp,
             address,
             gst,
+            isUser,
         });
         console.log(newSupplier)
         const savedSupplier = await newSupplier.save();
-        res.status(201).json({message:'Supplier Created Successfully', savedSupplier});
+        res.status(201).json({ message: 'Supplier Created Successfully', savedSupplier });
+        if (isUser === true) {
+            const password = name + '@' + phone
+            convertToUser(savedSupplier._id, 'Supplier', password);
+        }
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -47,7 +55,8 @@ const createSupplier = async (req, res) => {
 
 const updateSupplier = async (req, res) => {
     try {
-        const  _id  = req.params.id;
+        const _id = req.params.id;
+        const { name, email, phone, whatsapp, address, gst, bank, isUser } = req.body;
         const updatedSupplier = await Supplier.findByIdAndUpdate(
             _id,
             req.body,
@@ -56,7 +65,11 @@ const updateSupplier = async (req, res) => {
         if (!updatedSupplier) {
             return res.status(404).json({ error: 'Supplier not found' });
         }
-        res.status(200).json({message:'Details Updated Successfully', updatedSupplier});
+        res.status(200).json({ message: 'Details Updated Successfully', updatedSupplier });
+        if (isUser === true && updatedSupplier.userId == '') {
+            const password = name + '@' + phone
+            convertToUser(updatedSupplier._id, 'Supplier', password);
+        }
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -65,12 +78,16 @@ const updateSupplier = async (req, res) => {
 
 const deleteSupplier = async (req, res) => {
     try {
-        const  id  = req.params.id;
-        const deletedSupplier = await Supplier.findByIdAndDelete(id);
-        if (!deletedSupplier) {
+        const id = req.params.id;
+        const existingSupplier = await Supplier.findByIdAndDelete(id);
+        if (!existingSupplier) {
             return res.status(404).json({ error: 'Supplier not found' });
         }
-        res.status(204).json({message:'Supplier Deleted Successfully'}); // No content after successful deletion
+        const existingUser = await User.findByIdAndDelete(existingSupplier.userId);
+        if (!existingUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.status(204).json({ message: 'Supplier Deleted Successfully' }); // No content after successful deletion
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: 'Internal Server Error' });

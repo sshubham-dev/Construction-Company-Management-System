@@ -3,12 +3,11 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import Header from '../components/Header';
 import Select from 'react-select';
 
 axios.defaults.withCredentials = true;
 
-const CreateReturnOrder = () => {
+const CreateReturnOrder = ({onClose}) => {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     supplier: '',
@@ -159,19 +158,20 @@ const CreateReturnOrder = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(formData)
     try {
       if (returnOrderToEdit) {
-        const response = await axios.put(`/api/v1/return-order/${returnOrderToEdit}`, formData);
+        const response = await axios.put(`/api/v1/return/${returnOrderToEdit}`, formData);
         toast.success(response.data.message);
-        navigate(-1);
+        onClose()
       } else if (returnableToEdit.id && returnableToEdit.index) {
-        const response = await axios.put(`/api/v1/return-order/${returnableToEdit.id}/returnable/${returnableToEdit.index}`, returnable);
+        const response = await axios.put(`/api/v1/return/${returnableToEdit.id}/returnable/${returnableToEdit.index}`, returnable);
         toast.success(response.data.message);
-        navigate(-1);
+        onClose()
       } else {
-        const response = await axios.post('/api/v1/return-order/create', formData);
+        const response = await axios.post('/api/v1/return', formData);
         toast.success(response.data.message);
-        navigate(-1);
+        onClose()
       }
     } catch (error) {
       console.error('Error submitting return order:', error.message);

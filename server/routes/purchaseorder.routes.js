@@ -24,7 +24,7 @@ PurchaseOrder.get('/:siteId/:supplierId', getSiteAndContractorPurchaseOrders);
 PurchaseOrder.put('/:id/requirement/:index', userAuth, updateRequirement);
 PurchaseOrder.put('/save/:id', userAuth, savePurchaseOrder);
 PurchaseOrder.delete('/:id/requirement/:index', userAuth, deleteRequirement);
-PurchaseOrder.post('/create', userAuth, createPurchaseOrder);
+PurchaseOrder.post('/', userAuth, createPurchaseOrder);
 PurchaseOrder.route('/:id')
     .get(getPurchaseOrder)
     .put(userAuth, updatePurchaseOrder)

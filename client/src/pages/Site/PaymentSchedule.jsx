@@ -65,7 +65,7 @@ const PaymentSchedules = () => {
 
   return (
     <div >
-      <section className="overflow-x-auto">
+      <section className="overflow-x-auto scrollbar-hide">
         <Header category="Page" title="Payment Schedule's" />
         <div className="w-full mx-auto mb-6 text-gray-700 p-1 flex flex-row justify-between items-center">
           <h2 className="text-lg sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-2">
@@ -77,14 +77,10 @@ const PaymentSchedules = () => {
             </button>)}
         </div>
 
-        <div className="overflow-x-auto"
-          style={{
-            scrollbarWidth: 'none',
-            '-ms-overflow-style': 'none',
-          }}>
+        <div className="overflow-x-auto scrollbar-hide">
           <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
-            <thead className="bg-gray-800">
-              <tr className="text-white text-left">
+            <thead className="bg-gray-300">
+              <tr className=" text-left">
                 <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
                 <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Amount </th>
                 <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Paid Amount </th>
@@ -121,7 +117,6 @@ const PaymentSchedules = () => {
             </tbody>
           </table>
         </div>
-
 
         <Toaster
           position="top-right"

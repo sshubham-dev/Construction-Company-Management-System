@@ -19,12 +19,12 @@ const MorePage = ({options}) => {
       role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
     },
 
-    {
-      to: '/settings',
-      name: 'Settings',
-      icon: <FaCog size={22} />,
-      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
-    },
+    // {
+    //   to: '/settings',
+    //   name: 'Settings',
+    //   icon: <FaCog size={22} />,
+    //   role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
+    // },
 
     {
       to: '/profile',
@@ -40,12 +40,12 @@ const MorePage = ({options}) => {
       role: ['Admin', 'Company', 'Ceo', 'Account Head']
     },
 
-    {
-      to: '/site-kharchi',
-      name: 'Expenses Record',
-      icon: <GiExpense size={22} />,
-      role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
-    },
+    // {
+    //   to: '/site-kharchi',
+    //   name: 'Expenses Record',
+    //   icon: <GiExpense size={22} />,
+    //   role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
+    // },
 
     /* Employee Management*/
     {
@@ -69,23 +69,23 @@ const MorePage = ({options}) => {
       role: ['Admin', 'Company', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head'],
     },
 
-    {
-      to: '/help',
-      name: 'Help',
-      icon: <FaInfoCircle size={22} />,
-      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
-    },
+    // {
+    //   to: '/help',
+    //   name: 'Help',
+    //   icon: <FaInfoCircle size={22} />,
+    //   role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
+    // },
 
-    {
-      to: '/terms',
-      name: 'Terms & Conditions',
-      icon: <FaClipboardList size={22} />,
-      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
-    },
+    // {
+    //   to: '/terms',
+    //   name: 'Terms & Conditions',
+    //   icon: <FaClipboardList size={22} />,
+    //   role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
+    // },
   ];
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 pb-6">
       <h1 className="text-3xl font-semibold mb-4">More Options</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {(options || MoreOptions).map((option, index) =>

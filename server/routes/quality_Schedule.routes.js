@@ -9,15 +9,17 @@ const {
     updateWorkDetail,
     deleteWorkDetail,
     getWorkDetails,
+    saveQualitySchedule
 } = require('../controller/qualityschedule.controller');
-
+const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 QualitySchedule.route('/:id')
     .get(getQualitySchedule)
     .put(updateQualitySchedule)
     .delete(deleteQualitySchedule);
 QualitySchedule.get('/', getQualitySchedules);
-QualitySchedule.post('/create', createQualitySchedule);
+QualitySchedule.post('/', userAuth, createQualitySchedule);
+QualitySchedule.put('/save/:id', userAuth, saveQualitySchedule);
 
 
 QualitySchedule.get('/:id/workDetails', getWorkDetails);

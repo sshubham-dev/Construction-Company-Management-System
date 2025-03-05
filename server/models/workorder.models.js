@@ -27,10 +27,8 @@ const workDetailSchema = new mongoose.Schema({
         type: Number,
     },
     bill: [{
-        name: String,
-        id: {   
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Bill',}
+        ref: 'Bill',
     }],
 }, { timestamps: true });
 
@@ -45,25 +43,26 @@ const workOrderSchema = new mongoose.Schema({
         index: true
     },
     contractor: {
-        // name: String,
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Contractor',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Contractor',
+        }
     },
     site: {
-        // name: String,
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
     },
     date: {
         type: Date,
         default: Date.now,
     },
     createdBy: {
-        name: String,
-        id:{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     },
     work: [workDetailSchema],
     workOrderValue: {
@@ -94,6 +93,10 @@ const workOrderSchema = new mongoose.Schema({
         default: 'Pending'
     },
     inchargeApprove: {
+        type: String,
+        default: 'Pending'
+    },
+    accountheadApprove: {
         type: String,
         default: 'Pending'
     },

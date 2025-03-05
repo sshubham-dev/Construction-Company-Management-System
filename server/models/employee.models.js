@@ -1,13 +1,8 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
 
 const employeeSchema = new mongoose.Schema({
     name: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-        },
+        type: String,
     },
     email: {
         type: String,
@@ -15,16 +10,12 @@ const employeeSchema = new mongoose.Schema({
         lowercase: true,
         trim: true
     },
-    password: {
-        type: String,
-        minlength: 8
-    },
-    contactNo: {
+    phone: {
         type: Number,
+        required: true,
     },
     whatsapp: {
         type: Number,
-        required: true,
     },
     employeeNo: {
         type: String,
@@ -51,6 +42,10 @@ const employeeSchema = new mongoose.Schema({
         type: String,
     },
     isUser: Boolean,
+    userId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'User'
+    },
     certificates: {
         type: [{
             type: String,
@@ -85,17 +80,6 @@ const employeeSchema = new mongoose.Schema({
     taxRegime: String,
 }, { timestamps: true })
 
-employeeSchema.pre('save', async function (next) {
-    if (this.isModified('password')) {
-        try {
-            const hashedPassword = await bcrypt.hash(this.password, 10);
-            this.password = hashedPassword;
-        } catch (error) {
-            return next(error);
-        }
-    }
-    next();
-});
 
 const Employee = mongoose.model('Employee', employeeSchema);
 module.exports = Employee;

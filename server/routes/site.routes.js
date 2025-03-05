@@ -7,7 +7,7 @@ const upload = require('../middlewares/Upload');
 
 // GET /api/sites - Get all sites
 Site.get('/', userAuth, getSites);
-Site.post('/create', upload.single('agreement'), adminAuth, createSite);
+Site.post('/', upload.single('agreement'), adminAuth, createSite);
 Site.get('/:id', userAuth, getSite);
 Site.put('/:id', upload.single('agreement'), userAuth, updateSite);
 Site.delete('/:id', adminAuth, deleteSite);

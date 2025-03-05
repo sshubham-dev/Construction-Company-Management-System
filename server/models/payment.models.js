@@ -41,6 +41,10 @@ var paymentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  paymentFor:{
+    type: String,
+    trim: true,
+  },
   invoice: [{
     name: String,
     id: {

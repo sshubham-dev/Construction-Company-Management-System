@@ -7,11 +7,14 @@ import { MdDelete, MdAdd } from "react-icons/md";
 import { useSelector } from 'react-redux';
 import { FaExternalLinkAlt } from "react-icons/fa";
 import Header from '../../components/Header';
+import Modal from '../../components/Modal';
+import CreateSupplier from '../../components/CreateSupplier';
 
 const Suppliers = () => {
     const navigate = useNavigate();
     const [suppliers, setSuppliers] = useState([]);
     const { user } = useSelector((state) => state.auth);
+    const [createModal, setCreateModal] = useState(false);
 
     useEffect(() => {
         const getSuppliers = async () => {
@@ -31,7 +34,7 @@ const Suppliers = () => {
 
     const handleRedirect = (id) => {
         navigate(`/supplier/${id}`);
-      }
+    }
 
     const handleDelete = async (id) => {
         try {
@@ -42,9 +45,7 @@ const Suppliers = () => {
         }
     };
 
-    const handleAdd = () => {
-        navigate('/create-supplier');
-    };
+
     return (
         <div >
             <section className="overflow-x-auto">
@@ -54,16 +55,16 @@ const Suppliers = () => {
                         Total Suppliers: {suppliers?.length}
                     </h2>
                     {user.department === 'Site Incharge' || user.department === 'Account Head' && (
-                    <button onClick={handleAdd} className="bg-green-500 rounded-full text-white px-2 py-2">
-                        <MdAdd className='text-xl' />
-                    </button>)}
+                        <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2">
+                            <MdAdd className='text-xl' />
+                        </button>)}
                 </div>
 
                 <div className="overflow-x-auto"
-                style={{
-                  scrollbarWidth: 'none',
-                  '-ms-overflow-style': 'none',
-                }}>
+                    style={{
+                        scrollbarWidth: 'none',
+                        '-ms-overflow-style': 'none',
+                    }}>
                     <table className='w-full whitespace-nowrap divide-y divide-gray-300 overflow-hidden'>
                         <thead className="bg-gray-800">
                             <tr className="text-white text-left">
@@ -77,14 +78,14 @@ const Suppliers = () => {
                             {suppliers?.map((supplier) => (
                                 <tr key={supplier._id} className='border-b border-blue-gray-200'>
                                     <td className="px-6 py-4">
-                                    {supplier.name}
+                                        {supplier.name}
                                     </td>
                                     <td className="px-6 py-4">
                                         <p className="text-sm"> {supplier.contactNo} </p>
                                         <p className="text-gray-500 text-sm tracking-wide"> {supplier.whatsapp} </p>
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                    {supplier.gst}
+                                        {supplier.gst}
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         {/* <button onClick={() => handleRedirect(supplier._id)} className="mr-2">
@@ -102,49 +103,10 @@ const Suppliers = () => {
                         </tbody>
                     </table>
                 </div>
-
-                {/* <table className="w-full text-sm text-left rtl:text-right text-gray-500">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                        <tr>
-                            <th scope="col" className="px-6 py-3">Name</th>
-                            <th scope="col" className="px-6 py-3">Contact No</th>
-                            <th scope="col" className="px-6 py-3">GST No</th>
-                            <th scope="col" className="px-6 py-3">Purchase Orders</th>
-                            <th scope="col" className="px-6 py-3">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {suppliers.map((supplier) => (
-                            <tr key={supplier._id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                <td className="px-6 py-4">{supplier.name}</td>
-                                <td className="px-6 py-4">{supplier.contactNo}, {supplier.whatsapp}</td>
-                                <td className="px-6 py-4">{supplier.gst}</td>
-                                <td className="px-6 py-4">{supplier?.purchaseOrder.length}</td>
-                                <td className="px-6 py-4">
-                                    <button
-                            onClick={() => handleRedirect(supplier._id)}
-                            className="bg-blue-500 text-white px-2 py-1 mr-2"
-                        >
-                            <FaExternalLinkAlt />
-                        </button>
-                                    <button
-                                        onClick={() => handleEdit(supplier._id)}
-                                        className="bg-blue-500 text-white px-2 py-1 mr-2"
-                                    >
-                                        <GrEdit />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(supplier._id)}
-                                        className="bg-red-500 text-white px-2 py-1 mr-2"
-                                    >
-                                        <MdDelete />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table> */}
-
+                <Modal onClose={() => setCreateModal(false)} isOpen={createModal} head='Create Supplier'>
+                    <CreateSupplier
+                        onClose={() => setCreateModal(false)} />
+                </Modal>
                 <Toaster
                     position="top-right"
                     reverseOrder={false}

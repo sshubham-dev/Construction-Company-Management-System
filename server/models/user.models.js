@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema({
     },
     department: {
         type: String,
-        enum: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head'],
+        enum: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Account Head', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer'],
         default: null,
     },
     avatar: {
@@ -51,32 +51,24 @@ const userSchema = new mongoose.Schema({
         ref: 'Attendance'
     }],
     leave:[{
-        //  name: String,
         type:mongoose.Schema.Types.ObjectId,
         ref:'Leave'
     }],
     pending:[{
-        // name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Pending-Approval',
     }],
     rejected:[{
-        // name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Rejected-Items'
     }],
     deleted:[{
-        // name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Deleted-Items'
     }],
     draft:[{
-        name: String,
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Draft-Items'
-    }],
-    task:[{
-        type: mongoose.Schema.Types.ObjectId,
     }],
     // message: [{
     //     type: mongoose.Schema.Types.ObjectId,

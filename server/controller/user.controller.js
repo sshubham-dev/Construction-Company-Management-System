@@ -2,6 +2,10 @@ const User = require('../models/user.models');
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateToken');
 // const cloudinary = require('../utils/cloudinary.js');
 const uploadOnCloudinary = require('../utils/cloudinary.js');
+const Employee = require('../models/employee.models.js');
+const Supplier = require('../models/supplier.models.js');
+const Contractor = require('../models/contractor.models.js');
+const Client = require('../models/client.models.js');
 
 const register = async (req, res) => {
     try {
@@ -78,12 +82,111 @@ const createUser = async (req, res) => {
             role,
             department
         });
-        const savedUser = await newUser.save();
+        await newUser.save();
         res.status(201).json({ message: 'User created successfully' });
 
     } catch (error) {
         console.log(error.message)
         res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+const convertToUser = async (id, role, password) => {
+    try {
+        switch (role) {
+            case 'Employee':
+                const employee = await Employee.findById(id)
+
+                if (!employee) return res.status(500).json({ error: 'Employee not Found' });
+                const employeeUser = await User.findOne({
+                    $and: [{ userName: employee.name }, { department: employee.department }]
+                });
+                if (employeeUser) return res.status(400).json({ error: 'Validation Error' });
+                const newEmployeeUser = new User({
+                    userName: employee.name,
+                    userMail: employee.email,
+                    password,
+                    phone: employee.phone,
+                    whatsapp: employee.whatsapp,
+                    role,
+                    department: employee.department,
+                });
+                const savedEmployeeUser = await newEmployeeUser.save();
+                employee.userId = savedEmployeeUser._id;
+                await employee.save({ validateBeforeSave: false });
+                break;
+
+            case 'Client':
+                const client = await Client.findById(id)
+                if (!client) return res.status(404).json({ message: 'Client not Found' });
+                const clientUser = await User.findOne({
+                    $and: [{ userName: client.name }, { department: 'Client' }]
+                });
+                if (clientUser) return res.status(400).json({ error: 'Validation Error' });
+                const newClientUser = new User({
+                    userName: client.name,
+                    userMail: client.email,
+                    password,
+                    phone: client.phone,
+                    whatsapp: client.whatsapp,
+                    role,
+                    department: 'Client',
+                });
+                const savedClientUser = await newClientUser.save();
+                client.userId = savedClientUser._id;
+                await client.save({ validateBeforeSave: false })
+                break;
+
+            case 'Contractor':
+                const contractor = await Contractor.findById(id)
+                if (!contractor) return res.status(404).json({ error: 'Contractor not found' });
+                const contractorUser = await User.findOne({
+                    $and: [{ userName: contractor.name }, { department: 'Contractor' }]
+                });
+                if (contractorUser) return res.status(400).json({ error: 'Validation Error' });
+                const newContractorUser = new User({
+                    userName: contractor.name,
+                    userMail: contractor.email,
+                    password,
+                    phone: contractor.phone,
+                    whatsapp: contractor.whatsapp,
+                    role,
+                    department: 'Contractor',
+                });
+                const savedContractorUser = await newContractorUser.save();
+                contractor.userId = savedContractorUser._id;
+                await contractor.save({ validateBeforeSave: false });
+                break;
+
+            case 'Supplier':
+                const supplier = await Supplier.findById(id);
+                if (!supplier) {
+                    return res.status(404).json({ error: 'Supplier not found' });
+                }
+                const supplierUser = await User.findOne({
+                    $and: [{ userName: supplier.name }, { department: 'Supplier' }]
+                });
+                if (supplierUser) return res.status(400).json({ error: 'Validation Error' });
+                const newSupplierUser = new User({
+                    userName: supplier.name,
+                    userMail: supplier.email,
+                    password,
+                    phone: supplier.phone,
+                    whatsapp: supplier.whatsapp,
+                    role,
+                    department: 'Supplier',
+                });
+                const savedSupplierUser = await newSupplierUser.save();
+                supplier.userId = savedSupplierUser._id;
+                await supplier.save({ validateBeforeSave: false });
+                break;
+
+            default:
+                break;
+        }
+
+    } catch (error) {
+        console.log(error.message)
     }
 };
 
@@ -249,4 +352,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-module.exports = { createUser, login, register, users, user, updateUser, deleteUser, logout, resetPasswd };
+module.exports = { createUser, login, register, users, user, updateUser, deleteUser, logout, resetPasswd, convertToUser };

@@ -2,17 +2,17 @@ import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { AiTwotoneAccountBook, AiOutlineClose } from "react-icons/ai";
-import { MdInventory,  MdWarehouse,  MdTrolley, MdLocationOn, MdBuild, MdWork, MdOutlineMoreHoriz,  MdAccountBalance } from "react-icons/md";
+import { MdInventory, MdWarehouse, MdTrolley, MdLocationOn, MdBuild, MdWork, MdOutlineMoreHoriz, MdAccountBalance } from "react-icons/md";
 import { GrUserWorker, GrSchedulePlay } from "react-icons/gr";
 import { BiSolidPurchaseTag } from "react-icons/bi";
-import {  AiOutlineProject } from "react-icons/ai";
+import { AiOutlineProject } from "react-icons/ai";
 import { LiaFileInvoiceDollarSolid } from "react-icons/lia";
 import { TbCalendarDollar, TbInvoice } from "react-icons/tb";
 import { LuCalendarCheck2, LuClipboardCheck } from "react-icons/lu";
 import { RiCustomerService2Fill } from "react-icons/ri";
-import { FaWallet, FaBalanceScale } from "react-icons/fa";
+import { FaWallet, FaBalanceScale, FaReceipt } from "react-icons/fa";
 import { TbTruckReturn } from "react-icons/tb";
-import { FaPersonCircleQuestion, FaPersonCircleCheck, FaPersonShelter, FaTruckArrowRight, FaTruckMedical } from "react-icons/fa6";
+import { FaPersonCircleQuestion, FaPersonCircleCheck, FaPersonShelter, FaTruckArrowRight, FaTruckMedical, FaMoneyBillTransfer } from "react-icons/fa6";
 
 
 
@@ -28,50 +28,68 @@ const BottomNavigation = () => {
       children: [
 
         /* Accounts Management*/
+        // {
+        //   to: '/erp/account',
+        //   name: 'Accounts Management',
+        //   icon: <MdAccountBalance />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
+        // },
         {
-          to: '/erp/account',
-          name: 'Accounts Management',
-          icon: <MdAccountBalance />,
-          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
-        },
-        {
-          to: '/erp/balance-sheet',
-          name: 'Balance Sheet',
-          icon: <FaBalanceScale />,
+          to: '/erp/receipt_payment',
+          name: 'Receipt & Payment',
+          icon: <FaReceipt/>,
           role: ['Admin', 'Company', 'Ceo', 'Account Head'],
         },
         {
-          to: '/erp/expenses',
-          name: 'Expenses',
-          icon: <FaWallet />,
+          to: '/erp/contra',
+          name: 'Contra',
+          icon: <FaMoneyBillTransfer />,
           role: ['Admin', 'Company', 'Ceo', 'Account Head'],
         },
+        // {
+        //   to: '/erp/balance-sheet',
+        //   name: 'Balance Sheet',
+        //   icon: <FaBalanceScale />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
+        // },
+        // {
+        //   to: '/erp/expenses',
+        //   name: 'Expenses',
+        //   icon: <FaWallet />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
+        // },
 
 
         /* Inventory Management*/
-        {
-          to: '/erp/inventory',
-          name: 'Inventory Management',
-          icon: <MdWarehouse />,
-          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
-        },
+        // {
+        //   to: '/erp/inventory',
+        //   name: 'Inventory Management',
+        //   icon: <MdWarehouse />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+        // },
         {
           to: '/erp/inventory/stock',
           name: 'Stock',
           icon: <MdInventory />,
           role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
         },
+        // {
+        //   to: '/erp/inventory/sales',
+        //   name: 'Sales',
+        //   icon: <FaTruckArrowRight style={{ transform: 'rotate(360deg) scaleX(-1)' }} />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+        // },
+        // {
+        //   to: '/erp/inventory/purchase',
+        //   name: 'Purchase',
+        //   icon: <FaTruckMedical />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+        // },
         {
-          to: '/erp/inventory/sales',
-          name: 'Sales',
-          icon: <FaTruckArrowRight style={{ transform: 'rotate(360deg) scaleX(-1)' }} />,
-          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
-        },
-        {
-          to: '/erp/inventory/purchase',
-          name: 'Purchase',
-          icon: <FaTruckMedical />,
-          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+          to: '/erp/inventory/purchase-request',
+          name: 'Purchase-Request',
+          icon: <BiSolidPurchaseTag />,
+          role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },
         {
           to: '/erp/inventory/return',
@@ -106,18 +124,18 @@ const BottomNavigation = () => {
           icon: <FaPersonCircleCheck />,
           role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
         },
-        {
-          to: '/crm/project',
-          name: 'Project',
-          icon: <AiOutlineProject />,
-          role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
-        },
-        {
-          to: '/crm/invoice',
-          name: 'Invoice',
-          icon: <TbInvoice />,
-          role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
-        },
+        // {
+        //   to: '/crm/project',
+        //   name: 'Project',
+        //   icon: <AiOutlineProject />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
+        // },
+        // {
+        //   to: '/crm/invoice',
+        //   name: 'Invoice',
+        //   icon: <TbInvoice />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
+        // },
       ],
       role: ['Admin', 'Company', 'Marketing', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
     },
@@ -128,12 +146,12 @@ const BottomNavigation = () => {
       icon: <MdLocationOn />,
       role: ["Admin", "Company", "Ceo", "Site Incharge", "Account Head"],
       children: [
-        {
-          to: '/site/report',
-          name: 'Sites Report',
-          icon: <FaPersonShelter />,
-          role: ['Admin', 'Company', 'Ceo', 'Account Head']
-        },
+        // {
+        //   to: '/site/report',
+        //   name: 'Sites Report',
+        //   icon: <FaPersonShelter />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head']
+        // },
         {
           to: '/sites/project-schedules',
           name: 'Project Schedules',

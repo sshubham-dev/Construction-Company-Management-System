@@ -19,6 +19,7 @@ const getAttendance = async (req, res) => {
         return res.status(501).json({ message: error.message })
     }
 };
+
 const getAttendanceByUser = async (req, res) => {
     try {
         const id = req.id;
@@ -33,6 +34,7 @@ const getAttendanceByUser = async (req, res) => {
         return res.status(501).json({ message: error.message })
     }
 };
+
 const getAttendances = async (req, res) => {
     try {
         const attendance = await Attendance.find()
@@ -45,6 +47,7 @@ const getAttendances = async (req, res) => {
         return res.status(501).json({ message: error.message })
     }
 };
+
 const getLeave = async (req, res) => {
     try {
         const user = req.user;
@@ -59,6 +62,7 @@ const getLeave = async (req, res) => {
         return res.status(501).json({ message: error.message })
     }
 };
+
 const getLeaveByUser = async (req, res) => {
     try {
         const id = req.id;
@@ -73,6 +77,7 @@ const getLeaveByUser = async (req, res) => {
         return res.status(501).json({ message: error.message })
     }
 };
+
 const getLeaves = async (req, res) => {
     try {
         const leaves = await Leave.find()
@@ -182,6 +187,7 @@ const updateLeave = async (req, res) => {
         return res.status(501).json({ message: error.message })
     }
 };
+
 const deleteAttendance = async (req, res) => {
     try {
         const id = req.params.id;
@@ -193,6 +199,7 @@ const deleteAttendance = async (req, res) => {
         return res.status(501).json({ message: error.message })
     }
 };
+
 const deleteLeave = async (req, res) => {
     try {
         const id = req.params.id;

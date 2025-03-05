@@ -37,7 +37,7 @@ const Employee = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/v1/user/delete/${id}`);
+      await axios.delete(`/api/v1/user/${id}`);
       setEmployee(employees.filter((employee) => employee._id !== id));
     } catch (error) {
       toast.error(error.message)

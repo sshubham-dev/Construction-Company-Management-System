@@ -40,11 +40,8 @@ const qualityScheduleSchema = new mongoose.Schema({
         trim: true,
     },
     createdBy: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     },
     workDetails: [workDetailSchema],
     qualityApprove: {
@@ -56,6 +53,10 @@ const qualityScheduleSchema = new mongoose.Schema({
         default: 'Pending'
     },
     inchargeApprove: {
+        type: String,
+        default: 'Pending'
+    },
+    approvalStatus: {
         type: String,
         default: 'Pending'
     },

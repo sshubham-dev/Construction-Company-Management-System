@@ -19,6 +19,8 @@ const ReturnOrders = () => {
   const [draftOrder, setDraftOrder] = useState([]);
   const [createModal, setCreateModal] = useState(false);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
+  const [activeTab, setActiveTab] = useState("approved");
+
   useEffect(() => {
     const fetchPurchaseOrders = async () => {
       try {
@@ -90,38 +92,91 @@ const ReturnOrders = () => {
 
   return (
     <div>
-      <Header category="Page" title="Return Order's" />
-      <section className="overflow-x-auto">
-        <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>
-          <div className="w-full mx-auto mb-6 text-gray-700 p-1 flex flex-row justify-between items-center">
-            <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
-              Total Return Orders: {purchaseOrders?.length}
-            </h2>
-              <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2">
-                <MdAdd className='text-xl' />
-              </button>
+      <section className="overflow-x-auto scrollbar-hide">
+        <Header category="Page" title="Return Order's" />
+        <div className="w-full mx-auto text-gray-700 p-1 flex flex-row justify-end items-center">
+          <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
+            Total Return Orders: {purchaseOrders?.length}
+          </h2>
+          <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2">
+            <MdAdd className='text-xl' />
+          </button>
+        </div>
+        
+        <div className="flex space-x-4 border-b-2 mb-4 w-full md:w-auto">
+          <button
+            className={`px-4 py-2 ${activeTab === "approved" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
+            onClick={() => setActiveTab("approved")}
+          >
+            Approved
+          </button>
+          <button
+            className={`px-4 py-2 ${activeTab === "draft" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
+            onClick={() => setActiveTab("draft")}
+          >
+            Drafts
+          </button>
+        </div>
+
+        {activeTab === "approved" && (
+          <div className="overflow-x-auto scrollbar-hide">
+            <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-x-auto scrollbar-hide'>
+              <thead className="bg-gray-300">
+                <tr className=" text-left">
+                  <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Admin Approve </th>
+                  {/* <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Supplier Approve</th> */}
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Amount </th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Paid </th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Due </th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {purchaseOrders?.map((purchaseOrder) => (
+                  <tr key={purchaseOrder._id} className='border-b border-blue-gray-200'>
+                    <td className="px-6 py-4">
+                      <p className=""> {purchaseOrder.site?.name} </p>
+                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {purchaseOrder.supplier?.name} </p>
+                    </td>
+                    <td className="px-6 py-4 text-center">{purchaseOrder?.adminApprove}</td>
+                    {/* <td className="px-6 py-4 text-center">{purchaseOrder?.supplierApprove}</td> */}
+                    <td className="px-6 py-4 text-center">₹ {purchaseOrder?.totalValue ? purchaseOrder?.totalValue : ' 0'}</td>
+                    <td className="px-6 py-4 text-center">₹ {purchaseOrder?.totalPaid ? purchaseOrder?.totalPaid : ' 0'}</td>
+                    <td className="px-6 py-4 text-center">₹ {purchaseOrder?.totalDue ? purchaseOrder?.totalDue : ' 0'}</td>
+                    <td className="px-6 py-4 text-center">
+                      <button onClick={() => handleRedirect(purchaseOrder._id)} className="mr-2">
+                        <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                      </button>
+                      <button onClick={() => handleEdit(purchaseOrder._id)} className="mr-2">
+                        <GrEdit className="text-green-500 hover:text-green-800 text-lg" />
+                      </button>
+                      <button onClick={() => handleDelete(purchaseOrder._id)} className="mr-2">
+                        <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <Tabs defaultActiveKey='ordered' tabPosition='top' className="w-full">
-            <Tabs.TabPane tab='Ordered' key={'ordered'}>
-              <div className="overflow-x-auto"
-                style={{
-                  scrollbarWidth: 'none',
-                  '-ms-overflow-style': 'none',
-                }}>
+        )}
+
+        {activeTab === "draft" && (
+          <>
+            {user.department === 'Site Incharge' && (
+              <div className="overflow-x-auto scrollbar-hide">
                 <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
-                  <thead className="bg-gray-800">
-                    <tr className="text-white text-left">
+                  <thead className="bg-gray-300">
+                    <tr className=" text-left">
                       <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
                       <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Admin Approve </th>
                       {/* <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Supplier Approve</th> */}
-                      <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Amount </th>
-                      <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Paid </th>
-                      <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Due </th>
                       <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {purchaseOrders?.map((purchaseOrder) => (
+                    {draftOrder?.map((purchaseOrder) => (
                       <tr key={purchaseOrder._id} className='border-b border-blue-gray-200'>
                         <td className="px-6 py-4">
                           <p className=""> {purchaseOrder.site?.name} </p>
@@ -129,17 +184,17 @@ const ReturnOrders = () => {
                         </td>
                         <td className="px-6 py-4 text-center">{purchaseOrder?.adminApprove}</td>
                         {/* <td className="px-6 py-4 text-center">{purchaseOrder?.supplierApprove}</td> */}
-                        <td className="px-6 py-4 text-center">₹ {purchaseOrder?.totalValue ? purchaseOrder?.totalValue : ' 0'}</td>
-                        <td className="px-6 py-4 text-center">₹ {purchaseOrder?.totalPaid ? purchaseOrder?.totalPaid : ' 0'}</td>
-                        <td className="px-6 py-4 text-center">₹ {purchaseOrder?.totalDue ? purchaseOrder?.totalDue : ' 0'}</td>
                         <td className="px-6 py-4 text-center">
-                          <button onClick={() => handleRedirect(purchaseOrder._id)} className="mr-2">
+                          <button onClick={() => handleSave(purchaseOrder._id)} className=" mr-2">
+                            <FcApproval className="text-green-500 hover:text-green-700 text-xl" />
+                          </button>
+                          {/* <button onClick={() => handleRedirect(purchaseOrder._id)} className="mr-2">
                             <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                           </button>
                           <button onClick={() => handleEdit(purchaseOrder._id)} className="mr-2">
-                            <GrEdit className="text-green-500 hover:text-green-800 text-lg" />
-                          </button>
-                          <button onClick={() => handleDelete(purchaseOrder._id)} className="mr-2">
+                            <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                          </button> */}
+                          <button onClick={() => handleDelete(purchaseOrder._id)}>
                             <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                           </button>
                         </td>
@@ -148,54 +203,9 @@ const ReturnOrders = () => {
                   </tbody>
                 </table>
               </div>
-            </Tabs.TabPane>
-            {user.department === 'Site Incharge' && (
-              <Tabs.TabPane tab='Draft' key={'draft'}>
-                <div className="overflow-x-auto"
-                  style={{
-                    scrollbarWidth: 'none',
-                    '-ms-overflow-style': 'none',
-                  }}>
-                  <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
-                    <thead className="bg-gray-800">
-                      <tr className="text-white text-left">
-                        <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
-                        <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Admin Approve </th>
-                        {/* <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Supplier Approve</th> */}
-                        <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {draftOrder?.map((purchaseOrder) => (
-                        <tr key={purchaseOrder._id} className='border-b border-blue-gray-200'>
-                          <td className="px-6 py-4">
-                            <p className=""> {purchaseOrder.site?.name} </p>
-                            <p className="text-gray-500 text-sm font-semibold tracking-wide"> {purchaseOrder.supplier?.name} </p>
-                          </td>
-                          <td className="px-6 py-4 text-center">{purchaseOrder?.adminApprove}</td>
-                          {/* <td className="px-6 py-4 text-center">{purchaseOrder?.supplierApprove}</td> */}
-                          <td className="px-6 py-4 text-center">
-                            <button onClick={() => handleSave(purchaseOrder._id)} className=" mr-2">
-                              <FcApproval className="text-green-500 hover:text-green-700 text-xl" />
-                            </button>
-                            <button onClick={() => handleRedirect(purchaseOrder._id)} className="mr-2">
-                              <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                            </button>
-                            <button onClick={() => handleEdit(purchaseOrder._id)} className="mr-2">
-                              <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                            </button>
-                            <button onClick={() => handleDelete(purchaseOrder._id)}>
-                              <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Tabs.TabPane>)}
-          </Tabs>
-        </div>
+            )}
+          </>)}
+
         <Toaster
           position="top-right"
           reverseOrder={false} />

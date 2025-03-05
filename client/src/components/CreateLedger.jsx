@@ -1,6 +1,7 @@
 import { useState } from "react";
+import axios from "axios";
 
-const LedgerModal = ({ isOpen, onClose }) => {
+const LedgerModal = ({ onClose }) => {
   const [ledger, setLedger] = useState({
     name: "",
     alias: "",
@@ -36,18 +37,20 @@ const LedgerModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Ledger Data:", ledger);
-    onClose();
+    try {
+      const response = await axios.post('/api/v1/ledger', ledger);
+      console.log(response)
+      console.log("Ledger Data:", ledger);
+      onClose();
+    } catch (error) {
+      console.log(error)
+    }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-8">
-      <div className="bg-white p-10 rounded-lg shadow-lg w-full max-w-lg md:w-3/4 lg:w-1/2 h-[75vh] md:h-[80vh] md:mt-12 overflow-auto">
-        <h2 className="text-xl font-bold mb-4 text-center">Create Ledger</h2>
+    <div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Ledger Name & Alias */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -102,7 +105,7 @@ const LedgerModal = ({ isOpen, onClose }) => {
               onChange={handleChange}
               className="mr-2"
             />
-            <label className="text-sm font-medium">Is GST Applicable</label>
+            <label className="text-md font-medium">Is GST Applicable</label>
           </div>
 
           <div className="flex items-center">
@@ -113,7 +116,7 @@ const LedgerModal = ({ isOpen, onClose }) => {
               onChange={handleChange}
               className="mr-2"
             />
-            <label className="text-sm font-medium">Is TDS Deductible</label>
+            <label className="text-md font-medium">Is TDS Deductible</label>
           </div>
 
           {/* Mailing Details */}
@@ -234,6 +237,7 @@ const LedgerModal = ({ isOpen, onClose }) => {
               className="w-full border px-3 py-2 rounded-md"
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium">GSTIN/UIN</label>
             <input
@@ -267,7 +271,6 @@ const LedgerModal = ({ isOpen, onClose }) => {
             </button>
           </div>
         </form>
-      </div>
     </div>
   );
 };

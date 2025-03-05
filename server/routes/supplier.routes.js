@@ -7,9 +7,10 @@ const {
     updateSupplier,
     deleteSupplier
 } = require('../controller/supplier.controller.js');
+const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 Supplier.get('/', getSuppliers);
-Supplier.post('/create', createSupplier);
+Supplier.post('/', createSupplier);
 Supplier.route('/:id')
     .get(getSupplier)
     .put(updateSupplier)

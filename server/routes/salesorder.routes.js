@@ -1,20 +1,21 @@
 const express = require('express');
-const router = express.Router();
-const salesController = require('../controllers/salesController');
+const SalesOrders = express.Router();
+const { createSalesOrder, getAllSalesOrders, getSalesOrderById, updateSalesOrder, deleteSalesOrder } = require('../controller/salesorder.controller')
+const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 // Create a new sales order
-router.post('/salesorders', salesController.createSalesOrder);
+SalesOrders.post('/', createSalesOrder);
 
 // Get all sales orders
-router.get('/salesorders', salesController.getAllSalesOrders);
+SalesOrders.get('/', getAllSalesOrders);
 
 // Get a specific sales order by ID
-router.get('/salesorders/:id', salesController.getSalesOrderById);
+SalesOrders.get('/:id', getSalesOrderById);
 
 // Update a sales order by ID
-router.put('/salesorders/:id', salesController.updateSalesOrder);
+SalesOrders.put('/:id', updateSalesOrder);
 
 // Delete a sales order by ID
-router.delete('/salesorders/:id', salesController.deleteSalesOrder);
+SalesOrders.delete('/:id', deleteSalesOrder);
 
-module.exports = router;
+module.exports = SalesOrders;

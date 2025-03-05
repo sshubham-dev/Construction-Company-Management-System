@@ -4,8 +4,15 @@ const supplierSchema = new mongoose.Schema({
     name: {
         type: String,
     },
-    contactNo: {
-        type: Number
+    email: {
+        type: String,
+        unique: true,
+        lowercase: true,
+        trim: true
+    },
+    phone: {
+        type: Number,
+        required: true,
     },
     whatsapp: {
         type: Number
@@ -27,35 +34,26 @@ const supplierSchema = new mongoose.Schema({
         type: String,
     },
     createdBy: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     },
     isUser: Boolean,
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     purchaseOrder: [{
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Purchase-Order',
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Purchase-Order',
     }],
-    bill: [{
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Bill',
-        }
-    }],
-    accounts:{
-        payable:{
+    accounts: {
+        payable: {
             type: Number,
         },
-        paid:{
+        paid: {
             type: Number,
         },
-        due:{
+        due: {
             type: Number,
         },
     }

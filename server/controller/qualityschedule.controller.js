@@ -1,11 +1,14 @@
 const QualitySchedule = require('../models/qualityschedule.models');
+const {
+    sendApproveByAdmin,
+    sendApproveByIncharge,
+    sendApproveByQuality,
+} = require('./approval.controller.js');
 const Site = require('../models/site.models');
 
 const getQualitySchedules = async (req, res) => {
     try {
         const qualityschedules = await QualitySchedule.find()
-            .populate('site')
-            .exec();
         if (qualityschedules.length === 0) return res.status(404).json({ error: 'No Quality Schedule Found' });
         return res.status(200).json(qualityschedules);
     } catch (error) {
@@ -16,8 +19,8 @@ const getQualitySchedules = async (req, res) => {
 
 const getWorkDetails = async (req, res) => {
     try {
-        const id = req.params.id;
-        const qualityschedule = await QualitySchedule.findById(id)
+        const _id = req.params.id;
+        const qualityschedule = await QualitySchedule.findById(_id)
         if (!qualityschedule && qualityschedule?.workDetails.length === 0) return res.status(404).json({ error: 'No Quality Schedule & Work Details Found' });
         const workDetail = qualityschedule.workDetails;
         return res.status(200).json(workDetail);
@@ -29,11 +32,9 @@ const getWorkDetails = async (req, res) => {
 
 const getQualitySchedule = async (req, res) => {
     try {
-        const id = req.params.id;
+        const _id = req.params.id;
         console.log(id)
-        const qualityschedule = await QualitySchedule.findById(id)
-            .populate('site')
-            .exec();
+        const qualityschedule = await QualitySchedule.findById(_id)
         if (!qualityschedule) return res.status(404).json({ error: 'Quality Schedule not found' });
         return res.status(200).json(qualityschedule);
     } catch (error) {
@@ -44,6 +45,7 @@ const getQualitySchedule = async (req, res) => {
 
 const createQualitySchedule = async (req, res) => {
     try {
+        const user = req.user
         const {
             site,
             qualityScheduleId,
@@ -58,16 +60,18 @@ const createQualitySchedule = async (req, res) => {
         if (existingQualitySchedule) return res.status(500).json({ error: 'Quality Schedule Already exists' });
 
         const newQualitySchedule = new QualitySchedule({
-            site,
+            site: { id: existingSite?._id, name: existingSite?.name },
             qualityScheduleId,
             workDetails,
+            createdBy: user._id,
         });
         console.log(newQualitySchedule)
         const savedQualitySchedule = await newQualitySchedule.save();
         if (!savedQualitySchedule) return res.status(500).json({ error: 'Something went wrong' });
+        sendApproveByAdmin(savedQualitySchedule, 'Quality Schedule', user._id)
+        sendApproveByIncharge(savedQualitySchedule, 'Quality Schedule', user._id)
+        sendApproveByQuality(savedQualitySchedule, 'Quality Schedule', user._id)
 
-        existingSite.qualitySchedule = savedQualitySchedule._id;
-        await existingSite.save({ validateBeforeSave: false });
 
         return res.status(200).json({ message: 'Quality Check Schedule created Successfully', savedQualitySchedule });
     } catch (error) {
@@ -76,9 +80,41 @@ const createQualitySchedule = async (req, res) => {
     }
 };
 
-const updateQualitySchedule = async (req, res) => {
+const saveQualitySchedule = async (req, res) => {
     try {
         const id = req.params.id;
+        const user = req.user;
+        // console.log(user)
+        const qualitySchedule = await QualitySchedule.findById(id)
+            .where('createdBy').equals(user?._id)
+            .exec();
+        if (!qualitySchedule) return res.status(404).json({ message: 'No qualitySchedule Found' });
+        const existingSite = await Site.findById(qualitySchedule?.site?.id);
+        if (qualitySchedule.createdBy.toString() === user?._id.toString()) {
+            if (qualitySchedule.adminApprove === 'Approved' && qualitySchedule.qualityApprove === 'Approved' && qualitySchedule.inchargeApprove === 'Approved') {
+                qualitySchedule.approvalStatus = 'Approved'
+                await qualitySchedule.save();
+                existingSite.qualitySchedule.push(qualitySchedule._id);
+                await existingSite.save({ validateBeforeSave: false });
+                console.log('qualitySchedule:', qualitySchedule)
+                return res.status(201).json({ message: 'qualitySchedule Saved Successfuly' })
+            } else {
+                console.log('qualitySchedule is Not Approved By Every One')
+                return res.status(400).json({ message: 'qualitySchedule is Not Approved By Every One' });
+            }
+        } else {
+            console.log('Unauthorized Request')
+            return res.status(401).json({ message: 'Unauthorized Request' })
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ message: 'Internal Server Error', error });
+    }
+};
+
+const updateQualitySchedule = async (req, res) => {
+    try {
+        const _id = req.params.id;
         const {
             site,
             qualityScheduleId,
@@ -90,14 +126,15 @@ const updateQualitySchedule = async (req, res) => {
         console.table(req.body)
         console.table(id)
 
+        const existingSite = await Site.findById(site);
         // Find the existing project schedule
-        const existingQualitySchedule = await QualitySchedule.findById(id);
+        const existingQualitySchedule = await QualitySchedule.findById(_id);
         console.log(existingQualitySchedule)
         if (!existingQualitySchedule) {
             return res.status(404).json({ error: 'Quality Schedule not found' });
         }
 
-        existingQualitySchedule.site = site || existingQualitySchedule.site;
+        existingQualitySchedule.site = { id: existingSite._id, name: existingSite.name } || existingQualitySchedule.site;
         existingQualitySchedule.qualityScheduleId = qualityScheduleId || existingQualitySchedule.qualityScheduleId;
         const newWorkDetail = {
             work,
@@ -118,8 +155,8 @@ const updateQualitySchedule = async (req, res) => {
 
 const deleteQualitySchedule = async (req, res) => {
     try {
-        const id = req.params.id;
-        const deletedProjectSchedule = await QualitySchedule.findByIdAndDelete(id);
+        const _id = req.params.id;
+        const deletedProjectSchedule = await QualitySchedule.findByIdAndDelete(_id);
         if (!deletedProjectSchedule) return res.status(500).json({ error: 'Something went wrong' });
         return res.status(200).json({ message: 'Project Schedule Deleted Successfully' });
     } catch (error) {
@@ -130,7 +167,7 @@ const deleteQualitySchedule = async (req, res) => {
 
 const updateWorkDetail = async (req, res) => {
     try {
-        const id = req.params.id;
+        const _id = req.params.id;
         const index = req.params.index;
         const {
             work,
@@ -144,7 +181,7 @@ const updateWorkDetail = async (req, res) => {
         console.log('index', req.params.index);
         console.log('req', req.body);
 
-        const qualitySchedule = await QualitySchedule.findById(id);
+        const qualitySchedule = await QualitySchedule.findById(_id);
         if (!qualitySchedule) return res.status(500).json({ error: 'No Project Schedule Found' });
         qualitySchedule.workDetails[index] = {
             work,
@@ -164,9 +201,9 @@ const updateWorkDetail = async (req, res) => {
 // Delete ProjectDetail by Index
 const deleteWorkDetail = async (req, res) => {
     try {
-        const id = req.params.id;
+        const _id = req.params.id;
         const index = req.params.index;
-        const qualitySchedule = await QualitySchedule.findById(id);
+        const qualitySchedule = await QualitySchedule.findById(_id);
 
         if (!qualitySchedule) {
             return res.status(404).json({ error: 'Quality Schedule not found' });
@@ -175,8 +212,6 @@ const deleteWorkDetail = async (req, res) => {
         qualitySchedule.workDetails.splice(index, 1);
         await qualitySchedule.save();
         const qualitySchedules = await QualitySchedule.find()
-            .populate('site')
-            .exec();
         res.status(201).json({ message: 'Work Detail Deleted Successfully', qualitySchedules, qualitySchedule });
     } catch (error) {
         console.log(error)
@@ -195,4 +230,5 @@ module.exports = {
     updateWorkDetail,
     deleteWorkDetail,
     getWorkDetails,
+    saveQualitySchedule,
 };

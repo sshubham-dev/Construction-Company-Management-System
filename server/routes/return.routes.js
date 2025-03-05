@@ -1,20 +1,21 @@
 const express = require('express');
-const router = express.Router();
-const returnController = require('../controllers/returnController');
+const Return = express.Router();
+const { createReturn, getReturnById, getReturns, updateReturn, deleteReturn } = require('../controller/return.controller');
+const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 // Create a return
-router.post('/returns', returnController.createReturn);
+Return.post('/', createReturn);
 
 // Get all returns
-router.get('/returns', returnController.getReturns);
+Return.get('/', getReturns);
 
 // Get a return by ID
-router.get('/returns/:id', returnController.getReturnById);
+Return.get('/:id', getReturnById);
 
 // Update a return
-router.put('/returns/:id', returnController.updateReturn);
+Return.put('/:id', updateReturn);
 
 // Delete a return
-router.delete('/returns/:id', returnController.deleteReturn);
+Return.delete('/:id', deleteReturn);
 
-module.exports = router;
+module.exports = Return;

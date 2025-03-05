@@ -1,20 +1,20 @@
 const express = require('express');
-const router = express.Router();
-const journalController = require('../controllers/journalController');
-const stockJournalController = require('../controllers/stockJournalController');
+const Journal = express.Router();
+const journalController = require('../controller/journal.controller');
+const { createJournal, getAllJournals, getJournalByVoucherNo, updateJournal, deleteJournal } = require('../controller/journal.controller');
+const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 // Journal Routes
-router.post('/journals', journalController.createJournal);
-router.get('/journals', journalController.getAllJournals);
-router.get('/journals/:voucherNo', journalController.getJournalByVoucherNo);
-router.put('/journals/:voucherNo', journalController.updateJournal);
-router.delete('/journals/:voucherNo', journalController.deleteJournal);
-
+Journal.post('/', createJournal);
+Journal.get('/', getAllJournals);
+Journal.get('/:voucherNo', getJournalByVoucherNo);
+Journal.put('/:voucherNo', updateJournal);
+Journal.delete('/:voucherNo', deleteJournal);
 // Stock Journal Routes
-router.post('/stock-journals', stockJournalController.createStockJournal);
-router.get('/stock-journals', stockJournalController.getAllStockJournals);
-router.get('/stock-journals/:voucherNumber', stockJournalController.getStockJournalByVoucherNumber);
-router.put('/stock-journals/:voucherNumber', stockJournalController.updateStockJournal);
-router.delete('/stock-journals/:voucherNumber', stockJournalController.deleteStockJournal);
+// router.post('/stock-journals', stockcreateStockJournal);
+// router.get('/stock-journals', stockgetAllStockJournals);
+// router.get('/stock-journals/:voucherNumber', stockgetStockJournalByVoucherNumber);
+// router.put('/stock-journals/:voucherNumber', stockupdateStockJournal);
+// router.delete('/stock-journals/:voucherNumber', stockdeleteStockJournal);
 
-module.exports = router;
+module.exports = Journal;

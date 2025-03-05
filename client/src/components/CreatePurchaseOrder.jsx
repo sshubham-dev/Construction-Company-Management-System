@@ -3,12 +3,11 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import Header from '../components/Header';
 import Select from 'react-select';
 
 axios.defaults.withCredentials = true;
 
-const CreatePurchaseOrder = () => {
+const CreatePurchaseOrder = ({onClose}) => {
   const [formData, setFormData] = useState({
     supplier: '',
     site: '',
@@ -191,7 +190,7 @@ const CreatePurchaseOrder = () => {
       if (purchaseOrderToEdit) {
         const response = await axios.put(`/api/v1/purchase-order/${purchaseOrderToEdit}`, updatedFormData);
         toast.success(response.data.message);
-        navigate(-1);
+        onClose()
       } else if (requirementToEdit.id && requirementToEdit.index) {
         const updatedDetail = {
           ...requirement,
@@ -199,11 +198,11 @@ const CreatePurchaseOrder = () => {
         };
         const response = await axios.put(`/api/v1/purchase-order/${requirementToEdit.id}/requirement/${requirementToEdit.index}`, updatedDetail);
         toast.success(response.data.message);
-        navigate(-1);
+        onClose()
       } else {
-        const response = await axios.post('/api/v1/purchase-order/create', updatedFormData);
+        const response = await axios.post('/api/v1/purchase-order', updatedFormData);
         toast.success(response.data.message);
-        navigate(-1);
+        onClose()
       }
     } catch (error) {
       console.error('Error submitting purchase order:', error.message);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const CreateJournal = ({ isOpen, onClose }) => {
+const CreateJournal = ({ onClose }) => {
     const [journalType, setJournalType] = useState(''); // State for selected journal type
     const [voucherNumber, setVoucherNumber] = useState('');
     const [date, setDate] = useState('');
@@ -60,49 +60,47 @@ const CreateJournal = ({ isOpen, onClose }) => {
             totalCredit: totalJournalCredit,
         };
         setSubmittedData(data);
+        onClose()
         console.log('Submitted Data:', data);
     };
 
-    if (!isOpen) return null
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-8">
-            <div className="bg-white px-5 py-8 rounded-lg shadow-lg w-full max-w-lg md:w-3/4 lg:w-1/2 h-[75vh] md:h-[80vh] md:mt-12 overflow-auto">
-                <h2 className="text-xl font-bold mb-4">Journal Entry</h2>
-                <form className="space-y-4" onSubmit={submitForm}>
-                    {/* <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value={journalType} onChange={handleJournalTypeChange}>
+        <div >
+            <form className="space-y-4" onSubmit={submitForm}>
+                {/* <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value={journalType} onChange={handleJournalTypeChange}>
                         <option value="">Select Journal Type</option>
                         <option value="journal">Journal</option>
                         <option value="stock">Stock Journal</option>
                     </select> */}
 
-                    <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Voucher Number" value={voucherNumber} onChange={(e) => setVoucherNumber(e.target.value)} />
+                <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Voucher Number" value={voucherNumber} onChange={(e) => setVoucherNumber(e.target.value)} />
 
-                    <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
 
-                    <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Narration" value={narration} onChange={(e) => setNarration(e.target.value)} />
+                <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Narration" value={narration} onChange={(e) => setNarration(e.target.value)} />
 
-                    {/* {journalType === 'journal' && (
+                {/* {journalType === 'journal' && (
                         <> */}
-                    <h3 className="text-lg font-bold">Entries</h3>
-                    {journalEntries.map((entry, index) => (
-                        <div key={index} className="flex flex-col sm:flex-row md:flex-row lg:flex-row gap-2">
-                            <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value={entry.account} onChange={(e) => updateJournalEntry(index, 'account', e.target.value)}>
-                                <option value="">Select Account</option>
-                            </select>
-                            
-                            <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" placeholder="Debit" value={entry.debit} onChange={(e) => updateJournalEntry(index, 'debit', e.target.value)} />
+                <h3 className="text-lg font-bold">Entries</h3>
+                {journalEntries.map((entry, index) => (
+                    <div key={index} className="flex flex-col sm:flex-row md:flex-row lg:flex-row gap-2">
+                        <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value={entry.account} onChange={(e) => updateJournalEntry(index, 'account', e.target.value)}>
+                            <option value="">Select Account</option>
+                        </select>
 
-                            <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" placeholder="Credit" value={entry.credit} onChange={(e) => updateJournalEntry(index, 'credit', e.target.value)} />
-                        </div>
-                    ))}
-                    <button onClick={addJournalEntry} className="mt-4 px-4 py-2 bg-gray-300 rounded">Add Journal Entry</button>
-                    <div className="mt-4 flex justify-between flex-col sm:flex-row md:flex-row lg:flex-row">
-                        <strong>Total Debit: </strong>{totalJournalDebit}
-                        <strong>Total Credit: </strong>{totalJournalCredit}
+                        <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" placeholder="Debit" value={entry.debit} onChange={(e) => updateJournalEntry(index, 'debit', e.target.value)} />
+
+                        <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" placeholder="Credit" value={entry.credit} onChange={(e) => updateJournalEntry(index, 'credit', e.target.value)} />
                     </div>
-                    {/* </>
+                ))}
+                <button onClick={addJournalEntry} className="mt-4 px-4 py-2 bg-gray-300 rounded">Add Journal Entry</button>
+                <div className="mt-4 flex justify-between flex-col sm:flex-row md:flex-row lg:flex-row">
+                    <strong>Total Debit: </strong>{totalJournalDebit}
+                    <strong>Total Credit: </strong>{totalJournalCredit}
+                </div>
+                {/* </>
                     )} */}
-                    {/* 
+                {/* 
                     {journalType === 'stock' && (
                         <>
                             <h3 className="text-lg font-bold">Stock Items</h3>
@@ -123,25 +121,24 @@ const CreateJournal = ({ isOpen, onClose }) => {
                         </>
                     )} */}
 
-                    <div className="flex justify-end gap-4 mt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="bg-gray-500 text-white p-2 rounded"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            onClick={submitForm}
-                            className=" bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                            Submit
-                        </button>
-                    </div>
-                    {/* <button onClick={submitForm} className="mt-3 px-4 py-2 bg-blue-500 text-white rounded">Submit</button> */}
-                </form>
-            </div>
+                <div className="flex justify-end gap-4 mt-4">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="bg-gray-500 text-white p-2 rounded"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        onClick={submitForm}
+                        className=" bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        Submit
+                    </button>
+                </div>
+                {/* <button onClick={submitForm} className="mt-3 px-4 py-2 bg-blue-500 text-white rounded">Submit</button> */}
+            </form>
         </div>
     );
 

@@ -15,7 +15,7 @@ const CheckList = () => {
   const navigate = useNavigate();
   const [checkLists, setCheckList] = useState([]);
   const [error, setError] = useState(null);
-    const [createModal, setCreateModal] = useState(false);
+  const [createModal, setCreateModal] = useState(false);
 
   useEffect(() => {
     const getcheckLists = async () => {
@@ -32,7 +32,6 @@ const CheckList = () => {
   }, [])
 
   const handleEdit = (checkListId) => {
-    // Add your edit logic here
     navigate(`/edit-checkList?checkListId=${checkListId}`);
   };
 
@@ -50,16 +49,17 @@ const CheckList = () => {
 
   return (
     <div>
-      <div className="overflow-x-auto">
+      <section className="overflow-x-auto scrollbar-hide">
         <Header category="Page" title="Checklist's" />
-        <div className=" mb-4 mr-20 text-right flex justify-between align-center">
-          <h2 className="text-xl text-green-600 ml-8">Total CheckList's: </h2>
+        <div className=" mb-4 mr-2 text-right flex justify-between align-center">
+          <h2 className="text-xl text-green-600 ">Total CheckList's: </h2>
           <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2">
-                <MdAdd className='text-xl' />
-              </button>
+            <MdAdd className='text-xl' />
+          </button>
         </div>
+
         <table className="w-full text-sm text-left rtl:text-right text-gray-500">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+          <thead className=" uppercase bg-gray-300 ">
             <tr>
               <th scope="col" className="px-6 py-3">Name</th>
               <th scope="col" className="px-6 py-3">Site Id</th>
@@ -69,7 +69,7 @@ const CheckList = () => {
           </thead>
           <tbody>
             {checkLists.map((checkList) => (
-              <tr key={checkList._id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+              <tr key={checkList._id} className="bg-white border-b hover:bg-gray-50 ">
                 <td className="px-6 py-4">
                   <NavLink>
                   </NavLink>
@@ -83,12 +83,12 @@ const CheckList = () => {
                   >
                     <FaExternalLinkAlt />
                   </button>
-                  <button
+                  {/* <button
                     onClick={() => handleEdit(checkList._id)}
                     className="bg-blue-500 text-white px-2 py-1 mr-2"
                   >
                     <GrEdit />
-                  </button>
+                  </button> */}
                   <button
                     onClick={() => handleDelete(checkList._id)}
                     className="bg-red-500 text-white px-2 py-1 mr-2"
@@ -101,13 +101,14 @@ const CheckList = () => {
           </tbody>
           {error && <p className="text-red-500">{error}</p>}
         </table>
+        
         <Toaster
           position="top-right"
           reverseOrder={false}
         />
-      </div>
-            {/* Check List Modal */}
-            {createModal && (
+      </section>
+      {/* Check List Modal */}
+      {createModal && (
         <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Check List' >
           <CreateChecklist onClose={() => setCreateModal(false)} />
         </Modal>

@@ -44,10 +44,6 @@ const paymentScheduleSchema = new mongoose.Schema({
             ref: 'Client',
         }
     },
-    adminApproved: {
-        type: String,
-        default: 'Pending'
-    },
     paymentDetails: [paymentDetailSchema],
     totalValue: {
         type: Number,
@@ -59,17 +55,18 @@ const paymentScheduleSchema = new mongoose.Schema({
         type: Number,
     },
     createdBy: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     },
     clientApprove: {
         type: String,
         default: 'Pending'
     },
     adminApprove: {
+        type: String,
+        default: 'Pending'
+    },
+    accountheadApprove: {
         type: String,
         default: 'Pending'
     },

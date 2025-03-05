@@ -8,13 +8,13 @@
 // }
 
 
-const Receipt = require('../models/Receipt');  // Adjust path as needed
+const Receipt = require('../models/receipt.models');  // Adjust path as needed
 
 // Create a new receipt
-exports.createReceipt = async (req, res) => {
+const createReceipt = async (req, res) => {
   try {
     const { receiptNo, date, from, to, receiptDetails, amount, description, invoice } = req.body;
-    
+
     const newReceipt = new Receipt({
       receiptNo,
       date,
@@ -25,7 +25,7 @@ exports.createReceipt = async (req, res) => {
       description,
       invoice
     });
-    
+
     await newReceipt.save();
     res.status(201).json({ message: 'Receipt created successfully', receipt: newReceipt });
   } catch (error) {
@@ -35,7 +35,7 @@ exports.createReceipt = async (req, res) => {
 };
 
 // Get all receipts
-exports.getAllReceipts = async (req, res) => {
+const getAllReceipts = async (req, res) => {
   try {
     const receipts = await Receipt.find();
     res.status(200).json(receipts);
@@ -46,7 +46,7 @@ exports.getAllReceipts = async (req, res) => {
 };
 
 // Get a receipt by ID
-exports.getReceiptById = async (req, res) => {
+const getReceiptById = async (req, res) => {
   try {
     const receipt = await Receipt.findById(req.params.id);
     if (!receipt) {
@@ -60,10 +60,10 @@ exports.getReceiptById = async (req, res) => {
 };
 
 // Update a receipt
-exports.updateReceipt = async (req, res) => {
+const updateReceipt = async (req, res) => {
   try {
     const { receiptNo, date, from, to, receiptDetails, amount, description, invoice } = req.body;
-    
+
     const updatedReceipt = await Receipt.findByIdAndUpdate(
       req.params.id,
       {
@@ -78,11 +78,11 @@ exports.updateReceipt = async (req, res) => {
       },
       { new: true } // Return updated document
     );
-    
+
     if (!updatedReceipt) {
       return res.status(404).json({ message: 'Receipt not found' });
     }
-    
+
     res.status(200).json({ message: 'Receipt updated successfully', receipt: updatedReceipt });
   } catch (error) {
     console.error(error);
@@ -91,7 +91,7 @@ exports.updateReceipt = async (req, res) => {
 };
 
 // Delete a receipt
-exports.deleteReceipt = async (req, res) => {
+const deleteReceipt = async (req, res) => {
   try {
     const receipt = await Receipt.findByIdAndDelete(req.params.id);
     if (!receipt) {
@@ -103,3 +103,5 @@ exports.deleteReceipt = async (req, res) => {
     res.status(500).json({ message: 'Error deleting receipt', error: error.message });
   }
 };
+
+module.exports = { createReceipt, getAllReceipts, getReceiptById, updateReceipt, deleteReceipt }

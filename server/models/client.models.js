@@ -1,10 +1,6 @@
 const mongoose = require('mongoose');
 
 const clientSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-    },
     name: {
         type: String,
         required: true,
@@ -16,7 +12,7 @@ const clientSchema = new mongoose.Schema({
         lowercase: true,
         trim: true
     },
-    contactNo: {
+    phone: {
         type: Number,
         required: true,
     },
@@ -40,6 +36,10 @@ const clientSchema = new mongoose.Schema({
         type: String,
     },
     isUser: Boolean,
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    },
     extraWork: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Extra-Work',

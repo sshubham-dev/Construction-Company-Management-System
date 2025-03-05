@@ -3,33 +3,32 @@ const mongoose = require('mongoose');
 const stockSchema = new mongoose.Schema({
     name: {
         type: String,
+        unique: true,
+        trim: true,
         required: true,
     },
     code: {
         type: String,
-        required: true,
-        unique: true,
+        // required: true,
+        // unique: true,
         trim: true,
     },
     category: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Stock_Group',
-            required: true,
-        }
+        type: String,
+        // id: {
+        //     type: mongoose.Schema.Types.ObjectId,
+        //     ref: 'Stock_Group',
+        //     required: true,
+        // }
     },
     unit: [{
-        name: String,
-        required: true,
+        type: String,
     }],
     rate: {
         type: Number,
-        required: true,
     },
     price: {
         type: Number,
-        required: true,
     },
     InStock: {
         type: Number,
@@ -46,20 +45,18 @@ const stockSchema = new mongoose.Schema({
     }, // GST percentage
     stockValue: {
         type: Number,
-        required: true,
     },
     status: {
         type: String,
         enum: ['In Stock', 'Out Of Stock', 'Low Stock'],
     },
-    typeOfSupply:{
+    typeOfSupply: {
         type: String,
         enum: ['Goods', 'Services', 'Capital Goods'],
     },
     valuationMethod: {
         type: String,
         enum: ['FIFO', 'LIFO', 'Weighted Average'],
-        required: true
     },
     purchaseOrder: [{
         name: String,
@@ -88,7 +85,6 @@ const stockSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const Stock = mongoose.model('Stock', stockSchema);
-module.exports = Stock;
 
 
 const stockGroupSchema = new mongoose.Schema({
@@ -98,20 +94,18 @@ const stockGroupSchema = new mongoose.Schema({
     },
     code: {
         type: String,
-        required: true,
-        unique: true,
+        // required: true,
+        // unique: true,
         trim: true,
     },
     unit: [{
-        name: String,
-        required: true,
+        type: String,
     }],
     item: [{
         name: String,
         id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Stock',
-            required: true,
         }
     }],
     profit: {
@@ -120,6 +114,6 @@ const stockGroupSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const Stock_Group = mongoose.model('StockGroup', stockGroupSchema);
-module.exports = Stock_Group;
+module.exports = { Stock, Stock_Group };
 
 

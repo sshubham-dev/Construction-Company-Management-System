@@ -4,9 +4,8 @@ const Supplier = require('../models/supplier.models.js');
 const mongoose = require('mongoose');
 const {
     sendApproveByAdmin,
-    sendApproveByAccountant,
-    sendApproveByIncharge,
-    sendApproveBySupplier
+    sendApproveBySupplier,
+    sendApproveByAccountHead
 } = require('./approval.controller.js')
 
 // Create a new purchase order
@@ -19,9 +18,11 @@ const createPurchaseOrder = async (req, res) => {
             purchaseOrderNo,
             requirement,
         } = req.body;
+        const existingSite = await Site.findById(site);
+        const existingSupplier = await Supplier.findById(supplier);
         const newPurchaseOrder = new PurchaseOrder({
-            supplier,
-            site,
+            supplier: { id: existingSupplier._id, name: existingSupplier.name },
+            site: { id: existingSite._id, name: existingSite.name },
             purchaseOrderNo,
             createdBy: user?._id,
             requirement,
@@ -29,6 +30,7 @@ const createPurchaseOrder = async (req, res) => {
         // console.log('first', newPurchaseOrder)
         const savedPurchaseOrder = await newPurchaseOrder.save();
         sendApproveByAdmin(savedPurchaseOrder, 'Purchase Order', user._id)
+        sendApproveByAccountHead(savedPurchaseOrder, 'Purchase Order', user._id)
         // sendApproveBySupplier(savedPurchaseOrder, 'Purchase Order', user._id)
         res.status(201).json({ message: 'Purchase Order Created Successfully' });
     } catch (error) {
@@ -43,24 +45,23 @@ const savePurchaseOrder = async (req, res) => {
         const user = req.user;
         const purchaseOrder = await PurchaseOrder.findById(id)
             .where('createdBy').equals(user?._id)
-            .populate('site supplier')
             .exec();
         // console.log(purchaseOrder)
         if (!purchaseOrder) {
             return res.status(404).json({ message: 'Purchase order not found' });
         }
-        if (purchaseOrder.adminApprove === 'Approved') {
+        if (purchaseOrder.adminApprove === 'Approved' && purchaseOrder.accountheadApprove === 'Approved') {
             purchaseOrder.approvalStatus = 'Approved'
             await purchaseOrder.save();
-            const existingSite = await Site.findById(purchaseOrder?.site._id);
-            const existingSupplier = await Supplier.findById(purchaseOrder?.supplier._id);
-            if (!existingSite.supplier.includes(existingSupplier._id)) {
-                existingSite.supplier.push(existingSupplier._id);
+            const existingSite = await Site.findById(purchaseOrder?.site.id);
+            const existingSupplier = await Supplier.findById(purchaseOrder?.supplier.id);
+            if (!existingSite.supplier.id.includes(existingSupplier._id)) {
+                existingSite.supplier.push({ id: existingSupplier._id, name: existingSupplier.name });
             }
             existingSite.purchaseOrder.push(purchaseOrder._id);
             await existingSite.save();
-            if (!existingSupplier?.site?.includes(existingSite._id)) {
-                existingSupplier?.site?.push(existingSite._id);
+            if (!existingSupplier?.site?.id.includes(existingSite._id)) {
+                existingSupplier?.site?.push({ id: existingSite._id, name: existingSite.name });
             }
             existingSupplier.purchaseOrder.push(purchaseOrder._id);
             await existingSupplier.save();
@@ -79,7 +80,6 @@ const draftPurchaseOrders = async (req, res) => {
     try {
         const purchaseOrders = await PurchaseOrder.find()
             .where('approvalStatus').equals("Pending")
-            .populate('site supplier')
             .exec();
         if (!purchaseOrders && purchaseOrders.length === 0) {
             return res.status(404).json({ message: 'Purchase order not found' });
@@ -99,7 +99,6 @@ const getPurchaseOrders = async (req, res) => {
             .where('adminApprove').equals('Approved')
             .where('approvalStatus').equals('Approved')
             .where('createdBy').equals(id)
-            .populate('site supplier')
             .exec();
         if (!purchaseOrders && purchaseOrders.length === 0) {
             return res.status(404).json({ message: 'Purchase order not found' });
@@ -115,10 +114,8 @@ const getPurchaseOrders = async (req, res) => {
 // Get a specific purchase order by ID
 const getPurchaseOrder = async (req, res) => {
     try {
-        const id = req.params.id;
-        const purchaseOrder = await PurchaseOrder.findById(id)
-            .populate('site supplier')
-            .exec();
+        const _id = req.params.id;
+        const purchaseOrder = await PurchaseOrder.findById(_id)
         if (!purchaseOrder) {
             return res.status(404).json({ message: 'Purchase order not found' });
         }
@@ -136,8 +133,6 @@ const sitePurchaseOrders = async (req, res) => {
             .where('adminApprove').equals('Approved')
             .where('approvalStatus').equals('Approved')
             .where('site').equals(id)
-            .populate('site')
-            .populate('supplier')
             .exec();
         if (!purchaseOrders && purchaseOrders.length === 0) {
             return res.status(404).json({ message: 'Purchase order not found' });
@@ -158,8 +153,6 @@ const getSiteAndContractorPurchaseOrders = async (req, res) => {
             .where('approvalStatus').equals('Approved')
             .where('site').equals(siteId)
             .where('supplier').equals(supplierId)
-            .populate('site')
-            .populate('supplier')
             .exec();
         if (!purchaseOrders && purchaseOrders.length === 0) {
             return res.status(404).json({ message: 'Purchase order not found' });
@@ -175,14 +168,14 @@ const getSiteAndContractorPurchaseOrders = async (req, res) => {
 // Update a purchase order by ID
 const updatePurchaseOrder = async (req, res) => {
     try {
-        const id = req.params.id;
+        const _id = req.params.id;
         const user = req.user;
         const {
             supplier,
             site,
             purchaseOrderNo,
         } = req.body;
-        const existingPurchaseOrder = await PurchaseOrder.findById(id)
+        const existingPurchaseOrder = await PurchaseOrder.findById(_id)
             .where('createdBy').equals(user?._id)
             .exec();
         if (!existingPurchaseOrder) {
@@ -203,9 +196,9 @@ const updatePurchaseOrder = async (req, res) => {
 // Delete a purchase order by ID
 const deletePurchaseOrder = async (req, res) => {
     try {
-        const id = req.params.id;
+        const _id = req.params.id;
         const user = req.user;
-        const deletedPurchaseOrder = await PurchaseOrder.findByIdAndDelete(id)
+        const deletedPurchaseOrder = await PurchaseOrder.findByIdAndDelete(_id)
             .where('createdBy').equals(user?._id)
             .exec();
         if (!deletedPurchaseOrder) {
@@ -220,10 +213,9 @@ const deletePurchaseOrder = async (req, res) => {
 
 const getRequirements = async (req, res) => {
     try {
-        const id = req.params.id;
-        const purchaseOrder = await PurchaseOrder.findById(id)
-            .populate('site supplier')
-            .exec();
+        const _id = req.params.id;
+        const purchaseOrder = await PurchaseOrder.findById(_id)
+
         if (!purchaseOrder && purchaseOrder.requirement.length === 0) {
             return res.status(404).json({ message: 'Purchase order not found' });
         }
@@ -237,7 +229,7 @@ const getRequirements = async (req, res) => {
 
 const updateRequirement = async (req, res) => {
     try {
-        const id = req.params.id;
+        const _id = req.params.id;
         const index = req.params.index;
         const user = req.user;
         const {
@@ -248,7 +240,7 @@ const updateRequirement = async (req, res) => {
             unit,
             status,
         } = req.body;
-        const purchaseOrder = await PurchaseOrder.findById(id)
+        const purchaseOrder = await PurchaseOrder.findById(_id)
             .where('createdBy').equals(user?._id)
             .exec();
         if (!purchaseOrder) {
@@ -275,10 +267,10 @@ const updateRequirement = async (req, res) => {
 
 const deleteRequirement = async (req, res) => {
     try {
-        const id = req.params.id;
+        const _id = req.params.id;
         const index = req.params.index;
         const user = req.user;
-        const purchaseOrder = await PurchaseOrder.findById(id)
+        const purchaseOrder = await PurchaseOrder.findById(_id)
             .where('createdBy').equals(user?._id)
             .exec();
         if (!purchaseOrder) {

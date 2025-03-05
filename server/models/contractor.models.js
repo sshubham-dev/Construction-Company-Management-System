@@ -5,13 +5,18 @@ const contractorSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    contactNo: {
+    email: {
+        type: String,
+        unique: true,
+        lowercase: true,
+        trim: true
+    },
+    phone: {
         type: Number,
         required: true,
     },
     whatsapp: {
         type: Number,
-        required: true,
     },
     address: {
         type: String,
@@ -29,6 +34,10 @@ const contractorSchema = new mongoose.Schema({
         type: String,
     },
     isUser: Boolean,
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     adminApprove: {
         type: String,
         default: 'Pending'
@@ -48,11 +57,13 @@ const contractorSchema = new mongoose.Schema({
     bill: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Bill',
-        required: true
     }],
     site: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Site',
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        }
     }],
     workOrder: [{
         type: mongoose.Schema.Types.ObjectId,
