@@ -15,7 +15,7 @@ const CreateSupplier = ({ onClose, isEdit }) => {
     address: '',
     pan: '',
     bank: '',
-    isUser: '',
+    isUser: false,
   });
   const [error, setError] = useState(null);
   const [supplierIdToEdit, setSupplierIdToEdit] = useState(null);

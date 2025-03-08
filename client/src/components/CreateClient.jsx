@@ -18,7 +18,7 @@ const CreateClient = ({ onClose, isEdit }) => {
       district: "",
       state: "",
     },
-    isUser: '',
+    isUser: false,
   });
   const [clientId, setClientId] = useState('');
 

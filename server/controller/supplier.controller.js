@@ -43,9 +43,9 @@ const createSupplier = async (req, res) => {
         console.log(newSupplier)
         const savedSupplier = await newSupplier.save();
         res.status(201).json({ message: 'Supplier Created Successfully', savedSupplier });
-        if (isUser === true) {
+        if (savedSupplier.isUser === true) {
             const password = name + '@' + phone
-            convertToUser(savedSupplier._id, 'Supplier', password);
+            await convertToUser(savedSupplier._id, 'Supplier', password);
         }
     } catch (error) {
         console.log(error);
@@ -66,9 +66,10 @@ const updateSupplier = async (req, res) => {
             return res.status(404).json({ error: 'Supplier not found' });
         }
         res.status(200).json({ message: 'Details Updated Successfully', updatedSupplier });
-        if (isUser === true && updatedSupplier.userId == '') {
-            const password = name + '@' + phone
-            convertToUser(updatedSupplier._id, 'Supplier', password);
+        if (updatedSupplier.isUser === true && updatedSupplier.userId === '') {
+            console.log(isUser)
+            const password = `${name}@${phone}`;
+            await convertToUser(updatedSupplier._id, 'Supplier', password);
         }
     } catch (error) {
         console.log(error);

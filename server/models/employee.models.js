@@ -41,7 +41,9 @@ const employeeSchema = new mongoose.Schema({
     bank: {
         type: String,
     },
-    isUser: Boolean,
+    isUser: {
+        type: Boolean,
+    },
     userId:{
         type: mongoose.Schema.Types.ObjectId,
         ref:'User'

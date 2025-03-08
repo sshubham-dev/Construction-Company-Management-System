@@ -15,7 +15,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
     pan: '',
     bank: '',
     jobWork: '',
-    isUser: '',
+    isUser: false,
   });
   const [contractorToEdit, setContractorToEdit] = useState(null);
   useEffect(() => {

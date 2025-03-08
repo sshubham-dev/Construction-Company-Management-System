@@ -44,6 +44,7 @@ const Employee = () => {
       await axios.delete(`/api/v1/user/${id}`);
       setEmployee(employees.filter((employee) => employee._id !== id));
     } catch (error) {
+      console.log(error)
       toast.error(error.message)
     }
   };

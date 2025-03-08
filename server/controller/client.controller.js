@@ -51,9 +51,41 @@ const createClient = async (req, res) => {
         console.log(savedClient)
         if (!savedClient) return res.status(404).json({ message: 'Something went wrong' });
         res.status(201).json({ message: 'Client Created Successfuly' })
-        if (isUser === true) {
-            const password = name + '@' + phone
-            convertToUser(savedClient._id, 'Client', password);
+        if (savedClient.isUser === true) {
+            const password = `${name}@${phone}`;
+            await convertToUser(savedClient._id, 'Client', password);
+        }
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ message: 'Something went wrong' });
+    }
+};
+
+const convertToClient = async (req, res) => {
+    try {
+        const { name, email, gstNo, phone, whatsapp, address, isUser } = req.body;
+
+        const existingClient = await Client.findOne({ $or: [{ name }] });
+        if (existingClient) return res.status(500).json({ message: 'Client already exists', existingClient });
+
+        const newClient = await Client({
+            name,
+            email,
+            gstNo,
+            phone,
+            whatsapp,
+            address,
+            isUser
+        });
+
+        const savedClient = await newClient.save();
+        console.log(savedClient)
+        if (!savedClient) return res.status(404).json({ message: 'Something went wrong' });
+        res.status(201).json({ message: 'Client Created Successfuly' })
+        if (savedClient.isUser === true) {
+            const password = `${name}@${phone}`;
+            await convertToUser(savedClient._id, 'Client', password);
         }
 
     } catch (error) {
@@ -82,9 +114,9 @@ const updateClient = async (req, res) => {
             existingClient.isUser = isUser || existingClient?.isUser,
             await existingClient.save();
         res.json({ message: 'Client updated successfully' });
-        if (isUser === true && existingClient.userId == '') {
-            const password = name + '@' + phone
-            convertToUser(existingClient._id, 'Client', password);
+        if (existingClient.isUser === true && existingClient.userId == '') {
+            const password = `${name}@${phone}`;
+            await convertToUser(existingClient._id, 'Client', password);
         }
     } catch (error) {
         console.log(error)

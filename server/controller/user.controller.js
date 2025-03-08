@@ -96,7 +96,7 @@ const convertToUser = async (id, role, password) => {
         switch (role) {
             case 'Employee':
                 const employee = await Employee.findById(id)
-
+                console.log('employee', employee)
                 if (!employee) return res.status(500).json({ error: 'Employee not Found' });
                 const employeeUser = await User.findOne({
                     $and: [{ userName: employee.name }, { department: employee.department }]
@@ -111,7 +111,9 @@ const convertToUser = async (id, role, password) => {
                     role,
                     department: employee.department,
                 });
+                console.log('newEmployeeUser', newEmployeeUser)
                 const savedEmployeeUser = await newEmployeeUser.save();
+                console.log('savedEmployeeUser', savedEmployeeUser)
                 employee.userId = savedEmployeeUser._id;
                 await employee.save({ validateBeforeSave: false });
                 break;

@@ -68,9 +68,9 @@ const createContractor = async (req, res) => {
         const savedContractor = await newContractor.save();
         if (!savedContractor) return res.status(500).json({ error: 'Internal Server Error' });
         res.status(200).json({ message: 'Contractor Created Successfuly', savedContractor });
-        if (isUser === true) {
-            const password = name + '@' + phone
-            convertToUser(savedContractor._id, 'Contractor', password);
+        if (savedContractor.isUser === true) {
+            const password = `${name}@${phone}`;
+            await convertToUser(savedContractor._id, 'Contractor', password);
         }
 
     } catch (error) {
@@ -109,9 +109,9 @@ const updateContractor = async (req, res) => {
             }, { new: true });
         if (!updatedContractor) return res.status(404).json({ error: 'Contractor not found' });
         res.status(200).json(updatedContractor);
-        if (isUser === true && updatedContractor.userId == '') {
-            const password = name + '@' + phone
-            convertToUser(updatedContractor._id, 'Contractor', password);
+        if (updatedContractor.isUser === true && updatedContractor.userId == '') {
+            const password = `${name}@${phone}`;
+            await convertToUser(updatedContractor._id, 'Contractor', password);
         }
     } catch (error) {
         console.log(error)
