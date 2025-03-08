@@ -144,7 +144,7 @@ const BottomNavigation = () => {
       name: "Site",
       to: '/sites',
       icon: <MdLocationOn />,
-      role: ["Admin", "Company", "Ceo", "Site Incharge", "Account Head"],
+      role: ['Admin', 'Company', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Engineer', 'Account Head'],
       children: [
         // {
         //   to: '/site/report',
@@ -156,19 +156,19 @@ const BottomNavigation = () => {
           to: '/sites/project-schedules',
           name: 'Project Schedules',
           icon: <GrSchedulePlay />,
-          role: ['Admin', 'Company', 'Client', 'Contractor', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
+          role: ['Admin', 'Company', 'Client', 'Contractor', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Engineer', 'Account Head'],
         },
         {
           to: '/sites/payment-schedules',
           name: 'Payment Schedules',
           icon: <TbCalendarDollar />,
-          role: ['Admin', 'Company', 'Client', 'Contractor', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
+          role: ['Admin', 'Company', 'Contractor', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Engineer', 'Account Head'],
         },
         {
           to: '/sites/quality-schedules',
           name: 'Quality Schedules',
           icon: <LuCalendarCheck2 />,
-          role: ['Admin', 'Company', 'Client', 'Ceo', 'Quality Head', 'Quality Engineer', 'Account Head'],
+          role: ['Admin', 'Company', 'Ceo', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },
         {
           to: '/sites/work-orders',
@@ -198,7 +198,7 @@ const BottomNavigation = () => {
           to: '/sites/extra-work',
           name: 'Extra-Works',
           icon: <MdBuild />,
-          role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
+          role: ['Admin', 'Company', 'Supplier', 'Contractor', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },
         {
           to: '/sites/contractors',
@@ -210,7 +210,7 @@ const BottomNavigation = () => {
           to: '/sites/checklists',
           name: 'Check-List ',
           icon: <LuClipboardCheck />,
-          role: ['Admin', 'Company', 'Contractor', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
+          role: ['Admin', 'Company', 'Ceo', 'Site Incharge', 'Quality Engineer', 'Account Head'],
         },
       ],
     },
@@ -219,7 +219,7 @@ const BottomNavigation = () => {
       to: '/more',
       name: "More",
       icon: <MdOutlineMoreHoriz />,
-      role: ["Admin", "Company", "Client", "Supplier", "Contractor", "Account Head"],
+      role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
     },
   ];
 
