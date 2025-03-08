@@ -8,8 +8,8 @@ import { MdDelete } from "react-icons/md";
 import toast, { Toaster } from 'react-hot-toast';
 import moment from 'moment';
 import Header from '../components/Header';
-import Modal from '../../components/Modal';
-import CreateWorkOrder from '../../components/CreateWorkOrder';
+import Modal from '../components/Modal';
+import CreateWorkOrder from '../components/CreateWorkOrder';
 axios.defaults.withCredentials = true;
 
 const WorkOrderScreen = () => {

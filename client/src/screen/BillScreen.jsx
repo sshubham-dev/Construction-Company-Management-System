@@ -8,8 +8,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import Header from '../components/Header';
 import { Page, Text, View, Document, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
 import BillPdf from '../pdf/BillPdf';
-import Modal from '../../components/Modal';
-import CreateBill from '../../components/CreateBill';
+import Modal from '../components/Modal';
+import CreateBill from '../components/CreateBill';
 
 const BillScreen = () => {
   const { id } = useParams();
