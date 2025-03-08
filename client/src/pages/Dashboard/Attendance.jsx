@@ -20,30 +20,27 @@ const Attendance = () => {
     status: '',
   });
   const [activeTab, setActiveTab] = useState('attendance'); // State for active tab
-
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
   // Fetch attendance and leave data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [attendanceResponse, leaveResponse] = await Promise.all([
-          axios.get('/api/v1/attendance'),
-          axios.get('/api/v1/leave'),
-        ]);
-        setAttendances(attendanceResponse.data);
-        setLeaves(leaveResponse.data);
+        const leaveResponse = await axios.get('/api/v1/leave');
+        const attendanceResponse = await axios.get('/api/v1/attendance');
+        console.log('Attendance:', attendanceResponse.data);
+        console.log('Leaves:', leaveResponse.data);
 
-        // Check if today's attendance is marked
-        const todayAttendance = attendanceResponse.data.find(attendance =>
-          moment(attendance.date).isSame(moment(), 'day')
-        );
-        setAttendanceMarked(todayAttendance !== undefined);
+        setAttendances(attendanceResponse.data || []);
+        setLeaves(leaveResponse.data || []);
       } catch (error) {
-        console.error(error);
+        console.error('Error fetching data:', error);
       }
     };
 
     fetchData();
-  }, []);
+  }, []); // Re-fetch data when year or month changes
+
 
   const handleStatusChange = (e) => {
     setAttendanceStatus(e.target.value);
@@ -68,17 +65,16 @@ const Attendance = () => {
     setMonth(e.target.value);
   };
 
-  // Filter attendance data based on selected year and month
   const filteredAttendance = attendances.filter(record => {
     const recordDate = moment(record.date);
-    return recordDate.year() === year && recordDate.month() === month;
+    return recordDate.year() === Number(year) && recordDate.month() === Number(month);
   });
 
-  // Filter leave data based on selected year and month
   const filteredLeaves = leaves.filter(record => {
     const recordDate = moment(record.from);
-    return recordDate.year() === year && recordDate.month() === month;
+    return recordDate.year() === Number(year) && recordDate.month() === Number(month);
   });
+
 
   return (
     <div className='p-1'>
@@ -176,21 +172,19 @@ const Attendance = () => {
             <div className="flex gap-4 border-b border-gray-200">
               <button
                 onClick={() => setActiveTab('attendance')}
-                className={`py-2 px-4 font-semibold ${
-                  activeTab === 'attendance'
+                className={`py-2 px-4 font-semibold ${activeTab === 'attendance'
                     ? 'border-b-2 border-blue-500 text-blue-500'
                     : 'text-gray-500 hover:text-blue-500'
-                }`}
+                  }`}
               >
                 Attendance
               </button>
               <button
                 onClick={() => setActiveTab('leave')}
-                className={`py-2 px-4 font-semibold ${
-                  activeTab === 'leave'
+                className={`py-2 px-4 font-semibold ${activeTab === 'leave'
                     ? 'border-b-2 border-blue-500 text-blue-500'
                     : 'text-gray-500 hover:text-blue-500'
-                }`}
+                  }`}
               >
                 Leave
               </button>
@@ -209,17 +203,16 @@ const Attendance = () => {
                   </tr>
                 </thead>
                 <tbody className='bg-gradient-to-br from-blue-50 to-purple-50'>
-                  {filteredAttendance.map(record => (
-                    <tr key={record._id} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
+                  {filteredAttendance.map((record, index) => (
+                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
                       <td className="p-3 text-gray-700">{moment(record.date).format('DD MMM YYYY')}</td>
                       <td className="p-3 text-gray-700">{record.timeIn || 'N/A'}</td>
                       <td className="p-3">
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                            record.status === 'present'
+                          className={`px-3 py-1 rounded-full text-sm font-semibold ${record.status === 'present'
                               ? 'bg-green-100 text-green-700'
                               : 'bg-red-100 text-red-700'
-                          }`}
+                            }`}
                         >
                           {record.status}
                         </span>
@@ -245,8 +238,8 @@ const Attendance = () => {
                   </tr>
                 </thead>
                 <tbody className='bg-gradient-to-br from-blue-50 to-purple-50'>
-                  {filteredLeaves.map(record => (
-                    <tr key={record._id} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
+                  {filteredLeaves.map((record, index) => (
+                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
                       <td className="p-3 text-gray-700">{moment(record.from).format('DD MMM YYYY')}</td>
                       <td className="p-3 text-gray-700">{moment(record.reportingDate).format('DD MMM YYYY')}</td>
                       <td className="p-3 text-gray-700">{record.reason || 'N/A'}</td>
@@ -260,9 +253,12 @@ const Attendance = () => {
           )}
 
           {/* Leave Modal */}
-            <Modal isOpen={leaveModal} onClose={() => setLeaveModal(false)} head='Create Leave'>
+          <Modal isOpen={leaveModal} onClose={() => setLeaveModal(false)} head='Create Leave'>
             <CreateLeave onClose={() => setLeaveModal(false)} />
-            </Modal>
+          </Modal>
+          <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Leave'>
+            <CreateLeave onClose={() => setEditModal(false)} isEdit={editId} />
+          </Modal>
         </div>
       </section>
     </div>

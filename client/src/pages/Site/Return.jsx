@@ -14,6 +14,8 @@ const ReturnRequest = () => {
     const [returnRequests, setReturnRequest] = useState([]);  // ✅ Ensure default state is an array
     const [createModal, setCreateModal] = useState(false);
     const { user } = useSelector((state) => state.auth);
+        const [editModal, setEditModal] = useState(false);
+        const [editId, setEditId] = useState('');
 
     useEffect(() => {
         const fetchReturnRequest = async () => {
@@ -117,11 +119,9 @@ const ReturnRequest = () => {
                 <Toaster position="top-right" reverseOrder={false} />
             </section>
 
-            {createModal && (
                 <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Return Request'>
                     <ReturnFormModal onClose={() => setCreateModal(false)} />
                 </Modal>
-            )}
         </div>
     );
 };

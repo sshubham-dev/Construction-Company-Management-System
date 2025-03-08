@@ -6,7 +6,7 @@ import Select from 'react-select';
 
 axios.defaults.withCredentials = true;
 
-const CreateProjectSchedule = ({ onClose, isEdit }) => {
+const CreateProjectSchedule = ({ onClose, id, index }) => {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     site: '',
@@ -35,7 +35,6 @@ const CreateProjectSchedule = ({ onClose, isEdit }) => {
   const [projectToEdit, setProjectToEdit] = useState({ id: '', index: '' });
   const { user } = useSelector((state) => state.auth);
   const statusOptions = ['Started', 'Completed', 'Pending', 'Partially Completed'];
-  const { index, id } = isEdit;
 
   useEffect(() => {
     if (id && !index) {

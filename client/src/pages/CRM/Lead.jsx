@@ -125,6 +125,8 @@ const Lead = () => {
   const [selectedLead, setSelectedLead] = useState(null);
   const [isAddFollowUpModalOpen, setIsAddFollowUpModalOpen] = useState(false);
   // const [statusFilter, setStatusFilter] = useState("all");
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
 
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [filter, setFilter] = useState({
@@ -185,9 +187,9 @@ const Lead = () => {
   //     setStatusFilter(filterValue);
   // };
 
-  const handleEdit = (lead) => {
-    setSelectedLead(lead);
-    setIsModalOpen(true);
+  const handleEdit = (id) => {
+    setEditModal(true)
+    setEditId(id)
   };
 
   const handleDelete = (lead) => {
@@ -293,7 +295,7 @@ const Lead = () => {
                         </button>
                         <button
                           className="bg-yellow-500 text-white p-1 px-2 rounded-lg hover:bg-yellow-600 transition duration-200 mr-2"
-                          onClick={() => handleEdit(lead)}
+                          onClick={() => handleEdit(lead._id)}
                         >
                           Edit
                         </button>
@@ -334,6 +336,16 @@ const Lead = () => {
                 }}
                 onSubmit={handleSubmit}
                 leadData={selectedLead}
+              />
+            </Modal>
+            <Modal
+              isOpen={editModal}
+              onClose={() => setEditModal(false)} head='Update Lead'>
+              <CreateLead
+                onClose={() => setEditModal(false)}
+                onSubmit={handleSubmit}
+                leadData={selectedLead}
+                isEdit={editId}
               />
             </Modal>
             <Toaster position="top-right" reverseOrder={false} />

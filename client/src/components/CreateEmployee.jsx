@@ -20,7 +20,7 @@ const CreateEmployee = ({ onClose, isEdit }) => {
         cv: "",
         offerletter: "",
         bank: "",
-        isUser: '',
+        isUser: false,
         department: '',
     });
     const departments = [
@@ -37,22 +37,36 @@ const CreateEmployee = ({ onClose, isEdit }) => {
         'Account Head'
     ];
     const [error, setError] = useState(null);
-    const navigate = useNavigate();
-    const [users, setUsers] = useState([]);
+
+
     useEffect(() => {
-        const getUsers = async () => {
-            try {
-                const userData = await axios.get('/api/v1/user/lists');
-                let users = userData.data;
-                if (userData) {
-                    setUsers(users.filter((user) => user.role === 'Employee'));
-                }
-            } catch (error) {
-                toast.error(error.message);
-            }
+        if (isEdit) {
+            fetchEmployee(isEdit);
         }
-        getUsers();
     }, [])
+
+    const fetchEmployee = async (id) => {
+        try {
+            const employeerData = await axios.get(`/api/v1/employee/${id}`);
+            const exitEmployee = employeerData.data
+            if (employeerData.data) {
+                setEmployee({
+                    name: exitEmployee.name,
+                    email: exitEmployee.email,
+                    phone: exitEmployee.phone,
+                    whatsapp: exitEmployee.whatsapp,
+                    employeeNo: exitEmployee.employeeNo,
+                    joinDate: exitEmployee.joinDate,
+                    birthdate: exitEmployee.birthdate,
+                    address: exitEmployee.address,
+                    isUser: exitEmployee.isUser,
+                    department: exitEmployee.department,
+                });
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    }
 
     const handleReset = () => {
         setEmployee({
@@ -70,7 +84,7 @@ const CreateEmployee = ({ onClose, isEdit }) => {
             offerletter: "",
             bank: "",
             isUser: '',
-            department:''
+            department: ''
         })
     }
 
@@ -89,27 +103,27 @@ const CreateEmployee = ({ onClose, isEdit }) => {
     const formSubmit = async (e) => {
         e.preventDefault();
 
-        const formData = new FormData();
-        Object.entries(employee).forEach(([key, value]) => {
-            if (value instanceof File) {
-                formData.append(key, value);
-            } else {
-                formData.append(key, value);
-            }
-        });
-
         try {
             console.log(employee);
-            const response = await axios.post('/api/v1/employee', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data', // Set content type to multipart/form-data
-                },
-            });
-            if (response.data) {
-                console.log(response.data);
-                toast.success('Employee Created successfully!');
+            if(isEdit){
+                const response = await axios.put(`/api/v1/employee/${isEdit}`, employee);
+                if (response.data) {
+                    console.log(response.data);
+                    toast.success('Employee Updated successfully!');
+                }
+                onClose()
+            }else{
+                const response = await axios.post('/api/v1/employee', employee, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data', // Set content type to multipart/form-data
+                    },
+                });
+                if (response.data) {
+                    console.log(response.data);
+                    toast.success('Employee Created successfully!');
+                }
+                onClose()
             }
-            onClose()
         } catch (error) {
             toast.error(error.message);
             setError(error.message);
@@ -214,90 +228,27 @@ const CreateEmployee = ({ onClose, isEdit }) => {
                     />
                 </div>
 
-                {/* <div className='mb-4'>
-                        <h4 className='mb-2'>Document Name</h4>
-
-                        <div className='mb-4'>
-                            <label htmlFor='addhar'
-                                className='block text-gray-700 text-sm font-bold mb-2'>Addhar Card:</label>
-                            <input
-                                className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                                type='file'
-                                name='addhar'
-                                onChange={(e) => inputData(e, 'addhar')}
-                            />
-                        </div>
-
-                        <div className='mb-4'>
-                            <label htmlFor='pan'
-                                className='block text-gray-700 text-sm font-bold mb-2'>Pan Card:</label>
-                            <input
-                                className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                                type='file'
-                                name='pan'
-                                onChange={(e) => inputData(e, 'pan')}
-                            />
-                        </div>
-
-                        <div className='mb-4'>
-                            <label htmlFor='cv'
-                                className='block text-gray-700 text-sm font-bold mb-2'>CV:</label>
-                            <input
-                                className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                                type='file'
-                                name='cv'
-                                onChange={(e) => inputData(e, 'cv')}
-                            />
-                        </div>
-
-                        <div className='mb-4'>
-                            <label htmlFor='offerletter'
-                                className='block text-gray-700 text-sm font-bold mb-2'>Offer Letter:</label>
-                            <input
-                                className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                                type='file'
-                                name='offerletter'
-                                onChange={(e) => inputData(e, 'offerletter')}
-                            />
-                        </div>
-
-                        <div className='mb-4'>
-                            <label htmlFor='account'
-                                className='block text-gray-700 text-sm font-bold mb-2'>Bank Detail:</label>
-                            <input
-                                className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                                type='file'
-                                name='bank'
-                                onChange={(e) => inputData(e, 'bank')}
-                            />
-                        </div>
-                    </div> */}
-
                 <div className='mb-4'>
                     <label
                         htmlFor='joining'
                         className='block text-gray-700 text-sm font-bold mb-1'>
-                        Joining Date
+                        Joining Date: {employee.joinDate}
                     </label>
                     <input
                         className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
                         type='date'
                         name='joinDate'
-                        placeholder='Enter Your Joining Date'
-                        autoComplete='off'
                         value={employee.joinDate}
                         onChange={inputData}
                     />
                 </div>
 
                 <div className='mb-6'>
-                    <label htmlFor='birthdate' className='block text-gray-700 text-sm font-bold mb-1'>DOB</label>
+                    <label htmlFor='birthdate' className='block text-gray-700 text-sm font-bold mb-1'>DOB: {employee.birthdate}</label>
                     <input
                         className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
                         type='date'
                         name='birthdate'
-                        placeholder='Enter Your Date of Birth'
-                        autoComplete='off'
                         value={employee.birthdate}
                         onChange={inputData}
                     />
@@ -311,6 +262,7 @@ const CreateEmployee = ({ onClose, isEdit }) => {
                         name='department'
                         onChange={inputData}
                         required
+                        value={employee.department}
                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     >
                         <option>Department</option>

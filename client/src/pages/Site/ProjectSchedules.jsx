@@ -18,10 +18,9 @@ const ProjectSchedules = () => {
   const [projectSchedules, setProjectSchedule] = useState([]);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [createModal, setCreateModal] = useState(false);
-  const [editModal, setEditModal] = useState({
-    toEdit:false,
-    id:'',
-  });
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
+
 
   useEffect(() => {
     const getprojectSchedules = async () => {
@@ -51,12 +50,9 @@ const ProjectSchedules = () => {
 
   const handleEdit = (id) => {
     console.log(id)
-    console.log(index)
     setCreateModal(true)
-    setEditModal({
-      toEdit:true,
-      id,
-    })
+    setEditModal(true)
+    setEditId(id)
     // navigate(`/edit-projectSchedule/${id}/${index}`);
   };
 
@@ -115,12 +111,12 @@ const ProjectSchedules = () => {
                     <td className="px-6 py-4 text-center">{site.incharge?.userName}</td>
                     <td className="px-6 py-4 text-center">{site.projectType}</td> */}
                   <td className="px-6 py-4 text-center">
-                    {/* <button onClick={() => handleRedirect(projectSchedule._id)} className="mr-2">
+                    <button onClick={() => handleRedirect(projectSchedule._id)} className="mr-2">
                       <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                     </button>
                     <button onClick={() => handleEdit(projectSchedule._id)} className="mr-2">
                       <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                    </button> */}
+                    </button>
                     <button onClick={() => handleDelete(projectSchedule._id)} className="mr-2">
                       <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                     </button>
@@ -137,11 +133,13 @@ const ProjectSchedules = () => {
         />
       </section>
       {/* Project Schedule Modal */}
-      {createModal && (
+
         <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Project Schedule' >
-          <CreateProjectSchedule onClose={() => setCreateModal(false)} isEdit={editModal} />
+          <CreateProjectSchedule onClose={() => setCreateModal(false)} />
         </Modal>
-      )}
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Project Schedule' >
+          <CreateProjectSchedule onClose={() => setEditModal(false)} id={editId} />
+        </Modal>
     </div>
   )
 }

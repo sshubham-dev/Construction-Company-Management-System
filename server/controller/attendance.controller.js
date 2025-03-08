@@ -8,11 +8,10 @@ const {
 const getAttendance = async (req, res) => {
     try {
         const user = req.user;
-        const attendance = await Attendance.find()
+        const attendance = await Attendance.findOne()
             .where('user.id').equals(user._id)
-            .populate('user.id')
             .exec();
-        if (attendance.length === 0) return res.status(404).json({ message: 'No Attendance Found' })
+        if (attendance) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json(attendance)
     } catch (error) {
         console.log(error);
@@ -23,11 +22,10 @@ const getAttendance = async (req, res) => {
 const getAttendanceByUser = async (req, res) => {
     try {
         const id = req.id;
-        const attendance = await Attendance.find()
+        const attendance = await Attendance.findOne()
             .where('user.id').equals(id)
-            .populate('user.id')
             .exec();
-        if (attendance.length === 0) return res.status(404).json({ message: 'No Attendance Found' })
+        if (attendance) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json(attendance)
     } catch (error) {
         console.log(error);
@@ -37,9 +35,7 @@ const getAttendanceByUser = async (req, res) => {
 
 const getAttendances = async (req, res) => {
     try {
-        const attendance = await Attendance.find()
-            .populate('user.id')
-            .exec();
+        const attendance = await Attendance.find();
         if (attendance.length === 0) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json(attendance)
     } catch (error) {
@@ -51,11 +47,10 @@ const getAttendances = async (req, res) => {
 const getLeave = async (req, res) => {
     try {
         const user = req.user;
-        const leaves = await Leave.find()
+        const leaves = await Leave.findOne()
             .where('user.id').equals(user._id)
-            .populate('user.id')
             .exec();
-        if (leaves.length === 0) return res.status(404).json({ message: 'No Leaves Found' })
+        if (leaves) return res.status(404).json({ message: 'No Leaves Found' })
         return res.status(201).json(leaves)
     } catch (error) {
         console.log(error);
@@ -66,11 +61,10 @@ const getLeave = async (req, res) => {
 const getLeaveByUser = async (req, res) => {
     try {
         const id = req.id;
-        const leaves = await Leave.find()
+        const leaves = await Leave.findOne()
             .where('user.id').equals(id)
-            .populate('user.id')
             .exec();
-        if (leaves.length === 0) return res.status(404).json({ message: 'No Leaves Found' })
+        if (leaves) return res.status(404).json({ message: 'No Leaves Found' })
         return res.status(201).json(leaves)
     } catch (error) {
         console.log(error);
@@ -81,8 +75,6 @@ const getLeaveByUser = async (req, res) => {
 const getLeaves = async (req, res) => {
     try {
         const leaves = await Leave.find()
-            .populate('user.id')
-            .exec();
         if (leaves.length === 0) return res.status(404).json({ message: 'No Leaves Found' })
         return res.status(201).json(leaves)
     } catch (error) {

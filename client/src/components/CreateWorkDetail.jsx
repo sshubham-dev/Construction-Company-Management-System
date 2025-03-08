@@ -4,7 +4,7 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 axios.defaults.withCredentials = true;
 
-function WorkDetailsForm({ onClose }) {
+function WorkDetailsForm({ onClose, id, index }) {
 
   const [workDetail, setWorkDetail] = useState({
     title: '',
@@ -12,14 +12,12 @@ function WorkDetailsForm({ onClose }) {
       work: '',
     }]
   });
-  const { id, index } = useParams();
   const [workToEdit, setWorkToEdit] = useState({
     id: '',
     index: '',
   });
   const [workDetailsToEdit, setWorkDetailsToEdit] = useState();
 
-  const navigate = useNavigate();
   useEffect(() => {
     if (id && !index) {
       fetchWorkDetail(id);

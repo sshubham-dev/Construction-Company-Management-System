@@ -95,15 +95,14 @@ const createEmployee = async (req, res) => {
 
 const updateEmployeeData = async (req, res) => {
     try {
-        const _id = req.params.id;
+        const id = req.params.id;
         const {
-            userId,
             name,
             email,
             password,
             contactNo,
             whatsapp,
-            employeeId,
+            employeeNo,
             address,
             addhar,
             pan,
@@ -119,16 +118,15 @@ const updateEmployeeData = async (req, res) => {
         } = req.body;
 
         // check and update Employee
-        const updatedEmployeeData = await Employee.findOneAndUpdate({ _id },
+        const updatedEmployeeData = await Employee.findByIdAndUpdate(id,
             {
                 $set: {
-                    userId,
                     name,
                     email,
                     password,
                     contactNo,
                     whatsapp,
-                    employeeId,
+                    employeeNo,
                     address,
                     addhar,
                     pan,

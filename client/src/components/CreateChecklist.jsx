@@ -4,7 +4,7 @@ import Select from 'react-select';
 
 const categories = ['Housekeeping', 'Safety'];
 
-const CreateChecklist = ({onClose, onEdit}) => {
+const CreateChecklist = ({onClose, isEdit}) => {
   const [formData, setFormData] = useState({
     site: '',                    // Selected site
     date: new Date().toISOString().slice(0, 10), // Selected date
@@ -34,7 +34,21 @@ const CreateChecklist = ({onClose, onEdit}) => {
       }
     };
     fetchSite();
+    if(isEdit){
+      fetchChecklist(isEdit)
+    }
   }, []);
+
+  const fetchChecklist = async (id) => {
+    try {
+      const checkList = await axios.get(`/api/v1/checkList/${id}`);
+      setFormData(checkList.data);
+      console.log(checkList.data)
+    } catch (error) {
+      toast.error(error.message)
+      setError(error.message);
+    }
+  }
 
   // Fetch predefinedItems from API
   useEffect(() => {
@@ -106,9 +120,15 @@ const CreateChecklist = ({onClose, onEdit}) => {
     e.preventDefault();
     try {
       console.log(formData)
-      const response = await axios.post('/api/v1/checklist', formData);
-      console.log(response)
-      onClose()
+      if(isEdit){
+        const response = await axios.put(`/api/v1/checklist/${isEdit}`, formData);
+        console.log(response)
+        onClose()
+      }else{
+        const response = await axios.post('/api/v1/checklist', formData);
+        console.log(response)
+        onClose()
+      }
     } catch (error) {
       console.log(error)
     }
@@ -151,8 +171,8 @@ const CreateChecklist = ({onClose, onEdit}) => {
               <div className="mb-4">
                 <label htmlFor="checklistname" className="block mb-1">Checklist Name</label>
                 <select
-                  name="site"
-                  id="site"
+                  name="name"
+                  id="name"
                   value={formData.name}
                   onChange={(e) => handleChange('name', e.target.value)}
                   className="border p-2 rounded w-full">

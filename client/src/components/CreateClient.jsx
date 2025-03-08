@@ -21,15 +21,11 @@ const CreateClient = ({ onClose, isEdit }) => {
     isUser: '',
   });
   const [clientId, setClientId] = useState('');
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [data, setData] = useState({
-    name: ''
-  })
+
   useEffect(() => {
-    if (id) {
-      setClientId(id)
-      fetchClient(id)
+    if (isEdit) {
+      setClientId(isEdit)
+      fetchClient(isEdit)
     }
   }, [])
 
@@ -37,11 +33,8 @@ const CreateClient = ({ onClose, isEdit }) => {
     try {
       const clientData = await axios.get(`/api/v1/client/${id}`);
       console.log(clientData.data)
-      setData({
-        name: clientData.data?.name
-      })
       setClient({
-        name: clientData.data?.userId,
+        name: clientData.data?.name,
         email: clientData.data?.email,
         phone: clientData.data?.phone,
         whatsapp: clientData.data?.whatsapp,

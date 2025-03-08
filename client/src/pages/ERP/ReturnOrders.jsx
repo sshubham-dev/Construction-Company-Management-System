@@ -20,6 +20,8 @@ const ReturnOrders = () => {
   const [createModal, setCreateModal] = useState(false);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState("approved");
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
 
   useEffect(() => {
     const fetchPurchaseOrders = async () => {
@@ -65,7 +67,8 @@ const ReturnOrders = () => {
     getDraftOrders();
   }, [])
   const handleEdit = (id) => {
-    navigate(`/edit-returnOrder/${id}`);
+    setEditModal(true)
+    setEditId(id)
   };
   const handleRedirect = (id) => {
     navigate(`/return-order/${id}`);
@@ -102,7 +105,7 @@ const ReturnOrders = () => {
             <MdAdd className='text-xl' />
           </button>
         </div>
-        
+
         <div className="flex space-x-4 border-b-2 mb-4 w-full md:w-auto">
           <button
             className={`px-4 py-2 ${activeTab === "approved" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
@@ -147,10 +150,10 @@ const ReturnOrders = () => {
                     <td className="px-6 py-4 text-center">
                       {/* <button onClick={() => handleRedirect(purchaseOrder._id)} className="mr-2">
                         <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                      </button>
+                      </button> */}
                       <button onClick={() => handleEdit(purchaseOrder._id)} className="mr-2">
                         <GrEdit className="text-green-500 hover:text-green-800 text-lg" />
-                      </button> */}
+                      </button>
                       <button onClick={() => handleDelete(purchaseOrder._id)} className="mr-2">
                         <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                       </button>
@@ -190,10 +193,10 @@ const ReturnOrders = () => {
                           </button>
                           {/* <button onClick={() => handleRedirect(purchaseOrder._id)} className="mr-2">
                             <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                          </button>
+                          </button> */}
                           <button onClick={() => handleEdit(purchaseOrder._id)} className="mr-2">
                             <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                          </button> */}
+                          </button>
                           <button onClick={() => handleDelete(purchaseOrder._id)}>
                             <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                           </button>
@@ -211,11 +214,12 @@ const ReturnOrders = () => {
           reverseOrder={false} />
       </section>
       {/* Return Order Modal */}
-      {createModal && (
         <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Return Order' >
           <CreateReturnOrder onClose={() => setCreateModal(false)} />
         </Modal>
-      )}
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Return Order' >
+          <CreateReturnOrder onClose={() => setEditModal(false)} id={editId} />
+        </Modal>
     </div>
   )
 }

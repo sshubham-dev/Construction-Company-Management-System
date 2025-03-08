@@ -8,12 +8,18 @@ import { MdDelete } from "react-icons/md";
 import toast, { Toaster } from 'react-hot-toast';
 import moment from 'moment';
 import Header from '../components/Header';
+import Modal from '../../components/Modal';
+import CreateWorkOrder from '../../components/CreateWorkOrder';
 axios.defaults.withCredentials = true;
 
 const WorkOrderScreen = () => {
   const [workDetail, setWorkDetail] = useState([]);
   const navigate = useNavigate();
   const { id } = useParams();
+  const [editModal, setEditModal] = useState(false);
+  const [editDetailModal, setEditDetailModal] = useState(false);
+  const [editId, setEditId] = useState('');
+  const [editIndex, setEditIndex] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -22,8 +28,8 @@ const WorkOrderScreen = () => {
   }, [id]);
 
   const handleEdit = (id) => {
-    console.log(id)
-    navigate(`/edit-workOrder/${id}`);
+    setEditModal(true)
+    setEditId(id)
   };
 
   const fetchWorkDetails = async (id) => {
@@ -39,7 +45,9 @@ const WorkOrderScreen = () => {
   const editWork = (id, index) => {
     console.log('id', id)
     console.log('index', index)
-    navigate(`/edit-workOrder/${id}/work/${index}`);
+    setEditDetailModal(true)
+    setEditId(id)
+    setEditIndex(index)
   };
 
   const deleteWork = async (id, index) => {
@@ -106,6 +114,12 @@ const WorkOrderScreen = () => {
             </tbody>
           </table>
         </div>
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Work Order' >
+          <CreateWorkOrder onClose={() => setEditModal(false)} id={editId} />
+        </Modal>
+        <Modal isOpen={editDetailModal} onClose={() => setEditDetailModal(false)} head='Update Work Order Detail' >
+          <CreateWorkOrder onClose={() => setEditDetailModal(false)} id={editId} index={editIndex} />
+        </Modal>
         <Toaster
           position="top-right"
           reverseOrder={false}

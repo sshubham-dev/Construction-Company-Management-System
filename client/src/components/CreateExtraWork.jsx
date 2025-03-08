@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 
 axios.defaults.withCredentials = true;
 
-const CreateExtraWork = ({ onClose}) => {
+const CreateExtraWork = ({ onClose, id, index}) => {
   const [formData, setFormData] = useState({
     extraFor: '',
     contractor: '',
@@ -45,8 +45,6 @@ const CreateExtraWork = ({ onClose}) => {
     client: '',
   });
   const { user, isLoggedIn } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
-  const { id, index } = useParams();
 
   useEffect(() => {
     const fetchSite = async () => {

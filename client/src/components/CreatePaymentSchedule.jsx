@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Select from 'react-select';
 
 axios.defaults.withCredentials = true;
 
-const CreatePaymentSchedule = () => {
+const CreatePaymentSchedule = ({onClose, id, index}) => {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     site: '',
@@ -27,7 +26,6 @@ const CreatePaymentSchedule = () => {
     due: '',
   });
   const [scheduleIdToEdit, setScheduleIdToEdit] = useState(null);
-  const navigate = useNavigate();
   const [paymentToEdit, setPaymentToEdit] = useState({ id: '', index: '' });
   const [client, setClient] = useState([]);
   const [workDetails, setWorkDetails] = useState([]);
@@ -35,7 +33,6 @@ const CreatePaymentSchedule = () => {
   const [data, setData] = useState({ site: '' });
   const { user } = useSelector((state) => state.auth);
   const statusOptions = ['Started', 'Completed', 'Pending', 'Partially Completed'];
-  const { id, index } = useParams();
   const [clients, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState({ name: '', id: '' });
 
@@ -200,15 +197,12 @@ const CreatePaymentSchedule = () => {
       if (scheduleIdToEdit) {
         const response = await axios.put(`/api/v1/payment-schedule/${scheduleIdToEdit}`, formData);
         toast.success(response.data.message);
-        navigate(-1);
       } else if (paymentToEdit.id && paymentToEdit.index) {
         const response = await axios.put(`/api/v1/payment-schedule/${paymentToEdit.id}/paymentDetails/${paymentToEdit.index}`, paymentDetail);
-        toast.success(response.data.message);
-        navigate(-1);
+        toast.success(response.data.message);;
       } else {
         const response = await axios.post('/api/v1/payment-schedule', formData);
         toast.success(response.data.message);
-        navigate(-1);
       }
     } catch (error) {
       console.log('Error submitting payment schedule:', error.message);

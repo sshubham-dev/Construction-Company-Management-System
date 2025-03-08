@@ -18,6 +18,8 @@ const UserManagement = () => {
   const [error, setError] = useState(null);
   const { user } = useSelector((state) => state.auth);
   const [createModal, setCreateModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
 
   useEffect(() => {
     const getUsers = async () => {
@@ -34,7 +36,8 @@ const UserManagement = () => {
   }, [])
 
   const handleEdit = (id) => {
-    navigate(`/edit-user/${id}`);
+    setEditModal(true)
+    setEditId(id)
   };
 
   const handleRedirect = (id) => {
@@ -101,9 +104,9 @@ const UserManagement = () => {
                       {/* <button onClick={() => handleRedirect(user._id)} className="mr-2">
                         <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                       </button> */}
-                      {/* <button onClick={() => handleEdit(user._id)} className='ml-1'>
+                      <button onClick={() => handleEdit(user._id)} className='ml-1'>
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                      </button> */}
+                      </button>
                       <button onClick={() => handleDelete(user._id)} className='mx-2'>
                         <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                       </button>
@@ -118,11 +121,12 @@ const UserManagement = () => {
       </section>
       {error && <p className="text-red-500 mt-2">{error}</p>}
       {/* Contractor Modal */}
-      {createModal && (
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create User' >
-          <CreateUser onClose={() => setCreateModal(false)} />
-        </Modal>
-      )}
+      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create User' >
+        <CreateUser onClose={() => setCreateModal(false)} />
+      </Modal>
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create User' >
+        <CreateUser onClose={() => setEditModal(false)} isEdit={editId} />
+      </Modal>
     </div>
   );
 };

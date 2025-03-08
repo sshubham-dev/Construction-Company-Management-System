@@ -17,6 +17,8 @@ const QualitySchedules = () => {
   const [qualitySchedules, setQualitySchedule] = useState([]);
   const { user } = useSelector((state) => state.auth);
   const [createModal, setCreateModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
 
   useEffect(() => {
     const getqualitySchedules = async () => {
@@ -34,7 +36,8 @@ const QualitySchedules = () => {
 
   const handleEdit = (id) => {
     console.log(id)
-    navigate(`/edit-qualitySchedule/${id}`);
+    setEditModal(true)
+    setEditId(id)
   };
 
   const handleDelete = async (id) => {
@@ -86,14 +89,14 @@ const QualitySchedules = () => {
                   <td className="px-6 py-4">{qualitySchedule.approvalStatus}</td>
                   {/* <td className="px-6 py-4 text-center">{work.startedAt ? moment(work.startedAt).format('DD-MM-YYYY') : '-'}</td> */}
                   <td className="px-6 py-4">
-                    {/* <button onClick={() => handleRedirect(qualitySchedule._id)} className="mr-2">
+                    <button onClick={() => handleRedirect(qualitySchedule._id)} className="mr-2">
                       <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                     </button>
                     <button
                       onClick={() => handleEdit(qualitySchedule._id)}
                       className="mr-2">
                       <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                    </button> */}
+                    </button>
                     <button
                       onClick={() => handleDelete(qualitySchedule._id)}>
                       <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
@@ -111,11 +114,12 @@ const QualitySchedules = () => {
         />
       </section>
       {/* Quality Schedules Modal */}
-      {createModal && (
         <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Quality Schedules' >
           <CreateQualitySchedule onClose={() => setCreateModal(false)} />
         </Modal>
-      )}
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Quality Schedules' >
+          <CreateQualitySchedule onClose={() => setEditModal(false)} id={editId} />
+        </Modal>
     </div>
   )
 }

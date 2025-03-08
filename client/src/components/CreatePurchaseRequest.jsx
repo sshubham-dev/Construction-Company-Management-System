@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Select from 'react-select';
 import axios from 'axios';
 
-const CreatePurchaseRequest = ({ onClose }) => {
+const CreatePurchaseRequest = ({ onClose, id, index }) => {
     const [step, setStep] = useState(0);
     const [formData, setFormData] = useState({
         site: '',
@@ -32,9 +31,7 @@ const CreatePurchaseRequest = ({ onClose }) => {
     const units = ['SQFT', 'RFT', 'LUMSUM', 'NOS', 'FIXED', 'RMT', 'SQMT', 'CUM', 'BAG', 'KG', 'TONES', 'LITERS'];
     const [requirementToEdit, setRequirementToEdit] = useState({ id: '', index: '' });
     const [purchaseReqToEdit, setPurchaseReqToEdit] = useState(null);
-    const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
-    const { id, index } = useParams();
 
     useEffect(() => {
         if (id && index) {

@@ -17,6 +17,8 @@ const PaymentSchedules = () => {
   const [paymentSchedules, setpaymentSchedules] = useState([]);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [createModal, setCreateModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
 
   useEffect(() => {
     const getpaymentSchedules = async () => {
@@ -41,8 +43,9 @@ const PaymentSchedules = () => {
     getpaymentSchedules();
   }, [])
 
-  const handleEdit = (id, index) => {
-    navigate(`/edit-paymentSchedule/${id}/${index}`);
+  const handleEdit = (id) => {
+    setEditModal(true)
+    setEditId(id)
   };
 
   const handleRedirect = (id) => {
@@ -102,12 +105,12 @@ const PaymentSchedules = () => {
                   <td className="px-6 py-4 text-center">{paymentSchedule.amountPaid ? paymentSchedule.amountPaid : '0'}</td>
                   <td className="px-6 py-4 text-center">{paymentSchedule.remaningAmount ? paymentSchedule.remaningAmount : '0'}</td>
                   <td className="px-6 py-4 text-center">
-                    {/* <button onClick={() => handleRedirect(paymentSchedule._id)} className="mr-2">
+                    <button onClick={() => handleRedirect(paymentSchedule._id)} className="mr-2">
                       <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                     </button>
                     <button onClick={() => handleEdit(paymentSchedule._id)} className="mr-2">
                       <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                    </button> */}
+                    </button>
                     <button onClick={() => handleDelete(paymentSchedule._id)} className="mr-2">
                       <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                     </button>
@@ -124,11 +127,13 @@ const PaymentSchedules = () => {
         />
       </section>
       {/* Project Schedule Modal */}
-      {createModal && (
+
         <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Payment Schedule' >
           <CreatePaymentSchedule onClose={() => setCreateModal(false)} />
         </Modal>
-      )}
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Payment Schedule' >
+          <CreatePaymentSchedule onClose={() => setEditModal(false)} id={editId} />
+        </Modal>
     </div>
   )
 }

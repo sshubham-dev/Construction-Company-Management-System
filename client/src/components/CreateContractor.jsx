@@ -18,15 +18,13 @@ const CreateContractor = ({ onClose, isEdit }) => {
     isUser: '',
   });
   const [contractorToEdit, setContractorToEdit] = useState(null);
-  const { id } = useParams();
   useEffect(() => {
-    if (id) {
-      console.log(id)
-      setContractorToEdit(id)
-      fetchContractor(id)
+    if (isEdit) {
+      console.log(isEdit)
+      setContractorToEdit(isEdit)
+      fetchContractor(isEdit)
     }
-  }, [id])
-  const navigate = useNavigate();
+  }, [isEdit])
 
   const fetchContractor = async (id) => {
     try {

@@ -15,6 +15,8 @@ const Suppliers = () => {
     const [suppliers, setSuppliers] = useState([]);
     const { user } = useSelector((state) => state.auth);
     const [createModal, setCreateModal] = useState(false);
+          const [editModal, setEditModal] = useState(false);
+          const [editId, setEditId] = useState('');
 
     useEffect(() => {
         const getSuppliers = async () => {
@@ -29,7 +31,8 @@ const Suppliers = () => {
     }, [])
 
     const handleEdit = (id) => {
-        navigate(`/edit-supplier/${id}`)
+        setEditModal(true)
+        setEditId(id)
     };
 
     const handleRedirect = (id) => {
@@ -91,9 +94,9 @@ const Suppliers = () => {
                                         {/* <button onClick={() => handleRedirect(supplier._id)} className="mr-2">
                                             <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                                         </button> */}
-                                        {/* <button onClick={() => handleEdit(supplier._id)} className="mr-2">
+                                        <button onClick={() => handleEdit(supplier._id)} className="mr-2">
                                             <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                                        </button> */}
+                                        </button>
                                         <button onClick={() => handleDelete(supplier._id)} className="mr-2">
                                             <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                                         </button>
@@ -106,6 +109,10 @@ const Suppliers = () => {
                 <Modal onClose={() => setCreateModal(false)} isOpen={createModal} head='Create Supplier'>
                     <CreateSupplier
                         onClose={() => setCreateModal(false)} />
+                </Modal>
+                <Modal onClose={() => setEditModal(false)} isOpen={editModal} head='Update Supplier'>
+                    <CreateSupplier
+                        onClose={() => setEditModal(false)} isEdit={editId} />
                 </Modal>
                 <Toaster
                     position="top-right"

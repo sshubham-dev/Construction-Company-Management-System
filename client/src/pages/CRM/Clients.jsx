@@ -18,12 +18,14 @@ const Clients = () => {
   const [error, setError] = useState(null);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [createModal, setCreateModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
 
   useEffect(() => {
     const getClients = async () => {
       try {
         const clientData = await axios.get('/api/v1/client');
-          setClient(clientData.data);
+        setClient(clientData.data);
         console.log(clientData.data)
       } catch (error) {
         console.error(error)
@@ -34,7 +36,8 @@ const Clients = () => {
   }, [])
 
   const handleEdit = (id) => {
-    navigate(`/edit-client/${id}`);
+    setEditModal(true)
+    setEditId(id)
   };
 
   const handleDelete = async (id) => {
@@ -94,9 +97,9 @@ const Clients = () => {
                     {/* <button onClick={() => handleRedirect(client._id)} className="mr-2">
                       <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                     </button> */}
-                    {/* <button onClick={() => handleEdit(client._id)} className="mr-2">
+                    <button onClick={() => handleEdit(client._id)} className="mr-2">
                       <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                    </button> */}
+                    </button>
                     <button onClick={() => handleDelete(client._id)} className="mr-2">
                       <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                     </button>
@@ -114,11 +117,12 @@ const Clients = () => {
         />
       </section>
       {/* Client Modal */}
-      {createModal && (
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Client' >
-          <CreateClient isOpen={createModal} onClose={() => setCreateModal(false)} />
-        </Modal>
-      )}
+      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Client' >
+        <CreateClient isOpen={createModal} onClose={() => setCreateModal(false)} />
+      </Modal>
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Client' >
+        <CreateClient onClose={() => setEditModal(false)} isEdit={editId} />
+      </Modal>
     </div>
   );
 }

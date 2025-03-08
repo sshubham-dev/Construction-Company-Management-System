@@ -21,6 +21,8 @@ const WorkOrders = () => {
   const [createModal, setCreateModal] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState("approved");
+      const [editModal, setEditModal] = useState(false);
+      const [editId, setEditId] = useState('');
 
   useEffect(() => {
     const fetchWorkorders = async () => {
@@ -81,7 +83,8 @@ const WorkOrders = () => {
   }, [])
 
   const handleEdit = (id) => {
-    navigate(`/edit-workOrder/${id}`);
+    setEditModal(true)
+    setEditId(id)
   };
 
   const handleRedirect = (id) => {
@@ -168,12 +171,12 @@ const WorkOrders = () => {
                     <td className="px-6 py-4 text-center">{workOrder.totalDue ? workOrder.totalDue : '0'}</td>
                     <td className="px-6 py-4 text-center">{moment(workOrder.duration).format('DD-MM-YYYY')}</td>
                     <td className="px-6 py-4 text-center">
-                      {/* <button onClick={() => handleRedirect(workOrder?._id)} className="mr-2">
+                      <button onClick={() => handleRedirect(workOrder?._id)} className="mr-2">
                         <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                       </button>
                       <button onClick={() => handleEdit(workOrder?._id)} className="mr-2">
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                      </button> */}
+                      </button>
                       <button onClick={() => handleDelete(workOrder?._id)} className="mr-2">
                         <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                       </button>
@@ -239,11 +242,12 @@ const WorkOrders = () => {
         <Toaster position="top-right" reverseOrder={false} />
       </section>
       {/* Work Order Modal */}
-      {createModal && (
         <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Work Order' >
           <CreateWorkOrder onClose={() => setCreateModal(false)} />
         </Modal>
-      )}
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Work Order' >
+          <CreateWorkOrder onClose={() => setEditModal(false)} id={editId} />
+        </Modal>
     </div>
   )
 }

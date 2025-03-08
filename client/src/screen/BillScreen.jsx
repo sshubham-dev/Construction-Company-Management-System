@@ -8,6 +8,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import Header from '../components/Header';
 import { Page, Text, View, Document, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
 import BillPdf from '../pdf/BillPdf';
+import Modal from '../../components/Modal';
+import CreateBill from '../../components/CreateBill';
 
 const BillScreen = () => {
   const { id } = useParams();
@@ -15,6 +17,9 @@ const BillScreen = () => {
   const [viewPdf, setViewPdf] = useState(false);
   const [contractorBill, setContractorBill] = useState({});
   const navigate = useNavigate();
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
+  const [editIndex, setEditIndex] = useState('');
   useEffect(() => {
     if (id) {
       getbills(id);
@@ -34,7 +39,10 @@ const BillScreen = () => {
       toast.error(error.message)
     }
   };
-
+  const handleEdit = (id) => {
+    setEditModal(true)
+    setEditId(id)
+  }
   const handleDownload = () => {
     return (
       <>
@@ -114,7 +122,7 @@ const BillScreen = () => {
                   <td className="px-6 py-4 text-gray-700">₹{bill?.paidAmount ? bill?.paidAmount : '0'}</td>
                   <td className="px-6 py-4 text-gray-700">₹{bill?.dueAmount ? bill?.dueAmount : '0'}</td>
                   <td className="px-6 py-4 text-gray-700">
-                    <button onClick={() => navigate(`/edit-bill/${bill._id}`)}>
+                    <button onClick={() => handleEdit(bill._id)}>
                       <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                     </button>
                   </td>
@@ -143,6 +151,9 @@ const BillScreen = () => {
                 Download
               </button>
             </div>  */}
+          <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Bill' >
+            <CreateBill onClose={() => setEditModal(false)} isEdit={editId} />
+          </Modal>
           <Toaster
             position="top-right"
             reverseOrder={false}

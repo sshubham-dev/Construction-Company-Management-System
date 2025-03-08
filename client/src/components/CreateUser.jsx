@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { useNavigate, useParams } from 'react-router-dom';
 import { IoEyeOff, IoEye } from "react-icons/io5";
 axios.defaults.withCredentials = true;
 
@@ -32,16 +31,14 @@ const CreateUser = ({ onClose, isEdit }) => {
     'H.R',
     'Account Head'
   ];
-  const navigate = useNavigate();
   const [userIdToEdit, setUserIdToEdit] = useState(null);
-  const { id } = useParams();
   const [showPassword, setShowPassword] = useState(false);
   useEffect(() => {
-    if (id) {
-      setUserIdToEdit(id);
-      fetchUserDetails(id);
+    if (isEdit) {
+      setUserIdToEdit(isEdit);
+      fetchUserDetails(isEdit);
     }
-  }, [id]);
+  }, [isEdit]);
 
   const fetchUserDetails = async (id) => {
     try {

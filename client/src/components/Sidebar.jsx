@@ -304,16 +304,16 @@ const Sidebar = () => {
 
     /* Employee Management*/
     {
-      to: '/hr/dashboard',
+      to: '/hr/employee/dashboard',
       name: 'Employee Management',
       icon: <FcManager />,
       children: [
-        {
-          to: '/hr/employee/dashboard',
-          name: 'Employee Management',
-          icon: <FcManager />,
-          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
-        },
+        // {
+        //   to: '/hr/employee/dashboard',
+        //   name: 'Employee Management',
+        //   icon: <FcManager />,
+        //   role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
+        // },
         // {
         //   to: '/employee/salary',
         //   name: 'Salary',

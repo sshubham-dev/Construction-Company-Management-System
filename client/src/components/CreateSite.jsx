@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 axios.defaults.withCredentials = true;
 
-const CreateSite = ({ onClose}) => {
+const CreateSite = ({ onClose, isEdit}) => {
   const [site, setSite] = useState({
     name: '',
     client: '',
@@ -31,14 +31,13 @@ const CreateSite = ({ onClose}) => {
   const [clients, setClient] = useState([]);
   const projectType = ['Residential', 'Commercial', 'Instutional', 'Government'];
   const floors = ['Ground', 'G+1', 'G+2', 'G+3', 'G+4', 'G+5', 'G+6', 'First', 'Second'];
-  const navigate = useNavigate();
   const [siteIdToEdit, setSiteIdToEdit] = useState(null);
-  const { id } = useParams();
   const { user, isLoggedIn } = useSelector((state) => state.auth);
+  
   useEffect(() => {
-    if (id) {
-      setSiteIdToEdit(id);
-      fetchSiteDetails(id);
+    if (isEdit) {
+      setSiteIdToEdit(isEdit);
+      fetchSiteDetails(isEdit);
     }
   }, []);
 

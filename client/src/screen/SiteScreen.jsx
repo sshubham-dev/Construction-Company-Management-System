@@ -278,12 +278,12 @@ const SiteScreen = () => {
                         <td className="px-6 py-4 text-center">{paymentDetail?.status}</td>
                         {user.role === 'Client' || user.department === 'Site Supervisor' ? '' :
                           <td className="px-6 py-4 text-center">
-                            <button onClick={() => {
+                            {/* <button onClick={() => {
                               navigate(`/edit-paymentSchedule/${paymentSchedules._id}/${index}`)
                             }}
                               className="mr-2">
                               <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                            </button>
+                            </button> */}
                             <button
                               onClick={() => deletePaymentDetail(paymentSchedules._id, index)}>
                               <MdDelete className='text-red-500 hover:text-red-600 text-xl' />

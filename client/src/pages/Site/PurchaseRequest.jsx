@@ -17,6 +17,8 @@ const PurchaseRequest = () => {
   const [createModal, setCreateModal] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("approved");
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
   const { user, isLoggedIn } = useSelector((state) => state.auth);
 
   useEffect(() => {
@@ -37,9 +39,10 @@ const PurchaseRequest = () => {
     setSearch(searchValue);
   };
 
-  const handleEdit = (request) => {
+  const handleEdit = (id) => {
     setSelectedRequest(purchaseRequest);
-    setIsModalOpen(true);
+    setEditModal(true);
+    setEditId(id)
   };
 
   const handleDelete = async (request) => {
@@ -122,14 +125,14 @@ const PurchaseRequest = () => {
                     <td className="p-3 text-left">{request.status}</td>
                     <td className="p-3 text-left">{request.approvalStatus}</td>
                     <td className="px-6 py-4">
-                      {/* <button onClick={() => handleRedirect(qualitySchedule._id)} className="mr-2">
+                      <button onClick={() => handleRedirect(qualitySchedule._id)} className="mr-2">
                           <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                        </button> */}
-                      {/* <button
+                        </button>
+                      <button
                           onClick={() => handleEdit(request._id)}
                           className="mr-2">
                           <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                        </button> */}
+                        </button>
                       <button
                         onClick={() => handleDelete(request._id)}>
                         <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
@@ -166,11 +169,12 @@ const PurchaseRequest = () => {
       </section>
 
       {/* Work Order Modal */}
-      {createModal && (
         <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Purchase Request' >
           <CreatePurchaseRequest onClose={() => setCreateModal(false)} />
         </Modal>
-      )}
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Purchase Request' >
+          <CreatePurchaseRequest onClose={() => setEditModal(false)} id={editId} />
+        </Modal>
     </div>
   )
 }

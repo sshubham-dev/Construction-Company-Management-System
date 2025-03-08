@@ -16,6 +16,8 @@ const CheckList = () => {
   const [checkLists, setCheckList] = useState([]);
   const [error, setError] = useState(null);
   const [createModal, setCreateModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
 
   useEffect(() => {
     const getcheckLists = async () => {
@@ -32,12 +34,14 @@ const CheckList = () => {
   }, [])
 
   const handleEdit = (checkListId) => {
-    navigate(`/edit-checkList?checkListId=${checkListId}`);
+    setEditModal(true);
+    setEditId(checkListId)
   };
 
   const handleRedirect = (checkListId) => {
     navigate(`/checkList?checkListId=${checkListId}`);
   }
+  
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/api/v1/checklist/${id}`);
@@ -83,12 +87,12 @@ const CheckList = () => {
                   >
                     <FaExternalLinkAlt />
                   </button> */}
-                  {/* <button
+                  <button
                     onClick={() => handleEdit(checkList._id)}
                     className="bg-blue-500 text-white px-2 py-1 mr-2"
                   >
                     <GrEdit />
-                  </button> */}
+                  </button>
                   <button
                     onClick={() => handleDelete(checkList._id)}
                     className="bg-red-500 text-white px-2 py-1 mr-2"
@@ -101,18 +105,19 @@ const CheckList = () => {
           </tbody>
           {error && <p className="text-red-500">{error}</p>}
         </table>
-        
+
         <Toaster
           position="top-right"
           reverseOrder={false}
         />
       </section>
       {/* Check List Modal */}
-      {createModal && (
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Check List' >
-          <CreateChecklist onClose={() => setCreateModal(false)} />
-        </Modal>
-      )}
+      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Check List' >
+        <CreateChecklist onClose={() => setCreateModal(false)} />
+      </Modal>
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Check List' >
+        <CreateChecklist onClose={() => setEditModal(false)} isEdit={editId} />
+      </Modal>
     </div>
   )
 }

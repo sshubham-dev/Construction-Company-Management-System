@@ -19,6 +19,8 @@ axios.defaults.withCredentials = true;
 const Bills = () => {
   const navigate = useNavigate();
   const [createModal, setCreateModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
   const [contractorBill, setContractorBill] = useState([]);
   const [draftBill, setDraftBill] = useState([]);
   const { user, isLoggedIn } = useSelector((state) => state.auth)
@@ -66,12 +68,13 @@ const Bills = () => {
   }, [])
 
   const handleEdit = (id) => {
-    navigate(`/edit-bill/${id}`);
+    setEditModal(true)
+    setEditId(id)
   };
 
-  // const handleRedirect = (id) => {
-  //   navigate(`/bill/${id}`);
-  // };
+  const handleRedirect = (id) => {
+    navigate(`/bill/${id}`);
+  };
 
   const handleDelete = async (id) => {
     try {
@@ -147,12 +150,12 @@ const Bills = () => {
                     <td className="px-6 py-4 text-center">{bill.amount}</td>
                     <td className="px-6 py-4 text-center">{bill.paymentStatus}</td>
                     <td className="px-6 py-4">
-                      {/* <button onClick={() => navigate(`/bill/${bill._id}`)} className="mr-2">
+                      <button onClick={() => navigate(`/bill/${bill._id}`)} className="mr-2">
                         <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                       </button>
                       <button onClick={() => handleEdit(bill._id)} className="mr-2">
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                      </button> */}
+                      </button>
                       <button onClick={() => handleDelete(bill._id)} className="">
                         <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                       </button>
@@ -198,12 +201,12 @@ const Bills = () => {
                           <button onClick={() => handleSave(bill._id)} className=" mr-2">
                             <FcApproval className="text-green-500 hover:text-green-700 text-xl" />
                           </button>
-                          {/* <button onClick={() => handleRedirect(purchaseOrder._id)} className="mr-2">
+                          <button onClick={() => handleRedirect(purchaseOrder._id)} className="mr-2">
                             <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                           </button>
                           <button onClick={() => handleEdit(bill._id)} className="mr-2">
                             <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                          </button> */}
+                          </button>
                           <button onClick={() => handleDelete(bill._id)} >
                             <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                           </button>
@@ -222,11 +225,12 @@ const Bills = () => {
         <Toaster position="top-right" reverseOrder={false} />
       </section>
       {/* Contractor Modal */}
-      {createModal && (
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Contractor' >
+        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Bill' >
           <CreateBill onClose={() => setCreateModal(false)} />
         </Modal>
-      )}
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Bill' >
+          <CreateBill onClose={() => setEditModal(false)} isEdit={editId} />
+        </Modal>
     </div>
   );
 };

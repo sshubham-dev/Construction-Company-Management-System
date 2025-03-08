@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { useNavigate, useParams } from 'react-router-dom';
 import Select from 'react-select';
 
 axios.defaults.withCredentials = true;
 
-const CreateQualitySchedule = ({onClose}) => {
+const CreateQualitySchedule = ({ onClose, id, index}) => {
   const [formData, setFormData] = useState({
     site: '',
     qualityScheduleId: '',
@@ -15,12 +14,10 @@ const CreateQualitySchedule = ({onClose}) => {
       checkingDate: '',
     }]
   });
-
   const [workDetails, setWorkDetails] = useState([]);
   const [data, setData] = useState('');
   const [sites, setSite] = useState([]);
   const [scheduleIdToEdit, setScheduleIdToEdit] = useState(null);
-  const navigate = useNavigate();
   const [workToEdit, setWorkToEdit] = useState({ id: '', index: '' });
   const [workDetail, setWorkDetail] = useState({
     work: '',
@@ -30,9 +27,7 @@ const CreateQualitySchedule = ({onClose}) => {
     reason: '',
     status: '',
   });
-
   const statusOptions = ['Started', 'Completed', 'Pending', 'Partially Completed'];
-  const { index, id } = useParams();
 
   useEffect(() => {
     if (id && !index) {
@@ -168,171 +163,171 @@ const CreateQualitySchedule = ({onClose}) => {
 
   return (
     <div>
-        <form onSubmit={handleSubmit} >
-          {workToEdit.id && workToEdit.index ? (
-            <>
-              <div className="mb-4">
-                <label htmlFor="work" className="block text-gray-700 text-sm font-bold mb-2">Work:</label>
-                <Select
-                  onChange={(selectedOption) => handleUpdate('work', selectedOption.value)}
-                  options={workDetails.map(workDetail => ({
-                    value: workDetail.work,
-                    label: workDetail.work
-                  }))}
-                  placeholder={workDetail.work || "Select Work Detail"}
-                />
-              </div>
+      <form onSubmit={handleSubmit} >
+        {workToEdit.id && workToEdit.index ? (
+          <>
+            <div className="mb-4">
+              <label htmlFor="work" className="block text-gray-700 text-sm font-bold mb-2">Work:</label>
+              <Select
+                onChange={(selectedOption) => handleUpdate('work', selectedOption.value)}
+                options={workDetails.map(workDetail => ({
+                  value: workDetail.work,
+                  label: workDetail.work
+                }))}
+                placeholder={workDetail.work || "Select Work Detail"}
+              />
+            </div>
 
-              <div className="mb-4">
-                <label htmlFor="checkingDate" className="block text-gray-700 text-sm font-bold mb-2">Checking Date:</label>
-                <input
-                  type="date"
-                  name="checkingDate"
-                  value={workDetail.checkingDate}
-                  onChange={(e) => handleUpdate('checkingDate', e.target.value)}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
+            <div className="mb-4">
+              <label htmlFor="checkingDate" className="block text-gray-700 text-sm font-bold mb-2">Checking Date:</label>
+              <input
+                type="date"
+                name="checkingDate"
+                value={workDetail.checkingDate}
+                onChange={(e) => handleUpdate('checkingDate', e.target.value)}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
 
-              <div className="mb-4">
-                <label htmlFor="checkedAt" className="block text-gray-700 text-sm font-bold mb-2">Actual Checked At:</label>
-                <input
-                  type="date"
-                  name="checkedAt"
-                  value={workDetail.checkedAt}
-                  onChange={(e) => handleUpdate('checkedAt', e.target.value)}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
+            <div className="mb-4">
+              <label htmlFor="checkedAt" className="block text-gray-700 text-sm font-bold mb-2">Actual Checked At:</label>
+              <input
+                type="date"
+                name="checkedAt"
+                value={workDetail.checkedAt}
+                onChange={(e) => handleUpdate('checkedAt', e.target.value)}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
 
-              <div className="mb-4">
-                <label htmlFor="difference" className="block text-gray-700 text-sm font-bold mb-2">Difference:</label>
-                <input
-                  type="text"
-                  name="difference"
-                  value={workDetail.difference}
-                  onChange={(e) => handleUpdate('difference', e.target.value)}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
+            <div className="mb-4">
+              <label htmlFor="difference" className="block text-gray-700 text-sm font-bold mb-2">Difference:</label>
+              <input
+                type="text"
+                name="difference"
+                value={workDetail.difference}
+                onChange={(e) => handleUpdate('difference', e.target.value)}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
 
-              <div className="mb-4">
-                <label htmlFor="reason" className="block text-gray-700 text-sm font-bold mb-2">Reason:</label>
-                <input
-                  type="text"
-                  name="reason"
-                  value={workDetail.reason}
-                  onChange={(e) => handleUpdate('reason', e.target.value)}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
+            <div className="mb-4">
+              <label htmlFor="reason" className="block text-gray-700 text-sm font-bold mb-2">Reason:</label>
+              <input
+                type="text"
+                name="reason"
+                value={workDetail.reason}
+                onChange={(e) => handleUpdate('reason', e.target.value)}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
 
-              <div className="mb-4">
-                <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">Status:</label>
-                <select
-                  value={workDetail.status}
-                  onChange={(e) => handleUpdate('status', e.target.value)}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                >
-                  <option>{workDetail.status || 'Select Status'}</option>
-                  {statusOptions.map((status, index) => (
-                    <option key={index} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-
-              <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Submit</button>
-            </>
-          ) : (
-            <>
-              <div className="mb-4">
-                <label htmlFor="site" className="block text-sm font-semibold text-gray-600">Site:</label>
-                <select
-                  name="site"
-                  value={formData.site}
-                  className="mt-1 p-2 w-full border rounded-md"
-                  onChange={(e) => handleChange('site', e.target.value)}
-                >
-                  <option>{scheduleIdToEdit ? data : 'Select Site'}</option>
-                  {sites.map((site) => (
-                    <option key={site._id} value={site._id}>{site.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="qualityScheduleId" className="block text-sm font-medium text-gray-600">Schedule Id:</label>
-                <input
-                  type="text"
-                  name="qualityScheduleId"
-                  value={formData.qualityScheduleId}
-                  onChange={(e) => handleChange('qualityScheduleId', e.target.value)}
-                  className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div className="mt-4">
-                <h2 className="text-lg font-semibold mb-2">Work Details</h2>
-                {formData.workDetails.map((workItem, index) => (
-                  <div key={index} className="mb-4 p-3 border rounded">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor={`work[${index}].work`} className="block text-sm font-semibold text-gray-600">Work to Check:</label>
-                        <Select
-                          value={{ value: workItem.work, label: workItem.work }}
-                          onChange={(selectedOption) => handleWorkChange(index, 'work', selectedOption.value)}
-                          options={workDetails.map(workDetail => ({
-                            value: workDetail.work,
-                            label: workDetail.work
-                          }))}
-                          placeholder="Select Work Detail"
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor={`work[${index}].checkingDate`} className="block text-sm font-semibold text-gray-600">Checking Date:</label>
-                        <input
-                          type="date"
-                          value={workItem.checkingDate}
-                          onChange={(e) => handleWorkChange(index, 'checkingDate', e.target.value)}
-                          className="border p-2 rounded w-full"
-                        />
-                      </div>
-
-                      {formData.workDetails.length > 1 && (
-                        <div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveWork(index)}
-                            className="bg-red-500 text-white p-2 rounded"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            <div className="mb-4">
+              <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">Status:</label>
+              <select
+                value={workDetail.status}
+                onChange={(e) => handleUpdate('status', e.target.value)}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              >
+                <option>{workDetail.status || 'Select Status'}</option>
+                {statusOptions.map((status, index) => (
+                  <option key={index} value={status}>{status}</option>
                 ))}
-                {scheduleIdToEdit ? null : (
-                  <button
-                    type="button"
-                    onClick={handleAddWork}
-                    className="bg-blue-500 text-white p-2 rounded"
-                  >
-                    More
-                  </button>
-                )}
-              </div>
+              </select>
+            </div>
 
-              <div className="text-center">
-                <button type="submit" className="bg-green-500 text-white p-2 rounded mt-4">
-                  {scheduleIdToEdit ? 'Update' : 'Create'}
+            <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Submit</button>
+          </>
+        ) : (
+          <>
+            <div className="mb-4">
+              <label htmlFor="site" className="block text-sm font-semibold text-gray-600">Site:</label>
+              <select
+                name="site"
+                value={formData.site}
+                className="mt-1 p-2 w-full border rounded-md"
+                onChange={(e) => handleChange('site', e.target.value)}
+              >
+                <option>{scheduleIdToEdit ? data : 'Select Site'}</option>
+                {sites.map((site) => (
+                  <option key={site._id} value={site._id}>{site.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="qualityScheduleId" className="block text-sm font-medium text-gray-600">Schedule Id:</label>
+              <input
+                type="text"
+                name="qualityScheduleId"
+                value={formData.qualityScheduleId}
+                onChange={(e) => handleChange('qualityScheduleId', e.target.value)}
+                className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div className="mt-4">
+              <h2 className="text-lg font-semibold mb-2">Work Details</h2>
+              {formData.workDetails.map((workItem, index) => (
+                <div key={index} className="mb-4 p-3 border rounded">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor={`work[${index}].work`} className="block text-sm font-semibold text-gray-600">Work to Check:</label>
+                      <Select
+                        value={{ value: workItem.work, label: workItem.work }}
+                        onChange={(selectedOption) => handleWorkChange(index, 'work', selectedOption.value)}
+                        options={workDetails.map(workDetail => ({
+                          value: workDetail.work,
+                          label: workDetail.work
+                        }))}
+                        placeholder="Select Work Detail"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor={`work[${index}].checkingDate`} className="block text-sm font-semibold text-gray-600">Checking Date:</label>
+                      <input
+                        type="date"
+                        value={workItem.checkingDate}
+                        onChange={(e) => handleWorkChange(index, 'checkingDate', e.target.value)}
+                        className="border p-2 rounded w-full"
+                      />
+                    </div>
+
+                    {formData.workDetails.length > 1 && (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveWork(index)}
+                          className="bg-red-500 text-white p-2 rounded"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {scheduleIdToEdit ? null : (
+                <button
+                  type="button"
+                  onClick={handleAddWork}
+                  className="bg-blue-500 text-white p-2 rounded"
+                >
+                  More
                 </button>
-              </div>
-            </>
-          )}
-        </form>
-        <Toaster position="top-right" reverseOrder={false} />
+              )}
+            </div>
+
+            <div className="text-center">
+              <button type="submit" className="bg-green-500 text-white p-2 rounded mt-4">
+                {scheduleIdToEdit ? 'Update' : 'Create'}
+              </button>
+            </div>
+          </>
+        )}
+      </form>
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };

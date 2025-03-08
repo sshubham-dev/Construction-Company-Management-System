@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Select from 'react-select';
 
 axios.defaults.withCredentials = true;
 
-const CreateWorkOrder = ({onClose}) => {
+const CreateWorkOrder = ({onClose, id, index}) => {
   const [formData, setFormData] = useState({
     workOrderName: '',
     workOrderNo: '',
@@ -37,8 +36,6 @@ const CreateWorkOrder = ({onClose}) => {
   const [workOrderToEdit, setWorkOrderToEdit] = useState(null);
   const units = ['SQFT', 'RFT', 'LUMSUM', 'NOS', 'FIXED', 'RMT', 'SQMT', 'CUM'];
   const { user } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
-  const { id, index } = useParams();
 
   useEffect(() => {
     if (id && index) {

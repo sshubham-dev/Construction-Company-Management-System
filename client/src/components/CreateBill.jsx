@@ -6,7 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 axios.defaults.withCredentials = true;
 
-const CreateBill = ({ onClose }) => {
+const CreateBill = ({ onClose, isEdit }) => {
   const [sites, setSite] = useState([]);
   const [data, setData] = useState({
     site: '',
@@ -33,7 +33,6 @@ const CreateBill = ({ onClose }) => {
   const [billWork, setBillWork] = useState([]);
   const [paymentDetail, setPaymentDetail] = useState({});
   const units = ['%', '₹']
-  const { id } = useParams();
 
   useEffect(() => {
     const fetchSite = async () => {
@@ -56,9 +55,9 @@ const CreateBill = ({ onClose }) => {
       }
     };
     fetchSite();
-    if (id) {
-      setBillToEdit(id)
-      fetchBill(id)
+    if (isEdit) {
+      setBillToEdit(isEdit)
+      fetchBill(isEdit)
     }
   }, [])
 

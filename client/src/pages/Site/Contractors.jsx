@@ -16,6 +16,8 @@ const Contractors = () => {
     const [contractors, setContractor] = useState([]);
     const { user, isLoggedIn } = useSelector((state) => state.auth)
     const [createModal, setCreateModal] = useState(false);
+    const [editModal, setEditModal] = useState(false);
+    const [editId, setEditId] = useState('');
 
     useEffect(() => {
         getContractors();
@@ -32,7 +34,8 @@ const Contractors = () => {
     }
 
     const handleEdit = (id) => {
-        navigate(`/edit-contractor/${id}`)
+        setEditModal(true)
+        setEditId(id)
     };
 
     const handleDelete = async (id) => {
@@ -87,9 +90,9 @@ const Contractors = () => {
                                         {/* <button onClick={() => handleRedirect(contractor._id)} className="mr-2">
                                             <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                                         </button> */}
-                                        {/* <button onClick={() => handleEdit(contractor._id)} className="mr-2">
+                                        <button onClick={() => handleEdit(contractor._id)} className="mr-2">
                                             <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                                        </button> */}
+                                        </button>
                                         <button onClick={() => handleDelete(contractor._id)} className="mr-2">
                                             <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                                         </button>
@@ -106,11 +109,12 @@ const Contractors = () => {
                 />
             </div>
             {/* Contractor Modal */}
-            {createModal && (
                 <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Contractor' >
                     <CreateContractor onClose={() => setCreateModal(false)} />
                 </Modal>
-            )}
+                <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Contractor' >
+                    <CreateContractor onClose={() => setEditModal(false)} isEdit={editId} />
+                </Modal>
         </div>
     )
 }

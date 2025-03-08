@@ -14,6 +14,8 @@ axios.defaults.withCredentials = true;
 const Employee = () => {
   const [employees, setEmployee] = useState([]);
   const [createModal, setCreateModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
   const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
@@ -32,7 +34,9 @@ const Employee = () => {
   const navigate = useNavigate();
 
   const handleEdit = (userId) => {
-    navigate(`/edit-user?userId=${userId}`);
+    setEditModal(true)
+    setEditId(userId)
+    // navigate(`/edit-user?userId=${userId}`);
   };
 
   const handleDelete = async (id) => {
@@ -86,7 +90,7 @@ const Employee = () => {
                     {employee.whatsapp}
                   </td>
                   <td className="px-6 py-4">
-                    {employee.employeeId}
+                    {employee.employeeNo}
                   </td>
                   <td className="px-6 py-4">
                     {employee.department}
@@ -114,11 +118,12 @@ const Employee = () => {
         <Toaster position="top-right" reverseOrder={false} />
       </div>
       {/* Employee Modal */}
-      {createModal && (
         <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Employee' >
           <CreateEmployee onClose={() => setCreateModal(false)} />
         </Modal>
-      )}
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Employee' >
+          <CreateEmployee onClose={() => setEditModal(false)} isEdit={editId} />
+        </Modal>
     </div>
   );
 };

@@ -20,6 +20,8 @@ const Sites = () => {
   const [error, setError] = useState(null);
   const { user } = useSelector((state) => state.auth);
   const [createModal, setCreateModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
 
   useEffect(() => {
     if (user && user.department === 'Site Incharge') {
@@ -59,7 +61,8 @@ const Sites = () => {
   console.log(sites)
 
   const handleEdit = (id) => {
-    navigate(`/edit-site/${id}`);
+    setEditModal(true);
+    setEditId(id)
   };
 
   const handleRedirect = (id) => {
@@ -113,13 +116,13 @@ const Sites = () => {
                   <td className="px-6 py-4 text-center">{site?.incharge?.userName}</td>
                   <td className="px-6 py-4 text-center">{site?.projectType}</td>
                   <td className="px-6 py-4 text-center">
-                    {/* <button onClick={() => handleRedirect(site?._id)} className="mr-2">
+                    <button onClick={() => handleRedirect(site?._id)} className="mr-2">
                       <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                     </button>
                     {user.role !== 'Client' && (
                       <button onClick={() => handleEdit(site?._id)} className="mr-2">
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                      </button>)} */}
+                      </button>)}
                     {user.role === 'Admin' && (
                       <button onClick={() => handleDelete(site?._id)} className="mr-2">
                         <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
@@ -135,6 +138,9 @@ const Sites = () => {
         <Toaster position="top-right" reverseOrder={false} />
         <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Site' >
           <CreateSite onClose={() => setCreateModal(false)} />
+        </Modal>
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Site' >
+          <CreateSite onClose={() => setEditModal(false)} isEdit={editId} />
         </Modal>
       </section>
     </div>

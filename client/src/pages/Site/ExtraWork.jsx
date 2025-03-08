@@ -20,7 +20,9 @@ const ExtraWork = () => {
   const [contractorExtraWorks, setContractorExtraWork] = useState([]);
   const [createModal, setCreateModal] = useState(false);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
-    const [activeTab, setActiveTab] = useState("client");
+  const [activeTab, setActiveTab] = useState("client");
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
 
   useEffect(() => {
 
@@ -50,8 +52,9 @@ const ExtraWork = () => {
     fetchExtraWork();
   }, [])
 
-  const handleEdit = (id, index) => {
-    navigate(`/edit-extra-work/${id}/work/${index}`);
+  const handleEdit = (id) => {
+    setEditModal(true)
+    setEditId(id)
   };
 
   const handleRedirect = (id) => {
@@ -100,96 +103,52 @@ const ExtraWork = () => {
         </div>
 
         {activeTab === "client" && (
-        <div className="overflow-x-auto scrollbar-hide">
-          <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
-            <thead className="bg-gray-300">
-              <tr className=" text-left">
-                <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
-                {/* <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Floor </th>
-                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Incharge </th>
-                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Project Type </th> */}
-                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-200">
-              {clientExtraWorks?.map((extraWork) => (
-                <tr key={extraWork._id} className='border-b border-blue-gray-200'>
-                  <td className="px-6 py-4">
-                    <p className=""> {extraWork.site?.name} </p>
-                    <p className="text-gray-500 text-sm font-semibold tracking-wide"> {extraWork.client?.name} </p>
-                  </td>
-                  {/* <td className="px-6 py-4 text-center">
-                      {site.floors}
-                    </td>
-                    <td className="px-6 py-4 text-center">{site.incharge?.userName}</td>
-                    <td className="px-6 py-4 text-center">{site.projectType}</td> */}
-                  <td className="px-6 py-4 text-center">
-                    {/* <button onClick={() => handleRedirect(extraWork._id)} className="mr-2">
-                      <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                    </button>
-                    <button onClick={() => handleEdit(extraWork._id)} className="mr-2">
-                      <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                    </button> */}
-                    <button onClick={() => handleDelete(extraWork._id)} className="mr-2">
-                      <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>)}
-
-        {activeTab === "contractor" && (
-        <div className="overflow-x-auto scrollbar-hide">
-          <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
-            <thead className="bg-gray-300">
-              <tr className=" text-left">
-                <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
-                {/* <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Floor </th>
-                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Incharge </th>
-                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Project Type </th> */}
-                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-200">
-              {contractorExtraWorks?.map((extraWork) => (
-                <tr key={extraWork._id} className='border-b border-blue-gray-200'>
-                  <td className="px-6 py-4">
-                    <p className=""> {extraWork.site?.name} </p>
-                    <p className="text-gray-500 text-sm font-semibold tracking-wide"> {extraWork.contractor?.name} </p>
-                  </td>
-                  {/* <td className="px-6 py-4 text-center">
-                      {site.floors}
-                    </td>
-                    <td className="px-6 py-4 text-center">{site.incharge?.userName}</td>
-                    <td className="px-6 py-4 text-center">{site.projectType}</td> */}
-                  <td className="px-6 py-4 text-center">
-                    <button onClick={() => handleRedirect(extraWork?._id)} className="mr-2">
-                      <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                    </button>
-                    <button onClick={() => handleEdit(extraWork?._id)} className="mr-2">
-                      <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                    </button>
-                    <button onClick={() => handleDelete(extraWork?._id)} className="mr-2">
-                      <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>)}
-
-        {activeTab === "draft" && (
-          <>
-        {user.department === 'Site Incharge' && (
           <div className="overflow-x-auto scrollbar-hide">
             <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
               <thead className="bg-gray-300">
-                <tr className="text-white text-left">
+                <tr className=" text-left">
+                  <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
+                  {/* <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Floor </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Incharge </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Project Type </th> */}
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-gray-200">
+                {clientExtraWorks?.map((extraWork) => (
+                  <tr key={extraWork._id} className='border-b border-blue-gray-200'>
+                    <td className="px-6 py-4">
+                      <p className=""> {extraWork.site?.name} </p>
+                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {extraWork.client?.name} </p>
+                    </td>
+                    {/* <td className="px-6 py-4 text-center">
+                      {site.floors}
+                    </td>
+                    <td className="px-6 py-4 text-center">{site.incharge?.userName}</td>
+                    <td className="px-6 py-4 text-center">{site.projectType}</td> */}
+                    <td className="px-6 py-4 text-center">
+                      {/* <button onClick={() => handleRedirect(extraWork._id)} className="mr-2">
+                      <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                    </button> */}
+                      <button onClick={() => handleEdit(extraWork._id)} className="mr-2">
+                        <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                      </button>
+                      <button onClick={() => handleDelete(extraWork._id)} className="mr-2">
+                        <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>)}
+
+        {activeTab === "contractor" && (
+          <div className="overflow-x-auto scrollbar-hide">
+            <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
+              <thead className="bg-gray-300">
+                <tr className=" text-left">
                   <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
                   {/* <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Floor </th>
                     <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Incharge </th>
@@ -212,8 +171,8 @@ const ExtraWork = () => {
                     <td className="px-6 py-4 text-center">{site.projectType}</td> */}
                     <td className="px-6 py-4 text-center">
                       {/* <button onClick={() => handleRedirect(extraWork?._id)} className="mr-2">
-                          <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                        </button> */}
+                      <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                    </button> */}
                       <button onClick={() => handleEdit(extraWork?._id)} className="mr-2">
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>
@@ -225,9 +184,53 @@ const ExtraWork = () => {
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
-        </>)}
+          </div>)}
+
+        {activeTab === "draft" && (
+          <>
+            {user.department === 'Site Incharge' && (
+              <div className="overflow-x-auto scrollbar-hide">
+                <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
+                  <thead className="bg-gray-300">
+                    <tr className="text-white text-left">
+                      <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
+                      {/* <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Floor </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Incharge </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Project Type </th> */}
+                      <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-gray-200">
+                    {contractorExtraWorks?.map((extraWork) => (
+                      <tr key={extraWork._id} className='border-b border-blue-gray-200'>
+                        <td className="px-6 py-4">
+                          <p className=""> {extraWork.site?.name} </p>
+                          <p className="text-gray-500 text-sm font-semibold tracking-wide"> {extraWork.contractor?.name} </p>
+                        </td>
+                        {/* <td className="px-6 py-4 text-center">
+                      {site.floors}
+                    </td>
+                    <td className="px-6 py-4 text-center">{site.incharge?.userName}</td>
+                    <td className="px-6 py-4 text-center">{site.projectType}</td> */}
+                        <td className="px-6 py-4 text-center">
+                          {/* <button onClick={() => handleRedirect(extraWork?._id)} className="mr-2">
+                          <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                        </button> */}
+                          <button onClick={() => handleEdit(extraWork?._id)} className="mr-2">
+                            <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                          </button>
+                          <button onClick={() => handleDelete(extraWork?._id)} className="mr-2">
+                            <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>)}
 
         <Toaster
           position="top-right"
@@ -235,11 +238,12 @@ const ExtraWork = () => {
         />
       </section>
       {/* Extra Work Modal */}
-      {createModal && (
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Extra Work' >
-          <CreateExtraWork onClose={() => setCreateModal(false)} />
-        </Modal>
-      )}
+      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Extra Work' >
+        <CreateExtraWork onClose={() => setCreateModal(false)} />
+      </Modal>
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Extra Work' >
+        <CreateExtraWork onClose={() => setEditModal(false)} id={editId} />
+      </Modal>
     </div>
   )
 }

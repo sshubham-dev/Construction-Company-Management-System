@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { useNavigate, useLocation } from 'react-router-dom';
+
 axios.defaults.withCredentials = true;
 
-const CreateSupplier = ({ onClose }) => {
+const CreateSupplier = ({ onClose, isEdit }) => {
 
   const [supplier, setSupplier] = useState({
     name: '',
@@ -18,18 +18,14 @@ const CreateSupplier = ({ onClose }) => {
     isUser: '',
   });
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
-  const location = useLocation();
   const [supplierIdToEdit, setSupplierIdToEdit] = useState(null);
 
   useEffect(() => {
-    const id = new URLSearchParams(location.search).get('supplierId');
-
-    if (id) {
-      setSupplierIdToEdit(id);
-      fetchSupplierDetails(id);
+    if (isEdit) {
+      setSupplierIdToEdit(isEdit);
+      fetchSupplierDetails(isEdit);
     }
-  }, [location.search]);
+  }, []);
 
   const fetchSupplierDetails = async (id) => {
     try {
