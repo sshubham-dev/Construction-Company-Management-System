@@ -91,11 +91,12 @@ const changeLeadStatus = async (req, res) => {
 // Add follow-up
 const addFollowUp = async (req, res) => {
     try {
-        const { followUpNo, date, message } = req.body; // Expecting { followUpNo: '1', date: '2023-10-01', message: 'Follow up message' }
+        const { date, message } = req.body; // Expecting { followUpNo: '1', date: '2023-10-01', message: 'Follow up message' }
         const lead = await Lead.findById(req.params.id);
         if (!lead) {
             return res.status(404).send('Lead not found');
         }
+        const followUpNo = lead.followUps.length + 1
         lead.followUps.push({ followUpNo, date, message });
         await lead.save();
         res.json(lead);

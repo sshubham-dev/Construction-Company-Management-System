@@ -35,11 +35,10 @@ const leaveSchema = new mongoose.Schema({
         type: String,
     },
     from: {
-        type: Date,
-        default: Date.now,
+        type: String,
     },
     reportingDate: {
-        type: Date,
+        type: String,
     },
     approval: {
         type: String,

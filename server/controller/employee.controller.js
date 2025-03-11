@@ -85,7 +85,7 @@ const createEmployee = async (req, res) => {
         if (createdEmployee.isUser === true) { 
             console.log('Converting to user:', createdEmployee._id);
             const password = `${name}@${phone}`;
-            await convertToUser(createdEmployee._id, 'Employee', password);
+            await convertToUser(createdEmployee._id, 'Employee', password, 'Create');
         } 
     } catch (error) {
         console.log(error)
@@ -159,7 +159,11 @@ const updateEmployeeData = async (req, res) => {
         if (updatedEmployeeData.isUser === true && !updatedEmployeeData.userId) {
             console.log('Converting to user:', updatedEmployeeData._id);
             const employeePassword = `${updatedEmployeeData.name}@${updatedEmployeeData.contactNo}`;
-            await convertToUser(updatedEmployeeData._id, 'Employee', employeePassword);
+            await convertToUser(updatedEmployeeData._id, 'Employee', employeePassword, 'Create');
+        }else if (updatedEmployeeData.isUser === true && updatedEmployeeData.userId) {
+            console.log('Converting to user:', updatedEmployeeData._id);
+            const employeePassword = `${updatedEmployeeData.name}@${updatedEmployeeData.contactNo}`;
+            await convertToUser(updatedEmployeeData._id, 'Employee', employeePassword, 'Update');
         }
 
         res.status(200).json({ message: 'Employee Data Updated Successfully', updatedEmployeeData });
@@ -177,6 +181,7 @@ const deleteEmployee = async (req, res) => {
         const id = req.params.id;
         const deletedEmployee = await Employee.findByIdAndDelete(id);
         if (!deletedEmployee) return res.status(404).json({ error: 'Employee not Found' });
+        await User.findByIdAndDelete(deletedEmployee.userId);
         res.status(200).json({ message: 'Employee deleted Successfuly', deletedEmployee });
     } catch (error) {
         console.log(error)

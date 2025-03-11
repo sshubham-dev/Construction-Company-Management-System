@@ -1,127 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import Header from "../../components/Header";
 import CreateLead from "../../components/CreateLead";
 import Modal from "../../components/Modal";
-
-const sampleLeads = [
-  {
-    name: "John Doe",
-    contact: {
-      phoneNo: "123-456-7890",
-      whatsapp: "123-456-7890",
-      email: "john.doe@example.com",
-    },
-    location: {
-      address: "123 Main St",
-      city: "Springfield",
-      district: "Downtown",
-      state: "IL",
-    },
-    status: "active",
-    requirement: {
-      service: "Web Development",
-      message: "Looking for a new website for my business.",
-    },
-    followUps: [
-      {
-        followUpNo: "1",
-        date: new Date("2023-10-01"),
-        message: "Initial contact made.",
-      },
-      {
-        followUpNo: "2",
-        date: new Date("2023-10-05"),
-        message: "Sent proposal.",
-      },
-    ],
-    source: "Website",
-    contactAgent: "60d5ec49f1a2b8b1f8c8e4e1", // Example ObjectId
-  },
-  {
-    name: "Jane Smith",
-    contact: {
-      phoneNo: "987-654-3210",
-      whatsapp: "987-654-3210",
-      email: "jane.smith@example.com",
-    },
-    location: {
-      address: "456 Elm St",
-      city: "Metropolis",
-      district: "Uptown",
-      state: "NY",
-    },
-    status: "converted",
-    requirement: {
-      service: "SEO Services",
-      message: "Need help improving my website's SEO.",
-    },
-    followUps: [
-      {
-        followUpNo: "1",
-        date: new Date("2023-09-15"),
-        message: "Discussed SEO needs.",
-      },
-    ],
-    source: "Referral",
-    contactAgent: "60d5ec49f1a2b8b1f8c8e4e2", // Example ObjectId
-  },
-  {
-    name: "Alice Johnson",
-    contact: {
-      phoneNo: "555-123-4567",
-      whatsapp: "555-123-4567",
-      email: "alice.johnson@example.com",
-    },
-    location: {
-      address: "789 Oak St",
-      city: "Gotham",
-      district: "Central",
-      state: "NJ",
-    },
-    status: "closed",
-    requirement: {
-      service: "Graphic Design",
-      message: "Looking for a logo design.",
-    },
-    followUps: [],
-    source: "Social Media",
-    contactAgent: "60d5ec49f1a2b8b1f8c8e4e3", // Example ObjectId
-  },
-  {
-    name: "Bob Brown",
-    contact: {
-      phoneNo: "321-654-0987",
-      whatsapp: "321-654-0987",
-      email: "bob.brown@example.com",
-    },
-    location: {
-      address: "321 Pine St",
-      city: "Star City",
-      district: "West End",
-      state: "CA",
-    },
-    status: "irrelevant",
-    requirement: {
-      service: "Consulting",
-      message: "Inquiring about consulting services.",
-    },
-    followUps: [
-      {
-        followUpNo: "1",
-        date: new Date("2023-08-20"),
-        message: "Followed up on consulting inquiry.",
-      },
-    ],
-    source: "Email Campaign",
-    contactAgent: "60d5ec49f1a2b8b1f8c8e4e4", // Example ObjectId
-  },
-];
+import axios from "axios";
+axios.defaults.withCredentials = true;
 
 const Lead = () => {
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [leads, setLeads] = useState(sampleLeads);
+  const [leads, setLeads] = useState([]);
   const [selectedLead, setSelectedLead] = useState(null);
   const [isAddFollowUpModalOpen, setIsAddFollowUpModalOpen] = useState(false);
   // const [statusFilter, setStatusFilter] = useState("all");
@@ -137,6 +25,14 @@ const Lead = () => {
     state: 'all',
     source: 'all',
   });
+
+  useEffect(() => {
+    const fetchLead = async () => {
+      const response = await axios.get('/api/v1/lead')
+      setLeads(response.data)
+    }
+    fetchLead()
+  },[])
 
   const handleOpenFilterModal = () => {
     setIsFilterModalOpen(true);
@@ -192,8 +88,9 @@ const Lead = () => {
     setEditId(id)
   };
 
-  const handleDelete = (lead) => {
-    setLeads((prevLeads) => prevLeads.filter((l) => l !== lead));
+  const handleDelete = async (id) => {
+    await axios.delete(`/api/v1/lead/${id}`)
+    setLeads((prevLeads) => prevLeads.filter((lead) => lead._id !== id));
     toast.success("Lead deleted successfully!");
   };
 
@@ -253,7 +150,7 @@ const Lead = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredLeads.map((lead, index) => (
+                  {leads.map((lead, index) => (
                     <tr key={index} className="border-t hover:bg-gray-50 transition duration-200">
                       <td className="p-3 text-sm text-gray-700">{lead.name}</td>
                       <td className="p-3 text-sm text-gray-700">
@@ -301,7 +198,7 @@ const Lead = () => {
                         </button>
                         <button
                           className="bg-red-500 text-white p-1 px-2 rounded-lg hover:bg-red-600 transition duration-200"
-                          onClick={() => handleDelete(lead)}
+                          onClick={() => handleDelete(lead._id)}
                         >
                           Delete
                         </button>
@@ -315,6 +212,7 @@ const Lead = () => {
               <FilterModal
                 onClose={handleCloseFilterModal}
                 onApplyFilter={handleApplyFilter}
+                data={leads}
               />
             </Modal>
             <AddFollowUpModal
@@ -344,7 +242,6 @@ const Lead = () => {
               <CreateLead
                 onClose={() => setEditModal(false)}
                 onSubmit={handleSubmit}
-                leadData={selectedLead}
                 isEdit={editId}
               />
             </Modal>
@@ -358,7 +255,7 @@ const Lead = () => {
 
 export default Lead
 
-const FilterModal = ({ onClose, onApplyFilter }) => {
+const FilterModal = ({ onClose, onApplyFilter, data }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [serviceFilter, setServiceFilter] = useState('');
   const [districtFilter, setDistrictFilter] = useState('');
@@ -409,7 +306,7 @@ const FilterModal = ({ onClose, onApplyFilter }) => {
           className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">All Services</option>
-          {sampleLeads.map((lead, index) => (
+          {data.map((lead, index) => (
             <option key={index} value={lead.requirement.service}>{lead.requirement.service}</option>
           ))}
         </select>
@@ -422,7 +319,7 @@ const FilterModal = ({ onClose, onApplyFilter }) => {
           className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">All Location</option>
-          {sampleLeads.map((lead, index) => (
+          {data.map((lead, index) => (
             <option key={index} value={lead.location.city}>{lead.location.city}</option>
           ))}
         </select>
@@ -435,7 +332,7 @@ const FilterModal = ({ onClose, onApplyFilter }) => {
           className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">All Location</option>
-          {sampleLeads.map((lead, index) => (
+          {data.map((lead, index) => (
             <option key={index} value={lead.location.district}>{lead.location.district}</option>
           ))}
         </select>
@@ -448,7 +345,7 @@ const FilterModal = ({ onClose, onApplyFilter }) => {
           className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">All Location</option>
-          {sampleLeads.map((lead, index) => (
+          {data.map((lead, index) => (
             <option key={index} value={lead.location.state}>{lead.location.state}</option>
           ))}
         </select>
@@ -461,7 +358,7 @@ const FilterModal = ({ onClose, onApplyFilter }) => {
           className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">All Source</option>
-          {sampleLeads.map((lead, index) => (
+          {data.map((lead, index) => (
             <option key={index} value={lead.source}>{lead.source}</option>
           ))}
         </select>
@@ -491,29 +388,29 @@ const FilterModal = ({ onClose, onApplyFilter }) => {
 };
 
 const AddFollowUpModal = ({ isOpen, onClose, onAddFollowUp, lead }) => {
-  const [followUpNo, setFollowUpNo] = useState('');
   const [date, setDate] = useState('');
   const [message, setMessage] = useState('');
+  console.log(lead)
 
-  const handleSubmit = () => {
-    const newFollowUp = { followUpNo, date, message };
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const newFollowUp = { date, message };
     onAddFollowUp(lead, newFollowUp);
-    onClose();
+    try {
+      const response = await axios.patch(`/api/v1/lead/${lead._id}/followUp`, newFollowUp)
+      if(response){
+        console.log(response.data)
+      }
+      onClose();
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} head='Add Follow-Up'>
       <div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm font-semibold mt-2">Follow-Up No:</label>
-            <input
-              type="text"
-              value={followUpNo}
-              onChange={(e) => setFollowUpNo(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
           <div>
             <label className="text-sm font-semibold mt-2">Date:</label>
             <input

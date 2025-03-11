@@ -91,7 +91,7 @@ const createUser = async (req, res) => {
     }
 };
 
-const convertToUser = async (id, role, password) => {
+const convertToUser = async (id, role, password, status) => {
     try {
         switch (role) {
             case 'Employee':
@@ -102,20 +102,29 @@ const convertToUser = async (id, role, password) => {
                     $and: [{ userName: employee.name }, { department: employee.department }]
                 });
                 if (employeeUser) return res.status(400).json({ error: 'Validation Error' });
-                const newEmployeeUser = new User({
-                    userName: employee.name,
-                    userMail: employee.email,
-                    password,
-                    phone: employee.phone,
-                    whatsapp: employee.whatsapp,
-                    role,
-                    department: employee.department,
-                });
-                console.log('newEmployeeUser', newEmployeeUser)
-                const savedEmployeeUser = await newEmployeeUser.save();
-                console.log('savedEmployeeUser', savedEmployeeUser)
-                employee.userId = savedEmployeeUser._id;
-                await employee.save({ validateBeforeSave: false });
+                if (status === 'Update') {
+                    employeeUser.userName = employee.name || employeeUser.userName,
+                        employeeUser.userMail = employee.email || employeeUser.userMail,
+                        employeeUser.phone = employee.phone || employeeUser.phone,
+                        employeeUser.whatsapp = employee.whatsapp || employeeUser.whatsapp,
+                        employeeUser.department = employee.department || employeeUser.department,
+                        await employeeUser.save();
+                } else if (status === 'Create') {
+                    const newEmployeeUser = new User({
+                        userName: employee.name,
+                        userMail: employee.email,
+                        password,
+                        phone: employee.phone,
+                        whatsapp: employee.whatsapp,
+                        role,
+                        department: employee.department,
+                    });
+                    console.log('newEmployeeUser', newEmployeeUser)
+                    const savedEmployeeUser = await newEmployeeUser.save();
+                    console.log('savedEmployeeUser', savedEmployeeUser)
+                    employee.userId = savedEmployeeUser._id;
+                    await employee.save({ validateBeforeSave: false });
+                }
                 break;
 
             case 'Client':

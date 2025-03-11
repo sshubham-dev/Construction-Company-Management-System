@@ -7,8 +7,8 @@ axios.defaults.withCredentials = true;
 
 const CreateLeave = ({ onClose, isEdit }) => {
     const [leave, setLeave] = useState({
-        reportingDate: '',
-        from: '',
+        reportingDate: moment().format('YYYY-MM-DD'),
+        from: moment().format('YYYY-MM-DD'),
         reason: '',
     });
 
@@ -46,8 +46,8 @@ const CreateLeave = ({ onClose, isEdit }) => {
                 onClose()
                 // Reset form fields after successful submission
                 setLeave({
-                    reportingDate: moment(),
-                    from: moment(),
+                    reportingDate: moment().format('YYYY-MM-DD'),
+                    from: moment().format('YYYY-MM-DD'),
                     reason: '',
                 });
             } else {
@@ -56,8 +56,8 @@ const CreateLeave = ({ onClose, isEdit }) => {
                 onClose()
                 // Reset form fields after successful submission
                 setLeave({
-                    reportingDate: moment(),
-                    from: moment(),
+                    reportingDate: moment().format('YYYY-MM-DD'),
+                    from: moment().format('YYYY-MM-DD'),
                     reason: '',
                 });
             }
@@ -112,8 +112,8 @@ const CreateLeave = ({ onClose, isEdit }) => {
                     </button>
                     <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600">Submit</button>
                     <button type="button" onClick={() => setLeave({
-                        reportingDate: moment(),
-                        from: moment(),
+                        reportingDate: moment().format('YYYY-MM-DD'),
+                        from: moment().format('YYYY-MM-DD'),
                         reason: '',
                     })} className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
                         Reset

@@ -8,10 +8,11 @@ const {
 const getAttendance = async (req, res) => {
     try {
         const user = req.user;
-        const attendance = await Attendance.findOne()
+        console.log(user)
+        const attendance = await Attendance.find()
             .where('user.id').equals(user._id)
             .exec();
-        if (attendance) return res.status(404).json({ message: 'No Attendance Found' })
+        if (!attendance) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json(attendance)
     } catch (error) {
         console.log(error);
@@ -22,10 +23,10 @@ const getAttendance = async (req, res) => {
 const getAttendanceByUser = async (req, res) => {
     try {
         const id = req.id;
-        const attendance = await Attendance.findOne()
+        const attendance = await Attendance.find()
             .where('user.id').equals(id)
             .exec();
-        if (attendance) return res.status(404).json({ message: 'No Attendance Found' })
+        if (!attendance) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json(attendance)
     } catch (error) {
         console.log(error);
@@ -47,10 +48,10 @@ const getAttendances = async (req, res) => {
 const getLeave = async (req, res) => {
     try {
         const user = req.user;
-        const leaves = await Leave.findOne()
+        const leaves = await Leave.find()
             .where('user.id').equals(user._id)
             .exec();
-        if (leaves) return res.status(404).json({ message: 'No Leaves Found' })
+        if (!leaves) return res.status(404).json({ message: 'No Leaves Found' })
         return res.status(201).json(leaves)
     } catch (error) {
         console.log(error);
@@ -61,10 +62,10 @@ const getLeave = async (req, res) => {
 const getLeaveByUser = async (req, res) => {
     try {
         const id = req.id;
-        const leaves = await Leave.findOne()
+        const leaves = await Leave.find()
             .where('user.id').equals(id)
             .exec();
-        if (leaves) return res.status(404).json({ message: 'No Leaves Found' })
+        if (!leaves) return res.status(404).json({ message: 'No Leaves Found' })
         return res.status(201).json(leaves)
     } catch (error) {
         console.log(error);

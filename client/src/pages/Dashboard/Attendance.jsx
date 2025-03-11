@@ -4,6 +4,7 @@ import moment from 'moment';
 import CreateLeave from '../../components/CreateLeave';
 import Header from '../../components/Header';
 import Modal from '../../components/Modal';
+axios.defaults.withCredentials = true;
 
 const Attendance = () => {
   const [attendances, setAttendances] = useState([]);
@@ -24,23 +25,39 @@ const Attendance = () => {
   const [editId, setEditId] = useState('');
   // Fetch attendance and leave data
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAttendance = async () => {
       try {
-        const leaveResponse = await axios.get('/api/v1/leave');
         const attendanceResponse = await axios.get('/api/v1/attendance');
-        console.log('Attendance:', attendanceResponse.data);
-        console.log('Leaves:', leaveResponse.data);
-
-        setAttendances(attendanceResponse.data || []);
-        setLeaves(leaveResponse.data || []);
+        console.log('Attendance Response:', attendanceResponse.data);
+        if (Array.isArray(attendanceResponse.data)) {
+          setAttendances(attendanceResponse.data);
+        } else {
+          console.error('Invalid attendance data:', attendanceResponse.data);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
 
-    fetchData();
-  }, []); // Re-fetch data when year or month changes
-
+    const fetchLeave = async () => {
+      try {
+        const leaveResponse = await axios.get('/api/v1/leave');
+        console.log('Leaves Response:', leaveResponse.data);
+  
+        if (Array.isArray(leaveResponse.data)) {
+          setLeaves(leaveResponse.data);
+        } else {
+          console.error('Invalid leave data:', leaveResponse.data);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+  
+    fetchAttendance();
+    fetchLeave();
+  }, []);
+  
 
   const handleStatusChange = (e) => {
     setAttendanceStatus(e.target.value);
@@ -66,14 +83,17 @@ const Attendance = () => {
   };
 
   const filteredAttendance = attendances.filter(record => {
+    if (!record.date) return false; // Ensure date exists
     const recordDate = moment(record.date);
     return recordDate.year() === Number(year) && recordDate.month() === Number(month);
   });
-
+  
   const filteredLeaves = leaves.filter(record => {
+    if (!record.from) return false; // Ensure from date exists
     const recordDate = moment(record.from);
     return recordDate.year() === Number(year) && recordDate.month() === Number(month);
   });
+  
 
 
   return (

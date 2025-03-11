@@ -2,15 +2,13 @@ import { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import axios from 'axios'
 
-const CreateLead = ({ onClose, onSubmit, leadData }) => {
-    const [lead, setLead] = useState(
-        leadData || {
+const CreateLead = ({ onClose, onSubmit, isEdit }) => {
+    const [lead, setLead] = useState({
             name: "",
             contact: { phoneNo: "", whatsapp: "", email: "" },
             location: { address: "", city: "", district: "", state: "" },
             leadStatus: "",
             requirement: { service: "", message: "" },
-            followUps: [],
             source: "",
             contactAgent: "",
             isClient: '',
@@ -31,7 +29,15 @@ const CreateLead = ({ onClose, onSubmit, leadData }) => {
             }
         }
         getUsers();
+        if(isEdit){
+            fetchLead(isEdit)
+        }
     }, [])
+    const fetchLead = async(id) => {
+        const existlead = await axios.get(`/api/v1/lead/${id}`)
+        console.log('existlead',existlead)
+        setLead(existlead.data)
+    }
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -64,10 +70,17 @@ const CreateLead = ({ onClose, onSubmit, leadData }) => {
         e.preventDefault();
         try {
             console.log(lead)
-            const response = await axios.post('/api/v1/lead', lead)
-            console.log(response)
-            onSubmit(lead);
-            onClose();
+            if(isEdit){
+                const response = await axios.post(`/api/v1/lead/${isEdit}`, lead)
+                console.log(response)
+                onSubmit(lead);
+                onClose();  
+            }else{
+                const response = await axios.post('/api/v1/lead', lead)
+                console.log(response)
+                onSubmit(lead);
+                onClose();
+            }
         } catch (error) {
             console.log(error)
         }
@@ -171,7 +184,7 @@ const CreateLead = ({ onClose, onSubmit, leadData }) => {
                 </select>
 
                 <textarea
-                    name="requirement.service"
+                    name="requirement.message"
                     className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     onChange={handleChange}
                     placeholder="Wite Message..."
@@ -194,6 +207,7 @@ const CreateLead = ({ onClose, onSubmit, leadData }) => {
                     <option value="justdial">Just Dial</option>
                     <option value="flex">Flex</option>
                     <option value="wall">Wall Marketing</option>
+                    <option value="referral">Referral</option>
                 </select>
 
                 <select
@@ -214,8 +228,8 @@ const CreateLead = ({ onClose, onSubmit, leadData }) => {
                         name="isClient"
                         className="border-none rounded-lg focus:outline-none mr-2"
                         onChange={handleChange}
-                        value='true' />
-                    <label htmlFor="isClient" className="block text-md font-medium text-gray-600">Is a Client</label>
+                        value={lead.isClient ? lead.isClient : 'true'} />
+                    <label htmlFor="isClient" className="block text-md font-medium text-gray-600">{lead.isClient ? `Is a Client: ${lead.isClient}` : 'Is a Client'}</label>
                 </div>
 
                 <div className="flex space-x-4">
