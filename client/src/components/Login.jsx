@@ -11,7 +11,6 @@ axios.defaults.withCredentials = true;
 const Login = () => {
   const [formData, setFormData] = useState({
     auth: '',
-    // phone: '',
     password: '',
   });
   const [error, setError] = useState(null);
@@ -42,7 +41,6 @@ const Login = () => {
       }
       setFormData({
         auth: '',
-        // phone: '',
         password: '',
       });
     } catch (error) {

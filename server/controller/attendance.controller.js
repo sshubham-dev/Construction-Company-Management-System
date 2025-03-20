@@ -135,17 +135,20 @@ const createLeave = async (req, res) => {
     try {
         const { reason, from, reportingDate } = req.body;
         const user = req.user;
+        const existingUser = await User.findById(user._id);
         const newLeave = new Leave({
             user: {
-                name: user.userName,
-                id: user._id
+                name: existingUser.userName,
+                id: existingUser._id
             },
             reason,
             from,
             reportingDate,
         })
-        const existLeave = await newLeave.save();
-        sendApproveByAdmin(existLeave, 'Leave', user._id)
+        const savedLeave = await newLeave.save();
+        existingUser.leave.push(savedLeave._id);
+        existingUser.save({validateBeforeSave:false})
+        sendApproveByAdmin(savedLeave, 'Leave', user._id)
         return res.status(201).json({ message: 'Successfuly created and send for approval' })
     } catch (error) {
         console.log(error);

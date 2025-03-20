@@ -24,6 +24,7 @@ const getSites = async (req, res) => {
 const getSite = async (req, res) => {
     try {
         const id = req.params.id;
+        if(id !== "") return res.status(500).json({ error: 'Id undefined' });
         const site = await Site.findById(id)
             .populate('bill')
             .populate('purchaseOrder')

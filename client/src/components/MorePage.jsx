@@ -49,7 +49,7 @@ const MorePage = ({options}) => {
 
     /* Employee Management*/
     {
-      to: '/employee',
+      to: '/hr/employee/dashboard',
       name: 'Employee Management',
       icon: <FcManager size={22} />,
       role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
