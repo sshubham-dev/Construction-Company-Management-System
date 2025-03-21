@@ -6,28 +6,21 @@ import Header from '../../components/Header';
 import Modal from '../../components/Modal';
 axios.defaults.withCredentials = true;
 
-const Attendance = () => {
+const AttendanceReport = () => {
   const [attendances, setAttendances] = useState([]);
   const [leaves, setLeaves] = useState([]);
-  const [attendanceMarked, setAttendanceMarked] = useState(false);
-  const [leaveModal, setLeaveModal] = useState(false);
   const [filterModal, setFilterModal] = useState(false);
   const [year, setYear] = useState(moment().year());
   const [month, setMonth] = useState(moment().month());
   const [attendanceStatus, setAttendanceStatus] = useState('present');
-  const [markAttendance, setMarkAttendance] = useState({
-    date: moment().format('YYYY-MM-DD'),
-    timeIn: moment().format('HH:mm'),
-    status: '',
-  });
+  const [selectedName, setSelectedName] = useState(""); // Track selected name
+
   const [activeTab, setActiveTab] = useState('attendance'); // State for active tab
-  const [editModal, setEditModal] = useState(false);
-  const [editId, setEditId] = useState('');
   // Fetch attendance and leave data
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
-        const attendanceResponse = await axios.get('/api/v1/attendance');
+        const attendanceResponse = await axios.get('/api/v1/attendance/report');
         console.log('Attendance Response:', attendanceResponse.data);
         if (Array.isArray(attendanceResponse.data)) {
           setAttendances(attendanceResponse.data);
@@ -41,7 +34,7 @@ const Attendance = () => {
 
     const fetchLeave = async () => {
       try {
-        const leaveResponse = await axios.get('/api/v1/leave');
+        const leaveResponse = await axios.get('/api/v1/leave/report');
         console.log('Leaves Response:', leaveResponse.data);
 
         if (Array.isArray(leaveResponse.data)) {
@@ -63,19 +56,12 @@ const Attendance = () => {
     setAttendanceStatus(e.target.value);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post('/api/v1/attendance', markAttendance);
-      console.log(response.data);
-      setAttendanceMarked(true);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const handleYearChange = (e) => {
     setYear(e.target.value);
+  };
+
+  const handleNameChange = (e) => {
+    setSelectedName(e.target.value);
   };
 
   const handleMonthChange = (e) => {
@@ -83,65 +69,45 @@ const Attendance = () => {
   };
 
   const filteredAttendance = attendances.filter(record => {
-    if (!record.date) return false; // Ensure date exists
+    if (!record.date) return false;
     const recordDate = moment(record.date);
-    return recordDate.year() === Number(year) && recordDate.month() === Number(month);
+    return (
+      recordDate.year() === Number(year) &&
+      recordDate.month() === Number(month) &&
+      (selectedName ? record?.user?.name === selectedName : true) // Apply name filter
+    );
   });
 
   const filteredLeaves = leaves.filter(record => {
-    if (!record.from) return false; // Ensure from date exists
+    if (!record.from) return false;
     const recordDate = moment(record.from);
-    return recordDate.year() === Number(year) && recordDate.month() === Number(month);
+    return (
+      recordDate.year() === Number(year) &&
+      recordDate.month() === Number(month) &&
+      (selectedName ? record?.user?.name === selectedName : true) // Apply name filter
+    );
   });
 
   const handleReset = () => {
     setMonth(moment().month());  // Reset to the current month
     setYear(moment().year());    // Reset to the current year
+    setSelectedName("");         // Reset selected name
   };
 
   return (
     <div className='p-1'>
-      <Header category="Page" title="Attendance Dashboard" />
+      <Header category="Page" title="Employee Attendance Report" />
       <section className="h-full w-full mb-16 flex justify-center">
         <div className='overflow-x-auto scrollbar-hide w-full max-w-screen-xl mx-auto'>
 
           {/* Attendance Marking Section */}
-          <div className="flex flex-col md:flex-row gap-4 mb-2 items-center justify-between">
-            <form onSubmit={handleSubmit} className="flex gap-4">
-              {attendanceMarked !== true && (
-                <>
-                  <select
-                    value={attendanceStatus}
-                    onChange={handleStatusChange}
-                    className="py-2 px-3 border border-gray-300 rounded-lg focus:outline-none bg-white"
-                  >
-                    <option value="present">Present</option>
-                    <option value="absent">Absent</option>
-                  </select>
-                  <button
-                    onClick={() => setMarkAttendance({ ...markAttendance, status: attendanceStatus })}
-                    className={`py-2 px-3 rounded-lg font-semibold ${attendanceMarked ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
-                      } text-white transition duration-300`}
-                  >
-                    Mark Attendance
-                  </button>
-                </>
-              )}
-            </form>
-            <div className="flex gap-4">
-              <button
-                onClick={() => setFilterModal(true)}
-                className="py-2 px-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg transition duration-300"
-              >
-                Filter
-              </button>
-              <button
-                onClick={() => setLeaveModal(true)}
-                className="py-2 px-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg transition duration-300"
-              >
-                Mark Leave
-              </button>
-            </div>
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-end">
+            <button
+              onClick={() => setFilterModal(true)}
+              className="py-2 px-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg transition duration-300"
+            >
+              Filter
+            </button>
           </div>
 
           {/* Filter Modal */}
@@ -150,6 +116,18 @@ const Attendance = () => {
               <div className="bg-white p-6 rounded-lg shadow-lg w-96">
                 <h2 className="text-xl font-bold mb-4">Filter Attendance</h2>
                 <div className="space-y-4">
+
+                  <select
+                    value={name}
+                    onChange={handleNameChange}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-white"
+                  >
+                    <option value=''>All Employee</option>
+                    {filteredAttendance.map((record, index) => (
+                      <option key={index} value={record?.user.name}>{record?.user.name}</option>
+                    ))}
+                  </select>
+
                   <select
                     value={month}
                     onChange={(e) => setMonth(Number(e.target.value))}
@@ -169,6 +147,7 @@ const Attendance = () => {
                     min="2000"
                     className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-white"
                   />
+
                 </div>
                 <div className="mt-6 flex justify-end gap-4">
                   <button
@@ -218,6 +197,7 @@ const Attendance = () => {
               <table className="w-full overflow-x-auto scrollbar-hide">
                 <thead className="bg-gradient-to-r from-blue-400 to-purple-400">
                   <tr>
+                    <th className="p-3 text-left text-white font-semibold">Name</th>
                     <th className="p-3 text-left text-white font-semibold">Date</th>
                     <th className="p-3 text-left text-white font-semibold">Time</th>
                     <th className="p-3 text-left text-white font-semibold">Status</th>
@@ -226,6 +206,7 @@ const Attendance = () => {
                 <tbody className='bg-gradient-to-br from-blue-50 to-purple-50'>
                   {filteredAttendance.map((record, index) => (
                     <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
+                      <td className="p-3 text-gray-700">{record?.user.name}</td>
                       <td className="p-3 text-gray-700">{moment(record.date).format('DD MMM YYYY')}</td>
                       <td className="p-3 text-gray-700">{record.timeIn || 'N/A'}</td>
                       <td className="p-3">
@@ -251,6 +232,7 @@ const Attendance = () => {
               <table className="w-full overflow-x-auto scrollbar-hide">
                 <thead className="bg-gradient-to-r from-blue-400 to-purple-400">
                   <tr>
+                    <th className="p-3 text-left text-white font-semibold">Name</th>
                     <th className="p-3 text-left text-white font-semibold">From</th>
                     <th className="p-3 text-left text-white font-semibold">Reporting Date</th>
                     <th className="p-3 text-left text-white font-semibold">Reason</th>
@@ -261,6 +243,7 @@ const Attendance = () => {
                 <tbody className='bg-gradient-to-br from-blue-50 to-purple-50'>
                   {filteredLeaves.map((record, index) => (
                     <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
+                      <td className="p-3 text-gray-700">{record?.user.name}</td>
                       <td className="p-3 text-gray-700">{moment(record.from).format('DD MMM YYYY')}</td>
                       <td className="p-3 text-gray-700">{moment(record.reportingDate).format('DD MMM YYYY')}</td>
                       <td className="p-3 text-gray-700">{record.reason || 'N/A'}</td>
@@ -273,17 +256,10 @@ const Attendance = () => {
             </div>
           )}
 
-          {/* Leave Modal */}
-          <Modal isOpen={leaveModal} onClose={() => setLeaveModal(false)} head='Create Leave'>
-            <CreateLeave onClose={() => setLeaveModal(false)} />
-          </Modal>
-          <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Leave'>
-            <CreateLeave onClose={() => setEditModal(false)} isEdit={editId} />
-          </Modal>
         </div>
       </section>
     </div>
   );
 };
 
-export default Attendance;
+export default AttendanceReport;

@@ -13,6 +13,9 @@ import { RiCustomerService2Fill } from "react-icons/ri";
 import { FaWallet, FaBalanceScale, FaReceipt } from "react-icons/fa";
 import { TbTruckReturn } from "react-icons/tb";
 import { FaPersonCircleQuestion, FaPersonCircleCheck, FaPersonShelter, FaTruckArrowRight, FaTruckMedical, FaMoneyBillTransfer } from "react-icons/fa6";
+import { FaUserCheck } from "react-icons/fa";
+import { FaRegCalendarCheck } from "react-icons/fa6";
+import { FcManager } from "react-icons/fc";
 
 
 
@@ -37,7 +40,7 @@ const BottomNavigation = () => {
         {
           to: '/erp/receipt_payment',
           name: 'Receipt & Payment',
-          icon: <FaReceipt/>,
+          icon: <FaReceipt />,
           role: ['Admin', 'Company', 'Ceo', 'Account Head'],
         },
         {
@@ -211,6 +214,22 @@ const BottomNavigation = () => {
           name: 'Check-List ',
           icon: <LuClipboardCheck />,
           role: ['Admin', 'Company', 'Ceo', 'Site Incharge', 'Quality Engineer', 'Account Head'],
+        },
+      ],
+    },
+
+    /* Employee Management*/
+    {
+      to: '/hr/employee/dashboard',
+      name: 'H.R',
+      icon: <FcManager size={22} />,
+      role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
+      children: [
+        {
+          to: '/hr/employee/attendance',
+          name: 'Attendance Management',
+          icon: <FaUserCheck />,
+          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
         },
       ],
     },

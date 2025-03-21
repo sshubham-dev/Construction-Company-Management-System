@@ -25,6 +25,8 @@ import { FaReceipt } from "react-icons/fa";
 import { FaMoneyBillTransfer } from "react-icons/fa6";
 import { PiNoteFill } from "react-icons/pi";
 import { TbReportAnalytics } from "react-icons/tb";
+import { FaUserCheck } from "react-icons/fa";
+import { FaRegCalendarCheck } from "react-icons/fa6";
 
 const Sidebar = () => {
   const { activeMenu } = useStateContext();
@@ -308,12 +310,12 @@ const Sidebar = () => {
       name: 'Employee Management',
       icon: <FcManager />,
       children: [
-        // {
-        //   to: '/hr/employee/dashboard',
-        //   name: 'Employee Management',
-        //   icon: <FcManager />,
-        //   role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
-        // },
+        {
+          to: '/hr/employee/attendance',
+          name: 'Attendance Management',
+          icon: <FaUserCheck />,
+          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
+        },
         // {
         //   to: '/employee/salary',
         //   name: 'Salary',

@@ -7,6 +7,8 @@ import { GiExpense } from "react-icons/gi";  // Fixed import
 import { MdPerson, MdAssignment } from "react-icons/md";
 import { FcManager, FcApproval } from "react-icons/fc";
 import { FaBusinessTime } from "react-icons/fa";
+import { FaUserCheck } from "react-icons/fa";
+import { FaRegCalendarCheck } from "react-icons/fa6";
 
 
 const MorePage = ({options}) => {
@@ -46,14 +48,6 @@ const MorePage = ({options}) => {
     //   icon: <GiExpense size={22} />,
     //   role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
     // },
-
-    /* Employee Management*/
-    {
-      to: '/hr/employee/dashboard',
-      name: 'Employee Management',
-      icon: <FcManager size={22} />,
-      role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
-    },
 
     {
       to: '/approval',

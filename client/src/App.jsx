@@ -77,6 +77,7 @@ import Contra from './pages/ERP/Contra.jsx';
 import ERPReport from './pages/ERP/ERPReport.jsx';
 import Journal from './pages/ERP/Journal.jsx';
 import ReturnRequest from './pages/Site/Return.jsx';
+import AttendanceReport from './pages/HR/Attendance.jsx';
 
 const App = () => {
 
@@ -124,6 +125,8 @@ const App = () => {
         <Route path='/attendance' element={<Attendance />} />
 
         <Route path='/hr/employee/dashboard' element={<Employee />} />
+        <Route path='/hr/employee/attendance' element={<AttendanceReport />} />
+        <Route path='/hr' element={<Employee />} />
 
         <Route path='/user' element={<UserManagement />} />
         <Route path='/user/:id' element={<UserScreen />} />
