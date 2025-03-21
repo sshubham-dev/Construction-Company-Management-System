@@ -118,7 +118,7 @@ const AttendanceReport = () => {
                 <div className="space-y-4">
 
                   <select
-                    value={name}
+                    value={selectedName}
                     onChange={handleNameChange}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-white"
                   >

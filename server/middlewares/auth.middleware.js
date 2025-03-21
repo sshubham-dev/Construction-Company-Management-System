@@ -15,6 +15,7 @@ const authenticate = (allowedRoles) => async (req, res, next) => {
         }
 
         if (!allowedRoles.includes(user.department)) {
+            console.log('Insufficient permissions')
             return res.status(403).json('Insufficient permissions');
         }
 

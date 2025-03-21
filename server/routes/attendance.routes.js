@@ -21,7 +21,7 @@ Attendance.route('/')
 .get(userAuth, getAttendance)
 .post(userAuth, createAttendance);
 
-Attendance.get('/report', adminAuth, getAttendances );
+Attendance.get('/report', getAttendances );
 
 Attendance.route('/:id')
 .put(userAuth, updateAttendance)
@@ -32,7 +32,7 @@ Leave.route('/')
 .get(userAuth, getLeave )
 .post(userAuth, createLeave );
 
-Leave.get('/report', adminAuth, getLeaves );
+Leave.get('/report', getLeaves );
 
 Leave.route('/:id')
 .get(userAuth, getLeaveByUser)
