@@ -24,7 +24,7 @@ const Stock = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 5;
 
-  useEffect(()=>{
+  useEffect(() => {
     const fetchStock = async () => {
       try {
         const response = await axios.get('/api/v1/stock')
@@ -35,7 +35,7 @@ const Stock = () => {
       }
     };
     fetchStock();
-  },[])
+  }, [])
 
   // Filter and sort stock
   const filteredstock = useMemo(() => {
@@ -92,11 +92,13 @@ const Stock = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    // const confirmDelete = window.confirm("Are you sure you want to delete this item?");
-    // if (confirmDelete) {
-    setStock((prevstock) => prevstock.filter((item) => item._id !== id));
-    // }
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this item?");
+    if (confirmDelete) {
+      const response = await axios.delete(`/api/v1/stock/${id}`)
+      console.log(response.data)
+      setStock((prevstock) => prevstock.filter((item) => item._id !== id));
+    }
   };
 
   const handleSort = (key) => {
