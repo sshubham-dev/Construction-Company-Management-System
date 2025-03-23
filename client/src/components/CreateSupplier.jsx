@@ -11,7 +11,7 @@ const CreateSupplier = ({ onClose, isEdit }) => {
     email: '',
     phone: '',
     whatsapp: '',
-    gst: '',
+    gstNo: '',
     address: '',
     pan: '',
     bank: '',
@@ -36,7 +36,7 @@ const CreateSupplier = ({ onClose, isEdit }) => {
         email: supplier?.email,
         phone: supplier.phone,
         whatsapp: supplier.whatsapp,
-        gst: supplier.gst,
+        gstNo: supplier.gstNo,
         address: supplier.address,
         pan: supplier.pan,
         bank: '',
@@ -67,7 +67,7 @@ const CreateSupplier = ({ onClose, isEdit }) => {
       email: '',
       phone: '',
       whatsapp: '',
-      gst: '',
+      gstNo: '',
       address: '',
       pan: '',
       bank: '',
@@ -181,12 +181,12 @@ const CreateSupplier = ({ onClose, isEdit }) => {
         </div>
 
         <div className='mb-4'>
-          <label htmlFor="gst" className="block text-sm font-medium text-gray-600">
+          <label htmlFor="gstNo" className="block text-sm font-medium text-gray-600">
             GST No
           </label>
           <input
             type="text"
-            name="gst"
+            name="gstNo"
             onChange={handleChange}
             placeholder="GST No."
             className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"

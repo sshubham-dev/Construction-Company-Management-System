@@ -73,7 +73,7 @@ const salesSchema = new mongoose.Schema({
         name: String,
         id: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Account',
+            ref: 'Ledger',
         }
     },
     purchaseRequest: {
@@ -84,5 +84,5 @@ const salesSchema = new mongoose.Schema({
 
 
 
-const SalesOrder = mongoose.model('SalesOrder', salesSchema);
+const SalesOrder = mongoose.model('Sales_Order', salesSchema);
 module.exports = SalesOrder;

@@ -56,19 +56,19 @@ const userSchema = new mongoose.Schema({
     }],
     pending:[{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Pending-Approval',
+        ref: 'Pending_Approval',
     }],
     rejected:[{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Rejected-Items'
+        ref: 'Rejected_Item'
     }],
     deleted:[{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Deleted-Items'
+        ref: 'Deleted_Item'
     }],
     draft:[{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Draft-Items'
+        ref: 'Draft_Item'
     }],
     // message: [{
     //     type: mongoose.Schema.Types.ObjectId,

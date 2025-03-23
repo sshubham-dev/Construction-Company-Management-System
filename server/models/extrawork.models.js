@@ -95,5 +95,5 @@ const extraWorkSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-const ExtraWork = mongoose.model('Extra-Work', extraWorkSchema);
+const ExtraWork = mongoose.model('Extra_Work', extraWorkSchema);
 module.exports = ExtraWork;

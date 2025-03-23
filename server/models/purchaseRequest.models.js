@@ -85,7 +85,7 @@ const purchaseRequestSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-const PurchaseRequest = mongoose.model('Purchase-Request', purchaseRequestSchema);
+const PurchaseRequest = mongoose.model('Purchase_Request', purchaseRequestSchema);
 module.exports = PurchaseRequest;
 
 

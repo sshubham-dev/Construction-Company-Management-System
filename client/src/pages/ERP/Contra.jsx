@@ -4,6 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import Header from '../../components/Header';
 import { IoIosAddCircle } from "react-icons/io";
 import CreateContra from "../../components/CreateContra";
+import Modal from "../../components/Modal";
 
 
 const Contra = () => {
@@ -15,7 +16,8 @@ const Contra = () => {
         const fetchContraVouchers = async () => {
             setLoading(true);
             try {
-                const response = await axios.get("/api/contra");
+                const response = await axios.get("/api/v1/contra");
+                console.log(response.data)
                 setContraVouchers(response.data);
             } catch (error) {
                 console.error("Error fetching Contra vouchers:", error);
@@ -60,11 +62,11 @@ const Contra = () => {
                                 </tr>
                             ) : (
                                 contraVouchers.map((voucher) => (
-                                    <tr key={voucher._id} className="border-b">
+                                    <tr key={voucher._id} className="border-b bg-white">
                                         <td className="px-4 py-2">{voucher.voucherNo}</td>
                                         <td className="px-4 py-2">{new Date(voucher.date).toLocaleDateString()}</td>
-                                        <td className="px-4 py-2">{voucher.fromAccount.name}</td>
-                                        <td className="px-4 py-2">{voucher.toAccount.name}</td>
+                                        <td className="px-4 py-2">{voucher.from.name}</td>
+                                        <td className="px-4 py-2">{voucher.to.name}</td>
                                         <td className="px-4 py-2">{voucher.amount}</td>
                                         <td className="px-4 py-2">{voucher.description || "N/A"}</td>
                                     </tr>
@@ -75,9 +77,9 @@ const Contra = () => {
                     </div>
                 )}
                 {/* Add/Edit Modal */}
-                {isModalOpen && (
+                <Modal onClose={() => setIsModalOpen(false)} isOpen={isModalOpen} head='Record Contra'>
                     <CreateContra onClose={() => setIsModalOpen(false)} isOpen={isModalOpen} />
-                )}
+                </Modal>
                 <Toaster
                     position="top-right"
                     reverseOrder={false}

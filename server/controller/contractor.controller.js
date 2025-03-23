@@ -4,6 +4,7 @@ const Bill = require('../models/bill.models.js');
 const Site = require('../models/site.models');
 const ExtraWork = require('../models/extrawork.models.js');
 const { convertToUser } = require('./user.controller.js');
+const { addLedger } = require('./ledger.controller.js');
 
 const getContractors = async (req, res) => {
     try {
@@ -48,6 +49,7 @@ const createContractor = async (req, res) => {
             bank,
             jobWork,
             isUser,
+            gstNo,
         } = req.body;
 
         const newContractor = new Contractor({
@@ -60,6 +62,7 @@ const createContractor = async (req, res) => {
             bank,
             jobWork,
             isUser,
+            gstNo
         });
 
         const existingContractor = await Contractor.findOne({ name });
@@ -68,6 +71,8 @@ const createContractor = async (req, res) => {
         const savedContractor = await newContractor.save();
         if (!savedContractor) return res.status(500).json({ error: 'Internal Server Error' });
         res.status(200).json({ message: 'Contractor Created Successfuly', savedContractor });
+        const isGSTApplicable = gstNo !== '' ? true : false;
+        addLedger(savedContractor, 'Sundry Creditor', isGSTApplicable, false, 'contractor')
         if (savedContractor.isUser === true) {
             const password = `${name}@${phone}`;
             await convertToUser(savedContractor._id, 'Contractor', password);

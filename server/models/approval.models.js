@@ -83,9 +83,9 @@ const rejectSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-const Approval = mongoose.model('Pending-Approval', approvalSchema);
-const Approved = mongoose.model('Approved-Items', approvedSchema);
-const Rejected = mongoose.model('Rejected-Approval', rejectSchema);
+const Approval = mongoose.model('Pending_Approval', approvalSchema);
+const Approved = mongoose.model('Approved_Items', approvedSchema);
+const Rejected = mongoose.model('Rejected_Approval', rejectSchema);
 
 module.exports = {
     Rejected,

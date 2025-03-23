@@ -92,11 +92,11 @@ const siteSchema = new mongoose.Schema({
     },
     qualitySchedule: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'QualitySchedule',
+        ref: 'Quality_Schedule',
     }],
     projectSchedule: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'ProjectSchedule',
+        ref: 'Project_Schedule',
     },
     contractor: [{
         name: String,

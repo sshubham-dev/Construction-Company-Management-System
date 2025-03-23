@@ -96,6 +96,6 @@ stockJournalSchema.pre('save', function (next) {
 });
 
 
-const StockJournal = mongoose.model('StockJournal', stockJournalSchema);
+const StockJournal = mongoose.model('Stock_Journal', stockJournalSchema);
 
 module.exports = { Journal, StockJournal };

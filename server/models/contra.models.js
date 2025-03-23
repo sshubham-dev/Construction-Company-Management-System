@@ -15,7 +15,6 @@ const contraSchema = new mongoose.Schema({
         id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Account',
-            required: true
         }
     }, // Source account (e.g., cash, bank)
     to: {
@@ -23,7 +22,6 @@ const contraSchema = new mongoose.Schema({
         id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Account',
-            required: true
         }
     }, // Destination account (e.g., cash, bank)
     amount: {

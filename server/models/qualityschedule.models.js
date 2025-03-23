@@ -62,6 +62,6 @@ const qualityScheduleSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-const QualitySchedule = mongoose.model('Quality-Schedule', qualityScheduleSchema);
+const QualitySchedule = mongoose.model('Quality_Schedule', qualityScheduleSchema);
 
 module.exports = QualitySchedule;

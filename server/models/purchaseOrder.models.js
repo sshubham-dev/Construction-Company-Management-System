@@ -101,7 +101,7 @@ const purchaseOrderSchema = new mongoose.Schema({
         name: String,
         id: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Account',
+            ref: 'Ledger',
         }
     }
 }, { timestamps: true });

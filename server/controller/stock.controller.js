@@ -4,9 +4,34 @@ const { Stock, Stock_Group } = require('../models/stock.models');
 const createStock = async (req, res) => {
     try {
         console.log(req.body)
-        const stock = new Stock(req.body);
-        await stock.save();
-        res.status(201).json(stock);
+        const {
+            name,
+            code,
+            category,
+            unit,
+            openingStock,
+            cp,
+            sp,
+            mp,
+            gstRate,
+        } = req.body;
+        const existingGroup = await Stock_Group.findById(category);
+        const newStock = new Stock({
+            name,
+            code,
+            category:{
+                name:existingGroup.name,
+                id: existingGroup._id,
+            },
+            unit,
+            openingStock,
+            cp,
+            sp,
+            mp,
+            gstRate,
+        });
+        const savedStock = await newStock.save();
+        res.status(201).json(savedStock);
     } catch (err) {
         console.log(err)
         res.status(400).json({ error: err.message });
@@ -65,7 +90,16 @@ const deleteStock = async (req, res) => {
 // Create Stock Group
 const createStockGroup = async (req, res) => {
     try {
-        const stockGroup = new Stock_Group(req.body);
+        const {
+            name,
+            code,
+            unit,
+        } = req.body;
+        const stockGroup = new Stock_Group({
+            name,
+            code,
+            unit,
+        });
         await stockGroup.save();
         res.status(201).json(stockGroup);
     } catch (err) {

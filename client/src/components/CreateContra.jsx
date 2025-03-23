@@ -8,9 +8,20 @@ const CreateContra = ({ onClose }) => {
         date: "",
         from: "",
         to: "",
-        amount: "",
+        amount: 0,
         description: "",
     });
+    const [accounts, setAccounts] = useState([]);
+    useEffect(() => {
+        const fetchAccount = async () => {
+            const response = await axios.get('/api/v1/ledger');
+            const Ledgers = response.data;
+            const accountLedger = Ledgers.filter(ledger => ledger?.under.name.includes('Account'))
+            setAccounts(accountLedger)
+            console.log("Ledgers", accountLedger)
+        };
+        fetchAccount()
+    }, [])
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -18,7 +29,7 @@ const CreateContra = ({ onClose }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        // setLoading(true);
 
         console.log("Voucher created:", form);
         try {
@@ -77,9 +88,9 @@ const CreateContra = ({ onClose }) => {
                         required
                         className="mt-1 block w-full px-2 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">Select Account</option>
-                        <option value="kotak">Kotak Account</option>
-                        <option value="cash">Cash</option>
-                        <option value="utkarsh">Utkarsh</option>
+                        {accounts.map((account, index) => (
+                            <option key={index} value={account._id}>{account.name}</option>
+                        ))}
                     </select>
                 </div>
 
@@ -92,9 +103,9 @@ const CreateContra = ({ onClose }) => {
                         required
                         className="mt-1 block w-full px-2 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">Select Account</option>
-                        <option value="kotak">Kotak Account</option>
-                        <option value="cash">Cash</option>
-                        <option value="utkarsh">Utkarsh</option>
+                        {accounts.map((account, index) => (
+                            <option key={index} value={account._id}>{account.name}</option>
+                        ))}
                     </select>
                 </div>
 

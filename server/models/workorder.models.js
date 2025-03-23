@@ -150,6 +150,6 @@ workOrderSchema.pre('save', function (next) {
     next();
 });
 
-const WorkOrder = mongoose.model('Work-Order', workOrderSchema);
+const WorkOrder = mongoose.model('Work_Order', workOrderSchema);
 
 module.exports = WorkOrder;

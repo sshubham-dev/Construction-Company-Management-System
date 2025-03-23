@@ -171,26 +171,26 @@ const ERP = () => {
         {isModalOpen && (
           <Create onClose={() => setIsModalOpen(false)} />
         )}
-        <Modal onClose={() => setJournalModalOpen(false)} isOpen={isJournalModalOpen}>
+        <Modal onClose={() => setJournalModalOpen(false)} isOpen={isJournalModalOpen} head='Record Journal'>
           <CreateJournal onClose={() => setJournalModalOpen(false)} />
         </Modal>
-        <Modal isOpen={isContraModalOpen} onClose={() => setContraModalOpen(false)}>
+        <Modal isOpen={isContraModalOpen} onClose={() => setContraModalOpen(false)} head='Record Contra'>
           <CreateContra onClose={() => setContraModalOpen(false)} />
         </Modal>
-        <Modal isOpen={isLedgerModalOpen} onClose={() => setLedgerModalOpen(false)}>
+        <Modal isOpen={isLedgerModalOpen} onClose={() => setLedgerModalOpen(false)} head='Create Leadger'>
           <LedgerModal onClose={() => setLedgerModalOpen(false)} />
         </Modal>
-        <Modal isOpen={isGroupModalOpen} onClose={() => setGroupModalOpen(false)}>
+        <Modal isOpen={isGroupModalOpen} onClose={() => setGroupModalOpen(false)} head='Create Group'>
           <GroupModal onClose={() => setGroupModalOpen(false)} />
         </Modal>
-        <Modal isOpen={isStockModalOpen} onClose={() => setStockModalOpen(false)}>
+        <Modal isOpen={isStockModalOpen} onClose={() => setStockModalOpen(false)} head='Create Stock'>
           <CreateStock onClose={() => setStockModalOpen(false)} />
         </Modal>
-        <Modal onClose={() => setStockGroupModalOpen(false)} isOpen={isStockGroupModalOpen}>
+        <Modal onClose={() => setStockGroupModalOpen(false)} isOpen={isStockGroupModalOpen} head='Create Stock Group'>
           <CreateStockGroup
             onClose={() => setStockGroupModalOpen(false)} />
         </Modal>
-        <Modal isOpen={isReceiptPaymentModalOpen} onClose={() => setReceiptPaymentModalOpen(false)}>
+        <Modal isOpen={isReceiptPaymentModalOpen} onClose={() => setReceiptPaymentModalOpen(false)} head='Record Payment / Receipt'>
           <CreateReceipt_Payment onClose={() => setReceiptPaymentModalOpen(false)} />
         </Modal>
         <Toaster

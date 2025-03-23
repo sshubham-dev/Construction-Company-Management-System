@@ -27,8 +27,8 @@ const deleteSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-const Draft = mongoose.model('Draft-Items', draftSchema);
-const Deleted = mongoose.model('Deleted-Items', deleteSchema);
+const Draft = mongoose.model('Draft_Item', draftSchema);
+const Deleted = mongoose.model('Deleted_Item', deleteSchema);
 
 module.exports = {
     Draft,

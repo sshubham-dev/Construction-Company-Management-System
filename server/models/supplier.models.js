@@ -20,7 +20,7 @@ const supplierSchema = new mongoose.Schema({
     address: {
         type: String,
     },
-    gst: {
+    gstNo: {
         type: String,
     },
     bank: {
@@ -44,7 +44,7 @@ const supplierSchema = new mongoose.Schema({
     },
     purchaseOrder: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Purchase-Order',
+        ref: 'Purchase_Order',
     }],
     accounts: {
         payable: {

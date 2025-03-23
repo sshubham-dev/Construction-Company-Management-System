@@ -1,5 +1,6 @@
 const Supplier = require('../models/supplier.models.js');
 const User = require('../models/user.models.js');
+const { addLedger } = require('./ledger.controller.js');
 const { convertToUser } = require('./user.controller.js');
 
 const getSuppliers = async (req, res) => {
@@ -29,7 +30,7 @@ const getSupplier = async (req, res) => {
 
 const createSupplier = async (req, res) => {
     try {
-        const { name, email, phone, whatsapp, address, gst, bank, isUser } = req.body;
+        const { name, email, phone, whatsapp, address, gstNo, bank, isUser } = req.body;
         console.log(req.body)
         const newSupplier = new Supplier({
             name,
@@ -37,12 +38,14 @@ const createSupplier = async (req, res) => {
             phone,
             whatsapp,
             address,
-            gst,
+            gstNo,
             isUser,
         });
         console.log(newSupplier)
         const savedSupplier = await newSupplier.save();
         res.status(201).json({ message: 'Supplier Created Successfully', savedSupplier });
+        const isGSTApplicable = gstNo !== '' ? true : false;
+        addLedger(savedContractor, 'Sundry Creditor', isGSTApplicable, false, 'supplier')
         if (savedSupplier.isUser === true) {
             const password = name + '@' + phone
             await convertToUser(savedSupplier._id, 'Supplier', password);
@@ -56,7 +59,7 @@ const createSupplier = async (req, res) => {
 const updateSupplier = async (req, res) => {
     try {
         const _id = req.params.id;
-        const { name, email, phone, whatsapp, address, gst, bank, isUser } = req.body;
+        const { name, email, phone, whatsapp, address, gstNo, bank, isUser } = req.body;
         const updatedSupplier = await Supplier.findByIdAndUpdate(
             _id,
             req.body,

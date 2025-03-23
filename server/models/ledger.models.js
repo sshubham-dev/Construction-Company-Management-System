@@ -39,10 +39,6 @@ const ledgerSchema = new mongoose.Schema({
     },
     state: {
       type: String,
-      required: true,
-    },
-    pincode: {
-      type: String,
     },
   },
   bankingDetails: {
@@ -73,10 +69,29 @@ const ledgerSchema = new mongoose.Schema({
   paid: {
     type: Number,
   },
+  received:{
+    type: Number,
+  },
   due: {
     type: Number,
   },
+  balance:{
+    type:Number,
+  },
+  transaction:[{
+    id:{
+      type:mongoose.Schema.Types.ObjectId,
+    },
+    type:{
+      type: String,
+      enum:['Contra', 'Payment', 'Receipt', 'Journal']
+    },
+    amount:{
+      type: Number,
+    }
+  }]
 }, { timestamps: true });
+
 
 const Ledger = mongoose.model('Ledger', ledgerSchema);
 

@@ -9,12 +9,10 @@ import { FaEdit } from "react-icons/fa";
 import Modal from '../../components/Modal';
 import CreateStock from '../../components/CreateStock';
 import CreateStockGroup from '../../components/CreateStockGroup';
+import axios from 'axios';
 
 const Stock = () => {
-  const [data, setData] = useState([{
-    id: '1',
-    name: 'Product',
-  }]);
+  const [stocks, setStock] = useState([]);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isGroupModalOpen, setGroupModalOpen] = useState(false);
@@ -26,19 +24,31 @@ const Stock = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 5;
 
-  // Filter and sort data
-  const filteredData = useMemo(() => {
-    return data.filter((item) =>
-      item.name.toLowerCase().includes(search.toLowerCase()) &&
-      (filters.category ? item.category === filters.category : true) &&
-      (filters.brand ? item.brand === filters.brand : true) &&
-      (filters.minPrice ? item.price >= filters.minPrice : true) &&
-      (filters.maxPrice ? item.price <= filters.maxPrice : true)
-    );
-  }, [data, search, filters]);
+  useEffect(()=>{
+    const fetchStock = async () => {
+      try {
+        const response = await axios.get('/api/v1/stock')
+        setStock(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.log(error)
+      }
+    };
+    fetchStock();
+  },[])
 
-  const sortedData = useMemo(() => {
-    return [...filteredData].sort((a, b) => {
+  // Filter and sort stock
+  const filteredstock = useMemo(() => {
+    return stocks.filter((item) =>
+      item.name.toLowerCase().includes(search.toLowerCase()) &&
+      (filters.category ? item?.category.name === filters.category : true) &&
+      (filters.minPrice ? item.cp >= filters.minPrice : true) &&
+      (filters.maxPrice ? item.cp <= filters.maxPrice : true)
+    );
+  }, [stocks, search, filters]);
+
+  const sortedstock = useMemo(() => {
+    return [...filteredstock].sort((a, b) => {
       if (!sortConfig.key) return 0;
       return sortConfig.direction === "asc"
         ? a[sortConfig.key] > b[sortConfig.key]
@@ -48,30 +58,29 @@ const Stock = () => {
           ? 1
           : -1;
     });
-  }, [filteredData, sortConfig]);
+  }, [filteredstock, sortConfig]);
 
   useEffect(() => {
-    if (currentPage > Math.ceil(filteredData.length / rowsPerPage)) {
+    if (currentPage > Math.ceil(filteredstock.length / rowsPerPage)) {
       setCurrentPage((prev) => Math.max(prev - 1, 1));
     }
-  }, [filteredData]);
+  }, [filteredstock]);
 
 
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  const currentRows = sortedData.slice(indexOfFirstRow, indexOfLastRow);
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const currentRows = sortedstock.slice(indexOfFirstRow, indexOfLastRow);
+  const totalPages = Math.ceil(filteredstock.length / rowsPerPage);
 
   // Handle adding a new item
   const handleAdd = (newItem) => {
-    setData((prevData) => [...prevData, { id: Date.now(), ...newItem }]);
     setIsModalOpen(false);
   };
 
   // Handle editing an item
   const handleEditSave = (updatedItem) => {
-    setData((prevData) =>
-      prevData.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+    setStock((prevstock) =>
+      prevstock.map((item) => (item._id === updatedItem._id ? updatedItem : item))
     );
     setIsModalOpen(false);
     setCurrentItem(null);
@@ -86,7 +95,7 @@ const Stock = () => {
   const handleDelete = (id) => {
     // const confirmDelete = window.confirm("Are you sure you want to delete this item?");
     // if (confirmDelete) {
-    setData((prevData) => prevData.filter((item) => item.id !== id));
+    setStock((prevstock) => prevstock.filter((item) => item._id !== id));
     // }
   };
 
@@ -141,35 +150,34 @@ const Stock = () => {
             <table className="w-full border-collapse  overflow-x-auto">
               <thead>
                 <tr className="bg-gray-100">
-                  <th onClick={() => handleSort("name")} className="p-3">
+                  {/* <th onClick={() => handleSort("name")} className="px-4 py-2">
                     Product Id {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
-                  </th>
-                  <th onClick={() => handleSort("name")} className="p-3">
+                  </th> */}
+                  <th onClick={() => handleSort("name")} className="px-4 py-2 text-left">
                     Name {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
                   </th>
-                  <th onClick={() => handleSort("name")} className="p-3">
+                  <th onClick={() => handleSort("name")} className="px-4 py-2 text-left">
                     Category {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
                   </th>
-                  <th onClick={() => handleSort("name")} className="p-3">
+                  <th onClick={() => handleSort("name")} className="px-4 py-2 text-left">
                     Quantity {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
                   </th>
-                  <th onClick={() => handleSort("name")} className="p-3">
+                  <th onClick={() => handleSort("name")} className="px-4 py-2 text-left">
                     Price {sortConfig.key === 'name' && (sortConfig.direction === "asc" ? "▲" : "▼")}
                   </th>
-                  <th className="p-3">
+                  <th className="px-4 py-2 text-left">
                     Action
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {currentRows.map((item) => (
-                  <tr key={item.id} className="border-b hover:bg-gray-100">
-                    <td className="p-3">{item.id}</td>
-                    <td className="p-3">{item.name}</td>
-                    <td className="p-3">{item.category}</td>
-                    {/* <td className="p-3">{item.brand}</td> */}
-                    <td className="p-3">{item.quantity}</td>
-                    <td className="p-3">${item.price}</td>
+                {currentRows.map((item, index) => (
+                  <tr key={index} className="border-b hover:bg-gray-100">
+                    {/* <td className="px-4 py-2">{item._id}</td> */}
+                    <td className="px-4 py-2">{item.name}</td>
+                    <td className="px-4 py-2">{item?.category.name}</td>
+                    <td className="px-4 py-2">{item.actualQuantity}</td>
+                    <td className="px-4 py-2">₹ {item.cp}</td>
                     <td className="p-4 flex items-center gap-4">
                       <button
                         className=""
@@ -179,7 +187,7 @@ const Stock = () => {
                       </button>
                       <button
                         className=""
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => handleDelete(item._id)}
                       >
                         {<MdDeleteForever /> ? <MdDeleteForever size={26} color="red" /> : "Delete"}
                       </button>
@@ -264,19 +272,6 @@ const FilterModal = ({ filters, setFilters, onClose }) => {
               className="border rounded p-2 w-full"
             />
           </div>
-          {/* <div className="mb-2">
-            <label htmlFor="brand" className="block text-sm font-medium">
-              Brand
-            </label>
-            <input
-              type="text"
-              id="brand"
-              name="brand"
-              value={newFilters.brand}
-              onChange={handleChange}
-              className="border rounded p-2 w-full"
-            />
-          </div> */}
           <div className="mb-2">
             <label htmlFor="minPrice" className="block text-sm font-medium">
               Minimum Price

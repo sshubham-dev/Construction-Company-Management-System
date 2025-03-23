@@ -2,6 +2,7 @@ const Client = require('../models/client.models');
 const User = require('../models/user.models');
 const Site = require('../models/site.models');
 const { convertToUser } = require('./user.controller');
+const { addLedger } = require('./ledger.controller');
 
 const getClients = async (req, res) => {
     try {
@@ -51,6 +52,8 @@ const createClient = async (req, res) => {
         console.log(savedClient)
         if (!savedClient) return res.status(404).json({ message: 'Something went wrong' });
         res.status(201).json({ message: 'Client Created Successfuly' })
+        const isGSTApplicable = gstNo !== '' ? true : false;
+        addLedger(savedClient, 'Sundry Debtor', isGSTApplicable, false, 'client')
         if (savedClient.isUser === true) {
             const password = `${name}@${phone}`;
             await convertToUser(savedClient._id, 'Client', password);

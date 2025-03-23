@@ -18,6 +18,6 @@ const workDetailSchema = new mongoose.Schema({
   }],
 });
 
-const WorkDetails = mongoose.model('Work-Detail', workDetailSchema);
+const WorkDetails = mongoose.model('Work_Detail', workDetailSchema);
 
 module.exports = WorkDetails;

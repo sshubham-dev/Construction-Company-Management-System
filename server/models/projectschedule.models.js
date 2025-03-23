@@ -62,6 +62,6 @@ const projectScheduleSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-const ProjectSchedule = mongoose.model('Project-Schedule', projectScheduleSchema);
+const ProjectSchedule = mongoose.model('Project_Schedule', projectScheduleSchema);
 
 module.exports = ProjectSchedule;

@@ -42,7 +42,7 @@ const clientSchema = new mongoose.Schema({
     },
     extraWork: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Extra-Work',
+        ref: 'Extra_Work',
     }],
     agreement: {
         id: {

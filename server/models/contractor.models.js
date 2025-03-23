@@ -33,6 +33,9 @@ const contractorSchema = new mongoose.Schema({
     jobWork: {
         type: String,
     },
+    gstNo: {
+        type: String,
+    },
     isUser: Boolean,
     userId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -52,7 +55,7 @@ const contractorSchema = new mongoose.Schema({
     }],
     extraWork: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Extra-Work',
+        ref: 'Extra_Work',
     }],
     bill: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -67,7 +70,7 @@ const contractorSchema = new mongoose.Schema({
     }],
     workOrder: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Work-Order'
+        ref: 'Work_Order'
     }],
 }, { timestamps: true })
 

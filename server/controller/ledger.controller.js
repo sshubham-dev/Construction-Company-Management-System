@@ -4,11 +4,73 @@ const { Group, Ledger, CostCenter } = require("../models/ledger.models");
 // CRUD for Ledger
 const createLedger = async (req, res) => {
   try {
-    const ledger = new Ledger(req.body);
+    const {
+      name,
+      under,
+      isGSTApplicable,
+      isTDSDeductible,
+      mailingDetails,
+      taxRegistrationDetails,
+      bankingDetails,
+      openingBalance,
+    } = req.body;
+    const ledger = new Ledger({
+      name,
+      under:{
+        name:under,
+      },
+      isGSTApplicable,
+      isTDSDeductible,
+      mailingDetails,
+      taxRegistrationDetails,
+      bankingDetails,
+      openingBalance,
+      balance: openingBalance,
+      paid:0,
+      due:0,
+      receivable:0,
+      payable:0,
+      received:0,
+    });
     await ledger.save();
     res.status(201).json(ledger);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+};
+
+const addLedger = async (data, under, gst, tds, type) => {
+  try {
+    const ledger = new Ledger({
+      name: data.name,
+      alias: {
+        id: data._id,
+        type,
+      },
+      under,
+      isGSTApplicable: gst,
+      isTDSDeductible: tds,
+      mailingDetails: {
+        name: data.name,
+        address: data.address.stree + ', ' + data.address.city + ', ' + data.address.district,
+        state: data.address.state,
+      },
+      taxRegistrationDetails: {
+        panNo: data.pan,
+        gstin: data.gstNo,
+      },
+      bankingDetails: {
+        name: data.name,
+        acNo: '',
+        ifscCode: '',
+        bankname: '',
+        branch: '',
+      },
+      openingBalance: 0,
+    });
+    await ledger.save();
+  } catch (error) {
+    console.log(error);
   }
 };
 
@@ -101,12 +163,13 @@ const deleteGroup = async (req, res) => {
 module.exports = {
   createLedger,
   createGroup,
-  getLedgers, 
+  getLedgers,
   getGroups,
   getLedgerById,
   getGroupById,
   updateLedger,
-  updateGroup, 
+  updateGroup,
   deleteGroup,
-  deleteLedger
+  deleteLedger,
+  addLedger
 }

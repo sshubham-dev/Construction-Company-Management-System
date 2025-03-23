@@ -3,6 +3,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import Header from '../../components/Header';
 import { IoIosAddCircle } from "react-icons/io";
 import CreateReceipt_Payment from "../../components/CreateReceipt_Payment";
+import Modal from "../../components/Modal";
 
 const Receipt_Payment = () => {
   const [receipts, setReceipts] = useState([]);
@@ -95,9 +96,9 @@ const Receipt_Payment = () => {
         )}
 
         {/* Add/Edit Modal */}
-        {isModalOpen && (
+        <Modal onClose={() => setIsModalOpen(false)} isOpen={isModalOpen} head='Record Receipt / Payment'>
           <CreateReceipt_Payment onClose={() => setIsModalOpen(false)} isOpen={isModalOpen} />
-        )}
+        </Modal>
 
         <Toaster position="top-right" reverseOrder={false} />
       </section>

@@ -14,26 +14,32 @@ const stockSchema = new mongoose.Schema({
         trim: true,
     },
     category: {
-        type: String,
-        // id: {
-        //     type: mongoose.Schema.Types.ObjectId,
-        //     ref: 'Stock_Group',
-        //     required: true,
-        // }
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Stock_Group',
+            required: true,
+        }
     },
     unit: [{
         type: String,
     }],
-    rate: {
+    cp: {
         type: Number,
     },
-    price: {
+    sp: {
+        type: Number,
+    },
+    mp: {
         type: Number,
     },
     InStock: {
         type: Number,
     },
     actualQuantity: {
+        type: Number
+    },
+    quantity: {
         type: Number
     },
     openingStock: {
@@ -43,10 +49,10 @@ const stockSchema = new mongoose.Schema({
     gstRate: {
         type: Number
     }, // GST percentage
-    stockValue: {
+    stockValue: { 
         type: Number,
     },
-    status: {
+    status: { // auto update as per quantity
         type: String,
         enum: ['In Stock', 'Out Of Stock', 'Low Stock'],
     },
@@ -113,7 +119,7 @@ const stockGroupSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-const Stock_Group = mongoose.model('StockGroup', stockGroupSchema);
+const Stock_Group = mongoose.model('Stock_Group', stockGroupSchema);
 module.exports = { Stock, Stock_Group };
 
 

@@ -25,7 +25,7 @@ const receiptSchema = new mongoose.Schema({
     name: String,
     id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Account',
+      ref: 'Ledger',
       required: true,
     },
   },
@@ -50,7 +50,7 @@ const receiptSchema = new mongoose.Schema({
     type: {
       type: String,
       required: true,
-      enum: ['Invoice', 'Bill', 'ExtraWork'], // Specify the allowed models
+      enum: ['Invoice', 'Bill', 'Extra_Work', 'Payment_Schedule', 'Return_Order'], // Specify the allowed models
     },
   }],
 });

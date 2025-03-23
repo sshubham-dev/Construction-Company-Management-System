@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Select from "react-select";
 
 axios.defaults.withCredentials = true;
 
@@ -7,14 +8,33 @@ const CreateStockGroup = ({ onClose }) => {
   const [group, setGroup] = useState({
     name: "",
     code: "",
-    unit: "",
+    unit: [],
   });
+  const [workDetails, setWorkDetails] = useState([]);
+  const [selectedOptions, setSelectedOptions] = useState([]);
 
-  const [stockGroup, setStockGroup] = useState([]);
+  useEffect(() => {
+    const fetchWorkDetails = async () => {
+      try {
+        const title = 'Unit';
+        const workData = await axios.post('/api/v1/work-details/name', { title });
+        setWorkDetails(workData.data.description);
+      } catch (error) {
+        console.log('Error fetching work details:', error.message);
+      }
+    };
+    fetchWorkDetails()
+  }, [])
 
-  useEffect(()=>{
-    
-  },[])
+  // ✅ Fixed function to handle react-select
+  const handleMultiSelect = (selected) => {
+    const values = selected ? selected.map((opt) => opt.value) : [];
+    setSelectedOptions(selected);
+    setGroup((prev) => ({
+      ...prev,
+      unit: values, // Save only values inside the group state
+    }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,7 +47,7 @@ const CreateStockGroup = ({ onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/v1/ledger-group/', group)
+      const response = await axios.post('/api/v1/stock-group', group)
       console.log("Group Data:", group);
       console.log(response)
       onClose();
@@ -66,29 +86,16 @@ const CreateStockGroup = ({ onClose }) => {
 
         {/* Under Group */}
         <div>
-          <label className="block text-sm font-medium">Unit</label>
-          <select
-            name="unit"
-            value={group.unit}
-            onChange={handleChange}
-            multiple
-            className="w-full border px-3 py-2 rounded-md"
-          >
-            <option value="primary">Primary</option>
-            <option value="Capital Account">Capital Account</option>
-            <option value="Bank Accounts">Bank Accounts</option>
-            <option value="Cash-in-Hand">Cash-in-Hand</option>
-            <option value="Current Assets">Current Assets</option>
-            <option value="Current Liabilities">Current Liabilities</option>
-            <option value="Direct Expenses">Direct Expenses</option>
-            <option value="Direct Incomes">Direct Incomes</option>
-            <option value="Fixed Assets">Fixed Assets</option>
-            <option value="Investments">Investments</option>
-            <option value="Loans & Advances (Asset)">Loans & Advances (Asset)</option>
-            <option value="Sales Accounts">Sales Accounts</option>
-            <option value="Sundry Debtors">Sundry Debtors</option>
-            <option value="Sundry Creditors">Sundry Creditors</option>
-          </select>
+          <label className="block text-sm font-medium">Unit: {group.unit.join(", ")}</label>
+          <Select
+            options={workDetails.map((workDetail) => ({
+              value: workDetail.work,
+              label: workDetail.work,
+            }))}
+            isMulti
+            value={selectedOptions}
+            onChange={handleMultiSelect}
+          />
         </div>
 
         {/* Action Buttons */}

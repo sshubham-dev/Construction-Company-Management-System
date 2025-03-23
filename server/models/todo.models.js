@@ -35,5 +35,5 @@ const todoSchema = new mongoose.Schema({
 },{timestamps: true});
 
 
-const Todo = new mongoose.model('To-do', todoSchema);
+const Todo = new mongoose.model('To_do', todoSchema);
 module.exports = Todo;
