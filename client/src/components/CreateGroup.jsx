@@ -11,10 +11,14 @@ const GroupModal = ({ onClose }) => {
     nature: '',
   });
 
-  const [ledgerGroup, setLedgerGroup] = useState([]);
+  const [ledgerGroups, setLedgerGroup] = useState([]);
 
   useEffect(()=>{
-    
+    const fetchGroup = async () => {
+      const response = await axios.get('/api/v1/ledger-group')
+      setLedgerGroup(response.data)
+    };
+    fetchGroup();
   },[])
 
   const handleChange = (e) => {
@@ -28,10 +32,10 @@ const GroupModal = ({ onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/v1/ledger-group', group)
+      // const response = await axios.post('/api/v1/ledger-group', group)
       console.log("Group Data:", group);
-      console.log(response)
-      onClose();
+      // console.log(response)
+      // onClose();
     } catch (error) {
       console.log(error)
     }
@@ -74,20 +78,14 @@ const GroupModal = ({ onClose }) => {
             onChange={handleChange}
             className="w-full border px-3 py-2 rounded-md"
           >
-            <option value="primary">Primary</option>
-            <option value="Capital Account">Capital Account</option>
-            <option value="Bank Accounts">Bank Accounts</option>
-            <option value="Cash-in-Hand">Cash-in-Hand</option>
-            <option value="Current Assets">Current Assets</option>
-            <option value="Current Liabilities">Current Liabilities</option>
-            <option value="Direct Expenses">Direct Expenses</option>
-            <option value="Direct Incomes">Direct Incomes</option>
-            <option value="Fixed Assets">Fixed Assets</option>
-            <option value="Investments">Investments</option>
-            <option value="Loans & Advances (Asset)">Loans & Advances (Asset)</option>
-            <option value="Sales Accounts">Sales Accounts</option>
-            <option value="Sundry Debtors">Sundry Debtors</option>
-            <option value="Sundry Creditors">Sundry Creditors</option>
+            <option value="Primary">Primary</option>
+            <option value="Assets">Assets</option>
+            <option value="LiabilitY">Liability</option>
+            <option value="Expenses">Expenses</option>
+            <option value="Income">Income</option>
+            {ledgerGroups.map((ledgerGroup, index) => (
+              <option key={index} value={ledgerGroup.name}>{ledgerGroup.name}</option>
+            ))}
           </select>
         </div>
 
@@ -99,10 +97,11 @@ const GroupModal = ({ onClose }) => {
             onChange={handleChange}
             className="w-full border px-3 py-2 rounded-md"
           >
-            <option value="assets">Assets</option>
-            <option value="liabilities">Liabilities</option>
-            <option value="income">Income</option>
-            <option value="expenses">Expenses</option>
+            <option value="">Nature of Group</option>
+            <option value="Assets">Assets</option>
+            <option value="Liability">Liability</option>
+            <option value="Income">Income</option>
+            <option value="Expenses">Expenses</option>
           </select>
         </div>
 

@@ -8,6 +8,7 @@ axios.defaults.withCredentials = true;
 
 const AttendanceReport = () => {
   const [attendances, setAttendances] = useState([]);
+  const [employees, setEmployee] = useState([]);
   const [leaves, setLeaves] = useState([]);
   const [filterModal, setFilterModal] = useState(false);
   const [year, setYear] = useState(moment().year());
@@ -18,6 +19,14 @@ const AttendanceReport = () => {
   const [activeTab, setActiveTab] = useState('attendance'); // State for active tab
   // Fetch attendance and leave data
   useEffect(() => {
+    const fetchEmployee = async () => {
+      try {
+        const response = await axios.get('/api/v1/employee');
+        setEmployee(response.data)
+      } catch (error) {
+        console.log(error)
+      }
+    };
     const fetchAttendance = async () => {
       try {
         const attendanceResponse = await axios.get('/api/v1/attendance/report');
@@ -47,6 +56,7 @@ const AttendanceReport = () => {
       }
     };
 
+    fetchEmployee()
     fetchAttendance();
     fetchLeave();
   }, []);
@@ -123,8 +133,8 @@ const AttendanceReport = () => {
                     className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none bg-white"
                   >
                     <option value=''>All Employee</option>
-                    {filteredAttendance.map((record, index) => (
-                      <option key={index} value={record?.user.name}>{record?.user.name}</option>
+                    {employees.map((employee, index) => (
+                      <option key={index} value={employee._id}>{employee.name}</option>
                     ))}
                   </select>
 

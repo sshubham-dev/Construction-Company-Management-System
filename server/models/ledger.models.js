@@ -99,8 +99,8 @@ const Ledger = mongoose.model('Ledger', ledgerSchema);
 const groupSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
   alias: { type: String },
-  under: { type: String, required: true, default: 'primary' }, // Reference to parent group
-  nature: { type: String, enum: ['assets', 'liabilities', 'income', 'expenses'] }
+  under: { type: String, required: true, default: 'Primary' }, // Reference to parent group
+  nature: { type: String, enum: ['Assets', 'Liability', 'Income', 'Expenses'] }
 }, { timestamps: true });
 
 const Group = mongoose.model("Group", groupSchema);
