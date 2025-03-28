@@ -51,6 +51,9 @@ const Dashboard = () => {
           case 'Quality Engineer':
             navigate('/quality-engineer');
             break;
+          case 'Store Helper':
+            navigate('/store-helper');
+            break;
           default:
             console.log("Not exists");
             break;

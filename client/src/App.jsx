@@ -78,6 +78,7 @@ import ERPReport from './pages/ERP/ERPReport.jsx';
 import Journal from './pages/ERP/Journal.jsx';
 import ReturnRequest from './pages/Site/Return.jsx';
 import AttendanceReport from './pages/HR/Attendance.jsx';
+import StoreHelper from './pages/Dashboard/StoreHelper.jsx';
 
 const App = () => {
 
@@ -121,6 +122,7 @@ const App = () => {
         <Route path='/design-engineer' element={<Design_Engineer />} />
         <Route path='/accountant' element={<Accountant />} />
         <Route path='/account-head' element={<Account_Head />} />
+        <Route path='/store-helper' element={<StoreHelper />} />
 
         <Route path='/attendance' element={<Attendance />} />
 

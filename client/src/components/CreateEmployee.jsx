@@ -34,7 +34,8 @@ const CreateEmployee = ({ onClose, isEdit }) => {
         'Quality Engineer',
         'Store Incharge',
         'H.R',
-        'Account Head'
+        'Account Head',
+        'Store Helper'
     ];
     const [error, setError] = useState(null);
 
