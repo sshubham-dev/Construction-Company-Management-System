@@ -134,7 +134,7 @@ const AttendanceReport = () => {
                   >
                     <option value=''>All Employee</option>
                     {employees.map((employee, index) => (
-                      <option key={index} value={employee._id}>{employee.name}</option>
+                      <option key={index} value={employee.name}>{employee.name}</option>
                     ))}
                   </select>
 
