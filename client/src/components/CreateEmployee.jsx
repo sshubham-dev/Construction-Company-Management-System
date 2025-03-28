@@ -9,8 +9,8 @@ const CreateEmployee = ({ onClose, isEdit }) => {
     const [employee, setEmployee] = useState({
         name: "",
         email: "",
-        phone: '',
-        whatsapp: '',
+        phone: 0,
+        whatsapp: 0,
         employeeNo: "",
         joinDate: "",
         birthdate: "",
@@ -174,7 +174,7 @@ const CreateEmployee = ({ onClose, isEdit }) => {
                     </label>
                     <input
                         className='py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500'
-                        type='text'
+                        type='number'
                         name='phone'
                         id='phone'
                         placeholder='Enter Your Contact Number'
@@ -191,7 +191,7 @@ const CreateEmployee = ({ onClose, isEdit }) => {
                     </label>
                     <input
                         className='py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500'
-                        type='text'
+                        type='number'
                         name='whatsapp'
                         id='whatsapp'
                         placeholder='Enter Your Whatsapp Number'

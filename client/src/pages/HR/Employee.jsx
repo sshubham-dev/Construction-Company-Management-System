@@ -62,7 +62,7 @@ const Employee = () => {
             </button>
         </div>
 
-        <div className="overflow-x-auto"
+        <div className="overflow-x-auto mb-8"
           style={{
             scrollbarWidth: 'none',
             '-ms-overflow-style': 'none',
