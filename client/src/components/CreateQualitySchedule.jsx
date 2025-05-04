@@ -75,9 +75,24 @@ const CreateQualitySchedule = ({ onClose, id, index}) => {
     const fetchSite = async () => {
       try {
         const response = await axios.get('/api/v1/site');
-        setSite(response.data);
+        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
+          console.log(response.data)
+          const existingSites = user?.site;
+          console.log(existingSites)
+          let Sites = [];
+          for (let site of response.data) {
+            console.log(site)
+            if (existingSites?.map(existingSite => existingSite.id.includes(site._id))) {
+              console.log(site)
+              Sites.push(site);
+            }
+          }
+          setSite(Sites)
+        } else {
+          setSite(response.data)
+        }
       } catch (error) {
-        toast.error(error.message);
+        console.error(error.message)
       }
     };
 

@@ -5,20 +5,10 @@ const ledgerSchema = new mongoose.Schema({
     type: String,
   },
   alias: {
-    id: {
-      type: mongoose.Schema.Types.ObjectId,
-    },
-    type: {
-      type: String,
-      enum: ['client', 'contractor', 'supplier', 'employee'], // Specify the allowed models
-    },
+    type: String,
   },
   under: {
-    name: String,
-    id:{
-      type:mongoose.Schema.Types.ObjectId,
-      ref:'Group'
-    }
+    type: String,
   },
   statutoryDetails: {
     isTDSDeductible: {

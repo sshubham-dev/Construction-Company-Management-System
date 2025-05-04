@@ -113,7 +113,7 @@ const Sites = () => {
                   <td className="px-6 py-4 text-center">
                     {site?.floors}
                   </td>
-                  <td className="px-6 py-4 text-center">{site?.incharge?.userName}</td>
+                  <td className="px-6 py-4 text-center">{site?.incharge?.name}</td>
                   <td className="px-6 py-4 text-center">{site?.projectType}</td>
                   <td className="px-6 py-4 text-center">
                     <button onClick={() => handleRedirect(site?._id)} className="mr-2">
@@ -123,7 +123,7 @@ const Sites = () => {
                       <button onClick={() => handleEdit(site?._id)} className="mr-2">
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>)}
-                    {user.role === 'Admin' && (
+                    {user.department === 'Ceo' || user.department === 'Account Head' && (
                       <button onClick={() => handleDelete(site?._id)} className="mr-2">
                         <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                       </button>)}

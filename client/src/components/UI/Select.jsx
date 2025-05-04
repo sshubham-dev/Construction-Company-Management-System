@@ -1,117 +1,106 @@
-import React, {useState} from 'react'
+import React, { useState, useRef, useEffect } from "react";
 
-const Select = ({ option, isMulti = false }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [selectedOptions, setSelectedOptions] = useState([]);
-    const [searchQuery, setSearchQuery] = useState("");
-    const options = [
-      { value: "1", label: "Option 1" },
-      { value: "2", label: "Option 2" },
-      { value: "3", label: "Option 3" },
-      { value: "4", label: "Option 4" },
-    ];
-  
-    // Filter options based on search query
-    const filteredOptions = options.filter((option) =>
-      option.label.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  
-    // Handle option selection
-    const handleSelect = (option) => {
-      if (isMulti) {
-        if (selectedOptions.includes(option)) {
-          setSelectedOptions(selectedOptions.filter((item) => item !== option));
-        } else {
-          setSelectedOptions([...selectedOptions, option]);
-        }
-      } else {
-        setSelectedOptions([option]);
-        setIsOpen(false); // Close dropdown after selection
+const Select = ({ multiSelect = false, style, options }) => {
+  // const [options, setOptions] = useState([
+  //   "Apple", "Banana", "Cherry", "Mango", "Orange"
+  // ]);
+  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [selectedOption, setSelectedOption] = useState('');
+  const [search, setSearch] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
       }
     };
-  
-    // Remove selected option
-    const removeOption = (option) => {
-      setSelectedOptions(selectedOptions.filter((item) => item !== option));
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-  
-    return (
-      <div className="relative w-full sm:w-64">
-        {/* Input and Dropdown Toggle */}
-        <div
-          className="flex items-center justify-between p-2 border rounded cursor-pointer"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <div className="flex flex-wrap gap-2">
-            {selectedOptions.length > 0 ? (
-              selectedOptions.map((option) => (
-                <div
-                  key={option.value}
-                  className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded"
-                >
-                  {option.label}
-                  {isMulti && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeOption(option);
-                      }}
-                      className="ml-2 text-red-500 hover:text-red-700"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              ))
-            ) : (
-              <span className="text-gray-500">Select an option</span>
-            )}
-          </div>
-          <svg
-            className={`w-4 h-4 transition-transform ${isOpen ? "transform rotate-180" : ""
-              }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </div>
-  
-        {/* Dropdown Menu */}
-        {isOpen && (
-          <div className="absolute z-10 w-full sm:w-64 mt-2 bg-white border rounded shadow-lg">
-            {/* Search Input */}
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full p-2 border-b focus:outline-none"
-            />
-  
-            {/* Options List */}
-            <ul className={` ${searchQuery !== '' ? 'h-20' : 'h-0'} overflow-y-auto`}>
-              {filteredOptions.map((option) => (
-                <li
-                  key={option.value}
-                  onClick={() => handleSelect(option)}
-                  className={`p-2 cursor-pointer hover:bg-gray-100 ${selectedOptions.includes(option) ? "bg-blue-50" : ""
-                    }`}
-                >
-                  {option.label}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    );
+  }, []);
+
+  const handleSelection = (option) => {
+    if (multiSelect) {
+      if (!selectedOptions.includes(option)) {
+        setSelectedOptions([...selectedOptions, option]);
+      }
+    } else {
+      setSelectedOption(option)
+    }
+    setSearch("");
+    setIsDropdownOpen(false);
   };
 
-export default Select
+  const handleRemoveOption = (option) => {
+    setSelectedOptions(selectedOptions.filter((item) => item !== option));
+  };
+
+  const handleAddOption = () => {
+    if (search.trim() && !options.includes(search.trim())) {
+      setOptions([...options, search.trim()]);
+      setSelectedOptions([...selectedOptions, search.trim()]);
+      setSearch("");
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const handleAdd = () => { };
+
+  return (
+    <div className="p-4" ref={dropdownRef}>
+      <div className="flex flex-wrap gap-1 p-2 border rounded-md cursor-pointer bg-gray-100 w-80" onClick={() => setIsDropdownOpen(true)}>
+        {multiSelect ?
+          <>
+            {selectedOptions.map((option, index) => (
+              <div key={index} className="bg-blue-200 px-2 py-1 rounded-md flex items-center gap-1">
+                {option}
+                <span className="cursor-pointer text-red-500" onClick={(e) => { e.stopPropagation(); handleRemoveOption(option); }}>
+                  ×
+                </span>
+              </div>
+            ))}
+          </> :
+          <>
+            <div 
+            // className={`${selectedOption ? "bg-blue-200 px-2 py-1 rounded-md flex items-center gap-2" : ""}`}
+            >
+              {selectedOption}
+              {/* <span className="cursor-pointer text-red-500" onClick={() => setSelectedOption('')} >
+                {selectedOption ? 'x' : ""}
+              </span> */}
+            </div>
+          </>
+        }
+        <input
+          type="text"
+          placeholder="Select or search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-grow bg-transparent outline-none"
+          onClick={() => setIsDropdownOpen(true)}
+        />
+      </div>
+      {isDropdownOpen && (
+        <div className="absolute w-80 bg-white border rounded-md shadow-lg mt-1 p-2 z-10">
+          <div className="max-h-40 overflow-auto border p-2 rounded-md">
+            {options.filter(option => option.toLowerCase().includes(search.toLowerCase()) && !selectedOptions.includes(option)).map((option, index) => (
+              <div key={index} className="p-2 hover:bg-gray-100 cursor-pointer" onClick={() => handleSelection(option)}>
+                {option}
+              </div>
+            ))}
+            {search.trim() && !options.includes(search.trim()) && (
+              <div className="p-2 bg-green-100 cursor-pointer" onClick={handleAddOption}>
+                Add "{search.trim()}"
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Select;

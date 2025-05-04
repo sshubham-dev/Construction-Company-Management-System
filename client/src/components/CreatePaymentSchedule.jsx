@@ -53,12 +53,24 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
     const fetchSite = async () => {
       try {
         const response = await axios.get('/api/v1/site');
-        const filteredSites = user.department === 'Site Supervisor' || user.department === 'Site Incharge'
-          ? response.data.filter(site => user.site.includes(site._id))
-          : response.data;
-        setSite(filteredSites);
+        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
+          console.log(response.data)
+          const existingSites = user?.site;
+          console.log(existingSites)
+          let Sites = [];
+          for (let site of response.data) {
+            console.log(site)
+            if (existingSites?.map(existingSite => existingSite.id.includes(site._id))) {
+              console.log(site)
+              Sites.push(site);
+            }
+          }
+          setSite(Sites)
+        } else {
+          setSite(response.data)
+        }
       } catch (error) {
-        console.error(error.message);
+        console.error(error.message)
       }
     };
 

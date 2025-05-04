@@ -74,10 +74,11 @@ const PaymentSchedules = () => {
           <h2 className="text-lg sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-2">
             Total Payment Schedules: {paymentSchedules?.length}
           </h2>
-          {user.department === 'Account Head' && (
+          {/* {user.department === 'Account Head' && ( */}
             <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2 ">
               <MdAdd className='text-xl' />
-            </button>)}
+            </button>
+          {/* )} */}
         </div>
 
         <div className="overflow-x-auto scrollbar-hide">

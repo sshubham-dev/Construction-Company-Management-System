@@ -27,7 +27,7 @@ const authenticate = (allowedRoles) => async (req, res, next) => {
     }
 };
 
-const adminAuth = authenticate(['Ceo', 'Company']);
+const adminAuth = authenticate(['Ceo', 'Company', 'Account Head']);
 const clientAuth = authenticate(['Client']);
 // const employeeAuth = authenticate(['Employee']);
 const userAuth = authenticate(['Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'Store Helper']);

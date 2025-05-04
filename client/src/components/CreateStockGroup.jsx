@@ -84,9 +84,12 @@ const CreateStockGroup = ({ onClose }) => {
           </div>
         </div>
 
-        {/* Under Group */}
+        {/* Unit */}
         <div>
-          <label className="block text-sm font-medium">Unit: {group.unit.join(", ")}</label>
+          <label className="block text-sm font-medium">
+            Unit: 
+            {/* {group.unit.join(", ")} */}
+            </label>
           <Select
             options={workDetails.map((workDetail) => ({
               value: workDetail.work,

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
+import Select from 'react-select';
 
 const LedgerModal = ({ onClose }) => {
   const [ledger, setLedger] = useState({
@@ -26,10 +27,57 @@ const LedgerModal = ({ onClose }) => {
     },
     openingBalance: 0,
   });
+  const [users, setUser] = useState([]);
+  const [ledgerGroups, setLedgerGroup] = useState([]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get('/api/v1/user/lists')
+        setUser(response.data)
+      } catch (error) {
+        console.log(error)
+      }
+    };
+    const fetchGroup = async () => {
+      const response = await axios.get('/api/v1/ledger-group')
+      setLedgerGroup(response.data)
+    };
+    fetchGroup();
+    fetchUser()
+  }, [])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    if (type === "checkbox") {
+    if (name.startsWith('mailingDetails.')) {
+      const mailingField = name.split('.')[1];
+      setLedger((prev) => ({
+        ...prev,
+        mailingDetails: {
+          ...prev.mailingDetails,
+          [mailingField]: value,
+        },
+      }));
+    } else if (name.startsWith('taxRegistrationDetails.')) {
+      const taxField = name.split('.')[1];
+      setLedger((prev) => ({
+        ...prev,
+        taxRegistrationDetails: {
+          ...prev.taxRegistrationDetails,
+          [taxField]: value,
+        },
+      }));
+    } else if (name.startsWith('bankingDetails.')) {
+      const bankingField = name.split('.')[1];
+      setLedger((prev) => ({
+        ...prev,
+        bankingDetails: {
+          ...prev.bankingDetails,
+          [bankingField]: value,
+        },
+      }));
+    }
+    else if (type === "checkbox") {
       setLedger((prev) => ({ ...prev, [name]: checked }));
     } else {
       setLedger((prev) => ({ ...prev, [name]: value }));
@@ -53,7 +101,7 @@ const LedgerModal = ({ onClose }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Ledger Name & Alias */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
+
           <div>
             <label className="block text-sm font-medium">Name</label>
             <input
@@ -74,6 +122,7 @@ const LedgerModal = ({ onClose }) => {
               value={ledger.alias}
               onChange={handleChange}
               className="w-full border px-3 py-2 rounded-md"
+              required
             />
           </div>
 
@@ -82,28 +131,19 @@ const LedgerModal = ({ onClose }) => {
         {/* Account Group Selection */}
         <div>
           <label className="block text-sm font-medium">Under</label>
-          <select
-            name="under"
-            value={ledger.under}
-            onChange={handleChange}
-            className="w-full border px-3 py-2 rounded-md"
-          >
-            <option value="">Ledger Group</option>
-            <option value="Capital Account">Capital Account</option>
-            <option value="Bank Account">Bank Account</option>
-            <option value="Cash-in-Hand">Cash-in-Hand</option>
-            <option value="Sundry Debtors">Sundry Debtors</option>
-            <option value="Sundry Creditors">Sundry Creditors</option>
-            <option value="Expenses">Expenses</option>
-            <option value="Income">Income</option>
-          </select>
+          <Select
+            value={{ value: ledger.under, label: ledger.under }}
+            onChange={(selectedOption) => setLedger((prev) => ({ ...prev, under: selectedOption.value }))}
+            options={ledgerGroups.map(ledgerGroup => ({ value: ledgerGroup.name, label: ledgerGroup.name }))}
+            placeholder="Ledger Group"
+          />
         </div>
 
         {/* Statutory Details */}
         <div className="flex items-center">
           <input
             type="checkbox"
-            name="activateInterestCalculation"
+            name="isGSTApplicable"
             checked={ledger.isGSTApplicable}
             onChange={handleChange}
             className="mr-2"
@@ -158,7 +198,7 @@ const LedgerModal = ({ onClose }) => {
         </div>
 
         {/* Banking Details */}
-          <h3 className="mt-3 font-bold">Banking Details</h3>
+        <h3 className="mt-3 font-bold">Banking Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-medium">Name</label>
@@ -217,7 +257,7 @@ const LedgerModal = ({ onClose }) => {
           <label className="block text-sm font-medium">PAN No</label>
           <input
             type="text"
-            name="taxRegistrationDetails.gstinUin"
+            name="taxRegistrationDetails.panNo"
             value={ledger.taxRegistrationDetails.panNo}
             onChange={handleChange}
             className="w-full border px-3 py-2 rounded-md"
@@ -228,7 +268,7 @@ const LedgerModal = ({ onClose }) => {
           <label className="block text-sm font-medium">GSTIN/UIN</label>
           <input
             type="text"
-            name="taxRegistrationDetails.gstinUin"
+            name="taxRegistrationDetails.gstin"
             value={ledger.taxRegistrationDetails.gstin}
             onChange={handleChange}
             className="w-full border px-3 py-2 rounded-md"

@@ -232,8 +232,8 @@ const SiteScreen = () => {
                 client={site.client?.name}
                 projectType={site.projectType}
                 floors={site.floors}
-                incharge={site.incharge?.userName}
-                supervisor={site.supervisor?.userName}
+                incharge={site.incharge?.name}
+                supervisor={site.supervisor?.name}
                 address={site?.address}
                 handleEdit={() => handleEdit(site._id)}
               />

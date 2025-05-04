@@ -24,7 +24,7 @@ const getSites = async (req, res) => {
 const getSite = async (req, res) => {
     try {
         const id = req.params.id;
-        if(id !== "") return res.status(500).json({ error: 'Id undefined' });
+        if(id === "") return res.status(500).json({ error: 'Id undefined' });
         const site = await Site.findById(id)
             .populate('bill')
             .populate('purchaseOrder')
@@ -114,27 +114,29 @@ const createSite = async (req, res) => {
         const existingClient = await Client.findById(client);
         const existingIncharge = await User.findById(incharge);
         let existingSupervisor;
-        if (supervisor !== '') {
-            existingSupervisor = await User.findById(supervisor);
-        }
         let existingQuality;
         if (qualityEngineer !== '') {
             existingQuality = await User.findById(qualityEngineer);
+        }
+        console.log(existingQuality)
+        if (supervisor !== '') {
+            existingSupervisor = await User.findById(supervisor);
         }
 
         const newSite = new Site({
             name,
             client: { id: existingClient?._id, name: existingClient.name },
             siteId,
-            floors,
+            // floors,
             area,
-            incharge: { id: existingIncharge?._id, name: existingIncharge.name },
-            supervisor: { id: existingSupervisor?._id, name: existingSupervisor.name },
-            qualityEngineer: { id: existingQuality?._id, name: existingQuality.name },
+            incharge: { id: existingIncharge?._id, name: existingIncharge.userName },
+            supervisor: existingSupervisor?._id ? { id: existingSupervisor?._id, name: existingSupervisor.userName } : '',
+            qualityEngineer: { id: existingQuality?._id, name: existingQuality.userName },
             projectType,
             address,
             agreement: upload?.url || null,
         });
+
         console.log('Before saving new site:', newSite);
         const savedSite = await newSite.save();
         console.log('After saving new site:', savedSite);
@@ -147,7 +149,7 @@ const createSite = async (req, res) => {
         await existingClient.save();
 
         if (supervisor !== '') {
-            if (!existingSupervisor?.site.id.includes(savedSite._id)) {
+            if (existingSupervisor?.site.filter(site => site.id === savedSite._id)) {
                 existingSupervisor.site.push({ id: savedSite._id, name: savedSite.name });
                 await existingSupervisor.save();
             }
@@ -157,7 +159,7 @@ const createSite = async (req, res) => {
         await existingIncharge.save();
 
         if (qualityEngineer !== '') {
-            if (!existingQuality?.site.id.includes(savedSite._id)) {
+            if (existingQuality?.site.filter(site => site.id === savedSite._id)) {
                 existingQuality.site.push({ id: savedSite._id, name: savedSite.name });
                 await existingQuality.save();
             }
@@ -310,17 +312,17 @@ const deleteSite = async (req, res) => {
 
         if (deletedSite.supervisor !== '') {
             if (existingSupervisor !== '') {
-                existingSupervisor?.site.id.splice(deletedSite._id, 1);
+                existingSupervisor?.site.splice(deletedSite._id, 1);
                 await existingSupervisor.save();
             }
         }
 
-        existingIncharge?.site.id.splice(deletedSite._id, 1);
+        existingIncharge?.site.splice(deletedSite._id, 1);
         await existingIncharge.save();
 
         if (deletedSite.qualityEngineer !== '') {
             if (existingQuality !== '') {
-                existingQuality.site.id.splice(deletedSite._id, 1);
+                existingQuality.site.splice(deletedSite._id, 1);
                 await existingQuality.save();
             }
         }

@@ -32,6 +32,7 @@ const Lead = require('./routes/lead.routes');
 const { Ledger, Group } = require('./routes/ledger.routes');
 const PurchaseRequest = require('./routes/purchaserequest.routes');
 const Expenses = require('./routes/expenses.routes');
+const Notification = require('./routes/notification.routes');
 
 // midellware
 const corsOptions = {
@@ -90,6 +91,7 @@ app.use('/api/v1/lead', Lead);
 app.use('/api/v1/ledger', Ledger);
 app.use('/api/v1/ledger-group', Group);
 app.use('/api/v1/expenses', Expenses);
+app.use('/api/v1/notification', Notification)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   console.log(err)

@@ -4,6 +4,7 @@ const User = require('../models/user.models.js');
 const {
     sendApproveByAdmin,
 } = require('./approval.controller.js');
+const webpush = require('../utils/webpush.js');
 
 const getAttendance = async (req, res) => {
     try {
@@ -124,7 +125,32 @@ const createAttendance = async (req, res) => {
         existingUser.attendance.push(attendance._id);
         await existingUser.save({ validateBeforeSave: false });
 
+        // 🔔 Send Push Notification to All Employees (excluding self if needed)
+
+        const allEmployees = await User.find({
+            role: 'Employee',
+            pushSubscription: { $ne: null },
+        });
+
+        for (const emp of allEmployees) {
+            console.log(`Checking pushSubscription for ${emp.userName}:`, emp.pushSubscription);
+          
+            try {
+              await webpush.sendNotification(
+                emp.pushSubscription,
+                JSON.stringify({
+                  title: 'Attendance Alert',
+                  message: `${existingUser.userName} is ${attendance.status}.`,
+                  url: 'https://app.bhuvihomes.in/',
+                })
+              );
+            } catch (err) {
+              console.error(`❌ Push failed for ${emp.userName}:`, err);
+            }
+          }
+          
         return res.status(201).json({ message: 'Attendance marked successfully.' });
+
     } catch (error) {
         console.error('Error creating attendance:', error); // More specific logging
         return res.status(500).json({ message: 'Internal server error.' }); // Use 500 for internal errors
@@ -147,7 +173,7 @@ const createLeave = async (req, res) => {
         })
         const savedLeave = await newLeave.save();
         existingUser.leave.push(savedLeave._id);
-        existingUser.save({validateBeforeSave:false})
+        existingUser.save({ validateBeforeSave: false })
         sendApproveByAdmin(savedLeave, 'Leave', user._id)
         return res.status(201).json({ message: 'Successfuly created and send for approval' })
     } catch (error) {

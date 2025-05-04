@@ -1,4 +1,4 @@
-
+const User = require('../models/user.models');
 const { Group, Ledger, CostCenter } = require("../models/ledger.models");
 
 // CRUD for Ledger
@@ -6,6 +6,7 @@ const createLedger = async (req, res) => {
   try {
     const {
       name,
+      alias,
       under,
       isGSTApplicable,
       isTDSDeductible,
@@ -16,9 +17,8 @@ const createLedger = async (req, res) => {
     } = req.body;
     const ledger = new Ledger({
       name,
-      under:{
-        name:under,
-      },
+      alias,
+      under,
       isGSTApplicable,
       isTDSDeductible,
       mailingDetails,

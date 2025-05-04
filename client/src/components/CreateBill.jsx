@@ -39,10 +39,14 @@ const CreateBill = ({ onClose, isEdit }) => {
       try {
         const response = await axios.get('/api/v1/site');
         if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
+          console.log(response.data)
           const existingSites = user?.site;
+          console.log(existingSites)
           let Sites = [];
           for (let site of response.data) {
-            if (existingSites.includes(site._id)) {
+            console.log(site)
+            if (existingSites?.map(existingSite => existingSite.id.includes(site._id))) {
+              console.log(site)
               Sites.push(site);
             }
           }

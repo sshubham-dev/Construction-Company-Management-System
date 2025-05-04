@@ -144,6 +144,11 @@ const siteSchema = new mongoose.Schema({
             type: Number,
         },
     },
+    materialExp:[{
+        id:{
+            type:mongoose.Schema.Types.ObjectId,
+        },
+    }]
 }, { timestamps: true });
 
 const Site = mongoose.model('Site', siteSchema);

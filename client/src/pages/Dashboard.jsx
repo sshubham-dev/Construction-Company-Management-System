@@ -1,13 +1,30 @@
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import Login from '../components/Login';
-import Header from '../components/Header';
+import { registerPush } from '../helper/pushHelper';
+import axios from 'axios';
 
 const Dashboard = () => {
   const { user, isLoggedIn } = useSelector((state) => {
     return state.auth
   });
+
+  useEffect(() => {
+    // Send subscription to backend
+    const saveSubscription = async () => {
+      if(isLoggedIn){
+        const subscription = await registerPush();
+        try {
+          const response = await axios.post('/api/v1/notification/subscription', { userId: user._id, subscription, })
+          console.log(response.data)
+        } catch (error) {
+          console.log(error)
+         }
+      }
+    }
+    saveSubscription();
+
+  }, [])
 
   const navigate = useNavigate();
 

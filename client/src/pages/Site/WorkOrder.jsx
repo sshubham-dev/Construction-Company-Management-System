@@ -72,6 +72,8 @@ const WorkOrders = () => {
           }
           setDraftWorkOrder(draftWorkOrders);
           console.log("Draft work orders for all sites:", draftWorkOrders);
+        } else {
+          setDraftWorkOrder(workOrdersData.data);
         }
       } catch (error) {
         console.error(error);
@@ -188,8 +190,8 @@ const WorkOrders = () => {
           </div>
         )}
 
-        {user.department === 'Site Incharge' && (
-          <>
+        {/* {user.department === 'Site Incharge' && ( */}
+          {/* <> */}
             {activeTab === "draft" && (
               <div className="overflow-x-auto scrollbar-hide">
                 <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
@@ -236,8 +238,8 @@ const WorkOrders = () => {
                 </table>
               </div>
             )}
-          </>
-        )}
+          {/* </> */}
+        {/* )} */}
 
         <Toaster position="top-right" reverseOrder={false} />
       </section>

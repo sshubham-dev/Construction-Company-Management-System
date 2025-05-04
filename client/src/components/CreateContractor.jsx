@@ -283,7 +283,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
           </div>
         </div> */}
 
-        <div className="flex justify-end gap-2 mt-6">
+        <div className="flex justify-center md:justify-end lg:justify-end gap-2 mt-6">
           <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
             Cancel
           </button>

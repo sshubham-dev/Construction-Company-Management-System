@@ -14,12 +14,24 @@ const CreateContra = ({ onClose }) => {
     const [accounts, setAccounts] = useState([]);
     useEffect(() => {
         const fetchAccount = async () => {
-            const response = await axios.get('/api/v1/ledger');
-            const Ledgers = response.data;
-            const accountLedger = Ledgers.filter(ledger => ledger?.under.name.includes('Account'))
-            setAccounts(accountLedger)
-            console.log("Ledgers", accountLedger)
+            try {
+                const response = await axios.get('/api/v1/ledger');
+                const Ledgers = Array.isArray(response.data) ? response.data : []; // Ensure it's an array
+        
+                // console.log("All Ledgers:", Ledgers);
+                // console.log("Ledger under values:", Ledgers.map(l => l.under)); // Debugging
+        
+                const accountLedger = Ledgers.filter(ledger => 
+                    ledger?.under && ledger.under.toLowerCase().includes("account") // Case-insensitive check
+                );
+                setAccounts(accountLedger);
+                // console.log("Filtered Ledgers:", accountLedger);
+            } catch (error) {
+                console.error("Error fetching ledgers:", error);
+            }
         };
+        
+        
         fetchAccount()
     }, [])
 

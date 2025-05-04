@@ -32,10 +32,10 @@ const GroupModal = ({ onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // const response = await axios.post('/api/v1/ledger-group', group)
+      const response = await axios.post('/api/v1/ledger-group', group)
       console.log("Group Data:", group);
-      // console.log(response)
-      // onClose();
+      console.log(response)
+      onClose();
     } catch (error) {
       console.log(error)
     }
@@ -80,7 +80,7 @@ const GroupModal = ({ onClose }) => {
           >
             <option value="Primary">Primary</option>
             <option value="Assets">Assets</option>
-            <option value="LiabilitY">Liability</option>
+            <option value="Liability">Liability</option>
             <option value="Expenses">Expenses</option>
             <option value="Income">Income</option>
             {ledgerGroups.map((ledgerGroup, index) => (

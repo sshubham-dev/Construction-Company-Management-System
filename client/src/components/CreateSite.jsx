@@ -36,6 +36,7 @@ const CreateSite = ({ onClose, isEdit}) => {
   
   useEffect(() => {
     if (isEdit) {
+      console.log(isEdit)
       setSiteIdToEdit(isEdit);
       fetchSiteDetails(isEdit);
     }
@@ -45,12 +46,12 @@ const CreateSite = ({ onClose, isEdit}) => {
     try {
       const response = await axios.get(`/api/v1/site/${id}`);
       const site = response.data;
-      console.log(site)
+      console.log("site", site)
       setData({
         client: site.client?.name,
-        incharge: site.incharge?.userName,
-        supervisor: site.supervisor?.userName,
-        qualityEngineer: site.qualityEngineer?.userName,
+        incharge: site.incharge?.name,
+        supervisor: site.supervisor?.name,
+        qualityEngineer: site.qualityEngineer?.name,
       })
       setSite({
         name: site.name,
@@ -149,6 +150,7 @@ const CreateSite = ({ onClose, isEdit}) => {
         toast.success('User edited successfully');
         onClose()
       } else {
+        console.log(site)
         const siteData = await axios.post('/api/v1/site', formData);
         if (siteData.data) {
           console.log(siteData.data);
@@ -189,6 +191,7 @@ const CreateSite = ({ onClose, isEdit}) => {
           <select
             name="client"
             onChange={handleChange}
+            disabled={siteIdToEdit && user.department === 'Ceo'}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             <option>{siteIdToEdit ? data.client : 'Client'}</option>
             {clients.map((client) => (
@@ -273,7 +276,7 @@ const CreateSite = ({ onClose, isEdit}) => {
             <select
               name="qualityEngineer"
               onChange={handleChange}
-              disabled={siteIdToEdit && user.role !== 'Admin'}
+              disabled={siteIdToEdit && user.department === 'Ceo'}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
               <option>{data.qualityEngineer !== '' ? data.qualityEngineer : 'Assign an Quality incharge'}</option>
               {qualityEngineers.map((qualityEngineer) => (
@@ -292,7 +295,7 @@ const CreateSite = ({ onClose, isEdit}) => {
             <select
               name="incharge"
               onChange={handleChange}
-              disabled={siteIdToEdit && user.role !== 'Admin'}
+              disabled={siteIdToEdit && user.department === 'Ceo'}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
               <option>{data.incharge !== '' ? data.incharge : 'Assign an incharge'}</option>
               {incharges.map((incharge) => (

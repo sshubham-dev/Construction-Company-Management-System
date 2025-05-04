@@ -41,7 +41,7 @@ const createContractor = async (req, res) => {
     try {
         const {
             name,
-            contactNo,
+            phone,
             whatsapp,
             address,
             addhar,
@@ -54,7 +54,7 @@ const createContractor = async (req, res) => {
 
         const newContractor = new Contractor({
             name,
-            contactNo,
+            phone,
             whatsapp,
             address,
             addhar,
@@ -71,8 +71,8 @@ const createContractor = async (req, res) => {
         const savedContractor = await newContractor.save();
         if (!savedContractor) return res.status(500).json({ error: 'Internal Server Error' });
         res.status(200).json({ message: 'Contractor Created Successfuly', savedContractor });
-        const isGSTApplicable = gstNo !== '' ? true : false;
-        addLedger(savedContractor, 'Sundry Creditor', isGSTApplicable, false, 'contractor')
+        // const isGSTApplicable = gstNo !== '' ? true : false;
+        // addLedger(savedContractor, 'Sundry Creditor', isGSTApplicable, false, 'contractor')
         if (savedContractor.isUser === true) {
             const password = `${name}@${phone}`;
             await convertToUser(savedContractor._id, 'Contractor', password);
@@ -143,7 +143,7 @@ const deleteContractor = async (req, res) => {
             .exec();
 
         for (const site of existingSite) {
-            const index = site.contractor.id.indexOf(deletedContractor._id);
+            const index = site.contractor.indexOf(deletedContractor._id);
             if (index !== -1) {
                 site.contractor.splice(index, 1);
                 await site.save();

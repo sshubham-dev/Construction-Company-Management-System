@@ -142,4 +142,4 @@ const deleteClient = async (req, res) => {
     }
 };
 
-module.exports = { getClient, getClients, createClient, updateClient, deleteClient };
+module.exports = { getClient, getClients, createClient, updateClient, deleteClient, convertToClient };

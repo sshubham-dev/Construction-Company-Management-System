@@ -39,34 +39,34 @@ const userSchema = new mongoose.Schema({
         default: null,
     },
     avatar: {
-        type:String,
+        type: String,
     },
     notificationPreference: Boolean,
     refreshToken: String,
-    approved:[{
-        type:mongoose.Schema.Types.ObjectId,
+    approved: [{
+        type: mongoose.Schema.Types.ObjectId,
     }],
-    attendance:[{
-        type:mongoose.Schema.Types.ObjectId,
+    attendance: [{
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Attendance'
     }],
-    leave:[{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'Leave'
+    leave: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Leave'
     }],
-    pending:[{
+    pending: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Pending_Approval',
     }],
-    rejected:[{
+    rejected: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Rejected_Item'
     }],
-    deleted:[{
+    deleted: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Deleted_Item'
     }],
-    draft:[{
+    draft: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Draft_Item'
     }],
@@ -81,13 +81,21 @@ const userSchema = new mongoose.Schema({
         type: String,
         date: Date,
     }],
-    site: [{ 
+    site: [{
         name: String,
-        id:{
+        id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Site',
         }
     }],
+    pushSubscription: {
+        endpoint: String,
+        expirationTime: Date,
+        keys: {
+            p256dh: String,
+            auth: String
+        }
+    }
 },
     { timestamps: true });
 
