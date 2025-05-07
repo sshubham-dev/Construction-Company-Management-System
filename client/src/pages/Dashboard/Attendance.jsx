@@ -4,7 +4,38 @@ import moment from 'moment';
 import CreateLeave from '../../components/CreateLeave';
 import Header from '../../components/Header';
 import Modal from '../../components/Modal';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../../features/notification/notificationSlice';
+import { FaCheckCircle } from "react-icons/fa";
+import { BsXCircleFill } from "react-icons/bs";
+// import { CheckCircle, XCircle } from "react-icons/fa";
 axios.defaults.withCredentials = true;
+
+function AttendanceModal({ status, onClose }) {
+  if (!status) return null;
+
+  const isPresent = status === "present";
+  const icon = isPresent ? <FaCheckCircle className="text-green-500 text-4xl" /> : <BsXCircleFill className="text-red-500 text-4xl" />;
+  const message = isPresent
+    ? { title: "🎉 Great Job!", text: "You’re Present. Keep it up!" }
+    : { title: "😔 Maybe Tomorrow?", text: "You’re Absent. Hope to see you back soon!" };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 w-80 text-center transition-opacity duration-300">
+        <div className="flex justify-center mb-4">{icon}</div>
+        <h2 className="text-2xl font-bold mb-2">{message.title}</h2>
+        <p className="text-gray-600 text-md mb-4">{message.text}</p>
+        <button
+          onClick={onClose}
+          className="mt-2 px-4 py-2 text-sm font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+        >
+          Got it!
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const Attendance = () => {
   const [attendances, setAttendances] = useState([]);
@@ -15,6 +46,7 @@ const Attendance = () => {
   const [year, setYear] = useState(moment().year());
   const [month, setMonth] = useState(moment().month());
   const [attendanceStatus, setAttendanceStatus] = useState('present');
+  const { user } = useSelector((state) => state.auth);
   const [markAttendance, setMarkAttendance] = useState({
     date: moment().format('YYYY-MM-DD'),
     timeIn: moment().format('HH:mm'),
@@ -23,6 +55,8 @@ const Attendance = () => {
   const [activeTab, setActiveTab] = useState('attendance'); // State for active tab
   const [editModal, setEditModal] = useState(false);
   const [editId, setEditId] = useState('');
+  const dispatch = useDispatch();
+  const [status, setStatus] = useState(null);
   // Fetch attendance and leave data
   useEffect(() => {
     const fetchAttendance = async () => {
@@ -58,6 +92,13 @@ const Attendance = () => {
     fetchLeave();
   }, []);
 
+  // useEffect(() => {
+  //   if (status) {
+  //     const timer = setTimeout(() => setStatus(null), 4000);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [status]);
+
 
   const handleStatusChange = (e) => {
     setAttendanceStatus(e.target.value);
@@ -67,8 +108,10 @@ const Attendance = () => {
     e.preventDefault();
     try {
       const response = await axios.post('/api/v1/attendance', markAttendance);
-      console.log(response.data);
+      // console.log(response.data);
+      setStatus(markAttendance.status)
       setAttendanceMarked(true);
+      dispatch(fetchNotifications(user._id));
     } catch (error) {
       console.error(error);
     }
@@ -120,8 +163,7 @@ const Attendance = () => {
                   </select>
                   <button
                     onClick={() => setMarkAttendance({ ...markAttendance, status: attendanceStatus })}
-                    className={`py-2 px-3 rounded-lg font-semibold ${attendanceMarked ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
-                      } text-white transition duration-300`}
+                    className={`py-2 px-3 rounded-lg font-semibold ${attendanceMarked ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'} text-white transition duration-300`}
                   >
                     Mark Attendance
                   </button>
@@ -193,19 +235,13 @@ const Attendance = () => {
             <div className="flex gap-4 border-b border-gray-200">
               <button
                 onClick={() => setActiveTab('attendance')}
-                className={`py-2 px-4 font-semibold ${activeTab === 'attendance'
-                  ? 'border-b-2 border-blue-500 text-blue-500'
-                  : 'text-gray-500 hover:text-blue-500'
-                  }`}
+                cclassName={`py-2 px-4 font-semibold ${activeTab === 'attendance' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-blue-500'}`}
               >
                 Attendance
               </button>
               <button
                 onClick={() => setActiveTab('leave')}
-                className={`py-2 px-4 font-semibold ${activeTab === 'leave'
-                  ? 'border-b-2 border-blue-500 text-blue-500'
-                  : 'text-gray-500 hover:text-blue-500'
-                  }`}
+                className={`py-2 px-4 font-semibold ${activeTab === 'leave' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-blue-500'}`}
               >
                 Leave
               </button>
@@ -230,10 +266,7 @@ const Attendance = () => {
                       <td className="p-3 text-gray-700">{record.timeIn || 'N/A'}</td>
                       <td className="p-3">
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-semibold ${record.status === 'present'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
-                            }`}
+                          className={`px-3 py-1 rounded-full text-sm font-semibold ${record.status === 'present' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
                         >
                           {record.status}
                         </span>
@@ -280,6 +313,12 @@ const Attendance = () => {
           <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Leave'>
             <CreateLeave onClose={() => setEditModal(false)} isEdit={editId} />
           </Modal>
+          {status && (
+            <AttendanceModal
+              status='present'
+              onClose={() => setStatus(null)}
+            />
+           )}
         </div>
       </section>
     </div>
@@ -287,3 +326,6 @@ const Attendance = () => {
 };
 
 export default Attendance;
+
+
+

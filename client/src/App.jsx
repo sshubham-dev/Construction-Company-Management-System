@@ -79,6 +79,8 @@ import Journal from './pages/ERP/Journal.jsx';
 import ReturnRequest from './pages/Site/Return.jsx';
 import AttendanceReport from './pages/HR/Attendance.jsx';
 import StoreHelper from './pages/Dashboard/StoreHelper.jsx';
+import Setting from './pages/Setting.jsx';
+import Notification from './pages/Dashboard/Notification.jsx';
 
 const App = () => {
 
@@ -110,6 +112,7 @@ const App = () => {
         <Route path='/resetpasswd' element={<ResetPasswd />} />
         <Route path='/profile' element={<Profile />} />
         <Route path='/account' element={<Profile />} />
+        <Route path='/notifications' element={<Notification />} />
 
         <Route path='/admin' element={<Admin />} />
         <Route path='/ceo' element={<Admin />} />
@@ -224,7 +227,7 @@ const App = () => {
 
         <Route path='/work-details' element={<WorkDetails />} />
 
-        <Route path='/setting' element={<Profile />} />
+        <Route path='/setting' element={<Setting />} />
 
         <Route path='/approval' element={<Approval />} />
 

@@ -17,8 +17,6 @@ import { FaUserCheck } from "react-icons/fa";
 import { FaRegCalendarCheck } from "react-icons/fa6";
 import { FcManager } from "react-icons/fc";
 
-
-
 const BottomNavigation = () => {
   const { user } = useSelector((state) => state.auth);
   const [modal, setModal] = useState(null); // Track the active modal

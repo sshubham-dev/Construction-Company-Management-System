@@ -22,7 +22,7 @@ const MorePage = ({options}) => {
     },
 
     // {
-    //   to: '/settings',
+    //   to: '/setting',
     //   name: 'Settings',
     //   icon: <FaCog size={22} />,
     //   role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],

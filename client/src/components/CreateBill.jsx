@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 import { useNavigate, useParams } from 'react-router-dom';
 
 axios.defaults.withCredentials = true;
@@ -28,11 +29,12 @@ const CreateBill = ({ onClose, isEdit }) => {
   });
   const [contractors, setContractor] = useState([]);
   const status = ['Due', 'Paid', 'Pending'];
-  const { user, isLoggedIn } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
   const [billToEdit, setBillToEdit] = useState(null);
   const [billWork, setBillWork] = useState([]);
   const [paymentDetail, setPaymentDetail] = useState({});
-  const units = ['%', '₹']
+  const units = ['%', '₹'];
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchSite = async () => {
@@ -144,6 +146,7 @@ const CreateBill = ({ onClose, isEdit }) => {
         if (updateBill) {
           console.log(updateBill.data)
           toast.success(updateBill.data.message);
+          dispatch(fetchNotifications(user._id));
           onClose()
         }
       } else {
@@ -151,6 +154,7 @@ const CreateBill = ({ onClose, isEdit }) => {
         const response = await axios.post('/api/v1/bill', bill);
         console.log(response.data?.ContractorBill)
         toast.success(response.data.message);
+        dispatch(fetchNotifications(user._id));
         onClose()
       }
     } catch (error) {

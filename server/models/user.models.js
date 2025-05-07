@@ -70,10 +70,13 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Draft_Item'
     }],
-    // message: [{
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'Message'
-    // }],
+    notification: [{
+        message: { type: String },
+        title: { type: String },
+        link: { type: String },
+        isRead: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now }
+    }],
     message: [{
         type: String,
     }],
@@ -88,14 +91,6 @@ const userSchema = new mongoose.Schema({
             ref: 'Site',
         }
     }],
-    pushSubscription: {
-        endpoint: String,
-        expirationTime: Date,
-        keys: {
-            p256dh: String,
-            auth: String
-        }
-    }
 },
     { timestamps: true });
 

@@ -4,7 +4,6 @@ const User = require('../models/user.models.js');
 const {
     sendApproveByAdmin,
 } = require('./approval.controller.js');
-const webpush = require('../utils/webpush.js');
 
 const getAttendance = async (req, res) => {
     try {
@@ -88,79 +87,59 @@ const getLeaves = async (req, res) => {
 const createAttendance = async (req, res) => {
     try {
         const { date, timeIn, status } = req.body;
-        const user = req.user; // Ensure this is populated by your authentication middleware
-        console.log(date);
+        const user = req.user;
 
-        // Fetch the existing user without sensitive information
-        const existingUser = await User.findById(user._id)
-            .select('-password -refreshToken')
-            .exec();
+        const existingUser = await User.findById(user._id).select('-password -refreshToken');
 
-        // Check if attendance already exists for the user on the given date
         const existAttendance = await Attendance.findOne()
             .where('user.id').equals(existingUser._id)
-            .where('date').equals(date)
-            .exec();
+            .where('date').equals(date);
 
         if (existAttendance) {
-            console.log('Attendance is already marked for this date')
             return res.status(400).json({ message: 'Attendance is already marked for this date.' });
         }
 
-        // Create a new attendance record
         const newAttendance = new Attendance({
             user: {
                 name: existingUser.userName,
                 id: existingUser._id
             },
-            date: date,
+            date,
             timeIn,
             status,
         });
 
-        // Save the new attendance record
-        const attendance = await newAttendance.save();
+        // await newAttendance.save();
 
-        // Update the existing user's attendance array
-        existingUser.attendance.push(attendance._id);
-        await existingUser.save({ validateBeforeSave: false });
+        // existingUser.attendance.push(newAttendance._id);
+        // await existingUser.save({ validateBeforeSave: false });
 
-        // 🔔 Send Push Notification to All Employees (excluding self if needed)
+        // Send notification to each employee
+        const employees = await User.find({ role: "Employee" });
 
-        const allEmployees = await User.find({
-            role: 'Employee',
-            pushSubscription: { $ne: null },
-        });
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Attendance Alert',
+                message: `${existingUser.userName} is ${newAttendance.status}`,
+                createdAt: `${newAttendance.date}`
+            })
+            await employee.save()
+        }
 
-        for (const emp of allEmployees) {
-            console.log(`Checking pushSubscription for ${emp.userName}:`, emp.pushSubscription);
-          
-            try {
-              await webpush.sendNotification(
-                emp.pushSubscription,
-                JSON.stringify({
-                  title: 'Attendance Alert',
-                  message: `${existingUser.userName} is ${attendance.status}.`,
-                  url: 'https://app.bhuvihomes.in/',
-                })
-              );
-            } catch (err) {
-              console.error(`❌ Push failed for ${emp.userName}:`, err);
-            }
-          }
-          
-        return res.status(201).json({ message: 'Attendance marked successfully.' });
+        return res.status(201).json({ message: 'Attendance marked and notifications sent.' });
 
     } catch (error) {
-        console.error('Error creating attendance:', error); // More specific logging
-        return res.status(500).json({ message: 'Internal server error.' }); // Use 500 for internal errors
+        console.error('Error creating attendance:', error);
+        return res.status(500).json({ message: 'Internal server error.' });
     }
 };
+
 
 const createLeave = async (req, res) => {
     try {
         const { reason, from, reportingDate } = req.body;
         const user = req.user;
+
         const existingUser = await User.findById(user._id);
         const newLeave = new Leave({
             user: {
@@ -170,15 +149,30 @@ const createLeave = async (req, res) => {
             reason,
             from,
             reportingDate,
-        })
+        });
+
         const savedLeave = await newLeave.save();
+
         existingUser.leave.push(savedLeave._id);
-        existingUser.save({ validateBeforeSave: false })
-        sendApproveByAdmin(savedLeave, 'Leave', user._id)
-        return res.status(201).json({ message: 'Successfuly created and send for approval' })
+        await existingUser.save({ validateBeforeSave: false });
+        const employees = await User.find({ role: "Employee" });
+
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Leave Alert',
+                message: `${existingUser.userName} is on leave from ${savedLeave.from} to ${savedLeave.reportingDate}`,
+                createdAt: Date.now()
+            })
+            await employee.save()
+        }
+
+        sendApproveByAdmin(savedLeave, 'Leave', user._id);
+
+        return res.status(201).json({ message: 'Leave created and sent for approval.' });
+
     } catch (error) {
         console.log(error);
-        return res.status(501).json({ message: error.message })
+        return res.status(500).json({ message: 'Internal server error.' });
     }
 };
 

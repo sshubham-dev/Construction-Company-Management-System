@@ -16,7 +16,7 @@ import { IoIosJournal } from "react-icons/io";
 import { FcCustomerSupport } from "react-icons/fc";
 import { RiCustomerService2Fill } from "react-icons/ri";
 import { FcManager, FcApproval } from "react-icons/fc";
-import { FaWallet, FaBalanceScale, FaFileInvoiceDollar, FaBusinessTime } from "react-icons/fa";
+import { FaWallet, FaBalanceScale, FaFileInvoiceDollar, FaBusinessTime, FaCog } from "react-icons/fa";
 import { TbTruckReturn } from "react-icons/tb";
 import { FaPersonCircleQuestion, FaPersonCircleCheck, FaPersonShelter, FaTruckArrowRight, FaTruckMedical } from "react-icons/fa6";
 import { HiUserGroup } from "react-icons/hi2";
@@ -339,6 +339,13 @@ const Sidebar = () => {
       icon: <MdAssignment />,
       role: ['Admin', 'Company', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head'],
     },
+
+    // {
+    //   to: '/setting',
+    //   name: 'Settings',
+    //   icon: <FaCog size={22} />,
+    //   role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
+    // },
 
   ];
 
