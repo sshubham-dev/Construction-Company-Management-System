@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 import { fetchNotifications } from '../features/notification/notificationSlice';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Notification = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +25,7 @@ const Notification = () => {
             return () => clearInterval(interval);
         }
     }, [dispatch, user?._id]);
-
+console.log(unseenNotifications)
     // 🟡 Handle outside click
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -48,14 +48,14 @@ const Notification = () => {
     const toggleDropdown = () => setIsOpen(!isOpen);
     const displayed = activeTab === 'seen' ? seenNotifications : unseenNotifications;
 
-    const handleNotificationClick = async (index) => {
+    const handleNotificationClick = async (id) => {
         try {
-            await axios.patch(`/api/v1/notification/${user._id}/mark-read/${index}`);
-            dispatch(fetchNotifications(user._id));
+          await axios.patch(`/api/v1/notification/${user._id}/mark-read/${id}`);
+          dispatch(fetchNotifications(user._id));
         } catch (error) {
-            console.error('Failed to mark as read:', error);
+          console.error('Failed to mark as read:', error);
         }
-    };
+      };
 
     return (
         <div className="relative top-1" ref={dropdownRef}>
@@ -97,11 +97,11 @@ const Notification = () => {
                             displayed.map((msg, index) => (
                                 <div
                                     key={index}
-                                    onClick={() => activeTab === 'unseen' && handleNotificationClick(index)}
+                                    onClick={() => activeTab === 'unseen' && handleNotificationClick(msg._id)}
                                     className={`cursor-pointer px-3 py-2 rounded-md text-sm text-gray-700 border 
                                         ${msg.isRead ? 'bg-gray-100' : 'bg-blue-50 hover:bg-blue-100 border-blue-200'}`}
                                 >
-                                    <div className="font-semibold">{msg.title}</div>
+                                    <Link to={msg.link ? msg.link : ''} className="font-semibold">{msg.title}</Link>
                                     <div>{msg.message}</div>
                                     <div className="text-xs text-gray-500">
                                         {moment(msg.createdAt).format('DD MMM, YYYY')}
