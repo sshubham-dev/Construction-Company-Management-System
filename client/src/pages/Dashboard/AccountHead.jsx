@@ -1,11 +1,22 @@
-import React from 'react'
-import Header from '../../components/Header';
-const Account_Head = () => {
-  return (
-    <div >
-      <Header category="Page" title="Dashboard" />
-    </div>
-  )
-}
+import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import axios from 'axios';
+import DashboardSection from '../../components/UI/DashboardSection';
+import Layout from './Layout';
 
-export default Account_Head
+axios.defaults.withCredentials = true;
+
+
+const Account_Head = () => {
+  const { user } = useSelector((state) => state.auth);
+
+  return (
+    <Layout>
+
+    </Layout>
+  );
+};
+
+export default Account_Head;
+
+

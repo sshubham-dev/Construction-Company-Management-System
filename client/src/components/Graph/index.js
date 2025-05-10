@@ -14,7 +14,7 @@ import ScatterChart from "./ScatterChart";
 import StackedBarChart from "./StackedBarChart";
 import VBarChart from "./VBarChart";
 
-export const Graphs = {
+const Graphs = {
        AreaChart,  
        BubbleChart,
        DoughnutChart,  
@@ -31,3 +31,4 @@ export const Graphs = {
        StackedBarChart  ,
        VBarChart , 
 };
+export default Graphs;

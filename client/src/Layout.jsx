@@ -32,7 +32,7 @@ const Layout = ({ children }) => {
 
           {/* Main */}
           <div
-            className={`${isLoggedIn ? 'ml-0 md:ml-16 lg:ml-16 xl:ml-20' : 'ml-0'} mt-20 mb-4 min-w-screen min-h-screen p-2 bg-gray-50`}
+            className={`${isLoggedIn ? 'ml-0 md:ml-16 lg:ml-16 xl:ml-20' : 'ml-0'} mt-20 mb-6 min-w-screen min-h-screen p-2 bg-gray-50`}
           >
             <div className='m-1 md:my-3 mx-2 p-2 min-w-screen min-h-screen md:p-4 rounded-3xl'>
               {children}

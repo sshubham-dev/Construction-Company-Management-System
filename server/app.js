@@ -35,14 +35,25 @@ const Expenses = require('./routes/expenses.routes');
 const Notification = require('./routes/notification.routes');
 
 // midellware
+
+const allowedOrigins = process.env.CORS_ORIGIN.split(',');
+
 const corsOptions = {
-  origin: `${process.env.CORS_ORIGIN}`,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'HEAD', 'PUT', 'OPTIONS', 'PATCH', 'POST', 'DELETE'],
-  credentials: true, // Enable cookies across domains
-  secure: true, // Allow credentials only over HTTPS
-  // allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-csrf-token'],
+  credentials: true,
+  secure: true,
+    // allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-csrf-token'],
   // exposedHeaders: ['set-cookie', 'Content-Range', 'X-Content-Range', 'Authorization'],
 };
+
+
 app.use(cors(corsOptions));
 // app.use((req, res, next) => {
 //   res.header('Access-Control-Allow-Origin', 'https://bhuvi-manager.onrender.com');

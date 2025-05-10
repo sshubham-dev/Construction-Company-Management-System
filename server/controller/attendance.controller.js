@@ -109,10 +109,10 @@ const createAttendance = async (req, res) => {
             status,
         });
 
-        // await newAttendance.save();
+        await newAttendance.save();
 
-        // existingUser.attendance.push(newAttendance._id);
-        // await existingUser.save({ validateBeforeSave: false });
+        existingUser.attendance.push(newAttendance._id);
+        await existingUser.save({ validateBeforeSave: false });
 
         // Send notification to each employee
         const employees = await User.find({ role: "Employee" });

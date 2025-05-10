@@ -7,20 +7,20 @@ const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 Lead.post('/', createLead);
 
 // Get all leads
-Lead.get('/', getAllLeads);
+Lead.get('/', userAuth, getAllLeads);
 
 // Get a lead by ID
-Lead.get('/:id', getLeadById);
+Lead.get('/:id', userAuth, getLeadById);
 
 // Update a lead by ID
-Lead.put('/:id', updateLead);
+Lead.put('/:id', userAuth, updateLead);
 
 // Delete a lead by ID
-Lead.delete('/:id', deleteLead);
+Lead.delete('/:id', userAuth, deleteLead);
 
 // Change lead status
-Lead.patch('/status', changeLeadStatus);
+Lead.patch('/status', userAuth, changeLeadStatus);
 
-Lead.patch('/:id/followup', addFollowUp);
+Lead.patch('/:id/followup', userAuth, addFollowUp);
 
 module.exports = Lead;

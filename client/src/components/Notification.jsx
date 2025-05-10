@@ -130,3 +130,7 @@ console.log(unseenNotifications)
 };
 
 export default Notification;
+
+
+
+// a report recording the work and payment the do include - client name, option dwg start date, option dwg compelte date, working dwg start date, working complete date, 3d view start, 3d view complete, sanction start date, sanction complete date, service dwg start date, service dwg complete date and payment received with date for that client
