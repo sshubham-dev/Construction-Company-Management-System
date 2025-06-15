@@ -76,7 +76,7 @@ const savePurchaserequest = async (req, res) => {
 // Get all purchase requests
 const getAllPurchaseRequests = async (req, res) => {
     try {
-        const purchaseRequests = await PurchaseRequest.find()
+        const purchaseRequests = await PurchaseRequest.find().populate('site.id').exec()
         console.log(purchaseRequests)
         res.status(200).json(purchaseRequests);
     } catch (err) {
@@ -88,7 +88,25 @@ const getAllPurchaseRequests = async (req, res) => {
 // Get a specific purchase request by ID
 const getPurchaseRequestById = async (req, res) => {
     try {
-        const purchaseRequest = await PurchaseRequest.findById(req.params.id).populate('site.id to.id createdBy.id');
+        const purchaseRequest = await PurchaseRequest.findById(req.params.id).populate('site.id').exec()
+        if (!purchaseRequest) {
+            return res.status(404).json({ error: 'Purchase request not found' });
+        }
+        res.status(200).json(purchaseRequest);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error fetching purchase request' });
+    }
+};
+
+// Get a specific purchase request by ID
+const getPurchaseRequestBySite = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const purchaseRequest = await PurchaseRequest.find()
+            .where('site.id').equals(id)
+            .populate('site.id')
+            .exec()
         if (!purchaseRequest) {
             return res.status(404).json({ error: 'Purchase request not found' });
         }
@@ -102,11 +120,99 @@ const getPurchaseRequestById = async (req, res) => {
 // Update a purchase request
 const updatePurchaseRequest = async (req, res) => {
     try {
-        const updatedPurchaseRequest = await PurchaseRequest.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedPurchaseRequest) {
+        const id = req.params.id
+        const {
+            site,
+            reqDate,
+            createdBy,
+            requirementFor,
+            category,
+            requirement,
+        } = req.body;
+
+        const existingSite = await Site.findById(site);
+        const existingPurchaseRequest = await PurchaseRequest.findById(id);
+        if (!existingPurchaseRequest) {
             return res.status(404).json({ error: 'Purchase request not found' });
         }
-        res.status(200).json({ message: 'Purchase request updated successfully', updatedPurchaseRequest });
+
+        if (existingSite) {
+            existingPurchaseRequest.site = {
+                name: existingSite.name,
+                id: existingSite._id
+            }
+        }
+        existingPurchaseRequest.reqDate = reqDate || existingPurchaseRequest.reqDate
+        existingPurchaseRequest.requirementFor = requirementFor || existingPurchaseRequest.requirementFor
+        existingPurchaseRequest.category = category || existingPurchaseRequest.category
+        existingPurchaseRequest.createdBy = createdBy || existingPurchaseRequest.createdBy
+
+        if (Array.isArray(requirement) && requirement.length > 0) {
+            for (const req of requirement) {
+
+                if (req.item !== '') {
+                    const newRequirement = {
+                        item: req.item,
+                        request: {
+                            quantity: req.request.quantity,
+                            unit: req.request.unit,
+                            remarks: req.request.remarks,
+                        },
+                        approved: {
+                            quantity: req.approved.quantity,
+                            unit: req.approved.unit,
+                            remarks: req.approved.remarks,
+                        },
+                    }
+                    console.log('Pushing:', newRequirement);
+                    existingPurchaseRequest.requirement.push(newRequirement);
+                }
+            }
+        }
+        await existingPurchaseRequest.save();
+        res.status(200).json({ message: 'Purchase request updated successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(400).json({ error: 'Error updating purchase request' });
+    }
+};
+
+const updatePurchaseRequirement = async (req, res) => {
+    try {
+        const id = req.params.id
+        const index = req.params.index
+        const {
+            item,
+            request,
+            approved,
+        } = req.body;
+
+        const existingPurchaseRequest = await PurchaseRequest.findById(id);
+        if (!existingPurchaseRequest) {
+            return res.status(404).json({ error: 'Purchase request not found' });
+        }
+
+        if (index < 0 || index >= existingPurchaseRequest.requirement.length) {
+            return res.status(400).json({ success: false, message: 'Invalid index' });
+        }
+        if (!item) {
+            return res.status(400).json({ success: false, message: 'Item' });
+        }
+        existingPurchaseRequest.requirement[index] = {
+            item: item || existingPurchaseRequest.requirement[index].item,
+            request: {
+                quantity: request.quantity || existingPurchaseRequest.requirement.request[index].quantity,
+                unit: request.unit || existingPurchaseRequest.requirement.request[index].unit,
+                remarks: request.remarks || existingPurchaseRequest.requirement.request[index].remarks
+            },
+            approved: {
+                quantity: approved.quantity || existingPurchaseRequest.requirement.approved[index].quantity,
+                unit: approved.unit || existingPurchaseRequest.requirement.approved[index].unit,
+                remarks: approved.remarks || existingPurchaseRequest.requirement.approved[index].remarks
+            },
+        };
+        await existingPurchaseRequest.save();
+        res.status(200).json(existingPurchaseRequest);
     } catch (err) {
         console.error(err);
         res.status(400).json({ error: 'Error updating purchase request' });
@@ -127,4 +233,4 @@ const deletePurchaseRequest = async (req, res) => {
     }
 };
 
-module.exports = { getAllPurchaseRequests, getPurchaseRequestById, createPurchaseRequest, updatePurchaseRequest, deletePurchaseRequest, savePurchaserequest }
+module.exports = { getAllPurchaseRequests, getPurchaseRequestById, getPurchaseRequestBySite, createPurchaseRequest, updatePurchaseRequest, deletePurchaseRequest, savePurchaserequest, updatePurchaseRequirement }

@@ -81,6 +81,9 @@ import AttendanceReport from './pages/HR/Attendance.jsx';
 import StoreHelper from './pages/Dashboard/StoreHelper.jsx';
 import Setting from './pages/Setting.jsx';
 import Notification from './pages/Dashboard/Notification.jsx';
+import ReturnScreen from './screen/ReturnScreen.jsx';
+import PurchaseRequestScreen from './screen/PurchaseRequestScreen.jsx';
+import CheckListScreen from './screen/CheckListScreen.jsx';
 
 const App = () => {
 
@@ -172,9 +175,11 @@ const App = () => {
 
 
           <Route path='/sites/checklists' element={<CheckList />} />
+          <Route path='/checklist/:id' element={<CheckListScreen />} />
 
 
           <Route path='/sites/return' element={<ReturnRequest />} />
+          <Route path='/sites/return/:id' element={<ReturnScreen />} />
 
         <Route path='/suppliers' element={<Suppliers />} />
         <Route path='/supplier/:id' element={<SupplierScreen />} />
@@ -183,7 +188,7 @@ const App = () => {
         <Route path='/erp/inventory/purchase-request' element={<PurchaseRequest />} />
         <Route path='/erp/purchase-order' element={<PurchaseOrders />} />
         <Route path='/purchase-order/:id' element={<PurchaseOrderScreen />} />
-        <Route path='/purchase-request/:id' element={<PurchaseOrderScreen />} />
+        <Route path='/purchase-request/:id' element={<PurchaseRequestScreen />} />
 
 
         <Route path='/return-order/:from' element={<ReturnOrders />} />

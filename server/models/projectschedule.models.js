@@ -60,6 +60,10 @@ const projectScheduleSchema = new mongoose.Schema({
         type: String,
         default: 'Pending'
     },
+    approvalStatus:{
+        type:String,
+        default: 'Pending'
+    }
 }, { timestamps: true });
 
 const ProjectSchedule = mongoose.model('Project_Schedule', projectScheduleSchema);

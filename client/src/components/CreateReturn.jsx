@@ -1,15 +1,109 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useSelector } from 'react-redux';
+import moment from "moment";
 
 axios.defaults.withCredentials = true;
 
-const ReturnFormModal = ({ onClose, onSave, returnData }) => {
+const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => {
   const [formData, setFormData] = useState({
     site: "",
     materialType: "New",
     date: "",
     returnable: [{ item: "", quantity: 0, unit: "", }],
   });
+  const [sites, setSite] = useState([]);
+  const { user } = useSelector((state) => state.auth);
+  const [returnable, setReturnable] = useState([
+    {
+      item: "",
+      quantity: 0,
+      unit: "",
+      receivedQuantity: 0,
+      remarks: "",
+      rate: 0,
+    }
+  ]);
+  const [requestIdToEdit, setRequestIdToEdit] = useState(null);
+  const [ItemToEdit, setItemToEdit] = useState({ id: '', index: '' });
+
+  useEffect(() => {
+    if (editId && editIndex !== undefined) {
+      fetchReturnDetail(editId, editIndex);
+      setItemToEdit({ id: editId, index: editIndex });
+    } else if (editId) {
+      setRequestIdToEdit(editId);
+      fetchReturnRequest(editId);
+    }
+  }, [editId]);
+  const fetchReturnRequest = async (id) => {
+    try {
+      const response = await axios.get(`/api/v1/return/${id}`)
+      console.log(response.data)
+      setFormData({
+        site: response.data.site?.id._id || "",
+        materialType: response.data.materialType || "New",
+        date: response.data.date ? new Date(response.data.date).toISOString().split("T")[0] : "",
+        returnable: [{ item: "", quantity: 0, unit: "", }],
+      });
+      setRequestIdToEdit(id);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  const fetchReturnDetail = async (id, index) => {
+    try {
+      const response = await axios.get(`/api/v1/return/${id}/item`)
+      console.log(response.data)
+      const returnableItem = response.data[index];
+      setReturnable({
+        item: returnableItem.item || "",
+        quantity: returnableItem.quantity || 0,
+        unit: returnableItem.unit || "",
+        receivedQuantity: returnableItem.receivedQuantity || 0,
+        remarks: returnableItem.remarks || "",
+        rate: returnableItem.rate || 0,
+      });
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  useEffect(() => {
+    if (user && user.department === 'Site Incharge') {
+      console.log(user._id)
+      getUserSites(user._id);
+    } else if (user && user.department === 'Site Supervisor') {
+      console.log(user)
+      getUserSites(user._id);
+    } else if (user && user.department === 'Client') {
+      console.log(user)
+      getUserSites(user._id);
+    } else {
+      const getSites = async () => {
+        try {
+          const siteData = await axios.get('/api/v1/site');
+          setSite(siteData.data);
+          console.log(siteData.data)
+        } catch (error) {
+          console.error(error)
+          setError(error.message);
+        }
+      }
+      getSites();
+    }
+  }, [])
+
+  const getUserSites = async (id) => {
+    try {
+      const siteData = await axios.get(`/api/v1/site/user/${id}`);
+      console.log(siteData.data)
+      setSite(siteData.data);
+    } catch (error) {
+      console.error(error)
+      setError(error.message);
+    }
+  }
+  console.log(sites)
 
   useEffect(() => {
     if (returnData) {
@@ -40,6 +134,12 @@ const ReturnFormModal = ({ onClose, onSave, returnData }) => {
       }
     });
   };
+  const handleReturnableChange = (field, value) => {
+    setReturnable(prevState => ({
+      ...prevState,
+      [field]: value,  // Ensure deep update
+    }));
+  };
 
   const handleAddItem = () => {
     setFormData({
@@ -57,91 +157,214 @@ const ReturnFormModal = ({ onClose, onSave, returnData }) => {
     e.preventDefault();
     try {
       console.log(formData)
-      const response = await axios.post('/api/v1/return', formData)
-      console.log(response);
-      onClose();
-      onSave(formData);
+      if (ItemToEdit.id && ItemToEdit.index !== undefined) {
+        const response = await axios.put(`/api/v1/return/${ItemToEdit.id}/item/${ItemToEdit.index}`, returnable);
+        console.log(response);
+        onClose();
+      } else if (requestIdToEdit) {
+        console.log(formData)
+        const response = await axios.put(`/api/v1/return/${requestIdToEdit}`, formData);
+        console.log(response.data);
+        onClose();
+        // onSave(formData);
+      } else {
+        const response = await axios.post('/api/v1/return', formData)
+        console.log(response);
+        onClose();
+        onSave(formData);
+      }
     } catch (error) {
       console.log(error)
     }
   };
 
+  const handleReset = () => {
+    setFormData({
+      site: "",
+      materialType: "New",
+      date: "",
+      returnable: [{ item: "", quantity: 0, unit: "", }],
+    });
+    setReturnable([{ item: "", quantity: 0, unit: "", receivedQuantity: 0, remarks: "", rate: 0 }]);
+    setItemToEdit({ id: '', index: '' });
+  };
+
+
   return (
     <div >
       <form onSubmit={handleSubmit}>
-        <div className="space-y-3">
-          <input
-            type="text"
-            name="site"
-            placeholder="Site Name"
-            className="w-full border p-2 rounded"
-            value={formData.site}
-            onChange={handleChange}
-            required
-          />
-          <select
-            name="materialType"
-            className="w-full border p-2 rounded"
-            value={formData.materialType}
-            onChange={handleChange}
-          >
-            <option value="New">New</option>
-            <option value="Used">Used</option>
-            <option value="Scrap">Scrap</option>
-          </select>
-          <input
-            type="date"
-            name="date"
-            className="w-full border p-2 rounded"
-            value={formData.date}
-            onChange={handleChange}
-          />
-        </div>
-
-        <h3 className="text-lg font-semibold mt-4 mb-2">Returnable Items</h3>
-        {formData.returnable.map((item, index) => (
-          <div key={index} className="mb-3 p-3 border rounded relative bg-gray-50 flex flex-col gap-1">
-            {formData.returnable.length > 1 && (
-              <button
-                type="button"
-                className=" text-red-500 text-sm self-end"
-                onClick={() => handleRemoveItem(index)}
-              >
-                ✖ Remove
+        {ItemToEdit.id && ItemToEdit.index !== undefined ? (
+          <div className="">
+            <div className="mb-2">
+              <label htmlFor="item" className="block text-sm font-semibold text-gray-600">Item</label>
+              <input
+                type="text"
+                name="item"
+                id="item"
+                placeholder="Item Name"
+                className="w-full border p-2 mb-2 rounded"
+                value={returnable.item}
+                onChange={(e) => handleReturnableChange("item", e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+              <div className="mb-2">
+                <label htmlFor="quantity" className="block text-sm font-semibold text-gray-600">Quantity:</label>
+                <input
+                  type="number"
+                  name="quantity"
+                  placeholder="Qty"
+                  className="border p-2 rounded"
+                  value={returnable.quantity}
+                  onChange={(e) => handleReturnableChange("quantity", e.target.value)}
+                />
+              </div>
+              <div className="mb-2">
+                <label htmlFor="unit" className="block text-sm font-semibold text-gray-600">Unit:</label>
+                <input
+                  type="text"
+                  name="unit"
+                  placeholder="Unit"
+                  className="border p-2 rounded"
+                  value={returnable.unit}
+                  onChange={(e) => handleReturnableChange("unit", e.target.value)}
+                />
+              </div>
+            </div>
+            {user && user.department === 'Accountant' && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                  <div className="mb-2">
+                    <label htmlFor="receivedQuantity" className="block text-sm font-semibold text-gray-600">Received Quantity:</label>
+                    <input
+                      type="number"
+                      name="receivedQuantity"
+                      placeholder="Received Qty"
+                      className="border p-2 rounded"
+                      value={returnable.receivedQuantity}
+                      onChange={(e) => handleReturnableChange("receivedQuantity", e.target.value)}
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <label htmlFor="rate" className="block text-sm font-semibold text-gray-600">Rate:</label>
+                    <input
+                      type="number"
+                      name="rate"
+                      placeholder="rate"
+                      className="border p-2 rounded"
+                      value={returnable.rate}
+                      onChange={(e) => handleReturnableChange("rate", e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <label htmlFor="remarks" className="block text-sm font-semibold text-gray-600">Remarks:</label>
+                  <input
+                    type="text"
+                    name="remarks"
+                    placeholder="Remarks"
+                    className="w-full border p-2 rounded"
+                    value={returnable.remarks}
+                    onChange={(e) => handleReturnableChange("remarks", e.target.value)}
+                  />
+                </div>
+              </>)}
+            <div>
+              <button type="button" onClick={handleReset} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600">Reset</button>
+              <button type="submit" className="bg-blue-500 hover:bg-blue-700 ml-6 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Submit
               </button>
-            )}
-            <input
-              type="text"
-              placeholder="Item Name"
-              className="w-full border p-2 mb-2 rounded"
-              value={item.item}
-              onChange={(e) => handleChange(e, index, "item")}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {/* <input
+            </div>
+          </div>
+        ) :
+          (<>
+            <div className="space-y-3">
+              <div className="mb-4">
+                <label htmlFor="site" className="block text-sm font-semibold text-gray-600">Site</label>
+                <select
+                  name="site"
+                  value={formData.site}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  onChange={handleChange}>
+                  <option>Select Site</option>
+                  {sites.map((site, index) => (
+                    <option key={index} value={site._id}>{site.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-4">
+                <label htmlFor="materialType" className="block text-sm font-semibold text-gray-600">Material Type</label>
+                <select
+                  name="materialType"
+                  className="w-full border p-2 rounded"
+                  value={formData.materialType}
+                  onChange={handleChange}
+                >
+                  <option value="New">New</option>
+                  <option value="Used">Used</option>
+                  <option value="Scrap">Scrap</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label htmlFor="date" className="block text-sm font-semibold text-gray-600">Date: {moment(formData.date).format('DD-MM-YYYY')}</label>
+                <input
+                  type="date"
+                  name="date"
+                  className="w-full border p-2 rounded"
+                  value={formData.date}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <h3 className="text-lg font-semibold mt-4 mb-2">Returnable Items</h3>
+            {formData.returnable.map((item, index) => (
+              <div key={index} className="mb-3 p-4 border rounded relative flex flex-col gap-1">
+                {formData.returnable.length > 1 && (
+                  <button
+                    type="button"
+                    className=" text-red-500 text-sm self-end"
+                    onClick={() => handleRemoveItem(index)}
+                  >
+                    ✖ Remove
+                  </button>
+                )}
+                <div className="mb-2">
+                  <label htmlFor="item" className="block text-sm font-semibold text-gray-600">Item</label>
+                  <input
+                    type="text"
+                    placeholder="Item Name"
+                    className="w-full border p-2 mb-2 rounded"
+                    value={item.item}
+                    onChange={(e) => handleChange(e, index, "item")}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {/* <input
                     type="number"
                     placeholder="Received"
                     className="border p-2 rounded"
                     value={item.receivedQuantity}
                     onChange={(e) => handleChange(e, index, "receivedQuantity")}
                   /> */}
-              <input
-                type="number"
-                placeholder="Qty"
-                className="border p-2 rounded"
-                value={item.quantity}
-                onChange={(e) => handleChange(e, index, "quantity")}
-              />
-
-              <input
-                type="text"
-                placeholder="Unit"
-                className="border p-2 rounded"
-                value={item.unit}
-                onChange={(e) => handleChange(e, index, "unit")}
-              />
-            </div>
-            {/* <input
+                  <label htmlFor="quantity" className="block text-sm font-semibold text-gray-600">Quantity:</label>
+                  <input
+                    type="number"
+                    placeholder="Qty"
+                    className="border p-2 rounded"
+                    value={item.quantity}
+                    onChange={(e) => handleChange(e, index, "quantity")}
+                  />
+                  <label htmlFor="unit" className="block text-sm font-semibold text-gray-600">Unit:</label>
+                  <input
+                    type="text"
+                    placeholder="Unit"
+                    className="border p-2 rounded"
+                    value={item.unit}
+                    onChange={(e) => handleChange(e, index, "unit")}
+                  />
+                </div>
+                {/* <input
                   type="text"
                   placeholder="Remarks"
                   className="w-full border p-2 mt-2 rounded"
@@ -149,25 +372,26 @@ const ReturnFormModal = ({ onClose, onSave, returnData }) => {
                   onChange={(e) => handleChange(e, index, "remarks")}
                 /> */}
 
-          </div>
-        ))}
+              </div>
+            ))}
 
-        <button
-          type="button"
-          className=" bg-blue-600 text-white py-2 px-3 rounded mt-2 hover:bg-blue-700"
-          onClick={handleAddItem}
-        >
-          + Add More Item
-        </button>
+            <button
+              type="button"
+              className=" bg-blue-600 text-white py-2 px-3 rounded mt-2 hover:bg-blue-700"
+              onClick={handleAddItem}
+            >
+              + Add More Item
+            </button>
 
-        <div className="flex justify-end space-x-2 mt-4">
-          <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
-            Cancel
-          </button>
-          <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-            {returnData ? "Update" : "Add"}
-          </button>
-        </div>
+            <div className="flex justify-end space-x-2 mt-4">
+              <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                Cancel
+              </button>
+              <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                Add
+              </button>
+            </div>
+          </>)}
       </form>
     </div>
   );

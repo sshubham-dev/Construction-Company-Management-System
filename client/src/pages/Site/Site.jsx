@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast';
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
@@ -107,7 +107,7 @@ const Sites = () => {
               {sites?.map((site) => (
                 <tr key={site._id} className='border-b border-blue-gray-200'>
                   <td className="px-6 py-4">
-                    <p className=""> {site?.name} </p>
+                    <Link to={`/site/${site._id}`}> {site?.name} </Link>
                     <p className="text-gray-500 text-sm font-semibold tracking-wide"> {site?.client?.name} </p>
                   </td>
                   <td className="px-6 py-4 text-center">

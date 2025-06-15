@@ -55,7 +55,7 @@ const clientSchema = new mongoose.Schema({
         receivable: {
             type: Number,
         },
-        recived: {
+        received: {
             type: Number,
         },
         expenses: {
@@ -65,6 +65,10 @@ const clientSchema = new mongoose.Schema({
             type: Number,
         },
     },
+    ledger: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Ledger'
+    }
 }, { timestamps: true });
 
 clientSchema.pre('save', function (next) {

@@ -6,11 +6,13 @@ import Header from '../../components/Header';
 import Modal from '../../components/Modal';
 axios.defaults.withCredentials = true;
 
+
 const AttendanceReport = () => {
   const [attendances, setAttendances] = useState([]);
   const [employees, setEmployee] = useState([]);
   const [leaves, setLeaves] = useState([]);
   const [filterModal, setFilterModal] = useState(false);
+  const [modal, setModal] = useState(false);
   const [year, setYear] = useState(moment().year());
   const [month, setMonth] = useState(moment().month());
   const [attendanceStatus, setAttendanceStatus] = useState('present');
@@ -98,6 +100,63 @@ const AttendanceReport = () => {
     );
   });
 
+  const getWorkingDaysInMonth = (year, month, weeklyOffDay = 0) => {
+    // weeklyOffDay = 0 (Sunday), 2 (Tuesday), etc.
+    const totalDays = moment(`${year}-${Number(month) + 1}`, "YYYY-M").daysInMonth();
+    let workingDays = 0;
+
+    for (let day = 1; day <= totalDays; day++) {
+      const currentDate = moment(`${year}-${Number(month) + 1}-${day}`, "YYYY-M-D");
+      if (currentDate.day() !== weeklyOffDay) {
+        workingDays++;
+      }
+    }
+
+    return workingDays;
+  };
+
+
+
+  const getSummaryByEmployee = () => {
+    const summary = {};
+    const totalWorkingDays = getWorkingDaysInMonth(year, month);
+
+    attendances.forEach(record => {
+      const date = moment(record.date);
+      if (date.year() === Number(year) && date.month() === Number(month)) {
+        const name = record?.user?.name;
+        if (!summary[name]) {
+          summary[name] = { present: 0, leave: 0, absent: 0 };
+        }
+
+        if (record.status === 'present') {
+          summary[name].present += 1;
+        }
+      }
+    });
+
+    leaves.forEach(record => {
+      const fromDate = moment(record.from);
+      if (fromDate.year() === Number(year) && fromDate.month() === Number(month)) {
+        const name = record?.user?.name;
+        if (!summary[name]) {
+          summary[name] = { present: 0, leave: 0, absent: 0 };
+        }
+        summary[name].leave += 1;
+      }
+    });
+
+    Object.keys(summary).forEach(name => {
+      const { present, leave } = summary[name];
+      summary[name].workingDays = totalWorkingDays;
+      summary[name].absent = totalWorkingDays - present - leave;
+      if (summary[name].absent < 0) summary[name].absent = 0;
+    });
+
+    return summary;
+  };
+
+
   const handleReset = () => {
     setMonth(moment().month());  // Reset to the current month
     setYear(moment().year());    // Reset to the current year
@@ -177,6 +236,34 @@ const AttendanceReport = () => {
             </div>
           )}
 
+          {/* Attendance Summary Table */}
+          <div className="my-6 rounded-xl shadow-md overflow-x-auto scrollbar-hide">
+            <h2 className="text-lg font-semibold mb-2">Monthly Summary - {moment().set({ year, month }).format('MMMM')}</h2>
+            <table className="min-w-full bg-white rounded-xl overflow-hidden">
+              <thead className="bg-gradient-to-r from-green-400 to-blue-400 text-white">
+                <tr>
+                  <th className="p-3 text-left">Employee</th>
+                  <th className="p-3 text-left">Working Days</th>
+                  <th className="p-3 text-left">Present</th>
+                  <th className="p-3 text-left">Leave</th>
+                  <th className="p-3 text-left">Absent</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(getSummaryByEmployee()).map(([name, data], index) => (
+                  <tr key={index} className="border-b border-gray-200">
+                    <td className="p-3">{name}</td>
+                    <td className="p-3 font-medium">{data.workingDays}</td>
+                    <td className="p-3 text-green-700 font-semibold">{data.present}</td>
+                    <td className="p-3 text-yellow-600 font-semibold">{data.leave}</td>
+                    <td className="p-3 text-red-700 font-semibold">{data.absent}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+
           {/* Tabs for Attendance and Leave */}
           <div className="mb-4">
             <div className="flex gap-4 border-b border-gray-200">
@@ -216,7 +303,7 @@ const AttendanceReport = () => {
                 <tbody className='bg-gradient-to-br from-blue-50 to-purple-50'>
                   {filteredAttendance.map((record, index) => (
                     <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
-                      <td className="p-3 text-gray-700">{record?.user.name}</td>
+                      <td className="p-3 text-gray-700 cursor-pointer">{record?.user.name}</td>
                       <td className="p-3 text-gray-700">{moment(record.date).format('DD MMM YYYY')}</td>
                       <td className="p-3 text-gray-700">{record.timeIn || 'N/A'}</td>
                       <td className="p-3">

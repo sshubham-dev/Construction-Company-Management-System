@@ -27,15 +27,14 @@ const Navbar = () => {
   const {
     activeMenu,
     setActiveMenu,
-    screenSize,
     setScreenSize } = useStateContext();
 
   useEffect(() => {
-    const handleResize = () => setScreenSize(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    console.log(window.innerWidth)
-    return () => window.removeEventListener('resize', handleResize);
+    // const handleResize = () => setScreenSize(window.innerWidth);
+    // window.addEventListener('resize', handleResize);
+    // handleResize();
+    // console.log(window.innerWidth)
+    // return () => window.removeEventListener('resize', handleResize);
   }, [])
 
   const navigate = useNavigate();

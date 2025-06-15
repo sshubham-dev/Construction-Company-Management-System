@@ -1,19 +1,22 @@
 const express = require('express');
 const Return = express.Router();
-const { createReturn, getReturnById, getReturns, updateReturn, deleteReturn } = require('../controller/return.controller');
+const { createReturn, getReturnById, getReturns, updateReturn, deleteReturn, getReturnItem, updateReturnItem } = require('../controller/return.controller');
 const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 // Create a return
-Return.post('/', createReturn);
+Return.post('/', userAuth, createReturn);
 
 // Get all returns
 Return.get('/', getReturns);
 
 // Get a return by ID
 Return.get('/:id', getReturnById);
+Return.get('/:id/item', getReturnItem);
 
 // Update a return
 Return.put('/:id', updateReturn);
+Return.put('/save/:id', updateReturn);
+Return.put('/:id/item/:index', updateReturnItem);
 
 // Delete a return
 Return.delete('/:id', deleteReturn);

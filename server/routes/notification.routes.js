@@ -15,8 +15,8 @@ Notification.get('/:userId', async (req, res) => {
     const seenNotifications = notification.filter(msg => msg.isRead === true);
     const unseenNotifications = notification.filter(msg => msg.isRead === false);
 
-    console.log('Seen Notifications:', seenNotifications);
-    console.log('Unseen Notifications:', unseenNotifications);
+    // console.log('Seen Notifications:', seenNotifications);
+    // console.log('Unseen Notifications:', unseenNotifications);
 
     return res.status(200).json({ seenNotifications, unseenNotifications });
   } catch (err) {

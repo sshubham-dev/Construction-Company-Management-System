@@ -5,49 +5,44 @@ import { useNavigate } from 'react-router-dom';
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FaExternalLinkAlt } from "react-icons/fa";
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import Header from '../../components/Header';
 import CreateEmployee from '../../components/CreateEmployee';
 import Modal from '../../components/Modal';
+import { fetchEmployees, deleteEmployee } from '../../features/hr/employeeSlice';
 axios.defaults.withCredentials = true;
 
 const Employee = () => {
-  const [employees, setEmployee] = useState([]);
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [editId, setEditId] = useState('');
   const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
 
+  // useEffect(() => {
+  //   const getEmployees = async () => {
+  //     try {
+  //       const employeesData = await axios.get('/api/v1/employee');
+  //       setEmployee(employeesData.data);
+  //       console.log(employeesData.data);
+  //     } catch (error) {
+  //       console.error(error);
+  //     }
+  //   };
+  //   getEmployees();
+  // }, []);
+  const employees = useSelector((state) => state.employee.all);
   useEffect(() => {
-    const getEmployees = async () => {
-      try {
-        const employeesData = await axios.get('/api/v1/employee');
-        setEmployee(employeesData.data);
-        console.log(employeesData.data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    getEmployees();
-  }, []);
+    dispatch(fetchEmployees());
+  }, [dispatch]);
 
   const navigate = useNavigate();
 
   const handleEdit = (userId) => {
     setEditModal(true)
     setEditId(userId)
-    // navigate(`/edit-user?userId=${userId}`);
   };
 
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`/api/v1/user/${id}`);
-      setEmployee(employees.filter((employee) => employee._id !== id));
-    } catch (error) {
-      console.log(error)
-      toast.error(error.message)
-    }
-  };
 
   return (
     <div >
@@ -57,9 +52,9 @@ const Employee = () => {
           <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
             Total Employee: {employees.length}
           </h2>
-            <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2 sm:mt-0">
-              <MdAdd className='text-xl' />
-            </button>
+          <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2 sm:mt-0">
+            <MdAdd className='text-xl' />
+          </button>
         </div>
 
         <div className="overflow-x-auto mb-8"
@@ -106,7 +101,7 @@ const Employee = () => {
                       <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                     </button>
                     <button
-                      onClick={() => handleDelete(employee._id)}
+                      onClick={() => dispatch(deleteEmployee(employee._id))}
                       className="mr-2">
                       <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                     </button>
@@ -119,12 +114,12 @@ const Employee = () => {
         <Toaster position="top-right" reverseOrder={false} />
       </div>
       {/* Employee Modal */}
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Employee' >
-          <CreateEmployee onClose={() => setCreateModal(false)} />
-        </Modal>
-        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Employee' >
-          <CreateEmployee onClose={() => setEditModal(false)} isEdit={editId} />
-        </Modal>
+      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Employee' >
+        <CreateEmployee onClose={() => setCreateModal(false)} />
+      </Modal>
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Employee' >
+        <CreateEmployee onClose={() => setEditModal(false)} isEdit={editId} />
+      </Modal>
     </div>
   );
 };

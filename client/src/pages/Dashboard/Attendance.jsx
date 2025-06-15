@@ -8,6 +8,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchNotifications } from '../../features/notification/notificationSlice';
 import { FaCheckCircle } from "react-icons/fa";
 import { BsXCircleFill } from "react-icons/bs";
+import { RiFileExcel2Line } from "react-icons/ri";
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+
 // import { CheckCircle, XCircle } from "react-icons/fa";
 axios.defaults.withCredentials = true;
 
@@ -59,46 +63,38 @@ const Attendance = () => {
   const [status, setStatus] = useState(null);
   // Fetch attendance and leave data
   useEffect(() => {
-    const fetchAttendance = async () => {
-      try {
-        const attendanceResponse = await axios.get('/api/v1/attendance');
-        console.log('Attendance Response:', attendanceResponse.data);
-        if (Array.isArray(attendanceResponse.data)) {
-          setAttendances(attendanceResponse.data);
-        } else {
-          console.error('Invalid attendance data:', attendanceResponse.data);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    const fetchLeave = async () => {
-      try {
-        const leaveResponse = await axios.get('/api/v1/leave');
-        console.log('Leaves Response:', leaveResponse.data);
-
-        if (Array.isArray(leaveResponse.data)) {
-          setLeaves(leaveResponse.data);
-        } else {
-          console.error('Invalid leave data:', leaveResponse.data);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
     fetchAttendance();
     fetchLeave();
   }, []);
 
-  // useEffect(() => {
-  //   if (status) {
-  //     const timer = setTimeout(() => setStatus(null), 4000);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [status]);
+  const fetchLeave = async () => {
+    try {
+      const leaveResponse = await axios.get('/api/v1/leave');
+      console.log('Leaves Response:', leaveResponse.data);
 
+      if (Array.isArray(leaveResponse.data)) {
+        setLeaves(leaveResponse.data);
+      } else {
+        console.error('Invalid leave data:', leaveResponse.data);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const fetchAttendance = async () => {
+    try {
+      const attendanceResponse = await axios.get('/api/v1/attendance');
+      console.log('Attendance Response:', attendanceResponse.data);
+      if (Array.isArray(attendanceResponse.data)) {
+        setAttendances(attendanceResponse.data);
+      } else {
+        console.error('Invalid attendance data:', attendanceResponse.data);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   const handleStatusChange = (e) => {
     setAttendanceStatus(e.target.value);
@@ -111,6 +107,7 @@ const Attendance = () => {
       // console.log(response.data);
       setStatus(markAttendance.status)
       setAttendanceMarked(true);
+      fetchAttendance();
       dispatch(fetchNotifications(user._id));
     } catch (error) {
       console.error(error);
@@ -142,6 +139,18 @@ const Attendance = () => {
     setYear(moment().year());    // Reset to the current year
   };
 
+  const exportToExcel = async () => {
+  const response = await axios.get(`/api/v1/attendance/export-data/${user._id}`);
+  console.log(response.data)
+  const ws = XLSX.utils.json_to_sheet(response.data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Data');
+
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/octet-stream' });
+  saveAs(blob, 'attendance.xlsx');
+};
+
   return (
     <div className='p-1'>
       <Header category="Page" title="Attendance Dashboard" />
@@ -171,6 +180,13 @@ const Attendance = () => {
               )}
             </form>
             <div className="flex gap-4">
+              {/* <button
+                onClick={() => exportToExcel()}
+                // className="py-2 px-3 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition duration-300"
+                className='pr-4'
+              >
+                <RiFileExcel2Line size={28} color='green'/>
+              </button> */}
               <button
                 onClick={() => setFilterModal(true)}
                 className="py-2 px-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg transition duration-300"
@@ -268,7 +284,7 @@ const Attendance = () => {
                         <span
                           className={`px-3 py-1 rounded-full text-sm font-semibold ${record.status === 'present' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
                         >
-                          {record.status}
+                          {record.status.toUpperCase()}
                         </span>
                       </td>
                     </tr>
@@ -318,7 +334,7 @@ const Attendance = () => {
               status='present'
               onClose={() => setStatus(null)}
             />
-           )}
+          )}
         </div>
       </section>
     </div>

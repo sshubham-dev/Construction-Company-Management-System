@@ -75,8 +75,6 @@ const CreateJournal = ({ onClose }) => {
 
                 <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Voucher Number" value={voucherNumber} onChange={(e) => setVoucherNumber(e.target.value)} />
 
-                <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-
                 <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Narration" value={narration} onChange={(e) => setNarration(e.target.value)} />
 
                 {/* {journalType === 'journal' && (

@@ -72,6 +72,21 @@ const contractorSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Work_Order'
     }],
+    account: {
+        payable: {
+            type: Number,
+        },
+        paid: {
+            type: Number,
+        },
+        balance: {
+            type: Number,
+        },
+    },
+    ledger: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Ledger'
+    }
 }, { timestamps: true })
 
 const Contractor = mongoose.model('Contractor', contractorSchema);

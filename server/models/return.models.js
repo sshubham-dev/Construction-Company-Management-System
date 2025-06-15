@@ -15,6 +15,12 @@ const returnableSchema = new mongoose.Schema({
         type: String,
     },
     remarks: String,
+    rate: {
+        type: Number,
+    },
+    amount: {
+        type: Number,
+    }
 })
 const returnSchema = new mongoose.Schema({
     site: {
@@ -30,14 +36,15 @@ const returnSchema = new mongoose.Schema({
         enum: ['New', 'Used', 'Scrap']
     },
     date: Date,
+    returnDate: Date,
     returnable: [returnableSchema],
     status: [{
         name: String,
         date: Date,
     }],
-    createdBy:{
+    createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:'User'
+        ref: 'User'
     }
 }, { timestamps: true });
 

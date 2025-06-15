@@ -7,23 +7,32 @@
 //   // Do something with the Bill
 // }
 
-
+const { Ledger } = require("../models/ledger.models");
 const Receipt = require('../models/receipt.models');  // Adjust path as needed
 
 // Create a new receipt
 const createReceipt = async (req, res) => {
   try {
-    const { receiptNo, date, from, to, receiptDetails, amount, description, invoice } = req.body;
+    const { receiptNo, date, from, to, receiptDetails, amount, description } = req.body;
+
+    const existingFrom = await Ledger.findById(from);
+    const existingTo = await Ledger.findById(to);
 
     const newReceipt = new Receipt({
       receiptNo,
       date,
-      from,
-      to,
+      from:{
+        name: existingFrom.name,
+        id: existingFrom._id,
+        // type: existingFrom?.refrenceType,
+      },
+      to:{
+        name: existingTo.name,
+        id: existingTo._id,
+      },
       receiptDetails,
       amount,
       description,
-      invoice
     });
 
     await newReceipt.save();
@@ -38,6 +47,7 @@ const createReceipt = async (req, res) => {
 const getAllReceipts = async (req, res) => {
   try {
     const receipts = await Receipt.find();
+    console.log(receipts)
     res.status(200).json(receipts);
   } catch (error) {
     console.error(error);

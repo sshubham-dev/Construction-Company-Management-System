@@ -3,8 +3,9 @@ import axios from 'axios'
 import Select from "react-select";
 
 const CreateStock = ({ item, isEdit, onClose, onSave }) => {
+    console.log(item)
     const [formData, setFormData] = useState({
-        name: "",
+        name: item.name ? item.name : "",
         code: '',
         category: "",
         unit: [],
@@ -69,6 +70,7 @@ const CreateStock = ({ item, isEdit, onClose, onSave }) => {
             mp: '',
             gstRate: '',
         })
+        onClose();
     }
 
     const handleSubmit = async (e) => {

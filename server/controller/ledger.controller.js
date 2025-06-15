@@ -1,5 +1,10 @@
 const User = require('../models/user.models');
 const { Group, Ledger, CostCenter } = require("../models/ledger.models");
+const Employee = require('../models/employee.models');
+const Site = require('../models/site.models');
+const Contractor = require('../models/contractor.models');
+const Client = require('../models/client.models');
+const Supplier = require('../models/supplier.models.js');
 
 // CRUD for Ledger
 const createLedger = async (req, res) => {
@@ -26,11 +31,11 @@ const createLedger = async (req, res) => {
       bankingDetails,
       openingBalance,
       balance: openingBalance,
-      paid:0,
-      due:0,
-      receivable:0,
-      payable:0,
-      received:0,
+      paid: 0,
+      due: 0,
+      receivable: 0,
+      payable: 0,
+      received: 0,
     });
     await ledger.save();
     res.status(201).json(ledger);
@@ -97,6 +102,44 @@ const updateLedger = async (req, res) => {
   try {
     const ledger = await Ledger.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(ledger);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+const mapLedger = async (req, res) => {
+  console.log("🚨 mapLedger controller CALLED");
+  try {
+    const { id } = req.params;
+    const { refrenceId, refrenceType } = req.body
+    console.log("refrenceType:", refrenceType);
+    if (!refrenceType) throw new Error("Reference type is required");
+    const ledger = await Ledger.findById(id);
+    ledger.refrenceId = refrenceId;
+    ledger.refrenceType = refrenceType;
+
+    switch (refrenceType) {
+      case "Employee":
+        await Employee.findByIdAndUpdate(refrenceId, { ledger: ledger._id });
+        break;
+      case "Client":
+        await Client.findByIdAndUpdate(refrenceId, { ledger: ledger._id });
+        break;
+      case "Site":
+        await Site.findByIdAndUpdate(refrenceId, { ledger: ledger._id });
+        break;
+      case "Contractor":
+        await Contractor.findByIdAndUpdate(refrenceId, { ledger: ledger._id });
+        break;
+      case "Supplier":
+        await Supplier.findByIdAndUpdate(refrenceId, { ledger: ledger._id });
+        break;
+      default:
+        throw new Error("Invalid reference type");
+    }
+
+    await ledger.save();
+    return res.status(200).json(ledger);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -171,5 +214,6 @@ module.exports = {
   updateGroup,
   deleteGroup,
   deleteLedger,
-  addLedger
+  addLedger,
+  mapLedger
 }

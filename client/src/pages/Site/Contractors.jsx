@@ -80,7 +80,7 @@ const Contractors = () => {
                                         {contractor.name}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <p className="text-sm"> {contractor.contactNo} </p>
+                                        <p className="text-sm"> {contractor.phone} </p>
                                         <p className="text-gray-500 text-sm tracking-wide"> {contractor.whatsapp} </p>
                                     </td>
                                     <td className="px-6 py-4 text-center">

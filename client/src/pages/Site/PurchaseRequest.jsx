@@ -9,11 +9,11 @@ import { FaExternalLinkAlt } from "react-icons/fa";
 import CreatePurchaseRequest from '../../components/CreatePurchaseRequest';
 import Modal from '../../components/Modal';
 import axios from 'axios';
+import moment from 'moment';
 
 const PurchaseRequest = () => {
   const navigate = useNavigate();
   const [purchaseRequest, setPurchaseRequest] = useState([]);
-  const [selectedRequest, setSelectedRequest] = useState(null);
   const [createModal, setCreateModal] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("approved");
@@ -40,7 +40,6 @@ const PurchaseRequest = () => {
   };
 
   const handleEdit = (id) => {
-    setSelectedRequest(purchaseRequest);
     setEditModal(true);
     setEditId(id)
   };
@@ -53,19 +52,6 @@ const PurchaseRequest = () => {
     } catch (error) {
       console.log(error)
     }
-  };
-
-  const handleSubmit = (request) => {
-    if (selectedRequest) {
-      setPurchaseRequest((prevpurchaseRequests) =>
-        prevpurchaseRequests.map((l) => (l === selectedRequest ? purchaseRequest : l))
-      );
-      toast.success("purchaseRequest updated successfully!");
-    } else {
-      setPurchaseRequest((prevpurchaseRequests) => [...prevpurchaseRequests, purchaseRequest]);
-      toast.success("purchaseRequest added successfully!");
-    }
-    setSelectedRequest(null);
   };
 
   return (
@@ -98,10 +84,10 @@ const PurchaseRequest = () => {
             Approved
           </button>
           <button
-            className={`px-4 py-2 ${activeTab === "draft" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
-            onClick={() => setActiveTab("draft")}
+            className={`px-4 py-2 ${activeTab === "request" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
+            onClick={() => setActiveTab("request")}
           >
-            Drafts
+            Request
           </button>
         </div>
 
@@ -112,27 +98,27 @@ const PurchaseRequest = () => {
                 <tr className="bg-gray-300">
                   <th className="p-3 text-left text-sm font-semibold text-gray-700">Site</th>
                   <th className="p-3 text-left text-sm font-semibold text-gray-700">Requirement For</th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Category</th>
                   <th className="p-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Approval status</th>
                   <th className="p-3 text-left text-sm font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {purchaseRequest.map((request, index) => (
                   <tr key={index} className="bg-white border-b hover:bg-gray-50 ">
-                    <td className="p-3 text-left">{request.site}</td>
+                    <td className="p-3 text-left">{request.site.name}</td>
                     <td className="p-3 text-left">{request.requirementFor}</td>
+                    <td className="p-3 text-left">{request.category}</td>
                     <td className="p-3 text-left">{request.status}</td>
-                    <td className="p-3 text-left">{request.approvalStatus}</td>
                     <td className="px-6 py-4">
-                      <button onClick={() => handleRedirect(qualitySchedule._id)} className="mr-2">
-                          <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                        </button>
+                      <button onClick={() => handleRedirect(request._id)} className="mr-2">
+                        <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                      </button>
                       <button
-                          onClick={() => handleEdit(request._id)}
-                          className="mr-2">
-                          <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                        </button>
+                        onClick={() => handleEdit(request._id)}
+                        className="mr-2">
+                        <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                      </button>
                       <button
                         onClick={() => handleDelete(request._id)}>
                         <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
@@ -145,18 +131,47 @@ const PurchaseRequest = () => {
           </div>
         )}
 
-        {activeTab === "draft" && (
+        {activeTab === "request" && (
           <div className='bg-white rounded-lg shadow overflow-x-auto scrollbar-hide'>
             <table className="w-full border-collapse overflow-x-auto table-auto whitespace-nowrap">
               <thead>
                 <tr className="bg-gray-300">
                   <th className="p-3 text-left text-sm font-semibold text-gray-700">Site</th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Contact</th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Requirement For</th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Request Date</th>
+                  {/* <th className="p-3 text-left text-sm font-semibold text-gray-700">Approval status</th> */}
                   <th className="p-3 text-left text-sm font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
+                {purchaseRequest.map((request, index) => (
+                  <tr key={index} className="bg-white border-b hover:bg-gray-50 ">
+                    <td className="p-3 text-left">{request.site.name}</td>
+                    <td className="p-3 text-left flex flex-col">
+                      <p>
+                        {request.requirementFor}
+                      </p>
+                      <p>
+                        {request?.category}
+                      </p>
+                    </td>
+                    <td className="p-3 text-left">{moment(request?.reqDate).format('DD-MM-YYYY')}</td>
+                    <td className="px-6 py-4">
+                      <button onClick={() => handleRedirect(request._id)} className="mr-2">
+                        <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                      </button>
+                      <button
+                        onClick={() => handleEdit(request._id)}
+                        className="mr-2">
+                        <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(request._id)}>
+                        <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -169,12 +184,12 @@ const PurchaseRequest = () => {
       </section>
 
       {/* Work Order Modal */}
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Purchase Request' >
-          <CreatePurchaseRequest onClose={() => setCreateModal(false)} />
-        </Modal>
-        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Purchase Request' >
-          <CreatePurchaseRequest onClose={() => setEditModal(false)} id={editId} />
-        </Modal>
+      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Purchase Request' >
+        <CreatePurchaseRequest onClose={() => setCreateModal(false)} />
+      </Modal>
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Purchase Request' >
+        <CreatePurchaseRequest onClose={() => setEditModal(false)} id={editId} />
+      </Modal>
     </div>
   )
 }

@@ -21,17 +21,17 @@ var paymentSchema = new mongoose.Schema({
     name: String,
     id: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: 'Ledger',
       required: true,
     },
-    type: {
-      type: String,
-      required: true,
-      enum: ['Client', 'Supplier', 'Contractor', 'User', 'Employee'], // Specify the allowed models
-    },
+    // type: {
+    //   type: String,
+    //   required: true,
+    //   enum: ['Client', 'Supplier', 'Contractor', 'User', 'Employee'], // Specify the allowed models
+    // },
   },
-  paymentDetails: {
-    chequeNumber: { type: String }, // Optional cheque number for cheque payments
-    bankReference: { type: String }, // Optional bank transaction reference for online payments
+  referenceNo: {
+    type: String, // Optional bank transaction reference for online payments
   },
   amount: {
     type: Number,
@@ -41,7 +41,7 @@ var paymentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  paymentFor:{
+  paymentFor: {
     type: String,
     trim: true,
   },
@@ -49,11 +49,9 @@ var paymentSchema = new mongoose.Schema({
     name: String,
     id: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
     },
     type: {
       type: String,
-      required: true,
       enum: ['Invoice', 'Bill', 'ExtraWork'], // Specify the allowed models
     },
   }],

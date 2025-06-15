@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import Select from 'react-select';
+import { useSelector } from 'react-redux';
+import moment from 'moment';
 
 axios.defaults.withCredentials = true;
 
-const CreateQualitySchedule = ({ onClose, id, index}) => {
+const CreateQualitySchedule = ({ onClose, id, index }) => {
   const [formData, setFormData] = useState({
     site: '',
     qualityScheduleId: '',
@@ -27,22 +29,25 @@ const CreateQualitySchedule = ({ onClose, id, index}) => {
     reason: '',
     status: '',
   });
+  const { user } = useSelector((state) => state.auth);
   const statusOptions = ['Started', 'Completed', 'Pending', 'Partially Completed'];
 
   useEffect(() => {
-    if (id && !index) {
-      fetchProjectSchedule(id);
-      setScheduleIdToEdit(id);
-    } else if (id && index) {
-      fetchProjectDetail(id, index);
+    if (id && index !== undefined) {
+      fetchScheduleDetail(id, index);
       setWorkToEdit({ id, index });
+      // console.log(index)
+    } else if (id) {
+      fetchQualitySchedule(id);
+      setScheduleIdToEdit(id);
     }
   }, [id, index]);
 
-  const fetchProjectDetail = async (id, index) => {
+  const fetchScheduleDetail = async (id, index) => {
     try {
       const response = await axios.get(`/api/v1/quality-schedule/${id}/workDetails`);
       const detail = response.data[index];
+      // console.log('response.data', response.data[index])
       setWorkDetail({
         work: detail.work,
         checkingDate: detail.checkingDate,
@@ -56,7 +61,7 @@ const CreateQualitySchedule = ({ onClose, id, index}) => {
     }
   };
 
-  const fetchProjectSchedule = async (id) => {
+  const fetchQualitySchedule = async (id) => {
     try {
       const response = await axios.get(`/api/v1/quality-schedule/${id}`);
       const data = response.data;
@@ -76,14 +81,14 @@ const CreateQualitySchedule = ({ onClose, id, index}) => {
       try {
         const response = await axios.get('/api/v1/site');
         if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
-          console.log(response.data)
+          // console.log(response.data)
           const existingSites = user?.site;
-          console.log(existingSites)
+          // console.log(existingSites)
           let Sites = [];
           for (let site of response.data) {
-            console.log(site)
-            if (existingSites?.map(existingSite => existingSite.id.includes(site._id))) {
-              console.log(site)
+            // console.log(site)
+            if (existingSites?.map(existingSite => existingSite.id._id === site._id)) {
+              // console.log(site)
               Sites.push(site);
             }
           }
@@ -158,6 +163,7 @@ const CreateQualitySchedule = ({ onClose, id, index}) => {
     console.log(formData)
     try {
       if (scheduleIdToEdit) {
+        console.log(formData)
         const response = await axios.put(`/api/v1/quality-schedule/${scheduleIdToEdit}`, formData);
         toast.success(response.data.message);
         onClose()
@@ -179,7 +185,7 @@ const CreateQualitySchedule = ({ onClose, id, index}) => {
   return (
     <div>
       <form onSubmit={handleSubmit} >
-        {workToEdit.id && workToEdit.index ? (
+        {workToEdit.id && workToEdit.index !== undefined ? (
           <>
             <div className="mb-4">
               <label htmlFor="work" className="block text-gray-700 text-sm font-bold mb-2">Work:</label>
@@ -194,7 +200,7 @@ const CreateQualitySchedule = ({ onClose, id, index}) => {
             </div>
 
             <div className="mb-4">
-              <label htmlFor="checkingDate" className="block text-gray-700 text-sm font-bold mb-2">Checking Date:</label>
+              <label htmlFor="checkingDate" className="block text-gray-700 text-sm font-bold mb-2">Checking Date: {moment(workDetail?.checkingDate).format('DD MMMM YYYY')}</label>
               <input
                 type="date"
                 name="checkingDate"
@@ -205,7 +211,7 @@ const CreateQualitySchedule = ({ onClose, id, index}) => {
             </div>
 
             <div className="mb-4">
-              <label htmlFor="checkedAt" className="block text-gray-700 text-sm font-bold mb-2">Actual Checked At:</label>
+              <label htmlFor="checkedAt" className="block text-gray-700 text-sm font-bold mb-2">Actual Checked At: {workDetail?.checkedAt ? moment(workDetail?.checkedAt).format('DD MMMM YYYY'): ''}</label>
               <input
                 type="date"
                 name="checkedAt"

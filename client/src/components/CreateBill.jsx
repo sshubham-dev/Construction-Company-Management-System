@@ -19,16 +19,9 @@ const CreateBill = ({ onClose, isEdit }) => {
     billOf: '',
     billNo: '',
     toPay: '',
-    amount: '',
     unit: '',
-    dateOfPayment: '',
-    paymentStatus: '',
-    reason: '',
-    paidAmount: '',
-    dueAmount: '',
   });
   const [contractors, setContractor] = useState([]);
-  const status = ['Due', 'Paid', 'Pending'];
   const { user } = useSelector((state) => state.auth);
   const [billToEdit, setBillToEdit] = useState(null);
   const [billWork, setBillWork] = useState([]);
@@ -73,16 +66,19 @@ const CreateBill = ({ onClose, isEdit }) => {
     if (siteId) {
       siteData = sites.filter((site) => site._id === siteId);
     }
+    console.log(bill.site)
     console.log(siteData)
     setContractor(siteData[0]?.contractor || '');
+    console.log(siteData[0]?.contractor)
   }, [bill.site]);
 
   useEffect(() => {
     const getWorkOrder = async () => {
       try {
         const response = await axios.get(`/api/v1/work-order/${bill.site}/${bill.contractor}`);
+        console.log(response.data)
         // console.log(response.data.map((workOrder) => workOrder.work?.filter((work) => work?.due !== 0 && work?.status !== 'Pending')))
-        setBillWork(...response.data.map((workOrder) => workOrder.work?.filter((work) => work?.due !== 0 && work?.status === 'Pending')))
+        setBillWork(...response.data.map((workOrder) => workOrder.work?.filter((work) => work?.due !== 0 && work?.status !== 'Pending')))
       } catch (error) {
         console.error(error);
         // toast.error(error.message);
@@ -163,77 +159,6 @@ const CreateBill = ({ onClose, isEdit }) => {
     }
   }
 
-  const Update = () => {
-    return (
-      <>
-        <div className="mb-4">
-          <label htmlFor='dateOfPayment' className="block text-sm font-semibold text-gray-600 mb-2">
-            Date of Payment
-          </label>
-          <input
-            type="date"
-            name='dateOfPayment'
-            value={bill.dateOfPayment}
-            onChange={(e) => handleChange('dateOfPayment', e.target.value)}
-            className="border p-2 rounded w-full"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor='paidAmount' className="block text-sm font-semibold text-gray-600 mb-2">
-            Paid Amount
-          </label>
-          <input
-            type="text"
-            id='paidAmount'
-            name='paidAmount'
-            value={bill.paidAmount}
-            onChange={(e) => handleChange('paidAmount', e.target.value)}
-            placeholder="Paid Amount"
-            className="border p-2 rounded w-full"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor='dueAmount' className="block text-sm font-semibold text-gray-600 mb-2">
-            Due Amount
-          </label>
-          <input
-            type="number"
-            id='dueAmount'
-            name='dueAmount'
-            value={bill.dueAmount}
-            readOnly
-            onChange={(e) => handleChange('dueAmount', e.target.value)}
-            placeholder="Due Amount"
-            className="border p-2 rounded w-full"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="paymentStatus" className="block text-gray-700 text-sm font-bold mb-2">
-            Status
-          </label>
-          <select
-            id='paymentStatus'
-            value={bill.paymentStatus}
-            onChange={(e) => handleChange('paymentStatus', e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          >
-            <option>
-              {billToEdit ? bill.paymentStatus :
-                'Status'
-              }
-            </option>
-            {status.map((status, index) => (
-              <option key={index} value={status}>{status}</option>
-            ))}
-          </select>
-        </div>
-      </>
-    )
-  }
-
   return (
     <div >
       <form className="max-w-md mx-auto" onSubmit={handleSubmit}>
@@ -268,7 +193,7 @@ const CreateBill = ({ onClose, isEdit }) => {
           >
             <option>{billToEdit ? data.contractor : 'Contractor'}</option>
             {contractors && contractors?.map((contractor) => (
-              <option key={contractor?._id} value={contractor?._id}>
+              <option key={contractor?._id} value={contractor?.id}>
                 {contractor?.name}
               </option>
             ))}
@@ -305,8 +230,6 @@ const CreateBill = ({ onClose, isEdit }) => {
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           />
         </div>
-
-        {billToEdit ? <Update /> : ''}
 
         <div className="mb-4">
           <h2 className="block text-lg font-semibold text-gray-600 mb-4 mt-2">Detail</h2>

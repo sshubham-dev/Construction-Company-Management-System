@@ -8,6 +8,9 @@ import { FaExternalLinkAlt } from "react-icons/fa";
 import Header from '../../components/Header';
 import Modal from '../../components/Modal';
 import WorkDetailsForm from '../../components/CreateWorkDetail';
+import { RiFileExcel2Line } from "react-icons/ri";
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 axios.defaults.withCredentials = true;
 
@@ -66,17 +69,35 @@ const WorkDetails = () => {
     }
   };
 
+
+  const exportToExcel = async () => {
+    const response = await axios.get('/api/v1/work-details/export-data');
+    const ws = XLSX.utils.json_to_sheet(response.data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Data');
+
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/octet-stream' });
+    saveAs(blob, 'work_details.xlsx');
+  };
+
+
   return (
     <div >
       <div className="overflow-x-auto h-full">
         <Header category="Page" title="Work Detail's" />
         <div className="text-sm text-gray-700 py-1 flex flex-row items-center justify-end">
+          {/* <button
+            onClick={() => exportToExcel()} className='pr-4'>
+            <RiFileExcel2Line size={28} color='green' />
+          </button> */}
           <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white p-2 mt-2 sm:mt-0">
             <MdAdd className='text-xl' />
           </button>
+
         </div>
 
-        <div className="overflow-x-auto grid grid-cols-1 lg:grid-cols-2 gap-1"
+        <div className="overflow-x-auto grid grid-cols-1 lg:grid-cols-2 gap-2"
           style={{
             scrollbarWidth: 'none',
             '-ms-overflow-style': 'none',
@@ -129,15 +150,15 @@ const WorkDetails = () => {
         />
       </div>
       {/* Work Details Modal */}
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Work Detail' >
-          <WorkDetailsForm onClose={() => setCreateModal(false)} />
-        </Modal>
-        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Work Detail' >
-          <WorkDetailsForm onClose={() => setEditModal(false)} id={editId} />
-        </Modal>
-        <Modal isOpen={editDetailModal} onClose={() => setEditDetailModal(false)} head='Create Work Detail' >
-          <WorkDetailsForm onClose={() => setEditDetailModal(false)} id={editId} index={editIndex} />
-        </Modal>
+      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Work Detail' >
+        <WorkDetailsForm onClose={() => setCreateModal(false)} />
+      </Modal>
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Work Detail' >
+        <WorkDetailsForm onClose={() => setEditModal(false)} id={editId} />
+      </Modal>
+      <Modal isOpen={editDetailModal} onClose={() => setEditDetailModal(false)} head='Create Work Detail' >
+        <WorkDetailsForm onClose={() => setEditDetailModal(false)} id={editId} index={editIndex} />
+      </Modal>
     </div>
   )
 }

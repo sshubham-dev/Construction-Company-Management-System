@@ -92,6 +92,7 @@ const Approval = () => {
         try {
             console.log(id)
             const response = await axios.get(`/api/v1/approval/pending/user/${id}`);
+            console.log(response.data)
             const approvalData = response.data;
             // const sites = async (id)=>{
             //     return await axios.get(`/api/v1/site/${id}`);
@@ -183,6 +184,21 @@ const Approval = () => {
                 break;
             case 'Purchase Order':
                 navigate(`/purchase-order/${id}`)
+                break;
+            case 'Project Schedule':
+                navigate(`/project-schedule/${id}`)
+                break;
+            case 'Payment Schedule':
+                navigate(`/payment-schedule/${id}`)
+                break;
+            case 'Quality Schedule':
+                navigate(`/quality-schedule/${id}`)
+                break;
+            case 'Purchase Request':
+                navigate(`/purchase-request/${id}`)
+                break;
+            case 'Extra Work':
+                navigate(`/extra-work/${id}`)
                 break;
             case 'Work Order':
                 navigate(`/work-order/${id}`)

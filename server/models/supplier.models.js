@@ -53,9 +53,13 @@ const supplierSchema = new mongoose.Schema({
         paid: {
             type: Number,
         },
-        due: {
+        balance: {
             type: Number,
         },
+    },
+    ledger: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Ledger'
     }
 }, { timestamps: true })
 

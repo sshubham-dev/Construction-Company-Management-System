@@ -30,7 +30,12 @@ const Notification = () => {
   };
 
   const currentList = activeTab === 'unseen' ? unseenNotifications : seenNotifications;
-  const grouped = groupedByDate(currentList);
+  const sortedList = currentList
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const grouped = groupedByDate(sortedList);
+
   const handleNotificationClick = async (id) => {
     try {
       await axios.patch(`/api/v1/notification/${user._id}/mark-read/${id}`);
@@ -48,20 +53,23 @@ const Notification = () => {
         <button onClick={() => setActiveTab('seen')} className={`px-4 py-2 rounded ${activeTab === 'seen' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Seen</button>
       </div>
 
-      {Object.entries(grouped).map(([date, msgs], idx) => (
-        <div key={idx} className="mb-6 space-y-3" >
-          <h3 className="text-xl font-semibold mb-4">{date}</h3>
-          {msgs.map((msg, index) => (
-            <div key={index}
-              onClick={() => activeTab === 'unseen' && handleNotificationClick(msg._id)}
-              className={`cursor-pointer px-3 py-2 rounded-md text-sm text-gray-700 border ${msg.isRead ? 'bg-gray-100' : 'bg-blue-50 hover:bg-blue-100 border-blue-200'}`}
-            >
-              <div className="font-medium">{msg.title}</div>
-              <div>{msg.message}</div>
-              <div className="text-xs text-gray-500">{moment(msg.createdAt).format('DD MMM YYYY, hh:mm A')}</div>
-            </div>
-          ))}
-        </div>
+      {Object.entries(grouped)
+  .sort((a, b) => moment(b[0], 'MMMM YYYY').toDate() - moment(a[0], 'MMMM YYYY').toDate())
+  .map(([date, msgs], idx) => (
+
+      <div key={idx} className="mb-6 space-y-3" >
+        <h3 className="text-xl font-semibold mb-4">{date}</h3>
+        {msgs.map((msg, index) => (
+          <div key={index}
+            onClick={() => activeTab === 'unseen' && handleNotificationClick(msg._id)}
+            className={`cursor-pointer px-3 py-2 rounded-md text-sm text-gray-700 border ${msg.isRead ? 'bg-gray-100' : 'bg-blue-50 hover:bg-blue-100 border-blue-200'}`}
+          >
+            <div className="font-medium">{msg.title}</div>
+            <div>{msg.message}</div>
+            <div className="text-xs text-gray-500">{moment(msg.createdAt).format('DD MMM YYYY, hh:mm A')}</div>
+          </div>
+        ))}
+      </div>
       ))}
     </div>
   );

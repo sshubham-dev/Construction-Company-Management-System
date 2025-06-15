@@ -20,9 +20,9 @@ const PurchaseOrderScreen = () => {
 
   const getpurchaseOrder = async (id) => {
     try {
-      const paymentSchedulesData = await axios.get(`/api/v1/purchase-order/${id}`);
-      console.log(paymentSchedulesData.data)
-      setPurchaseOrder(paymentSchedulesData.data);
+      const purchaseRequestData = await axios.get(`/api/v1/purchase-request/${id}`);
+      console.log(purchaseRequestData.data)
+      setPurchaseOrder(purchaseRequestData.data);
     } catch (error) {
       toast.error(error.message)
     }
@@ -42,7 +42,7 @@ const PurchaseOrderScreen = () => {
     }
   };
 
-  const PurchaseOrderCard = ({ material, rate, unit, paid, due, amount, status, quantity, handleEdit, handleDelete }) => {
+  const PurchaseOrderCard = ({ material, request, approved, handleEdit, handleDelete }) => {
     return (
       <div className=" px-4 py-6">
         <h2 className="text-xl font-semibold mb-4">{material}</h2>
@@ -90,17 +90,13 @@ const PurchaseOrderScreen = () => {
     <div >
       <Header category="Page" title="Purchase Order" />
       <div className="grid grid-cols-1 md:grid-cols-2 w-full lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {purchaseOrder.requirement?.map((item, index) => (
+        {purchaseOrder.requirement?.map((req, index) => (
           <div key={index} className='bg-white shadow-lg rounded-xl'>
             <PurchaseOrderCard
-              material={item.material}
-              rate={item.rate}
-              unit={item.unit}
-              quantity={item.quantity}
-              amount={item.amount}
-              status={item.status}
-              paid={item.paid}
-              due={item.due}
+              material={req.item}
+              request={req.request}
+              approved={req.approved}
+
               handleEdit={() => handleEdit(purchaseOrder._id, index)}
               handleDelete={() => deleteDetail(purchaseOrder._id, index)}
             />

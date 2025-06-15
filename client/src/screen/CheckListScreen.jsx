@@ -9,7 +9,7 @@ const CheckListScreen = () => {
   const { id } = useParams();
   return (
     <div >
-    <Header category="Page" title="Work-Orders" />
+    <Header category="Page" title="CheckList" />
       <Toaster
         position="top-right"
         reverseOrder={false}

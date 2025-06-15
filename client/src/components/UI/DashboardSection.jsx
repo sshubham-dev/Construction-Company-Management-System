@@ -17,15 +17,15 @@ const DashboardSection = ({ title, columns, data, viewMode = 'both', chartType =
           <table className="min-w-[600px] w-full text-sm">
             <thead className="bg-green-100 text-green-900">
               <tr>
-                {columns.map((col, idx) => (
+                {columns?.map((col, idx) => (
                   <th key={idx} className="px-4 py-2 border text-left whitespace-nowrap">{col}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {data.map((row, idx) => (
+              {data?.map((row, idx) => (
                 <tr key={idx} className="even:bg-green-50">
-                  {columns.map((col, i) => (
+                  {columns?.map((col, i) => (
                     <td key={i} className="px-4 py-2 border whitespace-nowrap">
                       {col.toLowerCase() === 'link to bill' ? (
                         <NavLink to={row.link} className="text-blue-600"><FiExternalLink /></NavLink>

@@ -6,11 +6,17 @@ import toast, { Toaster } from 'react-hot-toast';
 import Header from '../components/Header';
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
+import Modal from '../components/Modal';
+import CreateQualitySchedule from '../components/CreateQualitySchedule';
 
 const QualityScheduleScreen = () => {
   const [qualitySchedule, setQualitySchedule] = useState({});
   const navigate = useNavigate();
   const { id } = useParams();
+  const [editModal, setEditModal] = useState(false);
+  const [addModal, setAddModal] = useState(false);
+  const [editId, setEditId] = useState('');
+  const [editIndex, setEditIndex] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -29,7 +35,10 @@ const QualityScheduleScreen = () => {
   }
 
   const handleEdit = (id, index) => {
-    navigate(`/edit-qualitySchedule/${id}/${index}`);
+    // console.log(id)
+    setEditModal(true)
+    setEditId(id)
+    setEditIndex(index)
   };
 
   const deleteDetail = async (id, index) => {
@@ -43,7 +52,9 @@ const QualityScheduleScreen = () => {
   };
 
   const addMore = async (id) => {
-    navigate(`/edit-qualitySchedule/${id}`);
+    // console.log(id)
+    setAddModal(true)
+    setEditId(id)
   }
 
   const QualityScheduleCard = ({ workDescription, reason, difference, checkedAt, status, checkingDate, handleEdit, handleDelete }) => {
@@ -113,6 +124,12 @@ const QualityScheduleScreen = () => {
             </div>
           ))}
         </div>
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Edit Quality Schedules' >
+          <CreateQualitySchedule onClose={() => setEditModal(false)} id={editId} index={editIndex} />
+        </Modal>
+        <Modal isOpen={addModal} onClose={() => setAddModal(false)} head='Add Quality Schedules' >
+          <CreateQualitySchedule onClose={() => setAddModal(false)} id={editId}  />
+        </Modal>
         <Toaster
           position="top-right"
           reverseOrder={false}

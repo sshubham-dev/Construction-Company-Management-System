@@ -21,8 +21,8 @@ const WorkOrders = () => {
   const [createModal, setCreateModal] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState("approved");
-      const [editModal, setEditModal] = useState(false);
-      const [editId, setEditId] = useState('');
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
 
   useEffect(() => {
     const fetchWorkorders = async () => {
@@ -36,13 +36,12 @@ const WorkOrders = () => {
           let WorkOrders = [];
 
           for (let site of sites) {
-            // Filter workOrdersData based on site id
-            const filteredWorkOrders = workOrdersData.data.filter((workOrder) => workOrder.site?._id === site);
-            // Concatenate filteredWorkOrders to WorkOrders
+            const siteId = site.id; // support both object or string
+            const filteredWorkOrders = workOrdersData.data.filter(
+              (workOrder) => String(workOrder.site?.id) === String(siteId)
+            );
             WorkOrders = [...WorkOrders, ...filteredWorkOrders];
-            console.log("workOrder for site", site, ":", filteredWorkOrders);
           }
-
           setWorkOrder(WorkOrders);
           console.log("workOrders for all sites:", WorkOrders);
         } else {
@@ -65,7 +64,7 @@ const WorkOrders = () => {
 
           for (let site of sites) {
             // Filter workOrdersData based on site id
-            const filteredWorkOrders = workOrdersData.data.filter((workOrder) => workOrder.site?._id === site);
+            const filteredWorkOrders = workOrdersData.data.filter((workOrder) => workOrder.site?.id === site.id);
             // Concatenate filteredWorkOrders to draftWorkOrders
             draftWorkOrders = [...draftWorkOrders, ...filteredWorkOrders];
             console.log("Draft work orders for site", site, ":", filteredWorkOrders);
@@ -191,65 +190,65 @@ const WorkOrders = () => {
         )}
 
         {/* {user.department === 'Site Incharge' && ( */}
-          {/* <> */}
-            {activeTab === "draft" && (
-              <div className="overflow-x-auto scrollbar-hide">
-                <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
-                  <thead className="bg-gray-300">
-                    <tr className="text-white text-left">
-                      <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Work-Order Name</th>
-                      <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Site</th>
-                      <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Total Value</th>
-                      <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Paid Amount</th>
-                      <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Due Amount </th>
-                      <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Duration</th>
-                      <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {draftWorkOrders.map((workOrder) => (
-                      <tr key={workOrder._id} className='border-b border-blue-gray-200'>
-                        <td className="px-6 py-4">
-                          <p className=""> {workOrder?.workOrderName} </p>
-                          <p className="text-gray-500 text-sm font-semibold tracking-wide"> {workOrder.contractor?.name} </p>
-                        </td>
-                        <td className="px-6 py-4">{workOrder.site?.name}</td>
-                        <td className="px-6 py-4 text-center">{workOrder.workOrderValue}</td>
-                        <td className="px-6 py-4 text-center">{workOrder.totalPaid ? workOrder.totalPaid : '0'}</td>
-                        <td className="px-6 py-4 text-center">{workOrder.totalDue ? workOrder.totalDue : '0'}</td>
-                        <td className="px-6 py-4 text-center">{moment(workOrder.duration).format('DD-MM-YYYY')}</td>
-                        <td className="px-6 py-4 text-center">
-                          <button onClick={() => handleSave(workOrder._id)} className=" mr-2">
-                            <FcApproval className="text-green-500 hover:text-green-700 text-xl" />
-                          </button>
-                          <button onClick={() => handleRedirect(workOrder._id)} className="mr-2">
-                            <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                          </button>
-                          <button onClick={() => handleEdit(workOrder._id)} className="mr-2">
-                            <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                          </button>
-                          <button onClick={() => handleDelete(workOrder._id)} className="mr-2">
-                            <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          {/* </> */}
+        {/* <> */}
+        {activeTab === "draft" && (
+          <div className="overflow-x-auto scrollbar-hide">
+            <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
+              <thead className="bg-gray-300">
+                <tr className="text-white text-left">
+                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Work-Order Name</th>
+                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Site</th>
+                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Total Value</th>
+                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Paid Amount</th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Due Amount </th>
+                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Duration</th>
+                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {draftWorkOrders.map((workOrder) => (
+                  <tr key={workOrder._id} className='border-b border-blue-gray-200'>
+                    <td className="px-6 py-4">
+                      <p className=""> {workOrder?.workOrderName} </p>
+                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {workOrder.contractor?.name} </p>
+                    </td>
+                    <td className="px-6 py-4">{workOrder.site?.name}</td>
+                    <td className="px-6 py-4 text-center">{workOrder.workOrderValue}</td>
+                    <td className="px-6 py-4 text-center">{workOrder.totalPaid ? workOrder.totalPaid : '0'}</td>
+                    <td className="px-6 py-4 text-center">{workOrder.totalDue ? workOrder.totalDue : '0'}</td>
+                    <td className="px-6 py-4 text-center">{moment(workOrder.duration).format('DD-MM-YYYY')}</td>
+                    <td className="px-6 py-4 text-center">
+                      <button onClick={() => handleSave(workOrder._id)} className=" mr-2">
+                        <FcApproval className="text-green-500 hover:text-green-700 text-xl" />
+                      </button>
+                      <button onClick={() => handleRedirect(workOrder._id)} className="mr-2">
+                        <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                      </button>
+                      <button onClick={() => handleEdit(workOrder._id)} className="mr-2">
+                        <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                      </button>
+                      <button onClick={() => handleDelete(workOrder._id)} className="mr-2">
+                        <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {/* </> */}
         {/* )} */}
 
         <Toaster position="top-right" reverseOrder={false} />
       </section>
       {/* Work Order Modal */}
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Work Order' >
-          <CreateWorkOrder onClose={() => setCreateModal(false)} />
-        </Modal>
-        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Work Order' >
-          <CreateWorkOrder onClose={() => setEditModal(false)} id={editId} />
-        </Modal>
+      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Work Order' >
+        <CreateWorkOrder onClose={() => setCreateModal(false)} />
+      </Modal>
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Work Order' >
+        <CreateWorkOrder onClose={() => setEditModal(false)} id={editId} />
+      </Modal>
     </div>
   )
 }

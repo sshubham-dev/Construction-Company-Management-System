@@ -22,7 +22,7 @@ const employeeSchema = new mongoose.Schema({
         unique: true,
         index: true
     },
-    gender:String,
+    gender: String,
     address: {
         type: String,
     },
@@ -44,9 +44,9 @@ const employeeSchema = new mongoose.Schema({
     isUser: {
         type: Boolean,
     },
-    userId:{
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:'User'
+        ref: 'User'
     },
     certificates: {
         type: [{
@@ -70,16 +70,34 @@ const employeeSchema = new mongoose.Schema({
         type: String,
         content: String
     }],
-    pf:{
+    pf: {
         type: String,
     },
-    esi:{
+    esi: {
         type: String,
     },
-    uan:{
+    uan: {
         type: String,
     },
     taxRegime: String,
+    ledger: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Ledger'
+    },
+    account: {
+        payable: {
+            type: Number,
+        },
+        paid: {
+            type: Number,
+        },
+        expenses: {
+            type: Number,
+        },
+        balance: {
+            type: Number,
+        },
+    },
 }, { timestamps: true })
 
 

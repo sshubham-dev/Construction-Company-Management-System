@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import DashboardSection from '../../components/UI/DashboardSection';
 import Layout from './Layout';
+import { fetchSiteByUser } from '../../features/site/siteSlice';
 
 axios.defaults.withCredentials = true;
 
@@ -47,8 +48,13 @@ const dummyTableData = {
 };
 
 const SiteIncharge = () => {
+  const sites = useSelector((state)=>state.site?.all)
   const [selectedSite, setSelectedSite] = useState(dummyFundData[0]);
     const { user } = useSelector((state) => state.auth);
+    const dispatch = useDispatch()
+    useEffect(()=>{
+      dispatch(fetchSiteByUser(user._id))
+    },[dispatch])
     const fundChartData = {
     labels: ['Received', 'Spent', 'Balance', 'To Receive'],
     datasets: [

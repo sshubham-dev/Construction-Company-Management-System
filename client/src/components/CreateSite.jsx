@@ -55,13 +55,13 @@ const CreateSite = ({ onClose, isEdit}) => {
       })
       setSite({
         name: site.name,
-        client: site.client?._id,
+        client: site.client?.id,
         siteId: site.siteId,
         floors: site.floors,
         area: site.area,
-        incharge: site.incharge?._id,
-        supervisor: site.supervisor?._id,
-        qualityEngineer: site.qualityEngineer?._id,
+        incharge: site.incharge?.id,
+        supervisor: site.supervisor?.id,
+        qualityEngineer: site.qualityEngineer?.id,
         projectType: site.projectType,
         agreement: site.agreement,
         address: site.address,
@@ -191,9 +191,10 @@ const CreateSite = ({ onClose, isEdit}) => {
           <select
             name="client"
             onChange={handleChange}
+            value={site.client}
             disabled={siteIdToEdit && user.department === 'Ceo'}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <option>{siteIdToEdit ? data.client : 'Client'}</option>
+            <option>Client</option>
             {clients.map((client) => (
               <option key={client._id} value={client._id}>
                 {client.name}
@@ -218,22 +219,23 @@ const CreateSite = ({ onClose, isEdit}) => {
         </div>
 
         {/* Total Floor */}
-        <div className="mb-4">
+        {/* <div className="mb-4">
           <label htmlFor="floor" className="block text-sm font-medium text-gray-600">
             Total Floor
           </label>
           <select
             name="floors"
             onChange={handleChange}
+            value={site.floors}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <option value=''>{site.floors !== '' ? site.floors : 'Select a Floor'}</option>
+            <option value=''>Select a Floor</option>
             {floors.map((floor, index) => (
               <option key={index} value={floor}>
                 {floor}
               </option>
             ))}
           </select>
-        </div>
+        </div> */}
 
         {/* Area */}
         <div className="mb-4">
@@ -258,8 +260,9 @@ const CreateSite = ({ onClose, isEdit}) => {
           <select
             name="projectType"
             onChange={handleChange}
+            value={site.projectType}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <option value=''>{site.projectType !== '' ? site.projectType : 'Select a Floor'}</option>
+            <option value=''>Select a Floor</option>
             {projectType.map((type, index) => (
               <option key={index} value={type}>
                 {type}
@@ -276,9 +279,10 @@ const CreateSite = ({ onClose, isEdit}) => {
             <select
               name="qualityEngineer"
               onChange={handleChange}
+              value={site.qualityEngineer}
               disabled={siteIdToEdit && user.department === 'Ceo'}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              <option>{data.qualityEngineer !== '' ? data.qualityEngineer : 'Assign an Quality incharge'}</option>
+              <option>Assign an Quality incharge</option>
               {qualityEngineers.map((qualityEngineer) => (
                 <option key={qualityEngineer._id} value={qualityEngineer._id}>
                   {qualityEngineer.userName}
@@ -295,9 +299,10 @@ const CreateSite = ({ onClose, isEdit}) => {
             <select
               name="incharge"
               onChange={handleChange}
+              value={site.incharge}
               disabled={siteIdToEdit && user.department === 'Ceo'}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              <option>{data.incharge !== '' ? data.incharge : 'Assign an incharge'}</option>
+              <option>Assign an incharge</option>
               {incharges.map((incharge) => (
                 <option key={incharge._id} value={incharge._id}>
                   {incharge.userName}
@@ -313,8 +318,9 @@ const CreateSite = ({ onClose, isEdit}) => {
           </label>
           <select name="supervisor"
             onChange={handleChange}
+            value={site.supervisor}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <option>{data.supervisor !== '' ? data.supervisor : 'Assign a supervisor'}</option>
+            <option>Assign a supervisor</option>
             {supervisors.map((supervisor) => (
               <option key={supervisor._id} value={supervisor._id}>
                 {supervisor.userName}
@@ -354,12 +360,12 @@ const CreateSite = ({ onClose, isEdit}) => {
         <div className="text-center">
           <button
             type="submit"
-            className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-300"
+            className="bg-blue-500 text-white p-2 rounded-md mr-2 hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-300"
           >
             Submit
           </button>
           <button type="button" onClick={handleReset}
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
+            className="bg-gray-300 text-gray-700 px-4 py-2 ml-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
             Reset
           </button>
         </div>

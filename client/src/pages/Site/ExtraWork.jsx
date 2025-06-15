@@ -17,6 +17,7 @@ axios.defaults.withCredentials = true;
 const ExtraWork = () => {
   const navigate = useNavigate();
   const [clientExtraWorks, setClientExtraWork] = useState([]);
+  const [draftExtraWorks, setDraftExtraWork] = useState([]);
   const [contractorExtraWorks, setContractorExtraWork] = useState([]);
   const [createModal, setCreateModal] = useState(false);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
@@ -31,15 +32,18 @@ const ExtraWork = () => {
         const extraWorkData = await axios.get('/api/v1/extra-work');
         let clientExtraWork;
         let contractorExtraWork;
+        let draftExtraWork;
         console.log(extraWorkData.data)
         if (user.department === 'Site Supervisor' || user.department === 'Site Incharge' && isLoggedIn) {
           const sites = user?.site;
           for (let site of sites) {
-            clientExtraWork = extraWorkData.data.filter((extra) => extra.extraFor === 'Client' && extra?.site?._id.includes(site))
-            contractorExtraWork = extraWorkData.data.filter((extra) => extra.extraFor === 'Contractor' && extra?.site?._id.includes(site))
+            clientExtraWork = extraWorkData.data.filter((extra) => extra.extraFor === 'Client' && extra?.site?.id._id === site.id && extra?.approvalStatus !== 'Pending')
+            contractorExtraWork = extraWorkData.data.filter((extra) => extra.extraFor === 'Contractor' && extra?.site?.id._id === site.id && extra?.approvalStatus !== 'Pending')
+            draftExtraWork = extraWorkData.data.filter((extra) => extra?.site?.id._id === site.id && extra?.approvalStatus === 'Pending')
           }
           setClientExtraWork(clientExtraWork);
           setContractorExtraWork(contractorExtraWork);
+          setDraftExtraWork(draftExtraWork)
         } else {
           setClientExtraWork(extraWorkData.data.filter((extra) => extra.extraFor === 'Client'));
           setContractorExtraWork(extraWorkData.data.filter((extra) => extra.extraFor === 'Contractor'));
@@ -67,6 +71,17 @@ const ExtraWork = () => {
       setClientExtraWork(clientExtraWorks.filter((extraWork) => extraWork._id !== id));
       setContractorExtraWork(contractorExtraWorks.filter((extraWork) => extraWork._id !== id));
     } catch (error) {
+      toast.error(error.message)
+    }
+  };
+
+  const handleSave = async (id) => {
+    try {
+      const response = await axios.put(`/api/v1/extra-work/save/${id}`);
+      setDraftExtraWork(draftExtraWorks.filter((extraWork) => extraWork._id !== id));
+      toast.success(response.data?.message);
+    } catch (error) {
+      console.error(error)
       toast.error(error.message)
     }
   };
@@ -108,10 +123,8 @@ const ExtraWork = () => {
               <thead className="bg-gray-300">
                 <tr className=" text-left">
                   <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
-                  {/* <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Floor </th>
-                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Incharge </th>
-                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Project Type </th> */}
-                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Payment Status </th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">Action</th>
                 </tr>
               </thead>
 
@@ -122,15 +135,13 @@ const ExtraWork = () => {
                       <p className=""> {extraWork.site?.name} </p>
                       <p className="text-gray-500 text-sm font-semibold tracking-wide"> {extraWork.client?.name} </p>
                     </td>
-                    {/* <td className="px-6 py-4 text-center">
-                      {site.floors}
-                    </td>
-                    <td className="px-6 py-4 text-center">{site.incharge?.userName}</td>
-                    <td className="px-6 py-4 text-center">{site.projectType}</td> */}
                     <td className="px-6 py-4 text-center">
-                      {/* <button onClick={() => handleRedirect(extraWork._id)} className="mr-2">
+                      {extraWork.paymentStatus}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button onClick={() => handleRedirect(extraWork._id)} className="mr-2">
                       <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                    </button> */}
+                    </button>
                       <button onClick={() => handleEdit(extraWork._id)} className="mr-2">
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>
@@ -150,10 +161,8 @@ const ExtraWork = () => {
               <thead className="bg-gray-300">
                 <tr className=" text-left">
                   <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
-                  {/* <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Floor </th>
-                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Incharge </th>
-                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Project Type </th> */}
-                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Payment Status </th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">Action</th>
                 </tr>
               </thead>
 
@@ -164,15 +173,13 @@ const ExtraWork = () => {
                       <p className=""> {extraWork.site?.name} </p>
                       <p className="text-gray-500 text-sm font-semibold tracking-wide"> {extraWork.contractor?.name} </p>
                     </td>
-                    {/* <td className="px-6 py-4 text-center">
-                      {site.floors}
-                    </td>
-                    <td className="px-6 py-4 text-center">{site.incharge?.userName}</td>
-                    <td className="px-6 py-4 text-center">{site.projectType}</td> */}
                     <td className="px-6 py-4 text-center">
-                      {/* <button onClick={() => handleRedirect(extraWork?._id)} className="mr-2">
+                      {extraWork.paymentStatus}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button onClick={() => handleRedirect(extraWork?._id)} className="mr-2">
                       <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                    </button> */}
+                    </button>
                       <button onClick={() => handleEdit(extraWork?._id)} className="mr-2">
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>
@@ -192,31 +199,30 @@ const ExtraWork = () => {
               <div className="overflow-x-auto scrollbar-hide">
                 <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
                   <thead className="bg-gray-300">
-                    <tr className="text-white text-left">
+                    <tr className=" text-left">
                       <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
-                      {/* <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Floor </th>
-                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Incharge </th>
-                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Project Type </th> */}
-                      <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                      <th className="font-semibold text-sm uppercase px-6 py-4 text-center "> Approval Status </th>
+                      <th className="font-semibold text-sm uppercase px-6 py-4 text-center">Action</th>
                     </tr>
                   </thead>
 
                   <tbody className="divide-y divide-gray-200">
-                    {contractorExtraWorks?.map((extraWork) => (
+                    {draftExtraWorks?.map((extraWork) => (
                       <tr key={extraWork._id} className='border-b border-blue-gray-200'>
                         <td className="px-6 py-4">
                           <p className=""> {extraWork.site?.name} </p>
-                          <p className="text-gray-500 text-sm font-semibold tracking-wide"> {extraWork.contractor?.name} </p>
+                          <p className="text-gray-500 text-sm font-semibold tracking-wide"> {extraWork.contractor?.name ? extraWork.contractor.name : extraWork.client?.name} </p>
                         </td>
-                        {/* <td className="px-6 py-4 text-center">
-                      {site.floors}
-                    </td>
-                    <td className="px-6 py-4 text-center">{site.incharge?.userName}</td>
-                    <td className="px-6 py-4 text-center">{site.projectType}</td> */}
                         <td className="px-6 py-4 text-center">
-                          {/* <button onClick={() => handleRedirect(extraWork?._id)} className="mr-2">
+                          {extraWork.approvalStatus}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <button onClick={() => handleRedirect(extraWork?._id)} className="mr-2">
                           <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                        </button> */}
+                        </button>
+                          <button onClick={() => handleSave(extraWork?._id)} className=" mr-2">
+                            <FcApproval className="text-green-500 hover:text-green-700 text-xl" />
+                          </button>
                           <button onClick={() => handleEdit(extraWork?._id)} className="mr-2">
                             <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                           </button>
@@ -230,7 +236,8 @@ const ExtraWork = () => {
                 </table>
               </div>
             )}
-          </>)}
+          </>
+        )}
 
         <Toaster
           position="top-right"

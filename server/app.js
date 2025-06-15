@@ -21,7 +21,7 @@ const PurchaseOrder = require('./routes/purchaseorder.routes');
 const Todo = require('./routes/todo.routes');
 const Approval = require('./routes/approval.routes');
 const path = require('path');
-const { Attendance, Leave } = require('./routes/attendance.routes');
+const { Attendances, Leaves } = require('./routes/attendance.routes');
 const Journal = require('./routes/journal.routes');
 const Contra = require('./routes/contra.routes');
 const Payment = require('./routes/payment.routes');
@@ -72,8 +72,8 @@ app.use(express.static(buildpath));
 app.use(helmet())
 
 app.use('/api/v1/user', UserRouter);
-app.use('/api/v1/attendance', Attendance);
-app.use('/api/v1/leave', Leave);
+app.use('/api/v1/attendance', Attendances);
+app.use('/api/v1/leave', Leaves);
 app.use('/api/v1/site', Site);
 app.use('/api/v1/work-order', WorkOrder);
 app.use('/api/v1/work-details', WorkDetail);

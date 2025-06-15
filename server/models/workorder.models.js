@@ -108,8 +108,10 @@ workOrderSchema.pre('save', function (next) {
     // console.log('WorkDetails:', WorkDetails)
 
     WorkDetails.map((detail) => {
-        const amount = parseFloat(detail.amount) || 0;
+        detail.amount = detail.rate * detail.area;
+        
         const paidAmount = parseFloat(detail.paid) || 0;
+        const amount = parseFloat(detail.amount) || 0;
         // console.log('workOrderamount:', amount)
         // console.log('workOrderpaid:', paidAmount)
         const payment = amount - paidAmount;

@@ -8,7 +8,9 @@ const paymentDetailSchema = new mongoose.Schema({
     paymentDate: {
         type: Date,
     },
-    dueDate: Date,
+    dueDate: {
+        type: Date,
+    },
     status: {
         type: String,
         default: 'Pending',
@@ -89,7 +91,7 @@ paymentScheduleSchema.pre('save', function (next) {
             const payment = parseInt(receive.amount);
             return payment || parseInt(receive.amount);
         })
-        const received = receivedAmount.reduce(total) || 0;
+        const received = receivedAmount?.reduce(total,0);
         console.log('amount:', amount)
         console.log('received:', received)
         const payment = amount - received;

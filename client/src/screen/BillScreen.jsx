@@ -53,7 +53,6 @@ const BillScreen = () => {
 
   return (
     <div>
-      <Header category="Page" title="Bill" />
       {viewPdf === true ? <BillPdf bill={bill} /> :
         <section className="h-full w-full bg-white overflow-x-auto p-2">
           <div className="flex items-center justify-center flex-col mb-6">
@@ -78,18 +77,18 @@ const BillScreen = () => {
             <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
               <thead className="bg-gray-800">
                 <tr className="text-white text-left">
-                  <th className="font-semibold text-sm uppercase px-6 py-4">Description</th>
-                  <th className="font-semibold text-sm uppercase px-6 py-4">Rate</th>
-                  <th className="font-semibold text-sm uppercase px-6 py-4">Quantity</th>
-                  <th className="font-semibold text-sm uppercase px-6 py-4">Total</th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">Description</th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">Rate/{bill.billOf?.unit}</th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">Quantity in {bill.billOf?.unit}</th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">Total</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className='border-b border-blue-gray-200'>
-                  <td className="px-6 py-4 text-gray-700 text-wrap">{bill.billOf?.workDetail}</td>
-                  <td className="px-6 py-4 text-gray-700">{bill ? `${bill.billOf?.rate}/${bill.billOf?.unit}` : '-'}</td>
-                  <td className="px-6 py-4 text-gray-700">{bill.billOf?.area}</td>
-                  <td className="px-6 py-4 text-gray-700">₹{bill.billOf?.amount}</td>
+                  <td className="px-6 py-4 text-gray-700 text-wrap text-center">{bill.billOf?.workDetail}</td>
+                  <td className="px-6 py-4 text-gray-700 text-center">{bill ? `${bill.billOf?.rate}` : '-'}</td>
+                  <td className="px-6 py-4 text-gray-700 text-center">{bill.billOf?.area}</td>
+                  <td className="px-6 py-4 text-gray-700 text-center">₹{bill.billOf?.amount}</td>
                 </tr>
               </tbody>
             </table>
@@ -108,24 +107,18 @@ const BillScreen = () => {
             <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
               <thead className="bg-gray-800">
                 <tr className="text-white text-left">
-                  <th className="font-semibold text-sm uppercase px-6 py-4">Total Amount</th>
-                  <th className="font-semibold text-sm uppercase px-6 py-4">To Pay</th>
-                  <th className="font-semibold text-sm uppercase px-6 py-4">Paid</th>
-                  <th className="font-semibold text-sm uppercase px-6 py-4">Due</th>
-                  <th className="font-semibold text-sm uppercase px-6 py-4">Action</th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">Total Amount</th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">To Pay</th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">Paid</th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">Due</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 <tr className='border-b border-blue-gray-200'>
-                  <td className="px-6 py-4 text-gray-700">₹{bill?.amount}</td>
-                  <td className="px-6 py-4 text-gray-700">₹{bill?.toPay}</td>
-                  <td className="px-6 py-4 text-gray-700">₹{bill?.paidAmount ? bill?.paidAmount : '0'}</td>
-                  <td className="px-6 py-4 text-gray-700">₹{bill?.dueAmount ? bill?.dueAmount : '0'}</td>
-                  <td className="px-6 py-4 text-gray-700">
-                    <button onClick={() => handleEdit(bill._id)}>
-                      <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                    </button>
-                  </td>
+                  <td className="px-6 py-4 text-gray-700 text-center">₹{bill?.amount}</td>
+                  <td className="px-6 py-4 text-gray-700 text-center">₹{bill?.toPay}</td>
+                  <td className="px-6 py-4 text-gray-700 text-center">₹{bill?.paidAmount ? bill?.paidAmount : '0'}</td>
+                  <td className="px-6 py-4 text-gray-700 text-center">₹{bill?.dueAmount ? bill?.dueAmount : '0'}</td>
                 </tr>
               </tbody>
             </table>
@@ -137,20 +130,20 @@ const BillScreen = () => {
           <div className="text-gray-700">123 Main St., Anytown, USA 12345</div> */}
           </div>
 
-          {/* <div className='mt-2 flex justify-between '>
-              <button
+          <div className='mt-2 flex justify-between '>
+              {/* <button
                 type='button'
                 className='bg-blue-500 text-white px-4 py-2 rounded-md'
                 onClick={() => setViewPdf(true)}>
                 View As Pdf
-              </button>
-              <button
+              </button> */}
+              {/* <button
                 type='button'
                 className='bg-green-500 text-white px-4 py-2 rounded-md'
                 onClick={handleDownload}>
                 Download
-              </button>
-            </div>  */}
+              </button> */}
+            </div> 
           <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Bill' >
             <CreateBill onClose={() => setEditModal(false)} isEdit={editId} />
           </Modal>

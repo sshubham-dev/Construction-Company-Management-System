@@ -127,6 +127,22 @@ function WorkDetailsForm({ onClose, id, index }) {
     }
   };
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const bstr = evt.target.result;
+      const workbook = XLSX.read(bstr, { type: 'binary' });
+      const wsname = workbook.SheetNames[0];
+      const ws = workbook.Sheets[wsname];
+      const data = XLSX.utils.sheet_to_json(ws);
+
+      // Send to backend
+      await axios.post('/api/v1/work-details/import-data', data);
+    };
+    reader.readAsBinaryString(file);
+  };
+
   return (
     <div >
       <form className='max-w-md mx-auto ' onSubmit={createWorkDetails}>
@@ -185,6 +201,14 @@ function WorkDetailsForm({ onClose, id, index }) {
             </button>
           }
         </div>
+
+        {/* <h2 className="text-lg text-center font-semibold my-4">OR</h2>
+        <div className="mb-4">
+          <label htmlFor='title' className="block text-sm font-semibold text-gray-600">
+            Import From Excel ( .csv, .xlsx, .xls )
+          </label>
+          <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileUpload} />
+        </div> */}
 
         <button
           type="button"

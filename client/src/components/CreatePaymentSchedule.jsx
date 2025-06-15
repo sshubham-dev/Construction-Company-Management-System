@@ -3,10 +3,11 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import Select from 'react-select';
+import moment from 'moment';
 
 axios.defaults.withCredentials = true;
 
-const CreatePaymentSchedule = ({onClose, id, index}) => {
+const CreatePaymentSchedule = ({ onClose, id, index }) => {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     site: '',
@@ -14,7 +15,7 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
     paymentDetails: [{
       workDescription: '',
       amount: '',
-      paymentDate: '',
+      dueDate: '',
     }],
   });
   const [paymentDetail, setPaymentDetail] = useState({
@@ -22,32 +23,42 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
     amount: '',
     paymentDate: '',
     status: '',
-    paid: '',
-    due: '',
+    dueDate:'',
   });
   const [scheduleIdToEdit, setScheduleIdToEdit] = useState(null);
   const [paymentToEdit, setPaymentToEdit] = useState({ id: '', index: '' });
-  const [client, setClient] = useState([]);
+  const [client, setClient] = useState({});
   const [workDetails, setWorkDetails] = useState([]);
   const [sites, setSite] = useState([]);
   const [data, setData] = useState({ site: '' });
   const { user } = useSelector((state) => state.auth);
-  const statusOptions = ['Started', 'Completed', 'Pending', 'Partially Completed'];
+  const statusOptions = ['Paid', 'Pending', 'Partially Paid'];
   const [clients, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState({ name: '', id: '' });
 
-  useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const response = await axios.get('/api/v1/clients'); // Adjust the endpoint as necessary
-        setClients(response.data);
-      } catch (error) {
-        console.error('Error fetching clients:', error.message);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchClients = async () => {
+  //     try {
+  //       const response = await axios.get('/api/v1/clients'); // Adjust the endpoint as necessary
+  //       setClients(response.data);
+  //     } catch (error) {
+  //       console.error('Error fetching clients:', error.message);
+  //     }
+  //   };
 
-    fetchClients();
-  }, []);
+  //   fetchClients();
+  // }, []);
+
+  useEffect(() => {
+    const siteId = formData.site;
+    let siteData = [];
+    if (siteId) {
+      siteData = sites.filter((site) => site._id === siteId);
+    }
+
+    setClient(siteData[0]?.client || '');
+  }, [formData.site]);
+  formData.client = client.name;
 
   useEffect(() => {
     const fetchSite = async () => {
@@ -87,12 +98,12 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
     fetchSite();
     fetchWorkDetails();
 
-    if (id && !index) {
-      fetchPaymentSchedule(id);
-      setScheduleIdToEdit(id);
-    } else if (id && index) {
+    if (id && index !== undefined) {
       fetchPaymentDetail(id, index);
       setPaymentToEdit({ id, index });
+    } else if (id) {
+      fetchPaymentSchedule(id);
+      setScheduleIdToEdit(id);
     }
   }, [id, index, user]);
 
@@ -104,6 +115,7 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
         workDescription: detail?.workDescription,
         amount: detail?.amount,
         paymentDate: detail?.paymentDate,
+        dueDate: detail?.dueDate,
         status: detail?.status,
       });
     } catch (error) {
@@ -145,7 +157,7 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
   const handleSiteChange = async (siteId) => {
     setFormData(prevState => ({
       ...prevState,
-      site:  siteId,
+      site: siteId,
     }));
 
     try {
@@ -209,12 +221,15 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
       if (scheduleIdToEdit) {
         const response = await axios.put(`/api/v1/payment-schedule/${scheduleIdToEdit}`, formData);
         toast.success(response.data.message);
-      } else if (paymentToEdit.id && paymentToEdit.index) {
+        onClose()
+      } else if (paymentToEdit.id && paymentToEdit.index !== undefined) {
         const response = await axios.put(`/api/v1/payment-schedule/${paymentToEdit.id}/paymentDetails/${paymentToEdit.index}`, paymentDetail);
-        toast.success(response.data.message);;
+        toast.success(response.data.message);
+        onClose()
       } else {
         const response = await axios.post('/api/v1/payment-schedule', formData);
         toast.success(response.data.message);
+        onClose()
       }
     } catch (error) {
       console.log('Error submitting payment schedule:', error.message);
@@ -225,7 +240,7 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
   return (
     <div>
       <form onSubmit={handleSubmit} className="mb-4 w-full max-w-md">
-        {paymentToEdit.id && paymentToEdit.index ? (
+        {paymentToEdit.id && paymentToEdit.index !== undefined ? (
           <>
             <div className='mb-4'>
               <label htmlFor='workDescription' className="block text-sm font-semibold text-gray-600">Work Detail</label>
@@ -250,7 +265,7 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
             </div>
 
             <div className="mb-4">
-              <label htmlFor='paymentDate' className="block text-sm font-semibold text-gray-600">Date of Payment</label>
+              <label htmlFor='paymentDate' className="block text-sm font-semibold text-gray-600">Date of Payment: {moment(paymentDetail.paymentDate).format('DD MM YYYY')}</label>
               <input
                 type="date"
                 name='paymentDate'
@@ -261,25 +276,12 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
             </div>
 
             <div className="mb-4">
-              <label htmlFor='paid' className="block text-sm font-semibold text-gray-600">Paid</label>
+              <label htmlFor='dueDate' className="block text-sm font-semibold text-gray-600">Date of Due: {moment(paymentDetail.dueDate).format('DD MM YYYY')}</label>
               <input
-                type="number"
-                name='paid'
-                value={paymentDetail.paid}
-                onChange={(e) => handleUpdate('paid', e.target.value)}
-                placeholder="Paid Amount"
-                className="border p-2 rounded w-full"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor='due' className="block text-sm font-semibold text-gray-600">Due</label>
-              <input
-                type="number"
-                name='due'
-                value={paymentDetail.due}
-                onChange={(e) => handleUpdate('due', e.target.value)}
-                placeholder="Due Amount"
+                type="date"
+                name='dueDate'
+                value={paymentDetail.dueDate}
+                onChange={(e) => handleUpdate('dueDate', e.target.value)}
                 className="border p-2 rounded w-full"
               />
             </div>
@@ -320,7 +322,7 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="client" className="block text-sm font-medium text-gray-600">Client</label>
-                  <p className="block text-md font-medium text-gray-600">{selectedClient.name || 'No client selected'}</p>
+                  <p className="block text-md font-medium text-gray-600">{formData?.client || 'No client selected'}</p>
                 </div>
                 <button type="button" onClick={() => setStep(step + 1)} className="bg-blue-500 text-white p-2 rounded">Add Work</button>
               </>
@@ -345,12 +347,12 @@ const CreatePaymentSchedule = ({onClose, id, index}) => {
                     placeholder="Amount"
                     className="border p-2 rounded w-full"
                   />
-                  <label htmlFor='paymentDate' className="block text-sm font-semibold text-gray-600 mt-4">Date of Payment</label>
+                  <label htmlFor='dueDate' className="block text-sm font-semibold text-gray-600 mt-4">Date of Due</label>
                   <input
                     type="date"
-                    name='paymentDate'
-                    value={formData.paymentDetails[step - 1]?.paymentDate || ''}
-                    onChange={(e) => handleWorkChange('paymentDate', e.target.value)}
+                    name='dueDate'
+                    value={formData.paymentDetails[step - 1]?.dueDate || ''}
+                    onChange={(e) => handleWorkChange('dueDate', e.target.value)}
                     className="border p-2 rounded w-full"
                   />
                 </div>

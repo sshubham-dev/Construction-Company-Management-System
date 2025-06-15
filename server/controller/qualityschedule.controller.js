@@ -32,11 +32,27 @@ const getWorkDetails = async (req, res) => {
 
 const getQualitySchedule = async (req, res) => {
     try {
-        const _id = req.params.id;
+        const id = req.params.id;
         console.log(id)
-        const qualityschedule = await QualitySchedule.findById(_id)
+        const qualityschedule = await QualitySchedule.findById(id)
         if (!qualityschedule) return res.status(404).json({ error: 'Quality Schedule not found' });
         return res.status(200).json(qualityschedule);
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+const getQualitySchedulesBySite = async (req, res) => {
+    try {
+        const id = req.params.id;
+        console.log(id)
+        const qualityschedule = await QualitySchedule.find()
+            .where('site.id').equals(id)
+            .exec();
+        if (qualityschedule.length === 0) return res.status(404).json({ error: 'Quality Schedule not found' });
+        const qualityschedules = qualityschedule.map(q => q.workDetails)
+        return res.status(200).json(qualityschedules);
     } catch (error) {
         console.log(error)
         res.status(500).json({ error: 'Internal Server Error' });
@@ -114,21 +130,18 @@ const saveQualitySchedule = async (req, res) => {
 
 const updateQualitySchedule = async (req, res) => {
     try {
-        const _id = req.params.id;
+        const id = req.params.id;
         const {
             site,
             qualityScheduleId,
-            workDetails: [{
-                work,
-                checkingDate,
-            }]
+            workDetails,
         } = req.body;
-        console.table(req.body)
+        console.log('req.body', req.body)
         console.table(id)
 
         const existingSite = await Site.findById(site);
         // Find the existing project schedule
-        const existingQualitySchedule = await QualitySchedule.findById(_id);
+        const existingQualitySchedule = await QualitySchedule.findById(id);
         console.log(existingQualitySchedule)
         if (!existingQualitySchedule) {
             return res.status(404).json({ error: 'Quality Schedule not found' });
@@ -136,12 +149,14 @@ const updateQualitySchedule = async (req, res) => {
 
         existingQualitySchedule.site = { id: existingSite._id, name: existingSite.name } || existingQualitySchedule.site;
         existingQualitySchedule.qualityScheduleId = qualityScheduleId || existingQualitySchedule.qualityScheduleId;
-        const newWorkDetail = {
-            work,
-            checkingDate,
-        };
-        if (newWorkDetail) {
-            existingQualitySchedule.workDetails.push(newWorkDetail);
+        if (workDetails[0]?.work !== '' && workDetails[0]?.checkingDate !== '') {
+            const newWorkDetail = {
+                work: workDetails[0]?.work,
+                checkingDate: workDetails[0]?.checkingDate,
+            };
+            if (newWorkDetail) {
+                existingQualitySchedule.workDetails.push(newWorkDetail);
+            }
         }
 
         const updatedQualitySchedule = await existingQualitySchedule.save();
@@ -167,7 +182,7 @@ const deleteQualitySchedule = async (req, res) => {
 
 const updateWorkDetail = async (req, res) => {
     try {
-        const _id = req.params.id;
+        const id = req.params.id;
         const index = req.params.index;
         const {
             work,
@@ -181,7 +196,7 @@ const updateWorkDetail = async (req, res) => {
         console.log('index', req.params.index);
         console.log('req', req.body);
 
-        const qualitySchedule = await QualitySchedule.findById(_id);
+        const qualitySchedule = await QualitySchedule.findById(id);
         if (!qualitySchedule) return res.status(500).json({ error: 'No Project Schedule Found' });
         qualitySchedule.workDetails[index] = {
             work,
@@ -231,4 +246,5 @@ module.exports = {
     deleteWorkDetail,
     getWorkDetails,
     saveQualitySchedule,
+    getQualitySchedulesBySite
 };

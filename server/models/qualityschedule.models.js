@@ -19,6 +19,10 @@ const workDetailSchema = new mongoose.Schema({
     status: {
         type: String,
         default: 'Pending',
+    },
+    checklist:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Checklist'
     }
 });
 

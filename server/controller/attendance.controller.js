@@ -134,7 +134,6 @@ const createAttendance = async (req, res) => {
     }
 };
 
-
 const createLeave = async (req, res) => {
     try {
         const { reason, from, reportingDate } = req.body;

@@ -16,7 +16,7 @@ const QualitySchedule = require('../models/qualityschedule.models.js');
 
 const getAllApprovals = async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = req.params.id;
         const pendingApproval = await Approval.find()
             .where('to.id').equals(id)
             .exec();
@@ -79,7 +79,7 @@ const reject = async (req, res) => {
     try {
         const id = req.params.id;
         const user = req.user;
-        const {message} = req.body
+        const { message } = req.body
         const approval = await Approval.findById(id)
         if (!approval) return res.status(400).json({ message: 'No Approval Avaliable' });
         switch (user.department) {
@@ -133,24 +133,24 @@ const reject = async (req, res) => {
                         res.status(201).json({ message: 'Work Order has been Approved By Parveen Sir' });
                         break;
 
-                        case 'Leave':
-                            const leave = await Leave.findById(approval?.data._id)
-                                .populate('user.id')
-                                .exec()
-                            console.log(leave)
-                            console.log("message", message)
-                            approval.isApproved = false,
+                    case 'Leave':
+                        const leave = await Leave.findById(approval?.data._id)
+                            .populate('user.id')
+                            .exec()
+                        console.log(leave)
+                        console.log("message", message)
+                        approval.isApproved = false,
                             approval.data.approval = 'Rejected',
                             leave.approval = 'Rejected',
                             // console.log('before reject', approval.data)
                             await approval.save();
-                            await leave.save();
-                            // console.log('after reject', approval.data)
-                            saveReject(approval, user?._id, 'Leave', message)
-                            await Approval.findByIdAndDelete(approval?._id);
-                            leave.user?.id.message.push('Leave has been Approved By Parveen Sir');
-                            res.status(201).json({ message: 'Leave has been Approved By Parveen Sir' });
-                            break;
+                        await leave.save();
+                        // console.log('after reject', approval.data)
+                        saveReject(approval, user?._id, 'Leave', message)
+                        await Approval.findByIdAndDelete(approval?._id);
+                        leave.user?.id.message.push('Leave has been Approved By Parveen Sir');
+                        res.status(201).json({ message: 'Leave has been Approved By Parveen Sir' });
+                        break;
 
                     default:
                         break;
@@ -468,7 +468,7 @@ const approve = async (req, res) => {
 
                         saveApproved(approval, user._id, 'Bill'),
                             await Approval.findByIdAndDelete(approval?._id);
-                        bill.createdBy.message.push('Bill has been Approved By Parveen Sir');
+                        // bill.createdBy.message.push('Bill has been Approved By Parveen Sir');
                         res.status(201).json({ message: 'Bill has been Approved By Parveen Sir' });
                         break;
 
@@ -575,9 +575,9 @@ const approve = async (req, res) => {
                             .exec()
                         console.log(leave)
                         approval.isApproved = true,
-                        approval.data.approval = 'Approved',
-                        leave.approval = 'Approved',
-                        console.log('before approval', approval.data)
+                            approval.data.approval = 'Approved',
+                            leave.approval = 'Approved',
+                            console.log('before approval', approval.data)
                         await approval.save();
                         await leave.save();
                         console.log('after approval', approval.data)
@@ -605,8 +605,8 @@ const approve = async (req, res) => {
                         await bill.save();
                         saveApproved(approval, user._id, 'Bill'),
                             await Approval.findByIdAndDelete(approval?._id);
-                        bill.createdBy.message.push('Bill has been Approved By Parveen Sir');
-                        res.status(201).json({ message: 'Bill has been Approved By Parveen Sir' });
+                        bill.createdBy.message.push('Bill has been Approved By Accountant');
+                        res.status(201).json({ message: 'Bill has been Approved By Accountant' });
                         // console.log('bill:', bill)
                         break;
 
@@ -747,8 +747,8 @@ const approve = async (req, res) => {
                         await bill.save();
                         saveApproved(approval, user._id, 'Bill'),
                             await Approval.findByIdAndDelete(approval?._id);
-                        bill.createdBy.message.push('Bill has been Approved By Parveen Sir');
-                        res.status(201).json({ message: 'Bill has been Approved By Parveen Sir' });
+                        bill.createdBy.message.push('Bill has been Approved By Incharge');
+                        res.status(201).json({ message: 'Bill has been Approved By Incharge' });
                         // console.log('Inchargebill:', bill)
                         break;
 
@@ -826,8 +826,8 @@ const approve = async (req, res) => {
                         await bill.save();
                         saveApproved(approval, user._id, 'Bill'),
                             await Approval.findByIdAndDelete(approval?._id);
-                        bill.createdBy.message.push('Bill has been Approved By Parveen Sir');
-                        res.status(201).json({ message: 'Bill has been Approved By Parveen Sir' });
+                        bill.createdBy.message.push('Bill has been Approved By Quality');
+                        res.status(201).json({ message: 'Bill has been Approved By Quality' });
                         // console.log('bill:', bill)
                         break;
 
@@ -979,21 +979,36 @@ const sendApproveByAdmin = async (data, approvalof, by) => {
 
 const sendApproveByIncharge = async (data, approvalof, by) => {
     try {
+        console.log('data', data)
+        console.log('data:', { data })
         const existingIncharge = await User.findOne()
             .where('department').equals('Site Incharge')
-            .where('site.id').equals(data.site)
+            .where('site.id').equals(data.site.id)
             .select('-password -refreshToken')
             .exec();
+
 
         if (!existingIncharge) {
             console.log('User not found');
             return;
         }
+        const existingUser = await User.findById(by)
+            .select('-password -refreshToken')
+            .exec();
 
+        console.log(existingUser)
+
+        if (!existingUser) {
+            console.log('User not found');
+            return;
+        }
         const newApproval = new Approval({
             data,
-            to: existingIncharge?._id,
-            by,
+            to: { id: existingIncharge?._id, name: existingIncharge.userName },
+            by: {
+                name: existingUser.userName,
+                id: by
+            },
             approvalOf: approvalof,
         });
         const inchargeApprove = await newApproval.save();
@@ -1022,11 +1037,24 @@ const sendApproveByAccountant = async (data, approvalof, by) => {
             console.log('User not found');
             return;
         }
+        const existingUser = await User.findById(by)
+            .select('-password -refreshToken')
+            .exec();
+
+        console.log(existingUser)
+
+        if (!existingUser) {
+            console.log('User not found');
+            return;
+        }
 
         const newApproval = new Approval({
             data,
-            to: existingAccountant?._id,
-            by,
+            to: { id: existingAccountant?._id, name: existingAccountant.userName },
+            by: {
+                name: existingUser.userName,
+                id: by
+            },
             approvalOf: approvalof,
         });
         const accountantApprove = await newApproval.save();
@@ -1055,21 +1083,29 @@ const sendApproveByAccountHead = async (data, approvalof, by) => {
             console.log('User not found');
             return;
         }
+        console.log('existingAccountant:', existingAccountant)
+        const existingUser = await User.findById(by)
+            .select('-password -refreshToken')
+            .exec();
 
+        console.log(existingUser)
+
+        if (!existingUser) {
+            console.log('User not found');
+            return;
+        }
         const newApproval = new Approval({
             data,
-            to: existingAccountant?._id,
-            by,
+            to: { id: existingAccountant?._id, name: existingAccountant.userName },
+            by: {
+                name: existingUser.userName,
+                id: by
+            },
             approvalOf: approvalof,
         });
         const accountantApprove = await newApproval.save();
-
-        if (accountantApprove) {
-            existingAccountant.pending.push(accountantApprove._id);
-            await existingAccountant.save();
-        } else {
-            console.log('accountantApprove  is not saved');
-        }
+        existingAccountant.pending.push(accountantApprove._id);
+        await existingAccountant.save();
 
         // console.log('accountantApprove:', accountantApprove)
     } catch (error) {
@@ -1080,7 +1116,7 @@ const sendApproveByAccountHead = async (data, approvalof, by) => {
 const sendApproveByQuality = async (data, approvalof, by) => {
     try {
         const existingQuality = await User.findOne()
-            .where('site.id').equals(data.site)
+            .where('site.id').equals(data.site.id)
             .where('department').equals('Quality Engineer')
             .select('-password -refreshToken')
             .exec();
@@ -1089,22 +1125,30 @@ const sendApproveByQuality = async (data, approvalof, by) => {
             console.log('User not found');
             return;
         }
+        const existingUser = await User.findById(by)
+            .select('-password -refreshToken')
+            .exec();
 
+        console.log(existingUser)
+
+        if (!existingUser) {
+            console.log('User not found');
+            return;
+        }
         // console.log('existingQuality:', existingQuality)
         const newApproval = new Approval({
             data,
-            to: existingQuality?._id,
-            by,
+            to: { id: existingQuality?._id, name: existingQuality.userName },
+            by: {
+                name: existingUser.userName,
+                id: by
+            },
             approvalOf: approvalof,
         });
         const qualityApprove = await newApproval.save();
 
-        if (qualityApprove) {
-            existingQuality.pending.push(qualityApprove._id);
-            await existingQuality.save();
-        } else {
-            console.log('qualityApprove is not saved');
-        }
+        existingQuality.pending.push(qualityApprove._id);
+        await existingQuality.save();
 
         // console.log('qualityApprove:', qualityApprove)
     } catch (error) {
@@ -1116,7 +1160,7 @@ const sendApproveByContractor = async (data, approvalof, by) => {
     try {
         const existingContractor = await User.findOne()
             .where('department').equals('Contractor')
-            .where('site.id').equals(data.site)
+            .where('site.id').equals(data.site.id)
             .select('-password -refreshToken')
             .exec();
 
@@ -1124,11 +1168,23 @@ const sendApproveByContractor = async (data, approvalof, by) => {
             console.log('Contractor not found');
             return;
         }
+        const existingUser = await User.findById(by)
+            .select('-password -refreshToken')
+            .exec();
 
+        console.log(existingUser)
+
+        if (!existingUser) {
+            console.log('User not found');
+            return;
+        }
         const newApproval = new Approval({
             data,
-            to: existingContractor?._id,
-            by,
+            to: { id: existingContractor?._id, name: existingContractor.userName },
+            by: {
+                name: existingUser.userName,
+                id: by
+            },
             approvalOf: approvalof,
         });
 

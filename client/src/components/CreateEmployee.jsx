@@ -3,6 +3,8 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { MdOutlineRemoveCircle, MdOutlineAddCircle } from "react-icons/md";
 import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { createEmployee, fetchEmployeeById, updateEmployee } from '../features/hr/employeeSlice';
 axios.defaults.withCredentials = true;
 
 const CreateEmployee = ({ onClose, isEdit }) => {
@@ -38,36 +40,57 @@ const CreateEmployee = ({ onClose, isEdit }) => {
         'Store Helper'
     ];
     const [error, setError] = useState(null);
+    const dispatch = useDispatch();
 
-
+    // const exitEmployee = useSelector((state) => state.employee.selected);
     useEffect(() => {
-        if (isEdit) {
-            fetchEmployee(isEdit);
-        }
-    }, [])
-
-    const fetchEmployee = async (id) => {
-        try {
-            const employeerData = await axios.get(`/api/v1/employee/${id}`);
-            const exitEmployee = employeerData.data
-            if (employeerData.data) {
-                setEmployee({
-                    name: exitEmployee.name,
-                    email: exitEmployee.email,
-                    phone: exitEmployee.phone,
-                    whatsapp: exitEmployee.whatsapp,
-                    employeeNo: exitEmployee.employeeNo,
-                    joinDate: exitEmployee.joinDate,
-                    birthdate: exitEmployee.birthdate,
-                    address: exitEmployee.address,
-                    isUser: exitEmployee.isUser,
-                    department: exitEmployee.department,
-                });
+        const fetchEmployee = async () => {
+            try {
+                const resultAction = await dispatch(fetchEmployeeById({ id: isEdit }));
+                if (fetchEmployeeById.fulfilled.match(resultAction)) {
+                    const exitEmployee = resultAction.payload;
+                    setEmployee({
+                        name: exitEmployee.name || "",
+                        email: exitEmployee.email || "",
+                        phone: exitEmployee.phone || "",
+                        whatsapp: exitEmployee.whatsapp || "",
+                        employeeNo: exitEmployee.employeeNo || "",
+                        joinDate: exitEmployee.joinDate || "",
+                        birthdate: exitEmployee.birthdate || "",
+                        address: exitEmployee.address || "",
+                        isUser: exitEmployee.isUser || false,
+                        department: exitEmployee.department || "",
+                    });
+                } else {
+                    toast.error("Failed to fetch employee data");
+                }
+            } catch (err) {
+                toast.error("Error fetching employee data");
             }
-        } catch (error) {
-            toast.error(error.message);
+        };
+
+        if (isEdit) {
+            fetchEmployee();
         }
-    }
+    }, [dispatch, isEdit]);
+
+
+    // const fetchEmployee = async (id) => {
+    //     const exitEmployee = dispatch(fetchEmployeeById(id))
+    //     console.log(exitEmployee)
+    //     setEmployee({
+    //         name: exitEmployee.name,
+    //         email: exitEmployee.email,
+    //         phone: exitEmployee.phone,
+    //         whatsapp: exitEmployee.whatsapp,
+    //         employeeNo: exitEmployee.employeeNo,
+    //         joinDate: exitEmployee.joinDate,
+    //         birthdate: exitEmployee.birthdate,
+    //         address: exitEmployee.address,
+    //         isUser: exitEmployee.isUser,
+    //         department: exitEmployee.department,
+    //     });
+    // }
 
     const handleReset = () => {
         setEmployee({
@@ -106,21 +129,19 @@ const CreateEmployee = ({ onClose, isEdit }) => {
 
         try {
             console.log(employee);
-            if(isEdit){
-                const response = await axios.put(`/api/v1/employee/${isEdit}`, employee);
-                if (response.data) {
-                    console.log(response.data);
+            if (isEdit) {
+                const response = await dispatch(updateEmployee({ id: isEdit, data: employee }));
+                if (response) {
+                    console.log(response);
                     toast.success('Employee Updated successfully!');
                 }
                 onClose()
-            }else{
-                const response = await axios.post('/api/v1/employee', employee, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data', // Set content type to multipart/form-data
-                    },
-                });
-                if (response.data) {
-                    console.log(response.data);
+            } else {
+
+                const response = await dispatch(createEmployee({data:employee}));
+
+                if (response) {
+                    console.log(response);
                     toast.success('Employee Created successfully!');
                 }
                 onClose()

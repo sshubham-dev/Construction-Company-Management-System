@@ -11,6 +11,7 @@ const {
     getPaymentDetails,
     paymentScheduleBySite,
     savePaymentSchedule,
+    getDraftPaymentSchedules,
     // clientPaymentSchedule,
     // contractorPaymentSchedule,
 } = require('../controller/paymentschedule.controller');
@@ -19,6 +20,7 @@ const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 PaymentSchedule.route('/')
     .get(getPaymentSchedules)
     .post(userAuth, createPaymentSchedule)
+PaymentSchedule.get('/draft', userAuth, getDraftPaymentSchedules);
 
 PaymentSchedule.route('/:id')
     .put(updatePaymentSchedule)

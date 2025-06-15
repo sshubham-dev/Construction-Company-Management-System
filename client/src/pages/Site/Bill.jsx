@@ -31,21 +31,26 @@ const Bills = () => {
       try {
         const billData = await axios.get('/api/v1/bill');
         const bills = billData.data;
-        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge' && isLoggedIn) {
+
+        console.log('Bills Fetched:', bills);
+
+        if ((user.department === 'Site Supervisor' || user.department === 'Site Incharge') && isLoggedIn) {
           const sites = user?.site;
-          let contractorBills;
-          for (let site of sites) {
-            contractorBills = bills.filter((bill) => bill.site?._id.includes(site) && bill.billFor === 'Contractor')
-          }
-          console.log('contractorBillfirst', contractorBills)
+          const contractorBills = bills.filter((bill) =>
+            sites.some((site) =>
+              bill.site?.id?._id?.toString() === site.id?.toString()
+            )
+          );
+          console.log('Filtered contractor bills:', contractorBills);
           setContractorBill(contractorBills);
         } else {
           setContractorBill(bills.filter((bill) => bill.billFor === 'Contractor'));
         }
       } catch (error) {
-        console.error(error)
+        console.error('Error fetching bills:', error);
       }
-    }
+    };
+
     const getDraftBills = async () => {
       try {
         const billData = await axios.get(`/api/v1/bill/draft/${user?._id}`);
@@ -54,10 +59,10 @@ const Bills = () => {
           const sites = user?.site;
           let draftBills;
           for (let site of sites) {
-            draftBills = bills?.filter((bill) => bill.site?._id.includes(site))
+            draftBills = bills?.filter((bill) => bill.site?.id?._id?.toString() === site.id?.toString())
           }
           setDraftBill(draftBills);
-          console.log(draftBills)
+          console.log('draftBills', draftBills)
         }
       } catch (error) {
         console.error(error)
@@ -188,11 +193,11 @@ const Bills = () => {
                       <tr key={bill?._id} className='border-b border-blue-gray-200'>
                         <td className="px-6 py-4">
                           <p className=""> {bill.site?.name}</p>
-                          <p className="text-gray-500 text-sm font-semibold tracking-wide"> {bill.billFor === 'Contractor' ? bill.contractor?.name : bill.supplier?.name} </p>
+                          <p className="text-gray-500 text-sm font-semibold tracking-wide"> {bill.contractor?.name} </p>
                         </td>
                         <td className="px-6 py-4">
                           <NavLink to={`/bill/${bill?._id}`} className="hover:text-blue-800 text-md">
-                            {bill.billFor === 'Contractor' ? bill?.billOf.workDetail : bill?.billOf.material}
+                            {bill?.billOf.workDetail}
                           </NavLink>
                         </td>
                         <td className="px-6 py-4 text-center">{bill.amount}</td>
@@ -201,7 +206,7 @@ const Bills = () => {
                           <button onClick={() => handleSave(bill._id)} className=" mr-2">
                             <FcApproval className="text-green-500 hover:text-green-700 text-xl" />
                           </button>
-                          <button onClick={() => handleRedirect(purchaseOrder._id)} className="mr-2">
+                          <button onClick={() => handleRedirect(bill._id)} className="mr-2">
                             <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
                           </button>
                           <button onClick={() => handleEdit(bill._id)} className="mr-2">
@@ -225,12 +230,12 @@ const Bills = () => {
         <Toaster position="top-right" reverseOrder={false} />
       </section>
       {/* Contractor Modal */}
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Bill' >
-          <CreateBill onClose={() => setCreateModal(false)} />
-        </Modal>
-        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Bill' >
-          <CreateBill onClose={() => setEditModal(false)} isEdit={editId} />
-        </Modal>
+      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Bill' >
+        <CreateBill onClose={() => setCreateModal(false)} />
+      </Modal>
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Bill' >
+        <CreateBill onClose={() => setEditModal(false)} isEdit={editId} />
+      </Modal>
     </div>
   );
 };

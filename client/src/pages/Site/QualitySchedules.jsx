@@ -25,7 +25,7 @@ const QualitySchedules = () => {
       try {
         const qualitySchedulesData = await axios.get('/api/v1/quality-schedule');
         setQualitySchedule(qualitySchedulesData.data);
-        console.log(projectScheduleData.data)
+        console.log(qualitySchedulesData.data)
       } catch (error) {
         console.error(error);
       }
@@ -85,8 +85,8 @@ const QualitySchedules = () => {
                   <td className="px-6 py-4">
                     {qualitySchedule.site?.name}
                   </td>
-                  <td className="px-6 py-4">{moment(qualitySchedule.date).format('DD-MM-YYYY')}</td>
-                  <td className="px-6 py-4">{qualitySchedule.approvalStatus}</td>
+                  <td className="px-6 py-4 text-center">{moment(qualitySchedule.date).format('DD-MM-YYYY')}</td>
+                  <td className="px-6 py-4 text-center">{qualitySchedule.approvalStatus}</td>
                   {/* <td className="px-6 py-4 text-center">{work.startedAt ? moment(work.startedAt).format('DD-MM-YYYY') : '-'}</td> */}
                   <td className="px-6 py-4">
                     <button onClick={() => handleRedirect(qualitySchedule._id)} className="mr-2">
@@ -117,7 +117,7 @@ const QualitySchedules = () => {
         <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Quality Schedules' >
           <CreateQualitySchedule onClose={() => setCreateModal(false)} />
         </Modal>
-        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Quality Schedules' >
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Edit Quality Schedules' >
           <CreateQualitySchedule onClose={() => setEditModal(false)} id={editId} />
         </Modal>
     </div>

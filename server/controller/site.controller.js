@@ -13,6 +13,12 @@ const uploadOnCloudinary = require('../utils/cloudinary.js');
 const getSites = async (req, res) => {
     try {
         const sites = await Site.find()
+            .populate('bill')
+            .populate('purchaseOrder')
+            .populate('projectSchedule')
+            .populate('paymentSchedule')
+            .populate('workOrder')
+            .exec();
         if (sites.length === 0) return res.status(404).json({ error: 'Sites Not Found' });
         res.status(200).json(sites);
     } catch (error) {
@@ -24,7 +30,7 @@ const getSites = async (req, res) => {
 const getSite = async (req, res) => {
     try {
         const id = req.params.id;
-        if(id === "") return res.status(500).json({ error: 'Id undefined' });
+        if (id === "") return res.status(500).json({ error: 'Id undefined' });
         const site = await Site.findById(id)
             .populate('bill')
             .populate('purchaseOrder')
@@ -43,6 +49,7 @@ const getSite = async (req, res) => {
 const siteByUser = async (req, res) => {
     try {
         const id = req.params.id;
+        console.log('id', id)
         const user = await User.findById(id);
         if (user && user.department === 'Site Incharge') {
             const inchargeSite = await Site.find()
@@ -96,7 +103,7 @@ const createSite = async (req, res) => {
             name,
             client,
             siteId,
-            floors,
+            // floors,
             area,
             incharge,
             qualityEngineer,
@@ -175,7 +182,7 @@ const createSite = async (req, res) => {
 const updateSite = async (req, res) => {
     try {
         const id = req.params.id;
-        const { name, client, siteId, floors, value, area, incharge, supervisor, qualityEngineer, projectType, address } = req.body;
+        const { name, client, siteId, value, area, incharge, supervisor, qualityEngineer, projectType, address } = req.body;
         const agreementLocalPath = req.file?.path;
         console.log('req', req.body);
         const upload = await uploadOnCloudinary(agreementLocalPath);
@@ -183,21 +190,37 @@ const updateSite = async (req, res) => {
         const existingClient = await Client.findById(client);
         const existingIncharge = await User.findById(incharge);
         const existingSupervisor = await User.findById(supervisor);
+        console.log("Supervisor ID from req.body:", supervisor, existingSupervisor);
         const existingQuality = await User.findById(qualityEngineer);
         const existingSite = await Site.findById(id);
         if (!existingSite) return res.status(404).json({ error: 'Site not Found' });
         // find client, incharge, supervisour & update them - todo
         existingSite.name = name || existingSite.name;
         existingSite.siteId = siteId || existingSite.siteId || '';
-        existingSite.floors = floors || existingSite.floors;
+        // existingSite.floors = floors || existingSite.floors;
         existingSite.value = value || existingSite.value;
         existingSite.area = area || existingSite.area;
         existingSite.address = address || existingSite.address;
-        existingSite.client = { id: existingClient?._id, name: existingClient.name } || existingSite.client;
+        if (existingClient?._id && existingClient.name) {
+            existingSite.client = { id: existingClient._id, name: existingClient.name };
+        }
+
         existingSite.projectType = projectType || existingSite.projectType;
-        existingSite.incharge = { id: existingIncharge?._id, name: existingIncharge.name } || existingSite.incharge;
-        existingSite.supervisor = { id: existingSupervisor?._id, name: existingSupervisor.name } || existingSite.supervisor;
-        existingSite.qualityEngineer = { id: existingQuality?._id, name: existingQuality.name } || existingSite.qualityEngineer;
+        if (existingIncharge?._id && existingIncharge.userName) {
+            existingSite.incharge = { id: existingIncharge._id, name: existingIncharge.userName };
+        }
+
+        if (existingSupervisor?._id && existingSupervisor.userName) {
+            existingSite.supervisor = {
+                id: existingSupervisor._id,
+                name: existingSupervisor.userName
+            };
+        }
+
+        if (existingQuality?._id && existingQuality.userName) {
+            existingSite.qualityEngineer = { id: existingQuality._id, name: existingQuality.userName };
+        }
+
         await existingSite.save();
 
         if (existingClient?.site.id !== existingSite._id) {
@@ -205,17 +228,17 @@ const updateSite = async (req, res) => {
             await existingClient.save({ validateBeforeSave: false });
         }
 
-        if (!existingSupervisor?.site.id.includes(existingSite._id)) {
+        if (!existingSupervisor?.site?.some(s => s.id.toString() === existingSite._id.toString())) {
             existingSupervisor?.site.push({ id: existingSite._id, name: existingSite.name });
             await existingSupervisor.save();
         }
 
-        if (!existingIncharge?.site.id.includes(existingSite._id)) {
-            existingIncharge?.site.push({ id: existingSite._id, name: existingSite.name });
+        if (!existingIncharge?.site?.some(s => s.id.toString() === existingSite._id.toString())) {
+            existingIncharge.site.push({ id: existingSite._id, name: existingSite.name });
             await existingIncharge.save();
         }
 
-        if (!existingQuality?.site.id.includes(existingSite._id)) {
+        if (!existingQuality?.site?.some(s => s.id.toString() === existingSite._id.toString())) {
             existingQuality.site.push({ id: existingSite._id, name: existingSite.name });
             await existingQuality.save();
         }

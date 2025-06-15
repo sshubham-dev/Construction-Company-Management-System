@@ -75,8 +75,10 @@ const saveReturn = async (req, res) => {
 // Get all returns
 const getReturns = async (req, res) => {
     try {
-        const returns = await Return.find();  // Populating the site ID with actual data
-        res.status(200).json({ success: true, data: returns });
+        const returns = await Return.find()
+            .populate('site.id')
+            .exec()  // Populating the site ID with actual data
+        res.status(200).json(returns);
     } catch (error) {
         console.log(error)
         res.status(400).json({ success: false, message: error.message });
@@ -86,11 +88,27 @@ const getReturns = async (req, res) => {
 // Get return by ID
 const getReturnById = async (req, res) => {
     try {
+        const returnData = await Return.findById(req.params.id)
+            .populate('site.id')
+            .exec();  // Populating the site ID with actual data
+        if (!returnData) {
+            return res.status(404).json({ success: false, message: 'Return not found' });
+        }
+        res.status(200).json(returnData);
+    } catch (error) {
+        console.log(error)
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
+
+const getReturnItem = async (req, res) => {
+    try {
         const returnData = await Return.findById(req.params.id);
         if (!returnData) {
             return res.status(404).json({ success: false, message: 'Return not found' });
         }
-        res.status(200).json({ success: true, data: returnData });
+        const data = returnData.returnable;
+        res.status(200).json(data);
     } catch (error) {
         console.log(error)
         res.status(400).json({ success: false, message: error.message });
@@ -100,11 +118,70 @@ const getReturnById = async (req, res) => {
 // Update a return
 const updateReturn = async (req, res) => {
     try {
-        const updatedReturn = await Return.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedReturn) {
+        const id = req.params.id;
+        const { site, materialType, date, returnable } = req.body;
+        const existingSite = await Site.findById(site);
+        const existingReturn = await Return.findById(id);
+        if (!existingReturn) {
             return res.status(404).json({ success: false, message: 'Return not found' });
         }
-        res.status(200).json({ success: true, data: updatedReturn });
+        if (existingSite) {
+            existingReturn.site = {
+                name: existingSite.name,
+                id: existingSite._id
+            }
+        }
+        existingReturn.materialType = materialType || existingPurchaseRequest.materialType
+        existingReturn.date = date || existingPurchaseRequest.date
+
+        if (Array.isArray(returnable) && returnable.length > 0) {
+            for (const retrn of returnable) {
+
+                if (retrn.item !== '') {
+                    const newReturnable = {
+                        item: retrn.item,
+                        quantity: retrn.quantity,
+                        unit: retrn.unit,
+                    }
+                    console.log('Pushing:', newReturnable);
+                    existingReturn.returnable.push(newReturnable);
+                }
+            }
+        }
+        await existingReturn.save();
+        res.status(200).json({ success: true, data: existingReturn });
+    } catch (error) {
+        console.log(error)
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
+
+const updateReturnItem = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const index = req.params.index;
+        const existingReturnRequest = await Return.findById(id);
+        if (!existingReturnRequest) {         
+            return res.status(404).json({ success: false, message: 'Return not found' });
+        }
+        if (index < 0 || index >= existingReturnRequest.returnable.length) {
+            return res.status(400).json({ success: false, message: 'Invalid index' });
+        }
+        const { item, quantity, unit, rate, receivedQuantity, remarks } = req.body;
+        if (!item || !quantity || !unit) {  
+            return res.status(400).json({ success: false, message: 'Item, quantity, and unit are required' });
+        }   
+        existingReturnRequest.returnable[index] = {
+            item: item || existingReturnRequest.returnable[index].item,
+            quantity: quantity || existingReturnRequest.returnable[index].quantity,
+            unit: unit || existingReturnRequest.returnable[index].unit,
+            rate: rate || existingReturnRequest.returnable[index].rate,
+            receivedQuantity: receivedQuantity || existingReturnRequest.returnable[index].receivedQuantity,
+            remarks: remarks || existingReturnRequest.returnable[index].remarks
+        };
+        await existingReturnRequest.save();
+        res.status(200).json(existingReturnRequest);
+
     } catch (error) {
         console.log(error)
         res.status(400).json({ success: false, message: error.message });
@@ -125,4 +202,4 @@ const deleteReturn = async (req, res) => {
     }
 };
 
-module.exports = { createReturn, getReturnById, getReturns, updateReturn, deleteReturn }
+module.exports = { createReturn, getReturnById, getReturns, updateReturn, deleteReturn, saveReturn, getReturnItem, updateReturnItem }

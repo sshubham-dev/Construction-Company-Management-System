@@ -32,7 +32,7 @@ const getDraftWorkorders = async (req, res) => {
         const user = req.user;
         const workOrders = await WorkOrder.find()
             .where('approvalStatus').equals("Pending")
-            .where('createdBy').equals(user?.id)
+            .where('createdBy').equals(user?._id)
             .exec();
         if (workOrders.length === 0) {
             return res.status(404).json({ error: 'No Work-Orders Found' });
@@ -129,12 +129,6 @@ const createWorkorder = async (req, res) => {
             work,
         } = req.body;
 
-
-        const workName = await WorkDetails.findById(workOrderName);
-        if (!workName) {
-            return res.status(400).json({ message: 'Work not found' });
-        }
-
         const existingSite = await Site.findById(site);
         if (!existingSite) {
             return res.status(400).json({ message: 'Site not found' });
@@ -156,7 +150,7 @@ const createWorkorder = async (req, res) => {
         } else {
 
             const newWorkOrder = new WorkOrder({
-                workOrderName: workName.title,
+                workOrderName,
                 workOrderNo,
                 createdBy: user?._id,
                 contractor: { id: existingContractor._id, name: existingContractor.name },
@@ -167,9 +161,9 @@ const createWorkorder = async (req, res) => {
             });
 
             const savedWorkOrder = await newWorkOrder.save();
-            sendApproveByAdmin(savedWorkOrder, "Work Order", user._id)
-            sendApproveByAccountHead(savedWorkOrder, 'Work Order', user._id)
-            sendApproveByIncharge(saveWorkOrder, 'Work Order', user._id)
+            await sendApproveByAdmin(savedWorkOrder, "Work Order", user._id)
+            await sendApproveByAccountHead(savedWorkOrder, 'Work Order', user._id)
+            await sendApproveByIncharge(savedWorkOrder, 'Work Order', user._id)
 
             res.status(201).json({ message: 'Work Order Created Successfully' });
         }
@@ -197,13 +191,13 @@ const saveWorkOrder = async (req, res) => {
             const existingContractor = await Contractor.findById(workOrder?.contractor.id);
             if (!existingSite.workOrder.includes(workOrder._id)) {
                 existingSite.workOrder.push(workOrder._id);
-                existingSite.contractor.push(existingContractor._id);
+                existingSite.contractor.push({ id: existingContractor._id, name: existingContractor.name });
                 await existingSite.save({ validateBeforeSave: false });
             };
 
             if (!existingContractor.workOrder.includes(workOrder._id)) {
                 existingContractor.workOrder.push(workOrder._id);
-                existingContractor.site.push(existingSite._id);
+                existingContractor.site.push({ id: existingSite._id, name: existingSite.name });
                 await existingContractor.save({ validateBeforeSave: false });
             }
 
@@ -220,7 +214,6 @@ const saveWorkOrder = async (req, res) => {
 const updateWorkOrder = async (req, res) => {
     try {
         const id = req.params.id;
-        const user = req.user;
         const {
             workOrderName,
             workOrderNo,
@@ -228,51 +221,60 @@ const updateWorkOrder = async (req, res) => {
             site,
             startdate,
             duration,
-            work: [
-                {
-                    workDetail,
-                    rate,
-                    area,
-                    unit,
-                    amount,
-                },
-            ],
+            work,
         } = req.body;
-        const existingWorkOrder = await WorkOrder.findById(id)
-            .where('createdBy').equals(user?._id)
-            .exec();
-        if (!existingWorkOrder) {
-            return res.status(404).json({ error: 'Work Order not found' });
+        console.log('REQ BODY:', JSON.stringify(req.body, null, 2));
+
+
+        const existingWorkOrder = await WorkOrder.findById(id);
+        if (!existingWorkOrder) return res.status(404).json({ error: 'Work Order not found' });
+
+        const existingSite = await Site.findById(site);
+        if (!existingSite) return res.status(400).json({ message: 'Site not found' });
+
+        const existingContractor = await Contractor.findById(contractor);
+        if (!existingContractor) return res.status(400).json({ error: 'Contractor not found' });
+
+        existingWorkOrder.site = { id: existingSite._id, name: existingSite.name };
+        existingWorkOrder.contractor = { id: existingContractor._id, name: existingContractor.name };
+        existingWorkOrder.workOrderNo = workOrderNo || existingWorkOrder.workOrderNo;
+        existingWorkOrder.workOrderName = workOrderName || existingWorkOrder.workOrderName;
+        existingWorkOrder.startdate = startdate || existingWorkOrder.startdate;
+        existingWorkOrder.duration = duration || existingWorkOrder.duration;
+
+        if (Array.isArray(work) && work.length > 0) {
+            for (const w of work) {
+                const parsedRate = parseFloat(w.rate);
+                const parsedArea = parseFloat(w.area);
+                const calculatedAmount = parsedRate * parsedArea;
+
+                if (
+                    typeof w.workDetail === 'string' &&
+                    typeof w.unit === 'string' &&
+                    !isNaN(parsedRate) &&
+                    !isNaN(parsedArea)
+                ) {
+                    const newWorkDetail = {
+                        _id: new mongoose.Types.ObjectId(),
+                        workDetail: w.workDetail,
+                        rate: parsedRate,
+                        area: parsedArea,
+                        unit: w.unit,
+                        amount: calculatedAmount, // Ensure this is numeric
+                    };
+                    console.log('Pushing:', newWorkDetail);
+                    existingWorkOrder.work.push(newWorkDetail);
+                } else {
+                    console.log('Invalid work item skipped:', w);
+                }
+            }
         }
 
-        const workName = await WorkDetails.findOne({ _id: workOrderName });
-        if (!workName) {
-            return res.status(400).json({ error: 'Work not found' });
-        }
-
-        existingWorkOrder.site = site || existingWorkOrder.site
-        existingWorkOrder.contractor = contractor || existingWorkOrder.contractor
-        existingWorkOrder.workOrderNo = workOrderNo || existingWorkOrder.workOrderNo
-        existingWorkOrder.workOrderName = workName.title || existingWorkOrder.workOrderName
-        existingWorkOrder.startdate = startdate || existingWorkOrder.startdate
-        existingWorkOrder.duration = duration || existingWorkOrder.duration
-
-        const newWorkDetail = {
-            _id: new mongoose.Types.ObjectId(),
-            workDetail,
-            rate,
-            area,
-            unit,
-            amount,
-        };
-        if (newWorkDetail) {
-            existingWorkOrder.work.push(newWorkDetail);
-        }
         await existingWorkOrder.save();
         return res.status(201).json({ message: 'Work Order Updated Successfully' });
 
     } catch (error) {
-        console.log(error)
+        console.error(error);
         return res.status(500).json({ error: 'Something went wrong' });
     }
 };

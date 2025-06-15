@@ -23,6 +23,8 @@ const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 WorkOrder.get('/', getWorkorders);
 WorkOrder.get('/draft', userAuth, getDraftWorkorders);
 WorkOrder.get('/:id', getWorkorder);
+WorkOrder.get('/export-data/:id', getWorkorder);
+WorkOrder.get('/export-data', getWorkorders);
 WorkOrder.get('/:id/work', getWorks);
 WorkOrder.get('/site/:id', siteWorkOrder);
 WorkOrder.get('/contractor/:id', contractorWorkOrder);
@@ -37,11 +39,15 @@ WorkOrder.delete('/:id/work/:index', userAuth, deleteWork);
 // WorkDetail Routes
 WorkDetail.get('/', getWorkDetails);
 WorkDetail.get('/:id', getWorkDetail);
+WorkDetail.get('/export-data/:id', getWorkDetail);
+WorkDetail.get('/export-data', getWorkDetails);
 WorkDetail.post('/name', workDetailByName);
 WorkDetail.post('/', createWorkDetails);
 WorkDetail.put('/:id/:index', updateDescription);
 WorkDetail.put('/:id', updateWorkDetails);
 WorkDetail.delete('/:id', deleteWorkDetails);
 WorkDetail.delete('/:id/:index', deleteDescription);
+
+
 
 module.exports = { WorkOrder, WorkDetail };

@@ -25,7 +25,7 @@ const Notification = () => {
             return () => clearInterval(interval);
         }
     }, [dispatch, user?._id]);
-console.log(unseenNotifications)
+    console.log(unseenNotifications)
     // 🟡 Handle outside click
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -46,16 +46,19 @@ console.log(unseenNotifications)
     }, [isOpen]);
 
     const toggleDropdown = () => setIsOpen(!isOpen);
-    const displayed = activeTab === 'seen' ? seenNotifications : unseenNotifications;
+    const displayed = (activeTab === 'seen' ? seenNotifications : unseenNotifications)
+        .slice() // to avoid mutating the original array
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
 
     const handleNotificationClick = async (id) => {
         try {
-          await axios.patch(`/api/v1/notification/${user._id}/mark-read/${id}`);
-          dispatch(fetchNotifications(user._id));
+            await axios.patch(`/api/v1/notification/${user._id}/mark-read/${id}`);
+            dispatch(fetchNotifications(user._id));
         } catch (error) {
-          console.error('Failed to mark as read:', error);
+            console.error('Failed to mark as read:', error);
         }
-      };
+    };
 
     return (
         <div className="relative top-1" ref={dropdownRef}>

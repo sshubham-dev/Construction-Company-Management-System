@@ -3,6 +3,7 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import Select from 'react-select';
+import moment from 'moment';
 
 axios.defaults.withCredentials = true;
 
@@ -25,7 +26,7 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
         difference: '',
         reason: '',
       },
-      status: '',
+      status: 'Pending',
     }]
   });
   const [workDetails, setWorkDetails] = useState([]);
@@ -35,57 +36,65 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
   const [projectToEdit, setProjectToEdit] = useState({ id: '', index: '' });
   const { user } = useSelector((state) => state.auth);
   const statusOptions = ['Started', 'Completed', 'Pending', 'Partially Completed'];
-
+  const [projectDetail, setProjectDetail] = useState({
+    workDetail: '',
+    startingStatus: {
+      toStart: '',
+      startedAt: '',
+      difference: '',
+      reason: '',
+    },
+    completingStatus: {
+      toComplete: '',
+      completedAt: '',
+      difference: '',
+      reason: '',
+    },
+    status: 'Pending',
+  })
   useEffect(() => {
-    if (id && !index) {
-      fetchProjectSchedule(id);
-      setScheduleIdToEdit(id);
-    } else if (id && index) {
+    if (id && index !== undefined) {
       fetchProjectDetail(id, index);
       setProjectToEdit({ id, index });
+    } else if (id) {
+      setScheduleIdToEdit(id);
+      fetchProjectSchedule(id);
     }
   }, [id, index]);
-
   const fetchProjectDetail = async (id, index) => {
     try {
       const response = await axios.get(`/api/v1/project-schedule/${id}/projectDetails`);
       const detail = response.data[index];
-      setFormData(prevState => ({
+      console.log(response.data[index])
+      setProjectDetail(prevState => ({
         ...prevState,
-        projectDetail: [{
-          ...prevState.projectDetail[0],
-          workDetail: detail.workDetail,
-          startingStatus: {
-            ...prevState.projectDetail[0].startingStatus,
-            toStart: detail.toStart,
-            startedAt: detail.startedAt,
-            difference: detail.difference,
-            reason: detail.reason,
-          },
-          completingStatus: {
-            ...prevState.projectDetail[0].completingStatus,
-            toComplete: detail.toComplete,
-            completedAt: detail.completedAt,
-            difference: detail.difference,
-            reason: detail.reason,
-          },
-          status: detail.status,
-
-        }]
+        workDetail: detail.workDetail,
+        startingStatus: {
+          toStart: detail.startingStatus.toStart,
+          startedAt: detail.startingStatus.startedAt,
+          difference: detail.startingStatus.difference,
+          reason: detail.startingStatus.reason,
+        },
+        completingStatus: {
+          toComplete: detail.completingStatus.toComplete,
+          completedAt: detail.completingStatus.completedAt,
+          difference: detail.completingStatus.difference,
+          reason: detail.completingStatus.reason,
+        },
+        status: detail.status,
       }));
     } catch (error) {
       console.error('Error fetching project details:', error);
       toast.error('Failed to fetch project details.');
     }
   };
-
   const fetchProjectSchedule = async (id) => {
     try {
       const response = await axios.get(`/api/v1/project-schedule/${id}`);
       const project = response.data;
       setData(project?.site.name);
       setFormData({
-        site: project?.site.id,
+        site: project?.site.id._id,
         projectScheduleId: project?.projectScheduleId,
         projectDetail: [{
           workDetail: '',
@@ -109,7 +118,6 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
       toast.error('Failed to fetch project schedule.');
     }
   };
-
   useEffect(() => {
     const fetchSite = async () => {
       try {
@@ -149,12 +157,57 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
     fetchSite();
     fetchWork();
   }, [user]);
-
   const handleChange = (field, value) => {
     setFormData(prevState => ({
       ...prevState,
       [field]: value,
     }));
+  };
+  const handleEdit = (field, value) => {
+    if (field.includes('.')) {
+      const [parent, child] = field.split('.');
+      setProjectDetail(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value,
+        }
+      }));
+    } else {
+      setProjectDetail(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+    if (field === 'completingStatus.completedAt') {
+      const toComplete = new Date(projectDetail.completingStatus.toComplete);
+      const completedAt = new Date(value);
+      const diffDays = Math.ceil((completedAt - toComplete) / (1000 * 60 * 60 * 24));
+      setProjectDetail(prev => ({
+        ...prev,
+        completingStatus: {
+          ...prev.completingStatus,
+          completedAt: value,
+          difference: `${diffDays} day(s)`
+        }
+      }));
+      return;
+    }
+    if (field === 'startingStatus.startedAt') {
+      const toStart = new Date(projectDetail.startingStatus.toStart);
+      const startedAt = new Date(value);
+      const diffDays = Math.ceil((startedAt - toStart) / (1000 * 60 * 60 * 24));
+      setProjectDetail(prev => ({
+        ...prev,
+        startingStatus: {
+          ...prev.startingStatus,
+          startedAt: value,
+          difference: `${diffDays} day(s)`
+        }
+      }));
+      return;
+    }
+
   };
 
   const handleUpdate = (field, value) => {
@@ -180,7 +233,6 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
       return { ...prevState, projectDetail: updatedProjectDetail };
     });
   };
-
   const handleNext = (e) => {
     e.preventDefault();
     // if (!formData.projectDetail[step].workDetail) {
@@ -205,12 +257,10 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
       setStep(step + 1);
     }
   };
-
   const handlePrevious = (e) => {
     e.preventDefault()
     if (step > 0) setStep(step - 1);
   };
-
   const handleReset = () => {
     setFormData({
       site: '',
@@ -224,23 +274,21 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
     });
     setStep(0);
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log(formData); // Log the form data before submission
-
-    // **Filter out empty project details before submitting**
     formData.projectDetail = formData.projectDetail.filter(detail =>
       detail.completingStatus.toComplete || detail.startingStatus.toStart
     );
-
     try {
       if (scheduleIdToEdit) {
+        console.log(formData)
         const response = await axios.put(`/api/v1/project-schedule/${scheduleIdToEdit}`, formData);
         toast.success(response.data.message);
         onClose()
       } else if (projectToEdit.id !== '' && projectToEdit.index !== '') {
-        await axios.put(`/api/v1/project-schedule/${projectToEdit.id}/projectDetails/${projectToEdit.index}`, formData.projectDetail[0]);
+        console.log(projectDetail)
+        await axios.put(`/api/v1/project-schedule/${projectToEdit.id}/projectDetails/${projectToEdit.index}`, projectDetail);
         toast.success('Edited successfully');
         onClose()
       } else {
@@ -254,72 +302,32 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
       toast.error('Failed to submit project schedule.');
     }
   };
-
+  const AddMore = () => {
+    return (
+      <></>
+    )
+  }
   return (
     <div>
       <form onSubmit={handleSubmit} className="mb-4 w-full max-w-md">
-        {projectToEdit.index && projectToEdit.id ? (
+        {projectToEdit.index !== undefined && projectToEdit.id ? (
           <>
             <div className="mb-4">
               <label htmlFor="workDetail" className="block text-gray-700 text-sm font-bold mb-2">Work:</label>
               <Select
-                onChange={(selectedOption) => handleUpdate('workDetail', selectedOption.value)}
+                onChange={(selectedOption) => handleEdit('workDetail', selectedOption.value)}
                 options={workDetails.map(workDetail => ({
                   value: workDetail.work,
                   label: workDetail.work
                 }))}
-                placeholder={formData.projectDetail[step]?.workDetail || 'Select Work Detail:'}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="toStart" className="block text-gray-700 text-sm font-bold mb-2">Starting Date:</label>
-              <input
-                type="date"
-                name="toStart"
-                value={formData.projectDetail[step]?.startingStatus.toStart || ''}
-                onChange={(e) => handleUpdate('toStart', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="startedAt" className="block text-gray-700 text-sm font-bold mb-2">Actual Starting Date:</label>
-              <input
-                type="date"
-                name="startedAt"
-                value={formData.projectDetail[step]?.startingStatus.startedAt || ''}
-                onChange={(e) => handleUpdate('startedAt', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="difference" className="block text-gray-700 text-sm font-bold mb-2">Difference:</label>
-              <input
-                type="text"
-                name="difference"
-                value={formData.projectDetail[step]?.startingStatus.difference || ''}
-                onChange={(e) => handleUpdate('difference', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="reason" className="block text-gray-700 text-sm font-bold mb-2">Reason:</label>
-              <input
-                type="text"
-                name="reason"
-                value={formData.projectDetail[step]?.startingStatus.reason || ''}
-                onChange={(e) => handleUpdate('reason', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                placeholder={projectDetail?.workDetail || 'Select Work Detail:'}
               />
             </div>
 
             <div className="mb-4">
               <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">Status:</label>
               <select
-                onChange={(e) => handleUpdate('status', e.target.value)}
+                onChange={(e) => handleEdit('status', e.target.value)}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               >
                 <option value="">{projectDetail.status || 'Select Status'}</option>
@@ -328,9 +336,101 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
                 ))}
               </select>
             </div>
+
+            <h3 className='mb-4 mt-6 font-bold text-lg'>Work Starting Status</h3>
+            <div className="mb-4">
+              <label htmlFor="toStart" className="block text-gray-700 text-sm font-bold mb-2">Starting Date: {moment(projectDetail?.startingStatus.toStart).format('DD MM YYYY')}</label>
+              <input
+                type="date"
+                name="toStart"
+                value={projectDetail?.startingStatus.toStart || ''}
+                onChange={(e) => handleEdit('startingStatus.toStart', e.target.value)}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
+            <div className="mb-4">
+              <label htmlFor="startedAt" className="block text-gray-700 text-sm font-bold mb-2">Actual Starting Date: {moment(projectDetail?.startingStatus.startedAt).format('DD MM YYYY')}</label>
+              <input
+                type="date"
+                name="startedAt"
+                value={projectDetail?.startingStatus.startedAt || ''}
+                onChange={(e) => handleEdit('startingStatus.startedAt', e.target.value)}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
+            <div className="mb-4">
+              <label htmlFor="difference" className="block text-gray-700 text-sm font-bold mb-2">Difference:</label>
+              <input
+                type="text"
+                name="difference"
+                value={projectDetail?.startingStatus.difference || ''}
+                onChange={(e) => handleEdit('startingStatus.difference', e.target.value)}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
+            <div className="mb-4">
+              <label htmlFor="reason" className="block text-gray-700 text-sm font-bold mb-2">Reason:</label>
+              <input
+                type="text"
+                name="reason"
+                value={projectDetail?.startingStatus.reason || ''}
+                onChange={(e) => handleEdit('startingStatus.reason', e.target.value)}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
+
+
+
+            {projectDetail.status === 'Completed' && (
+              <>
+                <h3 className='mb-4 mt-6 font-bold text-lg'>Work Completion Status</h3>
+                <div className="mb-4">
+                  <label htmlFor="toStart" className="block text-gray-700 text-sm font-bold mb-2">Starting Date: {moment(projectDetail?.completingStatus.toComplete).format('DD MM YYYY')}</label>
+                  <input
+                    type="date"
+                    name="toComplete"
+                    value={projectDetail?.completingStatus.toComplete || ''}
+                    onChange={(e) => handleEdit('completingStatus.toComplete', e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="completedAt" className="block text-gray-700 text-sm font-bold mb-2">Actual Starting Date: {moment(projectDetail?.completingStatus.completedAt).format('DD MM YYYY')}</label>
+                  <input
+                    type="date"
+                    name="completedAt"
+                    value={projectDetail?.completingStatus.completedAt || ''}
+                    onChange={(e) => handleEdit('completingStatus.completedAt', e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="difference" className="block text-gray-700 text-sm font-bold mb-2">Difference:</label>
+                  <input
+                    type="text"
+                    name="difference"
+                    value={projectDetail?.completingStatus.difference || ''}
+                    onChange={(e) => handleEdit('completingStatus.difference', e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="reason" className="block text-gray-700 text-sm font-bold mb-2">Reason:</label>
+                  <input
+                    type="text"
+                    name="reason"
+                    value={projectDetail?.completingStatus.reason || ''}
+                    onChange={(e) => handleEdit('completingStatus.reason', e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </div>
+              </>
+            )}
+
+
             <div>
               <button type="button" onClick={handleReset} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600">Reset</button>
-              <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+              <button type="submit" className="bg-blue-500 hover:bg-blue-700 ml-6 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                 Submit
               </button>
             </div>
@@ -371,30 +471,37 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
             <div className="my-4">
               {step > 0 && (
                 <div>
-                  <Select
-                    onChange={(selectedOption) => handleUpdate('workDetail', selectedOption.value)}
-                    options={workDetails.map(workDetail => ({
-                      value: workDetail.work,
-                      label: workDetail.work
-                    }))}
-                    placeholder={formData.projectDetail[step - 1]?.workDetail || 'Select Work Detail:'}
-                  />
-
-                  <input
-                    type="date"
-                    name="toStart"
-                    value={formData.projectDetail[step - 1]?.startingStatus.toStart || ''}
-                    onChange={(e) => handleUpdate('toStart', e.target.value)}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-
-                  <input
-                    type="date"
-                    name="toComplete"
-                    value={formData.projectDetail[step - 1]?.completingStatus.toComplete || ''}
-                    onChange={(e) => handleUpdate('toComplete', e.target.value)}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
+                  <div className="mb-4">
+                    <label htmlFor="workDetail" className="block text-sm font-medium text-gray-600">Work Details</label>
+                    <Select
+                      onChange={(selectedOption) => handleUpdate('workDetail', selectedOption.value)}
+                      options={workDetails.map(workDetail => ({
+                        value: workDetail.work,
+                        label: workDetail.work
+                      }))}
+                      placeholder={formData.projectDetail[step - 1]?.workDetail || 'Select Work Detail:'}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="toStart" className="block text-sm font-medium text-gray-600">Starting Date</label>
+                    <input
+                      type="date"
+                      name="toStart"
+                      value={formData.projectDetail[step - 1]?.startingStatus.toStart || ''}
+                      onChange={(e) => handleUpdate('toStart', e.target.value)}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="toComplete" className="block text-sm font-medium text-gray-600">Completion Date</label>
+                    <input
+                      type="date"
+                      name="toComplete"
+                      value={formData.projectDetail[step - 1]?.completingStatus.toComplete || ''}
+                      onChange={(e) => handleUpdate('toComplete', e.target.value)}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                  </div>
                 </div>
               )}
               <div className="mt-4 flex justify-between gap-4">

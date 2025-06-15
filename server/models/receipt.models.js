@@ -13,13 +13,14 @@ const receiptSchema = new mongoose.Schema({
     name: String,
     id: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: 'Ledger',
       required: true,
     },
-    type: {
-      type: String,
-      required: true,
-      enum: ['Client', 'Supplier', 'Contractor', 'User', 'Employee'], // Specify the allowed models
-    },
+    // type: {
+    //   type: String,
+    //   required: true,
+    //   enum: ['Client', 'Supplier', 'Contractor', 'User', 'Employee'], // Specify the allowed models
+    // },
   },
   to: {
     name: String,
@@ -29,9 +30,8 @@ const receiptSchema = new mongoose.Schema({
       required: true,
     },
   },
-  receiptDetails: {
-    chequeNumber: { type: String }, // Optional cheque number for cheque receipts
-    bankReference: { type: String }, // Optional bank transaction reference for online receipts
+  referenceNo: {
+    type: String // Optional bank transaction reference for online receipts
   },
   amount: {
     type: Number,
@@ -45,11 +45,9 @@ const receiptSchema = new mongoose.Schema({
     name: String,
     id: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
     },
     type: {
       type: String,
-      required: true,
       enum: ['Invoice', 'Bill', 'Extra_Work', 'Payment_Schedule', 'Return_Order'], // Specify the allowed models
     },
   }],

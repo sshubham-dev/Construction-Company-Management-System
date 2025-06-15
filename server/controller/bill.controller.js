@@ -19,6 +19,8 @@ const getBills = async (req, res) => {
     try {
         const bills = await Bill.find()
             .where('approvalStatus').equals('Approved')
+            .populate('site.id')        // fetch full site details
+            .populate('contractor.id') // fetch full contractor details
             .exec();
         if (bills.length === 0) return res.status(404).json({ message: 'No Bill Found' });
         const approvedBills = bills.filter((bill) => bill.approvalStatus !== 'Pending')
@@ -39,6 +41,8 @@ const getDraftBills = async (req, res) => {
         const bills = await Bill.find()
             .where('approvalStatus').equals("Pending")
             .where('createdBy').equals(id)
+            .populate('site.id')        // fetch full site details
+            .populate('contractor.id') // fetch full contractor details
             .exec();
         // console.log(bills)
         if (bills.length === 0) return res.status(404).json({ message: 'No Bill Found' });
@@ -52,7 +56,10 @@ const getDraftBills = async (req, res) => {
 const getBill = async (req, res) => {
     try {
         const id = req.params.id;
-        const bill = await Bill.findById(id);
+        const bill = await Bill.findById(id)
+            .populate('site.id')        // fetch full site details
+            .populate('contractor.id') // fetch full contractor details
+            .exec();
         if (!bill) return res.status(404).json({ message: 'No Bill Found' });
         return res.status(201).json(bill);
     } catch (error) {
@@ -67,6 +74,8 @@ const siteBill = async (req, res) => {
         const bills = await Bill.find()
             .where('approvalStatus').equals('Approved')
             .where('site.id').equals(id)
+            .populate('site.id')        // fetch full site details
+            .populate('contractor.id') // fetch full contractor details
             .exec();
         if (!bills.length === 0) return res.status(404).json({ message: 'No Bill Found' });
         const approvedBills = bills.filter((bill) => bill.approvalStatus !== 'Pending')
@@ -91,16 +100,26 @@ const createBill = async (req, res) => {
             billOf,
             toPay,
         } = req.body;
+        console.log('site', site)
+        console.log('contractor', contractor)
 
-        let workOrder;
         const existingSite = await Site.findById(site);
         const existingContractor = await Contractor.findById(contractor);
         const existingWorkorder = await WorkOrder.findOne()
             .where('site.id').equals(site)
             .where('contractor.id').equals(contractor)
             .exec();
-        workOrder = existingWorkorder.work?.filter((work) => work?.workDetail === billOf)[0];
-        // console.log('workOrder', workOrder)
+
+        if (!existingWorkorder) {
+            return res.status(404).json({ message: 'No WorkOrder found for the specified site and contractor.' });
+        }
+
+        const workOrder = existingWorkorder.work?.find(work => work?.workDetail === billOf);
+        if (!workOrder) {
+            return res.status(404).json({ message: 'No matching work detail found in the work order.' });
+        }
+
+        console.log('workOrder', workOrder)
         const newContractorBill = new Bill({
             site: {
                 name: existingSite.name,
@@ -118,7 +137,6 @@ const createBill = async (req, res) => {
         const ContractorBill = await newContractorBill.save();
         sendApproveByAdmin(ContractorBill, 'Bill', user?._id)
         sendApproveByIncharge(ContractorBill, 'Bill', user?._id)
-        sendApproveByAccountant(ContractorBill, 'Bill', user?._id)
         sendApproveByAccountHead(ContractorBill, 'Bill', user?._id)
         sendApproveByQuality(ContractorBill, 'Bill', user?._id)
         // sendApproveByContractor(newContractorBill, 'bill', createdBy)
@@ -143,7 +161,7 @@ const saveBill = async (req, res) => {
         const existingSite = await Site.findById(bill?.site?.id);
         const existingContractor = await Contractor.findById(bill?.contractor?.id);
         if (bill.createdBy.toString() === user?._id.toString()) {
-            if (bill.adminApprove === 'Approved' && bill.accountantApprove === 'Approved' && bill.accountheadApprove === 'Approved' && bill.inchargeApprove === 'Approved' && bill.qualityApprove === 'Approved') {
+            if (bill.adminApprove === 'Approved' && bill.accountheadApprove === 'Approved' && bill.inchargeApprove === 'Approved' && bill.qualityApprove === 'Approved') {
                 bill.approvalStatus = 'Approved'
                 await bill.save();
                 existingSite.bill.push(bill._id);
@@ -169,50 +187,60 @@ const saveBill = async (req, res) => {
 const updateBill = async (req, res) => {
     try {
         const id = req.params.id;
-        const {
-            site,
-            contractor,
-            createdBy,
-            billOf,
-            toPay,
-            dateOfPayment,
-            paymentStatus,
-            reason,
-            paidAmount,
-            dueAmount,
-        } = req.bill;
-        const user = req.user;
-        console.log('req.body', req.body);
-        let workOrder;
-        const existingContractorBill = await Bill.findById(id)
-            .where('createdBy').equals(user?._id)
-            .exec();
+        const { site, contractor, createdBy, billOf, toPay, reason } = req.body;
+
+        const existingSite = await Site.findById(site);
+        const existingContractor = await Contractor.findById(contractor);
+        const existingContractorBill = await Bill.findById(id);
         const existingWorkorder = await WorkOrder.findOne()
             .where('site.id').equals(site)
             .where('contractor.id').equals(contractor)
             .exec();
-        workOrder = existingWorkorder.work?.filter((work) => work?.workDetail === billOf)[0];
-        const workIndex = existingWorkorder?.work.indexOf(workOrder);
-        existingContractorBill.site = site || existingContractorBill.site;
-        existingContractorBill.contractor = contractor || existingContractorBill.contractor;
+
+        if (!existingContractorBill) {
+            return res.status(404).json({ message: 'Bill not found' });
+        }
+
+        const workOrder = existingWorkorder?.work?.find((w) => w?.workDetail === billOf);
+
+        if (existingSite) {
+            existingContractorBill.site = {
+                name: existingSite.name,
+                id: existingSite._id
+            }
+        }
+
+        if (existingContractor) {
+            existingContractorBill.contractor = {
+                name: existingContractor.name,
+                id: existingContractor._id
+            };
+        }
+
+
         existingContractorBill.createdBy = createdBy || existingContractorBill.createdBy;
         existingContractorBill.billOf = workOrder || existingContractorBill.billOf;
-        existingContractorBill.amount = workOrder.amount || existingContractorBill.amount;
+        existingContractorBill.amount = workOrder?.amount || existingContractorBill.amount;
         existingContractorBill.toPay = toPay || existingContractorBill.toPay;
-        existingContractorBill.dateOfPayment = dateOfPayment || existingContractorBill.dateOfPayment;
-        existingContractorBill.paymentStatus = paymentStatus || existingContractorBill.paymentStatus;
         existingContractorBill.reason = reason || existingContractorBill.reason;
-        existingContractorBill.paidAmount = paidAmount || existingContractorBill.paidAmount;
-        existingWorkorder.work[workIndex].paid = paidAmount
-        console.log('existingWorkorder:', existingWorkorder.work[workIndex])
-        await existingWorkorder.save();
+
         await existingContractorBill.save();
-        res.status(201).json(existingContractorBill);
+        console.log("Updated Bill:", existingContractorBill);
+
+
+        // Optional: link bill to workOrder
+        if (workOrder) {
+            workOrder.bill.push(existingContractorBill._id);
+            await existingWorkorder.save();
+        }
+
+        res.status(201).json({ message: 'Bill Updated Sucessfully' });
     } catch (error) {
-        console.log(error)
+        console.error(error);
         res.status(500).json({ message: 'Internal Server Error', error });
     }
 };
+
 
 const deleteBill = async (req, res) => {
     try {

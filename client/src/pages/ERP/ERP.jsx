@@ -13,6 +13,7 @@ import CreateJournal from '../../components/CreateJournal';
 import Modal from '../../components/Modal';
 import CreateStock from '../../components/CreateStock';
 import CreateStockGroup from '../../components/CreateStockGroup';
+import LedgerMaping from '../../components/LedgerMaping';
 
 
 const ERP = () => {
@@ -21,6 +22,7 @@ const ERP = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLedgerModalOpen, setLedgerModalOpen] = useState(false);
   const [isGroupModalOpen, setGroupModalOpen] = useState(false);
+  const [isLedgerMapModalOpen, setLedgerMapModalOpen] = useState(false);
   const [isStockModalOpen, setStockModalOpen] = useState(false);
   const [isStockGroupModalOpen, setStockGroupModalOpen] = useState(false);
   const [isContraModalOpen, setContraModalOpen] = useState(false);
@@ -54,6 +56,11 @@ const ERP = () => {
                   className=" "
                   onClick={() => setGroupModalOpen(true)}>
                   Accounting Group
+                </button>
+                <button
+                  className=" "
+                  onClick={() => setLedgerMapModalOpen(true)}>
+                  Ledger Maping
                 </button>
               </div>
             </div>
@@ -179,6 +186,9 @@ const ERP = () => {
         </Modal>
         <Modal isOpen={isLedgerModalOpen} onClose={() => setLedgerModalOpen(false)} head='Create Leadger'>
           <LedgerModal onClose={() => setLedgerModalOpen(false)} />
+        </Modal>
+        <Modal isOpen={isLedgerMapModalOpen} onClose={() => setLedgerMapModalOpen(false)} head='Map Leadger'>
+          <LedgerMaping onClose={() => setLedgerMapModalOpen(false)} />
         </Modal>
         <Modal isOpen={isGroupModalOpen} onClose={() => setGroupModalOpen(false)} head='Create Group'>
           <GroupModal onClose={() => setGroupModalOpen(false)} />

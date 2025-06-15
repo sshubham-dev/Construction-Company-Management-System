@@ -7,6 +7,9 @@ import { useSelector } from 'react-redux';
 import Header from '../../components/Header';
 import Modal from '../../components/Modal';
 import ReturnFormModal from '../../components/CreateReturn';
+import moment from 'moment';
+import { FaExternalLinkAlt } from "react-icons/fa";
+import { GrEdit } from "react-icons/gr";
 axios.defaults.withCredentials = true;
 
 const ReturnRequest = () => {
@@ -14,9 +17,17 @@ const ReturnRequest = () => {
     const [returnRequests, setReturnRequest] = useState([]);  // ✅ Ensure default state is an array
     const [createModal, setCreateModal] = useState(false);
     const { user } = useSelector((state) => state.auth);
-        const [editModal, setEditModal] = useState(false);
-        const [editId, setEditId] = useState('');
+    const [editModal, setEditModal] = useState(false);
+    const [editId, setEditId] = useState('');
+    const [selectedRequest, setSelectedRequest] = useState(null);
 
+    const handleEdit = (id) => {
+        setEditModal(true);
+        setEditId(id)
+    };
+    const handleRedirect = (id) => {
+        navigate(`/sites/return/${id}`);
+    };
     useEffect(() => {
         const fetchReturnRequest = async () => {
             try {
@@ -32,7 +43,7 @@ const ReturnRequest = () => {
                     let filteredRequests = [];
 
                     for (let site of sites) {
-                        const siteRequests = response.data.filter((req) => req.site?._id.includes(site));
+                        const siteRequests = response.data.filter((req) => req.site?.id._id === site.id);
                         filteredRequests = [...filteredRequests, ...siteRequests];
                     }
 
@@ -79,26 +90,31 @@ const ReturnRequest = () => {
                         <thead >
                             <tr className="text-left bg-gray-300">
                                 <th className="font-semibold text-sm uppercase px-6 py-4"> Name </th>
-                                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Admin Approve </th>
-                                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Amount </th>
-                                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Paid </th>
-                                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Due </th>
-                                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Material Type </th>
+                                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Material </th>
+                                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Date </th>
+                                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
                             {returnRequests.length > 0 ? (
-                                returnRequests.map((returnRequest) => (
-                                    <tr key={returnRequest._id} className='border-b border-blue-gray-200'>
+                                returnRequests.map((returnRequest, index) => (
+                                    <tr key={index} className='border-b border-blue-gray-200'>
                                         <td className="px-6 py-4">
-                                            <p>{returnRequest.site?.name}</p>
-                                            <p className="text-gray-500 text-sm font-semibold">{returnRequest.supplier?.name}</p>
+                                            {returnRequest.site?.name}
                                         </td>
-                                        <td className="px-6 py-4 text-center">{returnRequest?.adminApprove}</td>
-                                        <td className="px-6 py-4 text-center">₹ {returnRequest?.totalValue || 0}</td>
-                                        <td className="px-6 py-4 text-center">₹ {returnRequest?.totalPaid || 0}</td>
-                                        <td className="px-6 py-4 text-center">₹ {returnRequest?.totalDue || 0}</td>
+                                        <td className="px-6 py-4 text-center">{returnRequest?.materialType}</td>
+                                        <td className="px-6 py-4 text-center">{returnRequest?.returnable.length || 0}</td>
+                                        <td className="px-6 py-4 text-center">{moment(returnRequest?.date).format('DD-MM-YYYY') || 0}</td>
                                         <td className="px-6 py-4 text-center">
+                                            <button onClick={() => handleRedirect(returnRequest._id)} className="mr-2">
+                                                <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                                            </button>
+                                            <button
+                                                onClick={() => handleEdit(returnRequest._id)}
+                                                className="mr-2">
+                                                <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                                            </button>
                                             <button onClick={() => handleDelete(returnRequest._id)} className="mr-2">
                                                 <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                                             </button>
@@ -119,9 +135,12 @@ const ReturnRequest = () => {
                 <Toaster position="top-right" reverseOrder={false} />
             </section>
 
-                <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Return Request'>
-                    <ReturnFormModal onClose={() => setCreateModal(false)} />
-                </Modal>
+            <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Return Request'>
+                <ReturnFormModal onClose={() => setCreateModal(false)} />
+            </Modal>
+            <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Edit Return Request'>
+                <ReturnFormModal onClose={() => setEditModal(false)} editId={editId} />
+            </Modal>
         </div>
     );
 };

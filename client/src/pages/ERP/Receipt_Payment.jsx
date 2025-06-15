@@ -1,15 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast, { Toaster } from 'react-hot-toast';
 import Header from '../../components/Header';
 import { IoIosAddCircle } from "react-icons/io";
 import CreateReceipt_Payment from "../../components/CreateReceipt_Payment";
 import Modal from "../../components/Modal";
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchReceipt } from "../../features/erp/receiptSlice";
+import moment from 'moment';
+import { fetchPayment } from "../../features/erp/paymentSlice";
 
 const Receipt_Payment = () => {
-  const [receipts, setReceipts] = useState([]);
-  const [payments, setPayments] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("receipts");
+  const dispatch = useDispatch();
+
+  const receipts = useSelector((state) => state.receipt?.all);
+  const payments = useSelector((state) => state.payment?.all);
+  console.log(receipts)
+
+  useEffect(() => {
+    dispatch(fetchReceipt())
+    dispatch(fetchPayment())
+  }, [dispatch])
+
 
   return (
     <div>
@@ -48,15 +61,17 @@ const Receipt_Payment = () => {
                   <th className="px-4 py-2">To</th>
                   <th className="px-4 py-2">Amount</th>
                   <th className="px-4 py-2">Description</th>
+                  {/* <th className="px-4 py-2">Invoice</th> */}
+                  <th className="px-4 py-2"></th>
                 </tr>
               </thead>
               <tbody>
-                {receipts.map((r, index) => (
+                {receipts?.map((r, index) => (
                   <tr key={index} className="text-left">
                     <td className="px-4 py-2">{r.receiptNo}</td>
-                    <td className="px-4 py-2">{r.date}</td>
-                    <td className="px-4 py-2">{r.from}</td>
-                    <td className="px-4 py-2">{r.to}</td>
+                    <td className="px-4 py-2">{moment(r.date).format('DD MMM YYYY')}</td>
+                    <td className="px-4 py-2">{r.from.name}</td>
+                    <td className="px-4 py-2">{r.to.name}</td>
                     <td className="px-4 py-2">{r.amount}</td>
                     <td className="px-4 py-2">{r.description}</td>
                   </tr>
@@ -77,15 +92,16 @@ const Receipt_Payment = () => {
                   <th className="px-4 py-2">To</th>
                   <th className="px-4 py-2">Amount</th>
                   <th className="px-4 py-2">Description</th>
+                  <th className="px-4 py-2"></th>
                 </tr>
               </thead>
               <tbody>
-                {payments.map((p, index) => (
+                {payments?.map((p, index) => (
                   <tr key={index} className="text-left">
                     <td className="px-4 py-2">{p.paymentNo}</td>
-                    <td className="px-4 py-2">{p.date}</td>
-                    <td className="px-4 py-2">{p.from}</td>
-                    <td className="px-4 py-2">{p.to}</td>
+                    <td className="px-4 py-2">{moment(p.date).format("DD MM YYYY")}</td>
+                    <td className="px-4 py-2">{p.from.name}</td>
+                    <td className="px-4 py-2">{p.to.name}</td>
                     <td className="px-4 py-2">{p.amount}</td>
                     <td className="px-4 py-2">{p.description}</td>
                   </tr>

@@ -11,7 +11,26 @@ const {
 const getProjectSchedules = async (req, res) => {
     try {
         const projectschedules = await ProjectSchedule.find()
+            .populate('site.id')
+            .where('adminApprove').equals('Approved')
+            .where('approvalStatus').equals('Approved')
+            .exec();
+        if (projectschedules.length === 0) return res.status(404).json({ error: 'No Project Schedule Found' });
+        return res.status(200).json(projectschedules);
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
 
+const getDraftProjectSchedules = async (req, res) => {
+    try {
+        const user = req.user;
+        const projectschedules = await ProjectSchedule.find()
+            .where('approvalStatus').equals("Pending")
+            .where('createdBy').equals(user?._id)
+            .populate('site.id')
+            .exec();
         if (projectschedules.length === 0) return res.status(404).json({ error: 'No Project Schedule Found' });
         return res.status(200).json(projectschedules);
     } catch (error) {
@@ -35,8 +54,14 @@ const getProjectDetails = async (req, res) => {
 
 const getProjectSchedule = async (req, res) => {
     try {
-        const _id = req.params.id;
-        const projectschedule = await ProjectSchedule.findById(_id)
+        const id = req.params.id;
+        // Check if the ID is a valid ObjectId before querying
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ error: 'Invalid Project Schedule ID' });
+        }
+        const projectschedule = await ProjectSchedule.findById(id)
+            .populate('site.id')
+            .exec();
         if (!projectschedule) return res.status(404).json({ error: 'Project Schedule not found' });
         return res.status(200).json(projectschedule);
     } catch (error) {
@@ -67,7 +92,7 @@ const createProjectSchedule = async (req, res) => {
             date,
             projectScheduleId,
             projectDetail,
-            createdBy:user._id
+            createdBy: user._id
         });
 
         const savedProjectSchedule = await newProjectSchedule.save();
@@ -125,7 +150,8 @@ const updateProjectSchedule = async (req, res) => {
             projectScheduleId,
             projectDetail: [{
                 workDetail,
-                toStart,
+                completingStatus,
+                startingStatus,
             }]
         } = req.body;
         console.table(req.body)
@@ -133,9 +159,7 @@ const updateProjectSchedule = async (req, res) => {
 
         const existingSite = await Site.findById(site);
         // Find the existing project schedule
-        let existingProjectSchedule = await ProjectSchedule.findById(id)
-            .where('createdBy').equals(user?._id)
-            .exec();
+        const existingProjectSchedule = await ProjectSchedule.findById(id)
 
         console.log(existingProjectSchedule)
         if (!existingProjectSchedule) {
@@ -148,7 +172,8 @@ const updateProjectSchedule = async (req, res) => {
         const newProjectDetail = {
             _id: new mongoose.Types.ObjectId(),
             workDetail,
-            toStart,
+            completingStatus,
+            startingStatus,
         };
         if (newProjectDetail) {
             existingProjectSchedule.projectDetail.push(newProjectDetail);
@@ -165,9 +190,9 @@ const updateProjectSchedule = async (req, res) => {
 
 const deleteProjectSchedule = async (req, res) => {
     try {
-        const _id = req.params.id;
+        const id = req.params.id;
         const user = req.user;
-        const deletedProjectSchedule = await ProjectSchedule.findByIdAndDelete(_id)
+        const deletedProjectSchedule = await ProjectSchedule.findByIdAndDelete(id)
             .where('createdBy').equals(user?._id)
             .exec();
 
@@ -181,31 +206,26 @@ const deleteProjectSchedule = async (req, res) => {
 
 const updateProjectDetail = async (req, res) => {
     try {
-        const _id = req.params.id;
+        const id = req.params.id;
         const index = req.params.index;
         const user = req.user;
         const {
             workDetail,
-            toStart,
-            startedAt,
-            difference,
-            reason,
+            startingStatus,
+            completingStatus,
             status,
         } = req.body;
         console.log('id:', req.params.id);
         console.log('index', req.params.index);
         console.log('req', req.body);
 
-        const projectSchedule = await ProjectSchedule.findById(_id)
-            .where('createdBy').equals(user?._id)
-            .exec();
+        const projectSchedule = await ProjectSchedule.findById(id)
         if (!projectSchedule) return res.status(500).json({ error: 'No Project Schedule Found' });
+        console.log('first', projectSchedule)
         projectSchedule.projectDetail[index] = {
             workDetail,
-            toStart,
-            startedAt,
-            difference,
-            reason,
+            startingStatus,
+            completingStatus,
             status,
         };
         await projectSchedule.save({ validateBeforeSave: false });
@@ -252,4 +272,5 @@ module.exports = {
     updateProjectDetail,
     deleteProjectDetail,
     saveProjectSchedule,
+    getDraftProjectSchedules
 };

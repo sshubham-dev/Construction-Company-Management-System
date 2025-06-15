@@ -4,6 +4,12 @@ const ledgerSchema = new mongoose.Schema({
   name: {
     type: String,
   },
+  refrenceType:{
+    type: String,
+  },
+  refrenceId:{
+    type: mongoose.Schema.Types.ObjectId,
+  },
   alias: {
     type: String,
   },
@@ -60,9 +66,6 @@ const ledgerSchema = new mongoose.Schema({
     type: Number,
   },
   received:{
-    type: Number,
-  },
-  due: {
     type: Number,
   },
   balance:{

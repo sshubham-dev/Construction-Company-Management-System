@@ -144,11 +144,15 @@ const siteSchema = new mongoose.Schema({
             type: Number,
         },
     },
-    materialExp:[{
-        id:{
-            type:mongoose.Schema.Types.ObjectId,
+    materialExp: [{
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
         },
-    }]
+    }],
+    ledger: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Ledger'
+    }
 }, { timestamps: true });
 
 const Site = mongoose.model('Site', siteSchema);

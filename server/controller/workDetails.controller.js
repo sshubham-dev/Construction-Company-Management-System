@@ -11,7 +11,34 @@ const getWorkDetails = async (req, res) => {
     }
 }
 
+const exportWorkDetails = async (req, res) => {
+    try {
+        const workDetails = await WorkDetails.find()
+        if (workDetails.length === 0) return res.status(404).json({ error: 'Work details not found' });
+        const exportData = {
+            title: workDetails.title,
+            description: workDetails.description.work
+        }
+        return res.status(200).json(exportData);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: 'Something went wrong' });
+    }
+}
+
 const getWorkDetail = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const workDetail = await WorkDetails.findById(id)
+        if (!workDetail) return res.status(404).json({ error: 'No Work detail found' });
+        return res.status(200).json(workDetail);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: 'Something went wrong' });
+    }
+}
+
+const exportWorkDetail = async (req, res) => {
     try {
         const id = req.params.id;
         const workDetail = await WorkDetails.findById(id)
@@ -134,6 +161,8 @@ const deleteDescription = async (req, res) => {
         return res.status(500).json({ error: 'Something went wrong' });
     }
 }
+
+
 
 
 module.exports = { getWorkDetails, getWorkDetail, createWorkDetails, updateWorkDetails, updateDescription, deleteWorkDetails, deleteDescription, workDetailByName };

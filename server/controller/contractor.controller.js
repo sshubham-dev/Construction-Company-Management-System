@@ -1,7 +1,7 @@
+const Site = require('../models/site.models');
 const Contractor = require('../models/contractor.models');
 const WorkOrder = require('../models/workorder.models');
 const Bill = require('../models/bill.models.js');
-const Site = require('../models/site.models');
 const ExtraWork = require('../models/extrawork.models.js');
 const { convertToUser } = require('./user.controller.js');
 const { addLedger } = require('./ledger.controller.js');
@@ -24,7 +24,7 @@ const getContractors = async (req, res) => {
 const getContractor = async (req, res) => {
     try {
         const id = req.params.id;
-        const contractor = await Contractor.findOne(id)
+        const contractor = await Contractor.findById(id)
             .populate('bill')
             .populate('workOrder')
             .populate('extraWork')
@@ -41,6 +41,7 @@ const createContractor = async (req, res) => {
     try {
         const {
             name,
+            email,
             phone,
             whatsapp,
             address,
@@ -54,15 +55,16 @@ const createContractor = async (req, res) => {
 
         const newContractor = new Contractor({
             name,
-            phone,
+            email: email ? email : '', // Ensure email is not undefined
+            phone: phone ? phone : '', // Ensure phone is not undefined
             whatsapp,
             address,
-            addhar,
-            pan,
-            bank,
+            addhar: addhar ? addhar : '', // Ensure addhar is not undefined
+            pan: pan ? pan : '', // Ensure pan is not undefined
+            bank: bank ? bank : '', // Ensure bank is not undefined
             jobWork,
-            isUser,
-            gstNo
+            isUser: isUser ? isUser : false, // Ensure isUser is not undefined
+            gstNo: gstNo ? gstNo : '', // Ensure gstNo is not undefined
         });
 
         const existingContractor = await Contractor.findOne({ name });
@@ -89,7 +91,8 @@ const updateContractor = async (req, res) => {
         const id = req.params.id;
         const {
             name,
-            contactNo,
+            email,
+            phone,
             whatsapp,
             address,
             addhar,
@@ -97,19 +100,22 @@ const updateContractor = async (req, res) => {
             bank,
             jobWork,
             isUser,
+            gstNo,
         } = req.body;
-        const updatedContractor = await Contractor.findOneAndUpdate({ _id: id },
+        const updatedContractor = await Contractor.findByIdAndUpdate(id,
             {
                 $set: {
-                    name,
-                    contactNo,
-                    whatsapp,
-                    address,
-                    addhar,
-                    pan,
-                    bank,
-                    jobWork,
-                    isUser
+                    name: name ? name : '', // Ensure name is not undefined
+                    email: email ? email : '', // Ensure email is not undefined
+                    phone: phone ? phone : '', // Ensure phone is not undefined
+                    whatsapp: whatsapp ? whatsapp : '', // Ensure whatsapp is not undefined
+                    address: address ? address : '', // Ensure address is not undefined
+                    addhar: addhar ? addhar : '', // Ensure addhar is not undefined
+                    pan: pan ? pan : '', // Ensure pan is not undefined
+                    bank: bank ? bank : '', // Ensure bank is not undefined
+                    jobWork: jobWork ? jobWork : '', // Ensure jobWork is not undefined
+                    isUser: isUser ? isUser : false, // Ensure isUser is not undefined
+                    gstNo: gstNo ? gstNo : '', // Ensure gstNo is not undefined
                 }
             }, { new: true });
         if (!updatedContractor) return res.status(404).json({ error: 'Contractor not found' });

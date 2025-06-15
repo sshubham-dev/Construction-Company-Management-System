@@ -6,12 +6,18 @@ import toast, { Toaster } from 'react-hot-toast';
 import Header from '../components/Header';
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
+import Modal from '../components/Modal';
+import CreateProjectSchedule from '../components/CreateProjectSchedule';
 axios.defaults.withCredentials = true;
 
 const Project_ScheduleScreen = () => {
   const [projectSchedule, setProjectSchedule] = useState({});
   const navigate = useNavigate();
   const { id } = useParams();
+  const [addModal, setAddModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState('');
+  const [editIndex, setEditIndex] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -30,8 +36,15 @@ const Project_ScheduleScreen = () => {
   }
 
   const handleEdit = (id, index) => {
-    navigate(`/edit-projectSchedule/${id}/${index}`);
+    setEditModal(true)
+    setEditId(id)
+    setEditIndex(index)
   };
+
+  const handleAdd = (id) => {
+    setAddModal(true)
+    setEditId(id)
+  }
 
   const deleteDetail = async (id, index) => {
     try {
@@ -86,9 +99,9 @@ const Project_ScheduleScreen = () => {
   return (
     <div >
       <section className='mb-10 h-full w-full'>
-      <Header category="Page" title={`${projectSchedule.site?.name} Project Schedule`} />
+        <Header category="Page" title={`${projectSchedule.site?.name} Project Schedule`} />
         <div className=" mb-4 text-right">
-          <button onClick={() => navigate(`/edit-projectSchedule/${projectSchedule._id}`)} className="bg-green-500 text-white px-2 py-2 rounded-3xl">
+          <button onClick={() => handleAdd(projectSchedule._id)} className="bg-green-500 text-white px-2 py-2 rounded-3xl">
             <MdAdd className='text-lg md:text-xl' />
           </button>
         </div>
@@ -98,17 +111,23 @@ const Project_ScheduleScreen = () => {
             <div key={index} className='bg-white shadow-lg rounded-xl'>
               <ProjectScheduleCard
                 workDescription={work.workDetail || 'No Work Detail'}
-                toStart={work.toStart}
-                difference={work.difference}
-                startedAt={work.startedAt}
+                toStart={work.startingStatus?.toStart}
+                difference={work.startingStatus?.difference}
+                startedAt={work.startingStatus?.startedAt}
                 status={work.status}
-                reason={work.reason}
+                reason={work.startingStatus?.reason}
                 handleEdit={() => handleEdit(projectSchedule._id, index)}
                 handleDelete={() => deleteDetail(projectSchedule._id, index)}
               />
             </div>
           ))}
         </div>
+        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Project Detail' >
+          <CreateProjectSchedule onClose={() => setEditModal(false)} id={editId} index={editIndex} />
+        </Modal>
+        <Modal isOpen={addModal} onClose={() => setAddModal(false)} head='Add Project Schedule' >
+          <CreateProjectSchedule onClose={() => setAddModal(false)} id={editId} />
+        </Modal>
         <Toaster
           position="top-right"
           reverseOrder={false}

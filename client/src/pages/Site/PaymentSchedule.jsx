@@ -10,6 +10,7 @@ import { useSelector } from 'react-redux';
 import Header from '../../components/Header';
 import CreatePaymentSchedule from '../../components/CreatePaymentSchedule';
 import Modal from '../../components/Modal';
+import { FcApproval } from "react-icons/fc";
 axios.defaults.withCredentials = true;
 
 const PaymentSchedules = () => {
@@ -19,6 +20,8 @@ const PaymentSchedules = () => {
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [editId, setEditId] = useState('');
+  const [activeTab, setActiveTab] = useState("approved");
+  const [draftPaymentSchedules, setDraftPaymentSchedules] = useState([]);
 
   useEffect(() => {
     const getpaymentSchedules = async () => {
@@ -28,7 +31,7 @@ const PaymentSchedules = () => {
           const sites = user?.site;
           let PaymentSchedules = [];
           for (let site of sites) {
-            const filteredPaymentSchedules = paymentSchedulesData.data?.filter((paymentSchedule) => paymentSchedule?.site?._id.includes(site))
+            const filteredPaymentSchedules = paymentSchedulesData.data?.filter((paymentSchedule) => paymentSchedule?.site?.id._id === site.id)
             PaymentSchedules = [...PaymentSchedules, ...filteredPaymentSchedules]
           }
           setpaymentSchedules(PaymentSchedules);
@@ -40,6 +43,26 @@ const PaymentSchedules = () => {
         console.error(error)
       }
     }
+    const getDraftPaymentSchedules = async () => {
+      try {
+        const paymentSchedulesData = await axios.get('/api/v1/payment-schedule/draft');
+        if ((user.department === 'Site Supervisor' || user.department === 'Site Incharge') && isLoggedIn) {
+          const sites = user?.site;
+          let PaymentSchedules = [];
+          for (let site of sites) {
+            const filteredPaymentSchedules = paymentSchedulesData.data?.filter((paymentSchedule) => paymentSchedule?.site?.id._id === site.id)
+            PaymentSchedules = [...PaymentSchedules, ...filteredPaymentSchedules]
+          }
+          setDraftPaymentSchedules(PaymentSchedules);
+          console.log("DraftPaymentSchedules for all sites:", PaymentSchedules);
+        } else {
+          setDraftPaymentSchedules(paymentSchedulesData.data);
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    getDraftPaymentSchedules()
     getpaymentSchedules();
   }, [])
 
@@ -65,6 +88,16 @@ const PaymentSchedules = () => {
     }
   };
 
+  const handleSave = async (id) => {
+    try {
+      const response = await axios.put(`/api/v1/payment-schedule/save/${id}`);
+      setDraftPaymentSchedules(draftPaymentSchedules.filter((paymentSchedule) => paymentSchedule._id !== id));
+      toast.success(response.data?.message);
+    } catch (error) {
+      console.error(error)
+      toast.error(error.message)
+    }
+  };
 
   return (
     <div >
@@ -75,52 +108,118 @@ const PaymentSchedules = () => {
             Total Payment Schedules: {paymentSchedules?.length}
           </h2>
           {/* {user.department === 'Account Head' && ( */}
-            <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2 ">
-              <MdAdd className='text-xl' />
-            </button>
+          <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2 ">
+            <MdAdd className='text-xl' />
+          </button>
           {/* )} */}
         </div>
-
-        <div className="overflow-x-auto scrollbar-hide">
-          <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
-            <thead className="bg-gray-300">
-              <tr className=" text-left">
-                <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
-                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Amount </th>
-                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Paid Amount </th>
-                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Due Amount </th>
-                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-200">
-              {paymentSchedules?.map((paymentSchedule) => (
-                <tr key={paymentSchedule._id} className='border-b border-blue-gray-200'>
-                  <td className="px-6 py-4">
-                    <p className=""> {paymentSchedule.site?.name} </p>
-                    <p className="text-gray-500 text-sm font-semibold tracking-wide"> {paymentSchedule.client?.name} </p>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    {paymentSchedule.totalValue}
-                  </td>
-                  <td className="px-6 py-4 text-center">{paymentSchedule.amountPaid ? paymentSchedule.amountPaid : '0'}</td>
-                  <td className="px-6 py-4 text-center">{paymentSchedule.remaningAmount ? paymentSchedule.remaningAmount : '0'}</td>
-                  <td className="px-6 py-4 text-center">
-                    <button onClick={() => handleRedirect(paymentSchedule._id)} className="mr-2">
-                      <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
-                    </button>
-                    <button onClick={() => handleEdit(paymentSchedule._id)} className="mr-2">
-                      <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                    </button>
-                    <button onClick={() => handleDelete(paymentSchedule._id)} className="mr-2">
-                      <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex space-x-4 border-b-2 mb-4 w-full md:w-auto">
+          <button
+            className={`px-4 py-2 ${activeTab === "approved" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
+            onClick={() => setActiveTab("approved")}
+          >
+            Approved
+          </button>
+          <button
+            className={`px-4 py-2 ${activeTab === "draft" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
+            onClick={() => setActiveTab("draft")}
+          >
+            Drafts
+          </button>
         </div>
+
+        {activeTab === "approved" && (
+          <>
+            <div className="overflow-x-auto scrollbar-hide">
+              <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
+                <thead className="bg-gray-300">
+                  <tr className=" text-left">
+                    <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Amount </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Paid Amount </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Due Amount </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-200">
+                  {paymentSchedules?.map((paymentSchedule) => (
+                    <tr key={paymentSchedule._id} className='border-b border-blue-gray-200'>
+                      <td className="px-6 py-4">
+                        <p className=""> {paymentSchedule.site?.name} </p>
+                        <p className="text-gray-500 text-sm font-semibold tracking-wide"> {paymentSchedule.client?.name} </p>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {paymentSchedule.totalValue}
+                      </td>
+                      <td className="px-6 py-4 text-center">{paymentSchedule.amountPaid ? paymentSchedule.amountPaid : '0'}</td>
+                      <td className="px-6 py-4 text-center">{paymentSchedule.remaningAmount ? paymentSchedule.remaningAmount : '0'}</td>
+                      <td className="px-6 py-4 text-center">
+                        <button onClick={() => handleRedirect(paymentSchedule._id)} className="mr-2">
+                          <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                        </button>
+                        {/* <button onClick={() => handleEdit(paymentSchedule._id)} className="mr-2">
+                          <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                        </button> */}
+                        <button onClick={() => handleDelete(paymentSchedule._id)} className="mr-2">
+                          <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+        {activeTab === "draft" && (
+          <>
+            <div className="overflow-x-auto scrollbar-hide">
+              <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
+                <thead className="bg-gray-300">
+                  <tr className=" text-left">
+                    <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Amount </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Paid Amount </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Due Amount </th>
+                    <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-200">
+                  {draftPaymentSchedules?.map((paymentSchedule) => (
+                    <tr key={paymentSchedule._id} className='border-b border-blue-gray-200'>
+                      <td className="px-6 py-4">
+                        <p className=""> {paymentSchedule.site?.name} </p>
+                        <p className="text-gray-500 text-sm font-semibold tracking-wide"> {paymentSchedule.client?.name} </p>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {paymentSchedule.totalValue}
+                      </td>
+                      <td className="px-6 py-4 text-center">{paymentSchedule.amountPaid ? paymentSchedule.amountPaid : '0'}</td>
+                      <td className="px-6 py-4 text-center">{paymentSchedule.remaningAmount ? paymentSchedule.remaningAmount : '0'}</td>
+                      <td className="px-6 py-4 text-center">
+                        <button onClick={() => handleSave(paymentSchedule._id)} className=" mr-2">
+                          <FcApproval className="text-green-500 hover:text-green-700 text-xl" />
+                        </button>
+                        <button onClick={() => handleRedirect(paymentSchedule._id)} className="mr-2">
+                          <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                        </button>
+                        {/* <button onClick={() => handleEdit(paymentSchedule._id)} className="mr-2">
+                          <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                        </button> */}
+                        <button onClick={() => handleDelete(paymentSchedule._id)} className="mr-2">
+                          <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
 
         <Toaster
           position="top-right"
@@ -129,12 +228,12 @@ const PaymentSchedules = () => {
       </section>
       {/* Project Schedule Modal */}
 
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Payment Schedule' >
-          <CreatePaymentSchedule onClose={() => setCreateModal(false)} />
-        </Modal>
-        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Payment Schedule' >
-          <CreatePaymentSchedule onClose={() => setEditModal(false)} id={editId} />
-        </Modal>
+      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Payment Schedule' >
+        <CreatePaymentSchedule onClose={() => setCreateModal(false)} />
+      </Modal>
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Payment Schedule' >
+        <CreatePaymentSchedule onClose={() => setEditModal(false)} id={editId} />
+      </Modal>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 const express = require('express');
-const Attendance = express.Router();
-const Leave = express.Router();
+const Attendances = express.Router();
+const Leaves = express.Router();
 const {
     getAttendance,
     getAttendances,
@@ -8,7 +8,7 @@ const {
     getLeave,
     getLeaves,
     getLeaveByUser,
-    createAttendance, 
+    createAttendance,
     createLeave,
     updateAttendance,
     updateLeave,
@@ -16,27 +16,51 @@ const {
     deleteLeave,
 } = require('../controller/attendance.controller');
 const { userAuth, adminAuth } = require('../middlewares/auth.middleware');
+const { Attendance } = require('../models/attendance.models');
 
-Attendance.route('/')
-.get(userAuth, getAttendance)
-.post(userAuth, createAttendance);
+Attendances.route('/')
+    .get(userAuth, getAttendance)
+    .post(userAuth, createAttendance);
 
-Attendance.get('/report', getAttendances );
+Attendances.get('/report', getAttendances);
 
-Attendance.route('/:id')
-.put(userAuth, updateAttendance)
-.get(userAuth, getAttendanceByUser)
-.delete(userAuth, deleteAttendance);
+Attendances.route('/:id')
+    .put(userAuth, updateAttendance)
+    .get(userAuth, getAttendanceByUser)
+    .delete(userAuth, deleteAttendance);
 
-Leave.route('/')
-.get(userAuth, getLeave )
-.post(userAuth, createLeave );
+Leaves.route('/')
+    .get(userAuth, getLeave)
+    .post(userAuth, createLeave);
 
-Leave.get('/report', getLeaves );
+Leaves.get('/report', getLeaves);
 
-Leave.route('/:id')
-.get(userAuth, getLeaveByUser)
-.put(userAuth, updateLeave)
-.delete(userAuth, deleteLeave);
+Leaves.route('/:id')
+    .get(userAuth, getLeaveByUser)
+    .put(userAuth, updateLeave)
+    .delete(userAuth, deleteLeave);
 
-module.exports = {Attendance, Leave};
+Attendances.get('/export-data/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log(id)
+        const attendance = await Attendance.find()
+            .where('user.id').equals(id)
+            .exec();
+        if (!attendance) return res.status(404).json({ message: 'No Attendance Found' })
+        // Format data for Excel
+        const exportData = attendance.map(entry => ({
+            Name: entry.user.name,
+            Date: entry.date,
+            TimeIn: entry.timeIn,
+            Status: entry.status.toUpperCase()
+        }));
+        return res.status(201).json(exportData)
+    } catch (error) {
+        console.log(error);
+        return res.status(501).json({ message: error.message })
+    }
+});
+
+
+module.exports = { Attendances, Leaves };

@@ -33,6 +33,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
       const Contractor = contractorData.data;
       setContractor({
         name: Contractor?.name,
+        email: Contractor?.email || '',
         phone: Contractor?.phone,
         whatsapp: Contractor?.whatsapp,
         address: Contractor?.address,
@@ -40,6 +41,8 @@ const CreateContractor = ({ onClose, isEdit }) => {
         pan: Contractor?.pan,
         bank: Contractor?.bank,
         jobWork: Contractor?.jobWork,
+        isUser: Contractor?.isUser || false,
+        gstNo: Contractor?.gstNo || '',
       })
       console.log(Contractor)
     } catch (error) {
@@ -67,6 +70,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
       bank: '',
       jobWork: '',
       isUser: '',
+      gstNo:'',
     })
   }
 
@@ -77,6 +81,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
       if (contractorToEdit) {
         const response = await axios.put(`/api/v1/contractor/${contractorToEdit}`, {
           name: contractor.name,
+          email: contractor.email,
           phone: contractor.phone,
           whatsapp: contractor.whatsapp,
           address: contractor.address,
@@ -84,6 +89,8 @@ const CreateContractor = ({ onClose, isEdit }) => {
           pan: contractor.pan,
           bank: contractor.bank,
           jobWork: contractor.jobWork,
+          isUser: contractor.isUser,
+          gstNo: contractor.gstNo,
         });
         toast.success(response.data.message);
         console.log('Form data submitted:', contractor);
@@ -98,6 +105,9 @@ const CreateContractor = ({ onClose, isEdit }) => {
           pan: contractor.pan,
           bank: contractor.bank,
           jobWork: contractor.jobWork,
+          email: contractor.email,
+          isUser: contractor.isUser,  
+          gstNo: contractor.gstNo,
         });
         toast.success(response.data.message);
         console.log('Form data submitted:', contractor);

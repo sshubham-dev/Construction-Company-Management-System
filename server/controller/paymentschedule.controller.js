@@ -9,7 +9,26 @@ const {
 const getPaymentSchedules = async (req, res) => {
     try {
         const paymentschedules = await PaymentSchedule.find()
+            .populate('site.id')
+            .where('adminApprove').equals('Approved')
+            .where('approvalStatus').equals('Approved')
+            .exec();
+        if (paymentschedules.length === 0) return res.status(404).json({ error: 'No Payment Schedules Found' });
+        return res.status(200).json(paymentschedules);
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
 
+const getDraftPaymentSchedules = async (req, res) => {
+    try {
+         const user = req.user;
+        const paymentschedules = await PaymentSchedule.find()
+            .populate('site.id')
+            .where('approvalStatus').equals('Pending')
+            .where('createdBy').equals(user?._id)
+            .exec();
         if (paymentschedules.length === 0) return res.status(404).json({ error: 'No Payment Schedules Found' });
         return res.status(200).json(paymentschedules);
     } catch (error) {
@@ -20,8 +39,8 @@ const getPaymentSchedules = async (req, res) => {
 
 const getPaymentSchedule = async (req, res) => {
     try {
-        const _id = req.params.id;
-        const paymentschedule = await PaymentSchedule.findById(_id)
+        const id = req.params.id;
+        const paymentschedule = await PaymentSchedule.findById(id)
 
         if (!paymentschedule) return res.status(404).json({ error: 'Payment Schedule Not Found' });
         return res.status(200).json(paymentschedule);
@@ -251,5 +270,6 @@ module.exports = {
     updatePaymentDetails,
     getPaymentDetails,
     paymentScheduleBySite,
-    savePaymentSchedule
+    savePaymentSchedule,
+    getDraftPaymentSchedules
 };

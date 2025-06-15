@@ -94,7 +94,7 @@ const getAllChecklists = async (req, res) => {
 // Get a single checklist by ID
 const getChecklistById = async (req, res) => {
     try {
-        const checklist = await Checklist.findById(req.params.id).populate('createdBy');
+        const checklist = await Checklist.findById(req.params.id).populate('createdBy').exec();
         if (!checklist) {
             return res.status(404).json({ message: 'Checklist not found' });
         }
@@ -107,7 +107,33 @@ const getChecklistById = async (req, res) => {
 // Update a checklist by ID
 const updateChecklist = async (req, res) => {
     try {
-        const checklist = await Checklist.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        const {
+            site,
+            date,
+            checklistId,
+            checkFor,
+            name,
+            checkWork,
+            rating,
+            observation,
+        } = req.body;
+
+        const existingSite = await Site.findById(site);
+        if (!existingSite) {
+            return res.status(400).json({ message: 'Site not found' });
+        }
+        const checklist = await Checklist.findByIdAndUpdate(req.params.id, {
+            $set: {
+                site: { id: existingSite._id, name: existingSite.name },
+                date,
+                checklistId,
+                checkFor,
+                name,
+                checkWork,
+                rating,
+                observation,
+            }
+        }, { new: true, runValidators: true });
         if (!checklist) {
             return res.status(404).json({ message: 'Checklist not found' });
         }

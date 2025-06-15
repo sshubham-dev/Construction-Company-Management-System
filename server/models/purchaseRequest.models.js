@@ -16,6 +16,7 @@ const requirementSchema = new mongoose.Schema({
     approved: {
         quantity: Number,
         unit: String,
+        rate: Number,
         remarks: String,
     },
     delivered: {

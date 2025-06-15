@@ -24,7 +24,7 @@ const CheckList = () => {
       try {
         const checkListData = await axios.get('/api/v1/checkList');
         setCheckList(checkListData.data);
-        console.log(checkLists)
+        console.log(checkListData.data)
       } catch (error) {
         toast.error(error.message)
         setError(error.message);
@@ -39,9 +39,9 @@ const CheckList = () => {
   };
 
   const handleRedirect = (checkListId) => {
-    navigate(`/checkList?checkListId=${checkListId}`);
+    navigate(`/checklist/${checkListId}`);
   }
-  
+
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/api/v1/checklist/${id}`);
@@ -62,7 +62,7 @@ const CheckList = () => {
           </button>
         </div>
 
-        <table className="w-full text-sm text-left rtl:text-right text-gray-500">
+        <table className="w-full text-md text-left rtl:text-right text-gray-500">
           <thead className=" uppercase bg-gray-300 ">
             <tr>
               <th scope="col" className="px-6 py-3">Name</th>
@@ -75,11 +75,13 @@ const CheckList = () => {
             {checkLists.map((checkList) => (
               <tr key={checkList._id} className="bg-white border-b hover:bg-gray-50 ">
                 <td className="px-6 py-4">
-                  <NavLink>
+                  <NavLink to={`/checklist/${checkList._id}`}>
+                    {checkList.name}
                   </NavLink>
+                  {checkList.checklistId}
                 </td>
-                <td className="px-6 py-4"></td>
-                <td className="px-6 py-4"></td>
+                <td className="px-6 py-4">{checkList.site.name}</td>
+                <td className="px-6 py-4">{checkList.clientSign.approved}</td>
                 <td className="px-6 py-4">
                   {/* <button
                     onClick={() => handleRedirect(checkList._id)}
@@ -89,15 +91,15 @@ const CheckList = () => {
                   </button> */}
                   <button
                     onClick={() => handleEdit(checkList._id)}
-                    className="bg-blue-500 text-white px-2 py-1 mr-2"
+                    className="text-blue-500 px-2 py-1 mr-2"
                   >
                     <GrEdit />
                   </button>
                   <button
                     onClick={() => handleDelete(checkList._id)}
-                    className="bg-red-500 text-white px-2 py-1 mr-2"
+                    className="text-red-500 px-2 py-1 mr-2"
                   >
-                    <MdDelete />
+                    <MdDelete size={20} />
                   </button>
                 </td>
               </tr>
@@ -115,7 +117,7 @@ const CheckList = () => {
       <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Check List' >
         <CreateChecklist onClose={() => setCreateModal(false)} />
       </Modal>
-      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Check List' >
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Check List' >
         <CreateChecklist onClose={() => setEditModal(false)} isEdit={editId} />
       </Modal>
     </div>

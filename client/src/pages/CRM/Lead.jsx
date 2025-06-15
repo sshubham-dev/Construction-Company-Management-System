@@ -155,34 +155,34 @@ const Lead = () => {
                       <td className="p-3 text-sm text-gray-700">{lead.name}</td>
                       <td className="p-3 text-sm text-gray-700">
                         <div className="flex flex-col">
-                          <span>{lead.contact.phoneNo}</span>
-                          <span>{lead.contact.whatsapp}</span>
+                          <span>{lead?.contact.phoneNo}</span>
+                          <span>{lead?.contact.whatsapp}</span>
                         </div>
                       </td>
                       <td className="p-3 text-sm text-gray-700">
                         <div className="flex flex-col">
-                          <span>{lead.location.city}</span>
-                          <span>{`${lead.location.district}, ${lead.location.state}`}</span>
+                          <span>{lead?.location?.city || ''}</span>
+                          <span>{`${lead?.location?.district || ''}, ${lead?.location?.state || ''}`}</span>
                         </div>
                       </td>
                       <td className="p-3 text-sm text-gray-700">
-                        {lead.requirement.service}
+                        {lead?.requirement?.service}
                       </td>
                       <td className="p-3 text-sm text-gray-700">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${lead.status === "active"
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${lead?.status === "active"
                             ? "bg-green-100 text-green-700"
-                            : lead.status === "closed"
+                            : lead?.status === "closed"
                               ? "bg-red-100 text-red-700"
-                              : lead.status === "converted"
+                              : lead?.status === "converted"
                                 ? "bg-blue-100 text-blue-700"
                                 : "bg-gray-100 text-gray-700"
                             }`}
                         >
-                          {lead.status}
+                          {lead?.status}
                         </span>
                       </td>
-                      <td className="p-3 text-sm text-gray-700">{lead.source}</td>
+                      <td className="p-3 text-sm text-gray-700">{lead?.source}</td>
                       <td className="p-3 text-sm text-gray-700">
                         <button
                           className="bg-purple-500 text-white p-1 px-2 rounded-lg hover:bg-purple-600 transition duration-200 mr-2"
@@ -307,7 +307,7 @@ const FilterModal = ({ onClose, onApplyFilter, data }) => {
         >
           <option value="all">All Services</option>
           {data.map((lead, index) => (
-            <option key={index} value={lead.requirement.service}>{lead.requirement.service}</option>
+            <option key={index} value={lead?.requirement.service}>{lead?.requirement.service}</option>
           ))}
         </select>
       </div>
@@ -320,7 +320,7 @@ const FilterModal = ({ onClose, onApplyFilter, data }) => {
         >
           <option value="all">All Location</option>
           {data.map((lead, index) => (
-            <option key={index} value={lead.location.city}>{lead.location.city}</option>
+            <option key={index} value={lead?.location?.city}>{lead?.location?.city}</option>
           ))}
         </select>
       </div>
@@ -333,7 +333,7 @@ const FilterModal = ({ onClose, onApplyFilter, data }) => {
         >
           <option value="all">All Location</option>
           {data.map((lead, index) => (
-            <option key={index} value={lead.location.district}>{lead.location.district}</option>
+            <option key={index} value={lead?.location?.district}>{lead?.location?.district}</option>
           ))}
         </select>
       </div>
@@ -346,7 +346,7 @@ const FilterModal = ({ onClose, onApplyFilter, data }) => {
         >
           <option value="all">All Location</option>
           {data.map((lead, index) => (
-            <option key={index} value={lead.location.state}>{lead.location.state}</option>
+            <option key={index} value={lead?.location.state}>{lead?.location?.state}</option>
           ))}
         </select>
       </div>
@@ -359,7 +359,7 @@ const FilterModal = ({ onClose, onApplyFilter, data }) => {
         >
           <option value="all">All Source</option>
           {data.map((lead, index) => (
-            <option key={index} value={lead.source}>{lead.source}</option>
+            <option key={index} value={lead?.source}>{lead.source}</option>
           ))}
         </select>
       </div>

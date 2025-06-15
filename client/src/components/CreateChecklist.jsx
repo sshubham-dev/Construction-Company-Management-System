@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
-
+import moment from 'moment';
+import { useDispatch, useSelector } from 'react-redux';
 const categories = ['Housekeeping', 'Safety'];
 
-const CreateChecklist = ({onClose, isEdit}) => {
+const CreateChecklist = ({ onClose, isEdit }) => {
   const [formData, setFormData] = useState({
     site: '',                    // Selected site
     date: new Date().toISOString().slice(0, 10), // Selected date
@@ -19,11 +20,17 @@ const CreateChecklist = ({onClose, isEdit}) => {
     rating: categories.map(category => ({ category, stars: 0, remarks: '' })), // rating for categories
     observation: '',              // Additional observations
   });
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [sites, setSite] = useState([]);                      // Selected site
   const [showChecklist, setShowChecklist] = useState(false);  // Flag to show the checklist
   const [isAllChecked, setIsAllChecked] = useState(false);   // Flag to indicate if all works are checked
   const [checkListWork, setCheckListWork] = useState([]);
-
+  const [projectDetails, setProjectDetails] = useState([]);
+  const status = [
+    { value: 'N/A', label: 'N/A' },
+    { value: 'Yes', label: 'Yes' },
+    { value: 'No', label: 'No' }
+  ]
   useEffect(() => {
     const fetchSite = async () => {
       try {
@@ -33,29 +40,11 @@ const CreateChecklist = ({onClose, isEdit}) => {
         console.error(error.message);
       }
     };
-    fetchSite();
-    if(isEdit){
-      fetchChecklist(isEdit)
-    }
-  }, []);
-
-  const fetchChecklist = async (id) => {
-    try {
-      const checkList = await axios.get(`/api/v1/checkList/${id}`);
-      setFormData(checkList.data);
-      console.log(checkList.data)
-    } catch (error) {
-      toast.error(error.message)
-      setError(error.message);
-    }
-  }
-
-  // Fetch predefinedItems from API
-  useEffect(() => {
     const fetchWorkDetails = async () => {
       try {
+        const title = 'Checklist'
         const response = await axios.get('/api/v1/work-details');
-        const filteredItems = response.data.filter(item => item.title.includes('Checklist'));
+        const filteredItems = response.data.filter(item => item.title.toLowerCase().includes(title.toLowerCase()));
         setCheckListWork(filteredItems);
       } catch (error) {
         console.error('Error fetching work details:', error);
@@ -63,7 +52,66 @@ const CreateChecklist = ({onClose, isEdit}) => {
     };
 
     fetchWorkDetails();
+    fetchSite();
   }, []);
+
+  useEffect(() => {
+    if (isEdit) {
+      fetchChecklist(isEdit)
+    }
+  }, [isEdit]);
+
+  useEffect(() => {
+    const fetchprojectSchedule = async () => {
+      try {
+        const projectScheduleData = await axios.get('/api/v1/project-schedule');
+        console.log(projectScheduleData.data)
+        // console.log(user)
+        const filteredProjectSchedules = projectScheduleData.data.filter(
+          (projectSchedule) => projectSchedule?.site?.id?._id === formData.site
+        );
+        const ProjectSchedules = filteredProjectSchedules[0].projectDetail
+        setProjectDetails(ProjectSchedules)
+        console.log("ProjectSchedule", ProjectSchedules);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    fetchprojectSchedule();
+  }, [formData.site]);
+
+
+  const fetchChecklist = async (id) => {
+    try {
+      const response = await axios.get(`/api/v1/checkList/${id}`);
+      const checklist = response.data;
+      console.log('checklist', checklist);
+
+      setFormData({
+        site: checklist.site.id,
+        date: checklist.date,
+        checklistId: checklist.checklistId,
+        checkFor: checklist.checkFor,
+        name: checklist.name,
+        checkWork: checklist.checkWork.map(item => ({
+          work: item.work,
+          status: ['Yes', 'No', 'N/A'].includes(item.status) ? item.status : '',
+          remarks: item.remarks,
+        })),
+        rating: checklist.rating.map(item => ({
+          category: item.category,
+          stars: item.stars,
+          remarks: item.remarks,
+        })),
+        observation: checklist.observation,
+      });
+      setIsAllChecked(checklist.checkWork.every(item => item.status !== ''));
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
 
   const handleChange = (field, data) => {
     setFormData({
@@ -99,32 +147,37 @@ const CreateChecklist = ({onClose, isEdit}) => {
     }));
   };
 
-  const handleSubmit = () => {
-    if (!formData.site && formData.date && !formData.name) {
-      setShowChecklist(true);
+const handleSubmit = () => {
+  if (!formData.site || !formData.date || !formData.name) return;
+
+  if (!isEdit) {
+    const selectedChecklist = checkListWork.find(item => item.title === formData.name);
+    if (selectedChecklist) {
+      setFormData({
+        ...formData,
+        checkWork: selectedChecklist.description.map(desc => ({
+          work: desc.work,
+          status: '',
+          remarks: ''
+        })),
+      });
     }
-    if (formData.name) {
-      const selectedChecklist = checkListWork.find(item => item.title === formData.name);
-      console.log('selectedChecklist', selectedChecklist);
-      if (selectedChecklist) {
-        setFormData({
-          ...formData,
-          checkWork: selectedChecklist.description.map(desc => ({ work: desc.work, status: '', remarks: '' })),
-        });
-      }
-    }
-    console.log('first', formData)
-  };
+  }
+
+  setShowChecklist(true);
+};
+
+
 
   const handleChecklistSubmit = async (e) => {
     e.preventDefault();
     try {
       console.log(formData)
-      if(isEdit){
+      if (isEdit) {
         const response = await axios.put(`/api/v1/checklist/${isEdit}`, formData);
         console.log(response)
         onClose()
-      }else{
+      } else {
         const response = await axios.post('/api/v1/checklist', formData);
         console.log(response)
         onClose()
@@ -159,7 +212,7 @@ const CreateChecklist = ({onClose, isEdit}) => {
                 </select>
               </div>
               <div className="mb-4">
-                <label htmlFor="date" className="block mb-1">Date</label>
+                <label htmlFor="date" className="block mb-1">Date: {moment(formData.date).format('DD MMMM YYYY')}</label>
                 <input
                   id="date"
                   type="date"
@@ -167,6 +220,20 @@ const CreateChecklist = ({onClose, isEdit}) => {
                   onChange={(e) => handleChange('date', e.target.value)}
                   className="border p-2 rounded w-full"
                 />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="checkFor" className="block mb-1">Checklist For</label>
+                <select
+                  name="checkFor"
+                  id="checkFor"
+                  value={formData.checkFor}
+                  onChange={(e) => handleChange('checkFor', e.target.value)}
+                  className="border p-2 rounded w-full">
+                  <option value="">CheckList For</option>
+                  {projectDetails.map((work, index) => (
+                    <option key={index} value={work.workDetail}>{work.workDetail}</option>
+                  ))}
+                </select>
               </div>
               <div className="mb-4">
                 <label htmlFor="checklistname" className="block mb-1">Checklist Name</label>
@@ -199,25 +266,25 @@ const CreateChecklist = ({onClose, isEdit}) => {
               </div>
               <ul className="space-y-4">
                 {formData.checkWork.map((item, index) => (
-                  <li key={index} className="border p-4 rounded">
+                  <li key={item.work} className="border p-4 rounded">
                     <div className="flex items-center justify-between mb-2">
                       <label className="font-semibold">{item.work}</label>
                       <select
-                        value={item.status || ''}
+                        value={item.status}
                         onChange={(e) => updateStatus(index, e.target.value)}
                         className="border p-2 rounded w-40"
                       >
                         <option value="">Status</option>
-                        <option value="N/A">N/A</option>
-                        <option value="Yes">Yes</option>
-                        <option value="No">No</option>
+                        {status.map(option => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
                       </select>
                     </div>
                     <div className="mb-2">
                       <label htmlFor={`remarks-${index}`} className="block mb-1">Remarks</label>
                       <input
                         id={`remarks-${index}`}
-                        value={item.remarks || ''}
+                        value={item.remarks}
                         onChange={(e) => updateRemarks(index, e.target.value)}
                         placeholder="Enter remarks"
                         className="border p-2 rounded w-full"

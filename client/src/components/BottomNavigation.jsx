@@ -169,7 +169,7 @@ const BottomNavigation = () => {
           to: '/sites/quality-schedules',
           name: 'Quality Schedules',
           icon: <LuCalendarCheck2 />,
-          role: ['Admin', 'Company', 'Ceo', 'Quality Head', 'Quality Engineer', 'Account Head'],
+          role: ['Admin', 'Company', 'Ceo', 'Contractor', 'Accountant', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
         },
         {
           to: '/sites/work-orders',
