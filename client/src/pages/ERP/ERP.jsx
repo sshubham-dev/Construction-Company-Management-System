@@ -102,10 +102,10 @@ const ERP = () => {
               </div>
             </div>
             <div className="flex flex-col gap-2 justify-center items-center">
-              <h1 className='text-xl'>Report</h1>
+              {/* <h1 className='text-xl'>Report</h1> */}
               <div className="flex flex-col gap-2 justify-center items-center">
                 {/* <NavLink to='/erp/summary'>Summary</NavLink> */}
-                <NavLink to='/erp/balance-sheet'>Balance Sheet</NavLink>
+                {/* <NavLink to='/erp/balance-sheet'>Balance Sheet</NavLink> */}
                 {/* <NavLink to='/erp/p&l'>Profit & Loss A/c</NavLink>
                 <NavLink to='/erp/stock/summary'>Stock Summary</NavLink>
                 <NavLink to='/erp/ration-analysis'>Ratio Analysis</NavLink>

@@ -18,7 +18,7 @@ const MorePage = ({options}) => {
       to: '/attendance',
       name: 'Attendance',
       icon: <FaBusinessTime size={22} />,
-      role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
+      role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R', 'Store Helper']
     },
 
     // {
@@ -32,7 +32,7 @@ const MorePage = ({options}) => {
       to: '/profile',
       name: 'Profile',
       icon: <CgProfile size={22} />,
-      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Marketing Incharge', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head']
+      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Marketing Incharge', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'Store Helper']
     },
 
     {

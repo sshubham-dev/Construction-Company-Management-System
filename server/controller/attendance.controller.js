@@ -11,6 +11,7 @@ const getAttendance = async (req, res) => {
         console.log(user)
         const attendance = await Attendance.find()
             .where('user.id').equals(user._id)
+            .sort({ date: -1 }) // Sort by date in descending order
             .exec();
         if (!attendance) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json(attendance)
@@ -25,6 +26,7 @@ const getAttendanceByUser = async (req, res) => {
         const id = req.id;
         const attendance = await Attendance.find()
             .where('user.id').equals(id)
+            .sort({ date: -1 }) // Sort by date in descending order
             .exec();
         if (!attendance) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json(attendance)
@@ -36,7 +38,9 @@ const getAttendanceByUser = async (req, res) => {
 
 const getAttendances = async (req, res) => {
     try {
-        const attendance = await Attendance.find();
+        const attendance = await Attendance.find()
+        .sort({ date: -1 }) // Sort by date in descending order
+        .exec();
         if (attendance.length === 0) return res.status(404).json({ message: 'No Attendance Found' })
         return res.status(201).json(attendance)
     } catch (error) {
@@ -50,6 +54,7 @@ const getLeave = async (req, res) => {
         const user = req.user;
         const leaves = await Leave.find()
             .where('user.id').equals(user._id)
+            .sort({ from: -1 }) // Sort by 'from' date in descending order
             .exec();
         if (!leaves) return res.status(404).json({ message: 'No Leaves Found' })
         return res.status(201).json(leaves)
@@ -64,6 +69,7 @@ const getLeaveByUser = async (req, res) => {
         const id = req.id;
         const leaves = await Leave.find()
             .where('user.id').equals(id)
+            .sort({ from: -1 }) // Sort by 'from' date in descending order
             .exec();
         if (!leaves) return res.status(404).json({ message: 'No Leaves Found' })
         return res.status(201).json(leaves)
@@ -76,6 +82,8 @@ const getLeaveByUser = async (req, res) => {
 const getLeaves = async (req, res) => {
     try {
         const leaves = await Leave.find()
+        .sort({ from: -1 }) // Sort by 'from' date in descending order
+        .exec();    
         if (leaves.length === 0) return res.status(404).json({ message: 'No Leaves Found' })
         return res.status(201).json(leaves)
     } catch (error) {

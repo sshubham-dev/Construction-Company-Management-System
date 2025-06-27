@@ -90,13 +90,13 @@ const BottomNavigation = () => {
           to: '/erp/inventory/purchase-request',
           name: 'Purchase-Request',
           icon: <BiSolidPurchaseTag />,
-          role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
+          role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head', 'Store Helper'],
         },
         {
           to: '/erp/inventory/return-request',
           name: 'Return-Request',
           icon: <FaTruckArrowRight />,
-          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head','Store Helper'],
         },
         {
           to: '/erp/inventory/suppliers',
@@ -105,7 +105,7 @@ const BottomNavigation = () => {
           role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
         },
       ],
-      role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+      role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head', 'Store Helper'],
     },
 
     {
@@ -221,13 +221,13 @@ const BottomNavigation = () => {
       to: '/hr/employee/dashboard',
       name: 'H.R',
       icon: <FcManager size={22} />,
-      role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
+      role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R', 'Marketing'],
       children: [
         {
           to: '/hr/employee/attendance',
           name: 'Attendance Management',
           icon: <FaUserCheck />,
-          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
+          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R', 'Marketing'],
         },
       ],
     },
@@ -236,7 +236,7 @@ const BottomNavigation = () => {
       to: '/more',
       name: "More",
       icon: <MdOutlineMoreHoriz />,
-      role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
+      role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R', 'Store Helper'],
     },
   ];
 

@@ -47,14 +47,14 @@ const Sidebar = () => {
       to: '/dashboard',
       name: 'Dashboard',
       icon: <AiFillPieChart />,
-      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R'],
+      role: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R', 'Store Helper'],
     },
 
     {
       to: '/attendance',
       name: 'Attendance',
       icon: <FaBusinessTime />,
-      role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
+      role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R', 'Store Helper']
     },
 
     {
@@ -152,7 +152,7 @@ const Sidebar = () => {
           to: '/erp/inventory/stock',
           name: 'Stock',
           icon: <MdInventory />,
-          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head', 'Store Helper'],
         },
         // {
         //   to: '/erp/inventory/sales',
@@ -170,13 +170,13 @@ const Sidebar = () => {
           to: '/erp/inventory/purchase-request',
           name: 'Purchase-Request',
           icon: <BiSolidPurchaseTag />,
-          role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Quality Head', 'Quality Engineer', 'Account Head'],
+          role: ['Admin', 'Company', 'Supplier', 'Accountant', 'Ceo', 'Site Incharge', 'Account Head','Store Helper'],
         },
         {
           to: '/erp/inventory/return-request',
           name: 'Return-Request',
           icon: <FaTruckArrowRight />,
-          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
+          role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head', 'Store Helper'],
         },
         {
           to: '/erp/inventory/suppliers',
@@ -314,7 +314,7 @@ const Sidebar = () => {
           to: '/hr/employee/attendance',
           name: 'Attendance Management',
           icon: <FaUserCheck />,
-          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
+          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R', 'Marketing'],
         },
         // {
         //   to: '/employee/salary',
@@ -323,7 +323,7 @@ const Sidebar = () => {
         //   role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
         // },
       ],
-      role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
+      role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R', 'Marketing'],
     },
 
     {

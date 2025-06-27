@@ -2,6 +2,7 @@ const WorkOrder = require('../models/workorder.models');
 const Site = require('../models/site.models');
 const Contractor = require('../models/contractor.models');
 const WorkDetails = require('../models/workDetails.models');
+const User = require('../models/user.models.js');
 const mongoose = require('mongoose');
 const {
     sendApproveByAdmin,
@@ -165,6 +166,18 @@ const createWorkorder = async (req, res) => {
             await sendApproveByAccountHead(savedWorkOrder, 'Work Order', user._id)
             await sendApproveByIncharge(savedWorkOrder, 'Work Order', user._id)
 
+            const existingUser = await User.findById(user._id).select('-password -refreshToken');
+            const employees = await User.find({ role: "Employee" });
+
+            for (const employee of employees) {
+                employee.notification.push({
+                    title: 'Work Order Alert',
+                    message: `A Work Order created by ${existingUser.userName} for ${savedWorkOrder.workOrderName} of ${existingSite.name}`,
+                    createdAt: savedWorkOrder.createdAt ? savedWorkOrder.createdAt : new Date(),
+                    link: `/work-order/${savedWorkOrder._id}`,
+                })
+                await employee.save()
+            }
             res.status(201).json({ message: 'Work Order Created Successfully' });
         }
     } catch (error) {

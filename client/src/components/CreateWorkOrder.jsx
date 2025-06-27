@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 import Select from 'react-select';
 import moment from 'moment';
 
@@ -45,6 +46,7 @@ const CreateWorkOrder = ({ onClose, id, index }) => {
   const [workOrderToEdit, setWorkOrderToEdit] = useState(null);
   const units = ['SQFT', 'RFT', 'LUMSUM', 'NOS', 'FIXED', 'RMT', 'SQMT', 'CUM'];
   const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (id && index !== undefined) {
@@ -59,24 +61,20 @@ const CreateWorkOrder = ({ onClose, id, index }) => {
   useEffect(() => {
     const fetchSite = async () => {
       try {
-        const response = await axios.get(`/api/v1/site/user/${user._id}`);
-        setSite(response.data)
-        // if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
-        //   console.log(response.data)
-        //   const existingSites = user?.site;
-        //   console.log(existingSites)
-        //   let Sites = [];
-        //   for (let site of response.data) {
-        //     console.log(site)
-        //     if (existingSites?.map(existingSite => existingSite.id.includes(site._id))) {
-        //       console.log(site)
-        //       Sites.push(site);
-        //     }
-        //   }
-        //   setSite(Sites)
-        // } else {
-        //   setSite(response.data)
-        // }
+        const response = await axios.get('/api/v1/site');
+        if (user.department === 'Site Incharge' || user.department === 'Site Supervisor') {
+          const existingSites = user?.site;
+          let SitesData = [];
+          for (let site of response.data) {
+            if (existingSites?.some(existingSite => existingSite.id === site._id)) {
+              SitesData.push(site);
+            }
+          }
+          setSite(SitesData)
+          // console.log(SitesData)
+        } else {
+          setSite(response.data)
+        }
       } catch (error) {
         console.error(error.message)
       }
@@ -232,19 +230,22 @@ const CreateWorkOrder = ({ onClose, id, index }) => {
         const response = await axios.put(`/api/v1/work-order/${workToEdit.id}/work/${workToEdit.index}`, workOrderDetails);
         toast.success(response.data.message);
         onClose()
+        dispatch(fetchNotifications(user._id));
       } else if (workOrderToEdit) {
         console.log(formData)
         const response = await axios.put(`/api/v1/work-order/${workOrderToEdit}`, formData);
         toast.success(response.data.message);
         onClose()
+        dispatch(fetchNotifications(user._id));
       } else {
-        if (!workOrderName || !workOrderNo || !contractor || !site || !startdate || !duration) {
+        if (!workOrderName || !contractor || !site || !startdate || !duration) {
           toast.error("All fields are required");
           return;
         }
         const response = await axios.post('/api/v1/work-order', formData);
         toast.success(response.data.message);
         onClose()
+        dispatch(fetchNotifications(user._id));
       }
     } catch (error) {
       console.error('Error submitting work order:', error.message);
@@ -361,9 +362,9 @@ const CreateWorkOrder = ({ onClose, id, index }) => {
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 onChange={(e) => handleChange('site', e.target.value)}>
                 <option>{workOrderToEdit ? data.site : 'Select Site'}</option>
-                {sites.map((site) => (
-                  <option key={site._id} value={site._id}>{site.name}</option>
-                ))}
+                  {sites.map((site, index) => (
+                    <option key={index} value={site._id}>{site.name}</option>
+                  ))}
               </select>
             </div>
 

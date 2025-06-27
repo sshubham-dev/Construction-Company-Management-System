@@ -99,6 +99,8 @@ const siteByUser = async (req, res) => {
 
 const createSite = async (req, res) => {
     try {
+        const user = req.user;
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
         const {
             name,
             client,
@@ -171,6 +173,17 @@ const createSite = async (req, res) => {
                 await existingQuality.save();
             }
         }
+                const employees = await User.find({ role: "Employee" });
+        
+                for (const employee of employees) {
+                    employee.notification.push({
+                        title: 'Site Alert',
+                        message: `${savedSite.incharge.name} is assigned with a new site, ${savedSite.name}`,
+                        createdAt: savedSite.createdAt ? savedSite.createdAt : new Date(),
+                        link: `/site/${savedSite._id}`,
+                    })
+                    await employee.save()
+                }
         res.status(201).json({ message: 'Site Created Successfuly', savedSite });
     } catch (error) {
         console.log(error)

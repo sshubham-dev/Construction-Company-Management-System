@@ -26,7 +26,6 @@ const purchaseOrderSchema = new mongoose.Schema({
     orderNo: {
         type: String,
         required: true,
-        unique: true
     },
     site: {
         name: String,

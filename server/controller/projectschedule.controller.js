@@ -6,6 +6,7 @@ const {
     sendApproveByIncharge,
     sendApproveByAccountHead,
 } = require('./approval.controller.js');
+const User = require('../models/user.models.js');
 
 
 const getProjectSchedules = async (req, res) => {
@@ -100,7 +101,18 @@ const createProjectSchedule = async (req, res) => {
         sendApproveByAdmin(savedProjectSchedule, 'Project Schedule', user._id)
         sendApproveByAccountHead(savedProjectSchedule, 'Project Schedule', user._id)
         sendApproveByIncharge(savedProjectSchedule, 'Project Schedule', user._id)
+        const existingUser = await User.findById(user._id).select('-password -refreshToken');
+        const employees = await User.find({ role: "Employee" });
 
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Project Schedule Alert',
+                message: `A Project Schedule created by ${existingUser.userName} for ${existingSite.name}`,
+                createdAt: savedProjectSchedule.createdAt ? savedProjectSchedule.createdAt : new Date(),
+                link: `/project-schedule/${savedProjectSchedule._id}`,
+            })
+            await employee.save()
+        }
         return res.status(200).json({ message: 'Project Schedule created Successfully', savedProjectSchedule });
     } catch (error) {
         console.log(error)
@@ -125,6 +137,17 @@ const saveProjectSchedule = async (req, res) => {
                 existingSite.projectSchedule = projectSchedule._id;
                 await existingSite.save({ validateBeforeSave: false });
                 console.log('projectSchedule:', projectSchedule)
+                const employees = await User.find({ role: "Employee" });
+
+                for (const employee of employees) {
+                    employee.notification.push({
+                        title: 'Project Schedule Alert',
+                        message: `${existingSite.name} Project Schedule has been Approved`,
+                        createdAt: projectSchedule.createdAt ? projectSchedule.createdAt : new Date(),
+                        link: `/project-schedule/${projectSchedule._id}`,
+                    })
+                    await employee.save()
+                }
                 return res.status(201).json({ message: 'projectSchedule Saved Successfuly' })
             } else {
                 console.log('projectSchedule is Not Approved By Every One')
@@ -193,9 +216,6 @@ const deleteProjectSchedule = async (req, res) => {
         const id = req.params.id;
         const user = req.user;
         const deletedProjectSchedule = await ProjectSchedule.findByIdAndDelete(id)
-            .where('createdBy').equals(user?._id)
-            .exec();
-
         if (!deletedProjectSchedule) return res.status(500).json({ error: 'Something went wrong' });
         return res.status(200).json({ message: 'Project Schedule Deleted Successfully', deletedProjectSchedule });
     } catch (error) {

@@ -5,6 +5,7 @@ const Bill = require('../models/bill.models.js');
 const ExtraWork = require('../models/extrawork.models.js');
 const { convertToUser } = require('./user.controller.js');
 const { addLedger } = require('./ledger.controller.js');
+const User = require('../models/user.models.js');
 
 const getContractors = async (req, res) => {
     try {
@@ -39,6 +40,8 @@ const getContractor = async (req, res) => {
 
 const createContractor = async (req, res) => {
     try {
+        const user = req.user;
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
         const {
             name,
             email,
@@ -75,6 +78,18 @@ const createContractor = async (req, res) => {
         res.status(200).json({ message: 'Contractor Created Successfuly', savedContractor });
         // const isGSTApplicable = gstNo !== '' ? true : false;
         // addLedger(savedContractor, 'Sundry Creditor', isGSTApplicable, false, 'contractor')
+        const existingUser = await User.findById(user._id).select('-password -refreshToken');
+        const employees = await User.find({ role: "Employee" });
+
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Contractor Alert',
+                message: `A Contractor add by ${existingUser.userName}`,
+                createdAt: savedContractor.createdAt ? new Date(savedContractor.createdAt) : new Date()
+                // link: `/work-order/${savedWorkOrder._id}`,
+            })
+            await employee.save()
+        }
         if (savedContractor.isUser === true) {
             const password = `${name}@${phone}`;
             await convertToUser(savedContractor._id, 'Contractor', password);

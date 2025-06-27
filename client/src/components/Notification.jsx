@@ -25,7 +25,7 @@ const Notification = () => {
             return () => clearInterval(interval);
         }
     }, [dispatch, user?._id]);
-    console.log(unseenNotifications)
+    // console.log(unseenNotifications)
     // 🟡 Handle outside click
     useEffect(() => {
         const handleClickOutside = (event) => {

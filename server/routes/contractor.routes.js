@@ -1,10 +1,11 @@
 const express = require('express');
 const Contractor = express.Router();
 const { getContractors, getContractor, createContractor, updateContractor, deleteContractor } = require('../controller/contractor.controller');
+const { userAuth } = require('../middlewares/auth.middleware');
 
 Contractor.route('/')
-    .get(getContractors)
-    .post(createContractor);
-Contractor.route('/:id').get(getContractor).put(updateContractor).delete(deleteContractor);
+    .get(userAuth, getContractors)
+    .post(userAuth, createContractor);
+Contractor.route('/:id').get(userAuth, getContractor).put(userAuth, updateContractor).delete(userAuth, deleteContractor);
 
 module.exports = Contractor;

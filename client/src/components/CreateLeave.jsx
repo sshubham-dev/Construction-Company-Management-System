@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import moment from 'moment';
 import toast, { Toaster } from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 
 axios.defaults.withCredentials = true;
 
@@ -11,22 +13,24 @@ const CreateLeave = ({ onClose, isEdit }) => {
         from: moment().format('YYYY-MM-DD'),
         reason: '',
     });
+    const { user, isLoggedIn } = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
 
-    useEffect(()=>{
-        if(isEdit){
+    useEffect(() => {
+        if (isEdit) {
             fetchLeave(isEdit)
         }
-    },[])
-    
+    }, [])
+
     const fetchLeave = async (id) => {
         try {
-          const leaveResponse = await axios.get(`/api/v1/leave/${id}`);
-          console.log('Leaves:', leaveResponse.data);
-          setLeave(leaveResponse.data);
+            const leaveResponse = await axios.get(`/api/v1/leave/${id}`);
+            console.log('Leaves:', leaveResponse.data);
+            setLeave(leaveResponse.data);
         } catch (error) {
-          console.error('Error fetching data:', error);
+            console.error('Error fetching data:', error);
         }
-      };
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -50,6 +54,7 @@ const CreateLeave = ({ onClose, isEdit }) => {
                     from: moment().format('YYYY-MM-DD'),
                     reason: '',
                 });
+                dispatch(fetchNotifications(user._id));
             } else {
                 const response = await axios.post('/api/v1/leave', leave);
                 toast.success(response.data.message);
@@ -60,6 +65,7 @@ const CreateLeave = ({ onClose, isEdit }) => {
                     from: moment().format('YYYY-MM-DD'),
                     reason: '',
                 });
+                dispatch(fetchNotifications(user._id));
             }
         } catch (error) {
             console.error(error);

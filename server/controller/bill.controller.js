@@ -1,6 +1,7 @@
 const Bill = require('../models/bill.models.js');
 const PaymentSchedule = require('../models/paymentschedule.models');
 const Site = require('../models/site.models');
+const User = require('../models/user.models.js');
 const mongoose = require('mongoose');
 const Contractor = require('../models/contractor.models');
 const Supplier = require('../models/supplier.models.js');
@@ -21,6 +22,7 @@ const getBills = async (req, res) => {
             .where('approvalStatus').equals('Approved')
             .populate('site.id')        // fetch full site details
             .populate('contractor.id') // fetch full contractor details
+            .sort({ createdAt: -1 }) // Sort by createdAt in descending order
             .exec();
         if (bills.length === 0) return res.status(404).json({ message: 'No Bill Found' });
         const approvedBills = bills.filter((bill) => bill.approvalStatus !== 'Pending')
@@ -43,6 +45,7 @@ const getDraftBills = async (req, res) => {
             .where('createdBy').equals(id)
             .populate('site.id')        // fetch full site details
             .populate('contractor.id') // fetch full contractor details
+            .sort({ createdAt: -1 }) // Sort by createdAt in descending order
             .exec();
         // console.log(bills)
         if (bills.length === 0) return res.status(404).json({ message: 'No Bill Found' });
@@ -76,6 +79,7 @@ const siteBill = async (req, res) => {
             .where('site.id').equals(id)
             .populate('site.id')        // fetch full site details
             .populate('contractor.id') // fetch full contractor details
+            .sort({ createdAt: -1 }) // Sort by createdAt in descending order
             .exec();
         if (!bills.length === 0) return res.status(404).json({ message: 'No Bill Found' });
         const approvedBills = bills.filter((bill) => bill.approvalStatus !== 'Pending')
@@ -135,6 +139,18 @@ const createBill = async (req, res) => {
             createdBy: user?._id,
         });
         const ContractorBill = await newContractorBill.save();
+        const existingUser = await User.findById(user._id).select('-password -refreshToken');
+        const employees = await User.find({ role: "Employee" });
+
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Bill Alert',
+                message: `A Bill created by ${existingUser.userName} for ${existingSite.name}`,
+                createdAt: `${ContractorBill.createdAt ? ContractorBill.createdAt.toLocaleString() : new Date().toLocaleString()}`,
+                // link: `/bill/${ContractorBill}`,
+            })
+            await employee.save()
+        }
         sendApproveByAdmin(ContractorBill, 'Bill', user?._id)
         sendApproveByIncharge(ContractorBill, 'Bill', user?._id)
         sendApproveByAccountHead(ContractorBill, 'Bill', user?._id)
@@ -168,6 +184,19 @@ const saveBill = async (req, res) => {
                 existingContractor.bill.push(bill._id);
                 await existingSite.save();
                 await existingContractor.save();
+
+                const existingUser = await User.findById(user._id).select('-password -refreshToken');
+                const employees = await User.find({ role: "Employee" });
+
+                for (const employee of employees) {
+                    employee.notification.push({
+                        title: 'Bill Alert',
+                        message: `A Bill created by ${existingUser.userName} for ${existingSite.name}`,
+                        createdAt: bill.updatedAt ? bill.updatedAt.toLocaleString() : new Date().toLocaleString(),
+                        link: `/bill/${bill.id}`,
+                    })
+                    await employee.save()
+                }
                 console.log('bill:', bill)
                 return res.status(201).json({ message: 'Bill Saved Successfuly' })
             } else {

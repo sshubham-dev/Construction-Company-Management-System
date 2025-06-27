@@ -19,6 +19,7 @@ const getAllApprovals = async (req, res) => {
         const id = req.params.id;
         const pendingApproval = await Approval.find()
             .where('to.id').equals(id)
+            .sort({ createdAt: -1 }) // Sort by createdAt in descending order
             .exec();
         if (pendingApproval.length === 0) return res.status(400).json({ message: 'No Approval Avaliable' });
         // console.log(pendingApproval)
@@ -34,6 +35,7 @@ const getAllRejects = async (req, res) => {
         const { id } = req.params;
         const reject = await Rejected.find()
             .where('by.id').equals(id)
+            .sort({ createdAt: -1 }) // Sort by createdAt in descending order
             .exec();
         if (reject.length === 0) return res.status(400).json({ message: 'No Reject Avaliable' });
         // console.log(pendingApproval)
@@ -49,6 +51,7 @@ const getApprovalById = async (req, res) => {
         const id = req.params.id;
         // console.log('id:', id)
         const approval = await Approval.findById(id)
+        .sort({ createdAt: -1 }) // Sort by createdAt in descending order
             .exec();
         // console.log(approval)
         if (!approval) return res.status(400).json({ message: 'No Approval Avaliable' });
@@ -65,6 +68,7 @@ const getAllApproved = async (req, res) => {
         const approved = await Approved.find()
             .where('by.id').equals(id)
             .populate('by')
+            .sort({ createdAt: -1 }) // Sort by createdAt in descending order
             .exec();
         if (approved.length === 0) return res.status(400).json({ message: 'No Approved Item Avaliable' });
         // console.log(pendingApproval)

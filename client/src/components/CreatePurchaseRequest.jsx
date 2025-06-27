@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 import Select from 'react-select';
 import axios from 'axios';
 import CreatableSelect from 'react-select/creatable';
@@ -55,7 +56,7 @@ const CreatePurchaseRequest = ({ onClose, id, index }) => {
     const [purchaseReqToEdit, setPurchaseReqToEdit] = useState(null);
     const { user } = useSelector((state) => state.auth);
     const [item, setItem] = useState('')
-
+  const dispatch = useDispatch();
     useEffect(() => {
         if (id && index !== undefined) {
             setRequirementToEdit({ id, index });
@@ -67,29 +68,26 @@ const CreatePurchaseRequest = ({ onClose, id, index }) => {
     }, [id, index]);
 
     useEffect(() => {
-        const fetchSite = async () => {
-            try {
-                const response = await axios.get('/api/v1/site');
-                if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
-                    console.log(response.data)
-                    const existingSites = user?.site;
-                    console.log(existingSites)
-                    let Sites = [];
-                    for (let site of response.data) {
-                        console.log(site)
-                        if (existingSites?.map(existingSite => existingSite.id.includes(site._id))) {
-                            console.log(site)
-                            Sites.push(site);
-                        }
-                    }
-                    setSite(Sites)
-                } else {
-                    setSite(response.data)
-                }
-            } catch (error) {
-                console.error(error.message)
+    const fetchSite = async () => {
+      try {
+        const response = await axios.get('/api/v1/site');
+        if (user.department === 'Site Incharge' || user.department === 'Site Supervisor') {
+          const existingSites = user?.site;
+          let SitesData = [];
+          for (let site of response.data) {
+            if (existingSites?.some(existingSite => existingSite.id === site._id)) {
+              SitesData.push(site);
             }
-        };
+          }
+          setSite(SitesData)
+          // console.log(SitesData)
+        } else {
+          setSite(response.data)
+        }
+      } catch (error) {
+        console.error(error.message)
+      }
+    };
         const fetchCategory = async () => {
             try {
                 const response = await axios.get('/api/v1/stock-group')
@@ -304,15 +302,18 @@ const CreatePurchaseRequest = ({ onClose, id, index }) => {
                 const response = await axios.put(`/api/v1/purchase-request/${purchaseReqToEdit}`, formData);
                 toast.success(response.data.message);
                 onClose()
+                          dispatch(fetchNotifications(user._id));
             } else if (requirementToEdit.id && requirementToEdit.index !== undefined) {
                 console.log(requirement)
                 const response = await axios.put(`/api/v1/purchase-request/${requirementToEdit.id}/requirement/${requirementToEdit.index}`, requirement);
                 toast.success(response.data.message);
-                // onClose()
+                          dispatch(fetchNotifications(user._id));
+                onClose()
             } else {
                 const response = await axios.post('/api/v1/purchase-request', formData);
                 toast.success(response.data.message);
                 onClose()
+                          dispatch(fetchNotifications(user._id));
             }
         } catch (error) {
             console.error('Error submitting purchase request:', error.message);
@@ -426,9 +427,9 @@ const CreatePurchaseRequest = ({ onClose, id, index }) => {
                                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                                         onChange={(e) => handleChange('site', e.target.value)}>
                                         <option>Select Site</option>
-                                        {sites.map((site, index) => (
-                                            <option key={index} value={site._id}>{site.name}</option>
-                                        ))}
+                  {sites.map((site, index) => (
+                    <option key={index} value={site._id}>{site.name}</option>
+                  ))}
                                     </select>
                                 </div>
 

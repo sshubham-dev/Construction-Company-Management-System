@@ -162,7 +162,7 @@ const Lead = () => {
                       <td className="p-3 text-sm text-gray-700">
                         <div className="flex flex-col">
                           <span>{lead?.location?.city || ''}</span>
-                          <span>{`${lead?.location?.district || ''}, ${lead?.location?.state || ''}`}</span>
+                          <span>{`${lead?.location?.district || ''} ${lead?.location?.state || ''}`}</span>
                         </div>
                       </td>
                       <td className="p-3 text-sm text-gray-700">

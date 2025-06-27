@@ -3,6 +3,7 @@ import axios from 'axios';
 import Select from 'react-select';
 import moment from 'moment';
 import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 const categories = ['Housekeeping', 'Safety'];
 
 const CreateChecklist = ({ onClose, isEdit }) => {
@@ -26,6 +27,7 @@ const CreateChecklist = ({ onClose, isEdit }) => {
   const [isAllChecked, setIsAllChecked] = useState(false);   // Flag to indicate if all works are checked
   const [checkListWork, setCheckListWork] = useState([]);
   const [projectDetails, setProjectDetails] = useState([]);
+    const dispatch = useDispatch();
   const status = [
     { value: 'N/A', label: 'N/A' },
     { value: 'Yes', label: 'Yes' },
@@ -167,8 +169,6 @@ const handleSubmit = () => {
   setShowChecklist(true);
 };
 
-
-
   const handleChecklistSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -177,10 +177,12 @@ const handleSubmit = () => {
         const response = await axios.put(`/api/v1/checklist/${isEdit}`, formData);
         console.log(response)
         onClose()
+                  dispatch(fetchNotifications(user._id));
       } else {
         const response = await axios.post('/api/v1/checklist', formData);
         console.log(response)
         onClose()
+                  dispatch(fetchNotifications(user._id));
       }
     } catch (error) {
       console.log(error)

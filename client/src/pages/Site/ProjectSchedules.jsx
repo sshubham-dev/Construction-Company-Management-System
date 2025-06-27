@@ -35,7 +35,7 @@ const ProjectSchedules = () => {
           // console.log(user)
           let ProjectSchedules = [];
           for (let site of sites) {
-            const filteredProjectSchedules = projectScheduleData.data.filter((projectSchedule) => projectSchedule.site?.id._id.includes(site.id))
+            const filteredProjectSchedules = projectScheduleData.data.filter((projectSchedule) => projectSchedule.site?.id._id === site.id)
             ProjectSchedules = [...ProjectSchedules, ...filteredProjectSchedules]
           }
           setProjectSchedule(ProjectSchedules)

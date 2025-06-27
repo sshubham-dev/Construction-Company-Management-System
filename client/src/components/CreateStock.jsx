@@ -5,7 +5,7 @@ import Select from "react-select";
 const CreateStock = ({ item, isEdit, onClose, onSave }) => {
     console.log(item)
     const [formData, setFormData] = useState({
-        name: item.name ? item.name : "",
+        name: "",
         code: '',
         category: "",
         unit: [],

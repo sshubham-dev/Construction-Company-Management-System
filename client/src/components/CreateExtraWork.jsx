@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 
 axios.defaults.withCredentials = true;
 
@@ -45,24 +46,21 @@ const CreateExtraWork = ({ onClose, id, index }) => {
     client: '',
   });
   const { user, isLoggedIn } = useSelector((state) => state.auth);
-
+  const dispatch = useDispatch();
   useEffect(() => {
     const fetchSite = async () => {
       try {
         const response = await axios.get('/api/v1/site');
-        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
-          console.log(response.data)
+        if (user.department === 'Site Incharge' || user.department === 'Site Supervisor') {
           const existingSites = user?.site;
-          console.log(existingSites)
-          let Sites = [];
+          let SitesData = [];
           for (let site of response.data) {
-            console.log(site)
-            if (existingSites?.map(existingSite => existingSite.id.includes(site._id))) {
-              console.log(site)
-              Sites.push(site);
+            if (existingSites?.some(existingSite => existingSite.id === site._id)) {
+              SitesData.push(site);
             }
           }
-          setSite(Sites)
+          setSite(SitesData)
+          // console.log(SitesData)
         } else {
           setSite(response.data)
         }
@@ -256,16 +254,19 @@ const CreateExtraWork = ({ onClose, id, index }) => {
         const response = await axios.put(`/api/v1/extra-work/${workToEdit}`, updatedFormData);
         toast.success(response.data.message)
         onClose()
+                  dispatch(fetchNotifications(user._id));
       } else if (detailToEdit.id !== '' && detailToEdit.index !== undefined) {
         const response = await axios.put(`/api/v1/extra-work/${detailToEdit.id}/work/${detailToEdit.index}`, updatedDetail);
         toast.success(response.data.message)
         onClose()
+                  dispatch(fetchNotifications(user._id));
       } else {
         console.log('updatedFormData:', updatedFormData)
         const response = await axios.post('/api/v1/extra-work', updatedFormData);
         console.log(response.data);
         toast.success(response.data.message)
         onClose()
+                  dispatch(fetchNotifications(user._id));
       }
     } catch (error) {
       console.error('Error submitting extra work:', error.message);
@@ -449,11 +450,9 @@ const CreateExtraWork = ({ onClose, id, index }) => {
               onChange={(e) => handleChange('site', e.target.value)}
             >
               <option>Site</option>
-              {sites.map((site, index) => (
-                <option key={index} value={site._id}>
-                  {site.name}
-                </option>
-              ))}
+                  {sites.map((site, index) => (
+                    <option key={index} value={site._id}>{site.name}</option>
+                  ))}
             </select>
           </div>
 

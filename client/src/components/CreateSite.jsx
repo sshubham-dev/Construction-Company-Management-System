@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 axios.defaults.withCredentials = true;
 
-const CreateSite = ({ onClose, isEdit}) => {
+const CreateSite = ({ onClose, isEdit }) => {
   const [site, setSite] = useState({
     name: '',
     client: '',
@@ -23,7 +24,7 @@ const CreateSite = ({ onClose, isEdit}) => {
     client: '',
     incharge: '',
     supervisor: '',
-    qualityEngineer:'',
+    qualityEngineer: '',
   })
   const [incharges, setIncharge] = useState([]);
   const [supervisors, setSupervisor] = useState([]);
@@ -33,7 +34,8 @@ const CreateSite = ({ onClose, isEdit}) => {
   const floors = ['Ground', 'G+1', 'G+2', 'G+3', 'G+4', 'G+5', 'G+6', 'First', 'Second'];
   const [siteIdToEdit, setSiteIdToEdit] = useState(null);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
-  
+  const dispatch = useDispatch();
+console.log(user._id)
   useEffect(() => {
     if (isEdit) {
       console.log(isEdit)
@@ -156,6 +158,7 @@ const CreateSite = ({ onClose, isEdit}) => {
           console.log(siteData.data);
           toast.success('Site created successfully');
           onClose()
+          dispatch(fetchNotifications(user._id));
         }
       }
     } catch (error) {
@@ -274,41 +277,41 @@ const CreateSite = ({ onClose, isEdit}) => {
         {/* Quality Engineer */}
         <div className="mb-4">
           <label htmlFor="qualityEngineer" className="block text-sm font-medium text-gray-600">
-          Quality Engineer
-          </label> 
-            <select
-              name="qualityEngineer"
-              onChange={handleChange}
-              value={site.qualityEngineer}
-              disabled={siteIdToEdit && user.department === 'Ceo'}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              <option>Assign an Quality incharge</option>
-              {qualityEngineers.map((qualityEngineer) => (
-                <option key={qualityEngineer._id} value={qualityEngineer._id}>
-                  {qualityEngineer.userName}
-                </option>
-              ))}
-            </select>
+            Quality Engineer
+          </label>
+          <select
+            name="qualityEngineer"
+            onChange={handleChange}
+            value={site.qualityEngineer}
+            disabled={siteIdToEdit && user.department === 'Ceo'}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <option>Assign an Quality incharge</option>
+            {qualityEngineers.map((qualityEngineer) => (
+              <option key={qualityEngineer._id} value={qualityEngineer._id}>
+                {qualityEngineer.userName}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Site Incharge */}
         <div className="mb-4">
           <label htmlFor="incharge" className="block text-sm font-medium text-gray-600">
             Site Incharge
-          </label> 
-            <select
-              name="incharge"
-              onChange={handleChange}
-              value={site.incharge}
-              disabled={siteIdToEdit && user.department === 'Ceo'}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              <option>Assign an incharge</option>
-              {incharges.map((incharge) => (
-                <option key={incharge._id} value={incharge._id}>
-                  {incharge.userName}
-                </option>
-              ))}
-            </select>
+          </label>
+          <select
+            name="incharge"
+            onChange={handleChange}
+            value={site.incharge}
+            disabled={siteIdToEdit && user.department === 'Ceo'}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <option>Assign an incharge</option>
+            {incharges.map((incharge) => (
+              <option key={incharge._id} value={incharge._id}>
+                {incharge.userName}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Site Supervisor */}

@@ -4,6 +4,7 @@ const {
     sendApproveByIncharge,
 } = require('./approval.controller.js');
 const Site = require('../models/site.models');
+const User = require('../models/user.models');
 
 // Create a new checklist
 const createChecklist = async (req, res) => {
@@ -43,6 +44,18 @@ const createChecklist = async (req, res) => {
         await existingSite.save();
         // sendApproveByAdmin(savedChecklist, 'CheckList', user._id)
         // sendApproveByIncharge(savedChecklist, 'CheckList', user._id)
+        const existingUser = await User.findById(user._id).select('-password -refreshToken');
+        const employees = await User.find({ role: "Employee" });
+
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Checklist Alert',
+                message: `A Check List added for ${savedChecklist.checkFor} on ${existingSite.name} by ${existingUser.userName}`,
+                createdAt: savedChecklist.createdAt ? savedChecklist.createdAt : new Date(),
+                link: `/checklist/${savedChecklist._id}`,
+            })
+            await employee.save()
+        }
         res.status(201).json(savedChecklist);
     } catch (error) {
         res.status(400).json({ error: error.message });

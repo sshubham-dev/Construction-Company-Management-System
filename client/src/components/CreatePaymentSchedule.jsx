@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 import Select from 'react-select';
 import moment from 'moment';
 
@@ -23,7 +24,7 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
     amount: '',
     paymentDate: '',
     status: '',
-    dueDate:'',
+    dueDate: '',
   });
   const [scheduleIdToEdit, setScheduleIdToEdit] = useState(null);
   const [paymentToEdit, setPaymentToEdit] = useState({ id: '', index: '' });
@@ -35,7 +36,7 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
   const statusOptions = ['Paid', 'Pending', 'Partially Paid'];
   const [clients, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState({ name: '', id: '' });
-
+  const dispatch = useDispatch();
   // useEffect(() => {
   //   const fetchClients = async () => {
   //     try {
@@ -64,19 +65,16 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
     const fetchSite = async () => {
       try {
         const response = await axios.get('/api/v1/site');
-        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
-          console.log(response.data)
+        if (user.department === 'Site Incharge' || user.department === 'Site Supervisor') {
           const existingSites = user?.site;
-          console.log(existingSites)
-          let Sites = [];
+          let SitesData = [];
           for (let site of response.data) {
-            console.log(site)
-            if (existingSites?.map(existingSite => existingSite.id.includes(site._id))) {
-              console.log(site)
-              Sites.push(site);
+            if (existingSites?.some(existingSite => existingSite.id === site._id)) {
+              SitesData.push(site);
             }
           }
-          setSite(Sites)
+          setSite(SitesData)
+          // console.log(SitesData)
         } else {
           setSite(response.data)
         }
@@ -222,14 +220,17 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
         const response = await axios.put(`/api/v1/payment-schedule/${scheduleIdToEdit}`, formData);
         toast.success(response.data.message);
         onClose()
+        dispatch(fetchNotifications(user._id));
       } else if (paymentToEdit.id && paymentToEdit.index !== undefined) {
         const response = await axios.put(`/api/v1/payment-schedule/${paymentToEdit.id}/paymentDetails/${paymentToEdit.index}`, paymentDetail);
         toast.success(response.data.message);
         onClose()
+        dispatch(fetchNotifications(user._id));
       } else {
         const response = await axios.post('/api/v1/payment-schedule', formData);
         toast.success(response.data.message);
         onClose()
+        dispatch(fetchNotifications(user._id));
       }
     } catch (error) {
       console.log('Error submitting payment schedule:', error.message);
@@ -315,8 +316,8 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   >
                     <option value="">Select Site</option>
-                    {sites.map((site) => (
-                      <option key={site._id} value={site._id}>{site.name}</option>
+                    {sites.map((site, index) => (
+                      <option key={index} value={site._id}>{site.name}</option>
                     ))}
                   </select>
                 </div>

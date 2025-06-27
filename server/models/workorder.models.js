@@ -39,7 +39,6 @@ const workOrderSchema = new mongoose.Schema({
     },
     workOrderNo: {
         type: String,
-        unique: true,
         index: true
     },
     contractor: {

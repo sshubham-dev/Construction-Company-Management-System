@@ -8,6 +8,7 @@ const {
     sendApproveByAccountHead,
 } = require('./approval.controller.js');
 const Site = require('../models/site.models');
+const User = require('../models/user.models');
 
 // Create a return
 const createReturn = async (req, res) => {
@@ -33,6 +34,18 @@ const createReturn = async (req, res) => {
             createdBy: user._id,
         });
         const savedReturn = await newReturn.save();
+        const existingUser = await User.findById(user._id).select('-password -refreshToken');
+        const employees = await User.find({ role: "Employee" });
+
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Material Retrun Alert',
+                message: `A Material Retrun Requested by ${existingUser.userName} for ${existingSite.name}`,
+                createdAt: savedReturn.createdAt ? savedReturn.createdAt : new Date(),
+                link: `/sites/return/${savedReturn._id}`,
+            })
+            await employee.save()
+        }
         res.status(201).json({ success: true, data: savedReturn });
     } catch (error) {
         console.log(error)
@@ -161,16 +174,16 @@ const updateReturnItem = async (req, res) => {
         const id = req.params.id;
         const index = req.params.index;
         const existingReturnRequest = await Return.findById(id);
-        if (!existingReturnRequest) {         
+        if (!existingReturnRequest) {
             return res.status(404).json({ success: false, message: 'Return not found' });
         }
         if (index < 0 || index >= existingReturnRequest.returnable.length) {
             return res.status(400).json({ success: false, message: 'Invalid index' });
         }
         const { item, quantity, unit, rate, receivedQuantity, remarks } = req.body;
-        if (!item || !quantity || !unit) {  
+        if (!item || !quantity || !unit) {
             return res.status(400).json({ success: false, message: 'Item, quantity, and unit are required' });
-        }   
+        }
         existingReturnRequest.returnable[index] = {
             item: item || existingReturnRequest.returnable[index].item,
             quantity: quantity || existingReturnRequest.returnable[index].quantity,

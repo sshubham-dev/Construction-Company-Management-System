@@ -6,7 +6,9 @@ const User = require('../models/user.models');
 Notification.get('/:userId', async (req, res) => {
   const { userId } = req.params; // Use req.params to get userId from URL
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
+      .sort({ 'notification.createdAt': -1 }) // Sort notifications by createdAt in descending order
+      .exec()
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -30,7 +32,9 @@ Notification.patch('/:userId/mark-read/:id', async (req, res) => {
   const { userId, id } = req.params;
 
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
+      .sort({ 'notification.createdAt': -1 }) // Sort notifications by createdAt in descending order
+      .exec()
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

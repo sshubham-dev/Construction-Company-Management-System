@@ -8,6 +8,7 @@ const {
     sendApproveByContractor,
     sendApproveByAccountHead,
 } = require('./approval.controller.js');
+const User = require('../models/user.models');
 
 
 const getExtraWorks = async (req, res) => {
@@ -88,7 +89,25 @@ const createExtraWork = async (req, res, next) => {
 
             sendApproveByAdmin(clientExtraWork, 'Extra Work', user._id)
             sendApproveByAccountHead(clientExtraWork, 'Extra Work', user._id)
+            const existingUser = await User.findById(user._id).select('-password -refreshToken');
+            const employees = await User.find({ role: "Employee" });
 
+            for (const employee of employees) {
+                employee.notification.push({
+                    title: 'Extra Work Alert',
+                    message: `Extra Work raised by ${existingUser.userName} for ${clientExtraWork.extraFor} on ${existingSite.name}`,
+                    createdAt: clientExtraWork.createdAt ? clientExtraWork.createdAt : new Date(),
+                    link: `/extra-work/${clientExtraWork._id}`,
+                })
+                await employee.save()
+            }
+            // existingClient.notification.push({
+            //     title: 'Extra Work Alert',
+            //     message: `Extra Work raised by ${existingUser.userName} for ${existingSite.name}`,
+            //     createdAt: clientExtraWork.createdAt ? clientExtraWork.createdAt : new Date(),
+            //     link: `/extra-work/${clientExtraWork._id}`,
+            // })
+            // await existingClient.save()
             res.status(201).json({ message: 'Extra Work Created Successfuly', clientExtraWork });
             next();
         }
@@ -113,6 +132,24 @@ const createExtraWork = async (req, res, next) => {
 
             sendApproveByAdmin(contractorExtraWork, 'Extra Work', user._id)
             sendApproveByAccountHead(contractorExtraWork, 'Extra Work', user._id)
+            const existingUser = await User.findById(user._id).select('-password -refreshToken');
+            const employees = await User.find({ role: "Employee" });
+
+            for (const employee of employees) {
+                employee.notification.push({
+                    title: 'Extra Work Alert',
+                    message: `Extra Work raised by ${existingUser.userName} for ${contractorExtraWork.extraFor} on ${existingSite.name}`,
+                    createdAt: contractorExtraWork.createdAt ? contractorExtraWork.createdAt : new Date(),
+                    link: `/extra-work/${contractorExtraWork._id}`,
+                })
+                await employee.save()
+            }
+            // contractorExtraWork.notification.push({
+            //     title: 'Extra Work Alert',
+            //     message: `Extra Work raised by ${existingUser.userName} for ${existingSite.name}`,
+            //     createdAt: contractorExtraWork.createdAt ? contractorExtraWork.createdAt : new Date(),
+            //     link: `/extra-work/${contractorExtraWork._id}`,
+            // })
             res.status(201).json({ message: 'Extra Work Created Successfuly', contractorExtraWork })
         }
         else return res.status(401).json({ message: 'All fields are mandantory' });

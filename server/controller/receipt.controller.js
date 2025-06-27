@@ -11,7 +11,7 @@ const { Ledger } = require("../models/ledger.models");
 const Receipt = require('../models/receipt.models');  // Adjust path as needed
 
 // Create a new receipt
-const createReceipt = async (req, res) => {
+const createReceipt = async (req, res) => { 
   try {
     const { receiptNo, date, from, to, receiptDetails, amount, description } = req.body;
 
@@ -24,7 +24,6 @@ const createReceipt = async (req, res) => {
       from:{
         name: existingFrom.name,
         id: existingFrom._id,
-        // type: existingFrom?.refrenceType,
       },
       to:{
         name: existingTo.name,

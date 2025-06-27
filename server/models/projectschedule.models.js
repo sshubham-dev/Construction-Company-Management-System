@@ -36,7 +36,6 @@ const projectScheduleSchema = new mongoose.Schema({
     },
     scheduleId: {
         type: String,
-        unique: true,
         trim: true,
     },
     createdBy: {

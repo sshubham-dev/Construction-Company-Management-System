@@ -40,7 +40,6 @@ const qualityScheduleSchema = new mongoose.Schema({
     },
     qualityScheduleId: {
         type: String,
-        unique: true,
         trim: true,
     },
     createdBy: {

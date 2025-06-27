@@ -1,5 +1,5 @@
 const Lead = require('../models/lead.models'); // Adjust the path as necessary
-
+const User = require('../models/user.models');
 // Create a new lead
 const createLead = async (req, res) => {
     try {
@@ -16,6 +16,17 @@ const createLead = async (req, res) => {
         console.log(req.body)
         const lead = new Lead(req.body);
         await lead.save();
+        const employees = await User.find({ role: "Employee" });
+
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Lead Alert',
+                message: `A new Lead add by ${lead.contactAgent}`,
+                createdAt: lead.createdAt ? lead.createdAt : new Date(),
+                link: `/crm/lead`,
+            })
+            await employee.save()
+        }
         res.status(201).json({ message: 'Lead created successfully', lead });
     } catch (error) {
         console.log(error)

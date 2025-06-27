@@ -6,6 +6,7 @@ const {
     sendApproveByAccountHead,
 } = require('./approval.controller.js');
 const Site = require('../models/site.models');
+const User = require('../models/user.models');
 
 // Create a new purchase request
 const createPurchaseRequest = async (req, res) => {
@@ -34,6 +35,18 @@ const createPurchaseRequest = async (req, res) => {
         sendApproveByAccountant(savedPurchaseRequest, 'Purchase Request', user._id)
         sendApproveByAccountHead(savedPurchaseRequest, 'Purchase Request', user._id)
         sendApproveByIncharge(savedPurchaseRequest, 'Purchase Request', user._id)
+        const existingUser = await User.findById(user._id).select('-password -refreshToken');
+        const employees = await User.find({ role: "Employee" });
+
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Purchase Request Alert',
+                message: `Purchase Request created by ${existingUser.userName} for ${savedPurchaseRequest.requirementFor} on ${existingSite.name}`,
+                createdAt: savedPurchaseRequest.createdAt ? savedPurchaseRequest.createdAt : new Date(),
+                link: `/purchase-request/${savedPurchaseRequest._id}`,
+            })
+            await employee.save()
+        }
         res.status(201).json({ message: 'Purchase Request created successfully', savedPurchaseRequest });
     } catch (err) {
         console.error(err);
@@ -58,6 +71,17 @@ const savePurchaserequest = async (req, res) => {
                 existingSite.purchaseRequest.push(purchaseRequest._id);
                 await existingSite.save();
                 console.log('purchaseRequest:', purchaseRequest)
+                const employees = await User.find({ role: "Employee" });
+
+                for (const employee of employees) {
+                    employee.notification.push({
+                        title: 'Purchase Request Alert',
+                        message: `Purchase Request for ${purchaseRequest.requirementFor} on ${existingSite.name} has been approved by all authorities`,
+                        createdAt: purchaseRequest.createdAt ? purchaseRequest.createdAt : new Date(),
+                        link: `/purchase-request/${purchaseRequest._id}`,
+                    })
+                    await employee.save()
+                }
                 return res.status(201).json({ message: 'purchaseRequest Saved Successfuly' })
             } else {
                 console.log('purchaseRequest is Not Approved By Every One')

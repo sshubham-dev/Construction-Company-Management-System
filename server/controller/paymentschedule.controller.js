@@ -5,6 +5,7 @@ const {
     sendApproveByAdmin,
     sendApproveByAccountHead,
 } = require('./approval.controller.js');
+const User = require('../models/user.models.js');
 
 const getPaymentSchedules = async (req, res) => {
     try {
@@ -23,7 +24,7 @@ const getPaymentSchedules = async (req, res) => {
 
 const getDraftPaymentSchedules = async (req, res) => {
     try {
-         const user = req.user;
+        const user = req.user;
         const paymentschedules = await PaymentSchedule.find()
             .populate('site.id')
             .where('approvalStatus').equals('Pending')
@@ -89,6 +90,18 @@ const createPaymentSchedule = async (req, res) => {
         if (!clientPaymentSchedule) return res.status(401).json({ error: 'Payment Schedule is not saved', error })
         sendApproveByAdmin(clientPaymentSchedule, 'Payment Schedule', user?._id)
         sendApproveByAccountHead(clientPaymentSchedule, 'Payment Schedule', user?._id)
+        const existingUser = await User.findById(user._id).select('-password -refreshToken');
+        const employees = await User.find({ role: "Employee" });
+
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Payment Schedule Alert',
+                message: `A Payment Schedule created by ${existingUser.userName} for ${existingSite.name}`,
+                createdAt: clientPaymentSchedule.createdAt ? clientPaymentSchedule.createdAt : new Date(),
+                link: `/payment-schedule/${clientPaymentSchedule._id}`,
+            })
+            await employee.save()
+        }
         return res.status(201).json({ message: 'Payment Schedule Created Successfuly', clientPaymentSchedule });
 
     } catch (error) {
@@ -114,6 +127,17 @@ const savePaymentSchedule = async (req, res) => {
                 existingSite.paymentSchedule = paymentSchedule._id;
                 await existingSite.save();
                 console.log('paymentSchedule:', paymentSchedule)
+                const employees = await User.find({ role: "Employee" });
+
+                for (const employee of employees) {
+                    employee.notification.push({
+                        title: 'Payment Schedule Alert',
+                        message: `${existingSite.name} Payment Schedule has been Approved`,
+                        createdAt: paymentSchedule.createdAt ? paymentSchedule.createdAt : new Date(),
+                        link: `/payment-schedule/${paymentSchedule._id}`,
+                    })
+                    await employee.save()
+                }
                 return res.status(201).json({ message: 'paymentSchedule Saved Successfuly' })
             } else {
                 console.log('paymentSchedule is Not Approved By Every One')

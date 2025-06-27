@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 import moment from "moment";
 
 axios.defaults.withCredentials = true;
@@ -26,6 +27,7 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
   ]);
   const [requestIdToEdit, setRequestIdToEdit] = useState(null);
   const [ItemToEdit, setItemToEdit] = useState({ id: '', index: '' });
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (editId && editIndex !== undefined) {
@@ -161,17 +163,20 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
         const response = await axios.put(`/api/v1/return/${ItemToEdit.id}/item/${ItemToEdit.index}`, returnable);
         console.log(response);
         onClose();
+        dispatch(fetchNotifications(user._id));
       } else if (requestIdToEdit) {
         console.log(formData)
         const response = await axios.put(`/api/v1/return/${requestIdToEdit}`, formData);
         console.log(response.data);
         onClose();
+        dispatch(fetchNotifications(user._id));
         // onSave(formData);
       } else {
         const response = await axios.post('/api/v1/return', formData)
         console.log(response);
         onClose();
         onSave(formData);
+        dispatch(fetchNotifications(user._id));
       }
     } catch (error) {
       console.log(error)

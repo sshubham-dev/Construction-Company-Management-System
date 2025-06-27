@@ -5,6 +5,7 @@ const {
     sendApproveByQuality,
 } = require('./approval.controller.js');
 const Site = require('../models/site.models');
+const User = require('../models/user.models');
 
 const getQualitySchedules = async (req, res) => {
     try {
@@ -87,7 +88,18 @@ const createQualitySchedule = async (req, res) => {
         sendApproveByAdmin(savedQualitySchedule, 'Quality Schedule', user._id)
         sendApproveByIncharge(savedQualitySchedule, 'Quality Schedule', user._id)
         sendApproveByQuality(savedQualitySchedule, 'Quality Schedule', user._id)
+        const existingUser = await User.findById(user._id).select('-password -refreshToken');
+        const employees = await User.find({ role: "Employee" });
 
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Quality Schedule Alert',
+                message: `A Quality Schedule created by ${existingUser.userName} for ${existingSite.name}`,
+                createdAt: savedQualitySchedule.createdAt ? savedQualitySchedule.createdAt : new Date(),
+                link: `/quality-schedule/${savedQualitySchedule._id}`,
+            })
+            await employee.save()
+        }
 
         return res.status(200).json({ message: 'Quality Check Schedule created Successfully', savedQualitySchedule });
     } catch (error) {
@@ -113,6 +125,17 @@ const saveQualitySchedule = async (req, res) => {
                 existingSite.qualitySchedule.push(qualitySchedule._id);
                 await existingSite.save({ validateBeforeSave: false });
                 console.log('qualitySchedule:', qualitySchedule)
+                const employees = await User.find({ role: "Employee" });
+
+                for (const employee of employees) {
+                    employee.notification.push({
+                        title: 'Quality Schedule Alert',
+                        message: `Quality Schedule for ${existingSite.name} has been approved`,
+                        createdAt: qualitySchedule.createdAt ? qualitySchedule.createdAt : new Date(),
+                        link: `/quality-schedule/${qualitySchedule._id}`,
+                    })
+                    await employee.save()
+                }
                 return res.status(201).json({ message: 'qualitySchedule Saved Successfuly' })
             } else {
                 console.log('qualitySchedule is Not Approved By Every One')

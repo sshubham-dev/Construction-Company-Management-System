@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 import Select from 'react-select';
 import moment from 'moment';
 
@@ -52,6 +53,7 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
     },
     status: 'Pending',
   })
+  const dispatch = useDispatch();
   useEffect(() => {
     if (id && index !== undefined) {
       fetchProjectDetail(id, index);
@@ -122,19 +124,16 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
     const fetchSite = async () => {
       try {
         const response = await axios.get('/api/v1/site');
-        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
-          console.log(response.data)
+        if (user.department === 'Site Incharge' || user.department === 'Site Supervisor') {
           const existingSites = user?.site;
-          console.log(existingSites)
-          let Sites = [];
+          let SitesData = [];
           for (let site of response.data) {
-            console.log(site)
-            if (existingSites?.map(existingSite => existingSite.id.includes(site._id))) {
-              console.log(site)
-              Sites.push(site);
+            if (existingSites?.some(existingSite => existingSite.id === site._id)) {
+              SitesData.push(site);
             }
           }
-          setSite(Sites)
+          setSite(SitesData)
+          // console.log(SitesData)
         } else {
           setSite(response.data)
         }
@@ -156,7 +155,7 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
 
     fetchSite();
     fetchWork();
-  }, [user]);
+  }, []);
   const handleChange = (field, value) => {
     setFormData(prevState => ({
       ...prevState,
@@ -286,16 +285,19 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
         const response = await axios.put(`/api/v1/project-schedule/${scheduleIdToEdit}`, formData);
         toast.success(response.data.message);
         onClose()
+        dispatch(fetchNotifications(user._id));
       } else if (projectToEdit.id !== '' && projectToEdit.index !== '') {
         console.log(projectDetail)
         await axios.put(`/api/v1/project-schedule/${projectToEdit.id}/projectDetails/${projectToEdit.index}`, projectDetail);
         toast.success('Edited successfully');
         onClose()
+        dispatch(fetchNotifications(user._id));
       } else {
         console.log('first', formData)
         const response = await axios.post('/api/v1/project-schedule', formData);
         toast.success(response.data.message);
         onClose()
+        dispatch(fetchNotifications(user._id));
       }
     } catch (error) {
       console.error('Error submitting project schedule:', error);
@@ -448,8 +450,8 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   >
                     <option>{scheduleIdToEdit ? data.site : 'Site'}</option>
-                    {sites.map((site) => (
-                      <option key={site._id} value={site._id}>
+                    {sites.map((site, index) => (
+                      <option key={index} value={site._id}>
                         {site.name}
                       </option>
                     ))}

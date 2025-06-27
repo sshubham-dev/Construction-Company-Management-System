@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import Select from 'react-select';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 import moment from 'moment';
 
 axios.defaults.withCredentials = true;
@@ -31,7 +32,7 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
   });
   const { user } = useSelector((state) => state.auth);
   const statusOptions = ['Started', 'Completed', 'Pending', 'Partially Completed'];
-
+  const dispatch = useDispatch();
   useEffect(() => {
     if (id && index !== undefined) {
       fetchScheduleDetail(id, index);
@@ -80,19 +81,16 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
     const fetchSite = async () => {
       try {
         const response = await axios.get('/api/v1/site');
-        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
-          // console.log(response.data)
+        if (user.department === 'Site Incharge' || user.department === 'Site Supervisor') {
           const existingSites = user?.site;
-          // console.log(existingSites)
-          let Sites = [];
+          let SitesData = [];
           for (let site of response.data) {
-            // console.log(site)
-            if (existingSites?.map(existingSite => existingSite.id._id === site._id)) {
-              // console.log(site)
-              Sites.push(site);
+            if (existingSites?.some(existingSite => existingSite.id === site._id)) {
+              SitesData.push(site);
             }
           }
-          setSite(Sites)
+          setSite(SitesData)
+          // console.log(SitesData)
         } else {
           setSite(response.data)
         }
@@ -167,14 +165,17 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
         const response = await axios.put(`/api/v1/quality-schedule/${scheduleIdToEdit}`, formData);
         toast.success(response.data.message);
         onClose()
+                  dispatch(fetchNotifications(user._id));
       } else if (workToEdit.id && workToEdit.index) {
         await axios.put(`/api/v1/quality-schedule/${workToEdit.id}/workDetails/${workToEdit.index}`, workDetail);
         toast.success('Edited successfully');
         onClose()
+                  dispatch(fetchNotifications(user._id));
       } else {
         const response = await axios.post('/api/v1/quality-schedule', formData);
         toast.success(response.data.message);
         onClose()
+                  dispatch(fetchNotifications(user._id));
       }
     } catch (error) {
       console.log('Error submitting quality schedule:', error.message);
@@ -270,9 +271,9 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
                 onChange={(e) => handleChange('site', e.target.value)}
               >
                 <option>{scheduleIdToEdit ? data : 'Select Site'}</option>
-                {sites.map((site) => (
-                  <option key={site._id} value={site._id}>{site.name}</option>
-                ))}
+                  {sites.map((site, index) => (
+                    <option key={index} value={site._id}>{site.name}</option>
+                  ))}
               </select>
             </div>
 

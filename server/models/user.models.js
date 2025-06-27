@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema({
     },
     department: {
         type: String,
-        enum: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Account Head', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer'],
+        enum: ['Admin', 'Company', 'Client', 'Supplier', 'Contractor', 'Accountant', 'Account Head', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Store Helper'],
         default: null,
     },
     avatar: {
