@@ -916,7 +916,7 @@ const sendApproveByAdmin = async (data, approvalof, by) => {
             .select('-password -refreshToken')
             .exec();
 
-        console.log(existingUser)
+        // console.log(existingUser)
 
         if (!existingUser) {
             console.log('User not found');
@@ -933,7 +933,7 @@ const sendApproveByAdmin = async (data, approvalof, by) => {
             approvalOf: approvalof,
         });
         const adminApprove = await newApproval.save();
-        console.log(adminApprove)
+        // console.log(adminApprove)
         if (admin) {
             admin.pending.push(adminApprove._id);
             await admin.save();
@@ -983,8 +983,8 @@ const sendApproveByAdmin = async (data, approvalof, by) => {
 
 const sendApproveByIncharge = async (data, approvalof, by) => {
     try {
-        console.log('data', data)
-        console.log('data:', { data })
+        // console.log('data', data)
+        // console.log('data:', { data })
         const existingIncharge = await User.findOne()
             .where('department').equals('Site Incharge')
             .where('site.id').equals(data.site.id)
@@ -1000,7 +1000,7 @@ const sendApproveByIncharge = async (data, approvalof, by) => {
             .select('-password -refreshToken')
             .exec();
 
-        console.log(existingUser)
+        // console.log(existingUser)
 
         if (!existingUser) {
             console.log('User not found');
@@ -1024,7 +1024,7 @@ const sendApproveByIncharge = async (data, approvalof, by) => {
             console.log('inchargeApprove is not saved');
         }
 
-        console.log('inchargeApprove:', inchargeApprove)
+        // console.log('inchargeApprove:', inchargeApprove)
     } catch (error) {
         console.log(error);
     }
@@ -1045,7 +1045,7 @@ const sendApproveByAccountant = async (data, approvalof, by) => {
             .select('-password -refreshToken')
             .exec();
 
-        console.log(existingUser)
+        // console.log(existingUser)
 
         if (!existingUser) {
             console.log('User not found');
@@ -1087,12 +1087,12 @@ const sendApproveByAccountHead = async (data, approvalof, by) => {
             console.log('User not found');
             return;
         }
-        console.log('existingAccountant:', existingAccountant)
+        // console.log('existingAccountant:', existingAccountant)
         const existingUser = await User.findById(by)
             .select('-password -refreshToken')
             .exec();
 
-        console.log(existingUser)
+        // console.log(existingUser)
 
         if (!existingUser) {
             console.log('User not found');
@@ -1133,7 +1133,7 @@ const sendApproveByQuality = async (data, approvalof, by) => {
             .select('-password -refreshToken')
             .exec();
 
-        console.log(existingUser)
+        // console.log(existingUser)
 
         if (!existingUser) {
             console.log('User not found');
@@ -1176,7 +1176,7 @@ const sendApproveByContractor = async (data, approvalof, by) => {
             .select('-password -refreshToken')
             .exec();
 
-        console.log(existingUser)
+        // console.log(existingUser)
 
         if (!existingUser) {
             console.log('User not found');
@@ -1201,7 +1201,7 @@ const sendApproveByContractor = async (data, approvalof, by) => {
             console.log('contractorApprove is not saved');
         }
 
-        console.log('contractorApprove:', contractorApprove)
+        // console.log('contractorApprove:', contractorApprove)
     } catch (error) {
         console.log(error);
     }

@@ -3,74 +3,73 @@ const mongoose = require('mongoose');
 // Schema for journal entries
 const journalEntrySchema = new mongoose.Schema({
     account: {
-        name: String,
+        name: String, // optional for quick view
         id: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Ledger', // Reference to the Account model
-        }
+            ref: 'Ledger', // auto-linked, not typed manually
+            required: true,
+        },
     },
-    debit: {
-        type: Number,
-        default: 0, // Amount to be debited
-    },
-    credit: {
-        type: Number,
-        default: 0, // Amount to be credited
-    },
-    description: {
+    type: {
         type: String,
-        required: true, // Description of the transaction
+        enum: ['Debit', 'Credit'],
+        required: true,
     },
-    date: {
-        type: Date,
-        required: true, // Date of the entry
+    amount: {
+        type: Number,
+        required: true,
+    },
+    reference: {
+        type: String,
+    },
+    referenceId: { 
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: 'reference', // dynamic reference 
     },
 });
 
 const journalSchema = new mongoose.Schema({
     voucherNo: {
         type: String,
-        required: true, // Unique voucher number
+        required: true,
+        unique: true,
+    },
+    narration: String,
+    entries: [journalEntrySchema], // Must have at least one debit and one credit
+    totalDebit: Number,
+    totalCredit: Number,
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     },
     date: {
         type: Date,
-        required: true, // Date of the voucher
+        required: true,
     },
-    narration: {
-        type: String,
-        required: true, // Narration/Description of the voucher
-    },
-    entries: [journalEntrySchema], // Array of journal entries
-    totalDebit: {
-        type: Number,
-        required: true
-    }, // Sum of all debit amounts
-    totalCredit: {
-        type: Number,
-        required: true
-    }, // Sum of all credit amounts
-    createdBy: {
+    costCenter: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    }, // User who created the journal entry
+        ref: 'CostCenter',
+    }
 }, { timestamps: true });
 
 journalSchema.pre('save', function (next) {
-    const totalDebit = this.entries.reduce((sum, entry) => sum + entry.debit, 0);
-    const totalCredit = this.entries.reduce((sum, entry) => sum + entry.credit, 0);
+    let debit = 0, credit = 0;
 
-    if (totalDebit !== totalCredit) {
-        return next(new Error('Total debit and credit amounts must be equal.'));
+    for (let entry of this.entries) {
+        if (entry.type === 'Debit') debit += entry.amount;
+        else if (entry.type === 'Credit') credit += entry.amount;
     }
 
-    this.totalDebit = totalDebit;
-    this.totalCredit = totalCredit;
+    if (debit !== credit) {
+        return next(new Error('Total debit and credit must be equal.'));
+    }
+
+    this.totalDebit = debit;
+    this.totalCredit = credit;
     next();
 });
 
 const Journal = mongoose.model('Journal', journalSchema);
-
-
 
 const stockJournalSchema = new mongoose.Schema({
     voucherNumber: { type: String, required: true, unique: true }, // Unique identifier for the stock journal

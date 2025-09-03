@@ -3,130 +3,142 @@ const { Ledger } = require('../models/ledger.models');
 
 // Create Contra voucher
 const createContra = async (req, res) => {
-    try {
-        // console.log(req.body)
-        const { voucherNo, date, description, from, to, amount } = req.body;
-        const fromAccount = await Ledger.findById(from)
-        const toAccount = await Ledger.findById(to)
-        const newContra = new Contra({
-            voucherNo,
-            date,
-            description,
-            from: {
-                name: fromAccount.name,
-                id: fromAccount._id,
-            },
-            to: {
-                name: toAccount.name,
-                id: toAccount._id,
-            },
-            amount,
-        });
-        const savedContra = await newContra.save();
-        console.log(savedContra)
-        fromAccount.paid = parseInt(fromAccount.paid) + parseInt(amount);
-        fromAccount.balance = parseInt(fromAccount.balance) - parseInt(amount);
-        fromAccount.transaction.push({id: savedContra._id, type:'Contra', amount})
-        toAccount.transaction.push({id: savedContra._id, type:'Contra', amount})
-        toAccount.received = parseInt(toAccount.received) + parseInt(amount);
-        toAccount.balance = parseInt(toAccount.balance) + parseInt(amount);
-        await fromAccount.save();
-        await toAccount.save();
-        res.status(201).json({ message: 'Contra voucher created successfully' });
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ message: 'Error creating contra voucher' });
+  try {
+    const { voucherNo, date, from, to, amount, description } = req.body;
+
+    if (!from || !to || !amount) {
+      return res.status(400).json({ message: "Missing required fields" });
     }
+
+    const fromLedger = await Ledger.findById(from);
+    const toLedger = await Ledger.findById(to);
+
+    if (!fromLedger || !toLedger) {
+      return res.status(404).json({ message: "One or both ledgers not found" });
+    }
+
+    const contra = new Contra({
+      voucherNo,
+      date,
+      from: { id: from, name: fromLedger.name },
+      to: { id: to, name: toLedger.name },
+      amount,
+      description,
+    });
+
+    fromLedger.balance = (fromLedger.balance || 0) - amount;
+    toLedger.balance = (toLedger.balance || 0) + amount;
+
+    fromLedger.transaction.push({ id: contra._id, type: "Contra", amount: -amount });
+    toLedger.transaction.push({ id: contra._id, type: "Contra", amount });
+
+    await contra.save();
+    await fromLedger.save();
+    await toLedger.save();
+
+    res.status(201).json(contra);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Get all Contra vouchers
 const getAllContra = async (req, res) => {
-    try {
-        const contras = await Contra.find();
-        res.status(200).json(contras);
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ message: 'Error fetching contra vouchers', error: error.message });
-    }
+  try {
+    const contras = await Contra.find().sort({ date: -1 });
+    res.json(contras);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Get single Contra voucher by Id
 const getContra = async (req, res) => {
-    try {
-        const id = req.params.id;
-        const contra = await Contra.findById(id)
-            .populate('fromAccount.id')
-            .populate('toAccount.id')
-            .populate('createdBy');
-
-        if (!contra) {
-            return res.status(404).json({ message: 'Contra voucher not found' });
-        }
-        res.status(200).json(contra);
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ message: 'Error fetching contra voucher', error: error.message });
-    }
+  try {
+    const contra = await Contra.findById(req.params.id);
+    if (!contra) return res.status(404).json({ message: "Contra not found" });
+    res.json(contra);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Get single Contra voucher by voucherNo
 const getContraByVoucherNo = async (req, res) => {
-    try {
-        const contra = await Contra.findOne({ voucherNo: req.params.voucherNo })
-            .populate('fromAccount.id')
-            .populate('toAccount.id')
-            .populate('createdBy');
+  try {
+    const contra = await Contra.findOne({ voucherNo: req.params.voucherNo })
+      .populate('fromAccount.id')
+      .populate('toAccount.id')
+      .populate('createdBy');
 
-        if (!contra) {
-            return res.status(404).json({ message: 'Contra voucher not found' });
-        }
-
-        res.status(200).json({ message: 'Contra voucher retrieved successfully', data: contra });
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ message: 'Error fetching contra voucher', error: error.message });
+    if (!contra) {
+      return res.status(404).json({ message: 'Contra voucher not found' });
     }
+
+    res.status(200).json({ message: 'Contra voucher retrieved successfully', data: contra });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Error fetching contra voucher', error: error.message });
+  }
 };
 
 // Update Contra voucher
 const updateContra = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { date, description, fromAccount, toAccount, amount } = req.body;
-
-        const updatedContra = await Contra.findByIdAndUpdate(
-            id,
-            { date, description, fromAccount, toAccount, amount },
-            { new: true }
-        ).populate('fromAccount.id').populate('toAccount.id').populate('createdBy');
-
-        if (!updatedContra) {
-            return res.status(404).json({ message: 'Contra voucher not found' });
-        }
-
-        res.status(200).json({ message: 'Contra voucher updated successfully'});
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ message: 'Error updating contra voucher', error: error.message });
-    }
+  try {
+    const contra = await Contra.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(contra);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 };
 
 // Delete Contra voucher
 const deleteContra = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const contra = await Contra.findById(req.params.id);
+    if (!contra) return res.status(404).json({ message: "Contra not found" });
 
-        const deletedContra = await Contra.findByIdAndDelete(id);
+    await Ledger.findByIdAndUpdate(contra.from.id, {
+      $pull: { transaction: { id: contra._id } },
+      $inc: { balance: contra.amount },
+    });
 
-        if (!deletedContra) {
-            return res.status(404).json({ message: 'Contra voucher not found' });
-        }
+    await Ledger.findByIdAndUpdate(contra.to.id, {
+      $pull: { transaction: { id: contra._id } },
+      $inc: { balance: -contra.amount },
+    });
 
-        res.status(200).json({ message: 'Contra voucher deleted successfully'});
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ message: 'Error deleting contra voucher', error: error.message });
-    }
+    await contra.deleteOne();
+    res.json({ message: "Contra deleted" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-module.exports = { createContra, getAllContra, getContraByVoucherNo, updateContra, deleteContra, getContra }
+const getNextContraNo = async (req, res) => {
+  try {
+    console.log("Fetching latest Contra...");
+    const latest = await Contra.findOne().sort({ createdAt: -1 });
+    console.log("Latest Contra:", latest);
+
+    let nextNumber = 1;
+    if (latest && latest.voucherNo) {
+      const match = latest.voucherNo.match(/\d+$/);
+      if (match) {
+        const lastNumber = parseInt(match[0], 10);
+        nextNumber = lastNumber + 1;
+      }
+    }
+
+    const padded = String(nextNumber).padStart(4, '0');
+    const nextVoucherNo = `CTRA-${padded}`;
+
+    res.json({ voucherNo: nextVoucherNo });
+  } catch (error) {
+    console.error("Error in getNextContraNo:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+module.exports = { createContra, getAllContra, getContraByVoucherNo, updateContra, deleteContra, getContra, getNextContraNo };

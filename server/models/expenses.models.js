@@ -1,38 +1,29 @@
 const mongoose = require('mongoose');
 
-const expensesSchema = new mongoose.Schema({
-    recordFor: String,
-    to: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Ledger',
-    },
-    by: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-    },
-    paidTo: String,
-    unit: String,
-    amount: Number,
-    quantity: Number,
-    rate: Number,
-    paymentMode: {
-        type: String
-    },
-    date: {
-        type: Date,
-        default: Date.now,
-    },
-    purpose: {
-        type: String,
-        required: true,
-    },
-    remarks: {
-        type: String,
-    },
-    slip: {
-        type: String,
-    }
+const expenseSchema = new mongoose.Schema({
+  date: { type: Date, 
+    required: true 
+  },
+  amount: { type: Number, 
+    required: true 
+  },
+  from: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Ledger',
+    // required: true
+  },
+  to: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Ledger',
+    required: true
+  },
+  purpose: { type: String },
+  photo: { type: String },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
 }, { timestamps: true });
 
-const Expenses = mongoose.model('Expenses', expensesSchema);
-module.exports = Expenses;
+module.exports = mongoose.model('Expense', expenseSchema);

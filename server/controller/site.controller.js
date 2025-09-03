@@ -9,6 +9,7 @@ const ProjectSchedule = require('../models/projectschedule.models');
 const PurchaseOrder = require('../models/purchaseOrder.models.js');
 const ExtraWork = require('../models/extrawork.models.js');
 const uploadOnCloudinary = require('../utils/cloudinary.js');
+const { addLedgerAndCostCenterForSite } = require('./ledger.controller.js');
 
 const getSites = async (req, res) => {
     try {
@@ -153,7 +154,7 @@ const createSite = async (req, res) => {
             console.log('Site not saved:', savedSite);
             return res.status(500).json({ error: 'Site Not Created' });
         }
-
+        await addLedgerAndCostCenterForSite(savedSite);
         existingClient.site = { id: savedSite._id, name: savedSite.name };
         await existingClient.save();
 
@@ -173,17 +174,17 @@ const createSite = async (req, res) => {
                 await existingQuality.save();
             }
         }
-                const employees = await User.find({ role: "Employee" });
-        
-                for (const employee of employees) {
-                    employee.notification.push({
-                        title: 'Site Alert',
-                        message: `${savedSite.incharge.name} is assigned with a new site, ${savedSite.name}`,
-                        createdAt: savedSite.createdAt ? savedSite.createdAt : new Date(),
-                        link: `/site/${savedSite._id}`,
-                    })
-                    await employee.save()
-                }
+        const employees = await User.find({ role: "Employee" });
+
+        for (const employee of employees) {
+            employee.notification.push({
+                title: 'Site Alert',
+                message: `${savedSite.incharge.name} is assigned with a new site, ${savedSite.name}`,
+                createdAt: savedSite.createdAt ? savedSite.createdAt : new Date(),
+                link: `/site/${savedSite._id}`,
+            })
+            await employee.save()
+        }
         res.status(201).json({ message: 'Site Created Successfuly', savedSite });
     } catch (error) {
         console.log(error)
@@ -336,32 +337,40 @@ const deleteSite = async (req, res) => {
 
         // console.log('existingContractor:', existingContractors);
         for (const contractor of existingContractors) {
-            const index = contractor?.site?.id.indexOf(deletedSite._id);
-            if (index !== -1) {
-                contractor.site.splice(index, 1);
-                await contractor.save();
-            }
+            contractor.site = contractor.site.filter(s => s.id?.toString() !== deletedSite._id.toString());
+            await contractor.save();
+
         }
 
-        existingClient.site = null;
-        await existingClient.save({ validateBeforeSave: false });
+        if (existingClient) {
+            existingClient.site = null;
+            await existingClient.save({ validateBeforeSave: false });
+        }
 
-        if (deletedSite.supervisor !== '') {
-            if (existingSupervisor !== '') {
-                existingSupervisor?.site.splice(deletedSite._id, 1);
+        if (deletedSite.supervisor && existingSupervisor) {
+            const index = existingSupervisor.site?.findIndex(id => id.toString() === deletedSite._id.toString());
+            if (index !== -1) {
+                existingSupervisor.site.splice(index, 1);
                 await existingSupervisor.save();
             }
         }
 
-        existingIncharge?.site.splice(deletedSite._id, 1);
-        await existingIncharge.save();
+        if (existingIncharge) {
+            const index = existingIncharge.site?.findIndex(id => id.toString() === deletedSite._id.toString());
+            if (index !== -1) {
+                existingIncharge.site.splice(index, 1);
+                await existingIncharge.save();
+            }
+        }
 
-        if (deletedSite.qualityEngineer !== '') {
-            if (existingQuality !== '') {
-                existingQuality.site.splice(deletedSite._id, 1);
+        if (deletedSite.qualityEngineer && existingQuality) {
+            const index = existingQuality.site?.findIndex(id => id.toString() === deletedSite._id.toString());
+            if (index !== -1) {
+                existingQuality.site.splice(index, 1);
                 await existingQuality.save();
             }
         }
+
 
         // find the collections related with site & delete this site from them to - todo
         return res.status(200).json({ message: 'Site Deleted Successfuly' });

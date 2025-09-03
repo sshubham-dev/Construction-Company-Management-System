@@ -100,12 +100,14 @@ const convertToClient = async (req, res) => {
 const updateClient = async (req, res) => {
     try {
         const id = req.params.id;
-        const { userId, name, email, gstNo, password, contactNo, whatsapp, address, isUser } = req.body;
-        const userExist = await User.findById(name);
-        if (!userExist) return res.status(404).json({ message: 'User not Found' });
-
+        const { name, email, gstNo, password, contactNo, whatsapp, address, isUser } = req.body;
+        console.log(name)
         const existingClient = await Client.findById(id);
         if (!existingClient) return res.status(404).json({ message: 'Client not found' });
+
+        const userExist = await User.findById(existingClient.userId).select('-password -refreshToken');
+        if (!userExist) return res.status(404).json({ message: 'User not Found' });
+
 
         existingClient.userId = userExist._id || existingClient?.userId,
             existingClient.name = userExist?.userName || existingClient?.name,

@@ -15,6 +15,45 @@ const {
     sendApproveByQuality,
     sendApproveByContractor,
 } = require('./approval.controller.js')
+const { Ledger } = require('../models/ledger.models.js');
+const { Journal } = require('../models/journal.models.js');
+
+const generateBillNo = async (req, res) => {
+    try {
+        const siteId = req.body.site;
+
+        if (!siteId) {
+            return res.status(400).json({ error: "Site ID is required" });
+        }
+
+        const site = await Site.findById(siteId);
+        if (!site || !site.siteId) {
+            return res.status(404).json({ error: "Site not found or siteId missing" });
+        }
+
+        const sitePrefix = site.siteId.toUpperCase(); // Use saved siteId like "OTC"
+        const prefix = `${sitePrefix}/BILL/`;
+
+        const lastBill = await Bill.findOne({ 'site.id': siteId, billNo: { $regex: `^${prefix}` } })
+            .sort({ createdAt: -1 });
+
+        let nextNumber = 1;
+        if (lastBill?.billNo) {
+            const match = lastBill.billNo.match(/(\d+)$/);
+            if (match) {
+                nextNumber = parseInt(match[1], 10) + 1;
+            }
+        }
+
+        const padded = String(nextNumber).padStart(3, '0');
+        const billNo = `${prefix}${padded}`;
+
+        return res.json({ billNo });
+    } catch (error) {
+        console.error("Error generating bill number:", error);
+        return res.status(500).json({ error: error.message });
+    }
+};
 
 const getBills = async (req, res) => {
     try {
@@ -104,8 +143,8 @@ const createBill = async (req, res) => {
             billOf,
             toPay,
         } = req.body;
-        console.log('site', site)
-        console.log('contractor', contractor)
+        // console.log('site', site)
+        // console.log('contractor', contractor)
 
         const existingSite = await Site.findById(site);
         const existingContractor = await Contractor.findById(contractor);
@@ -177,7 +216,11 @@ const saveBill = async (req, res) => {
         const existingSite = await Site.findById(bill?.site?.id);
         const existingContractor = await Contractor.findById(bill?.contractor?.id);
         if (bill.createdBy.toString() === user?._id.toString()) {
-            if (bill.adminApprove === 'Approved' && bill.accountheadApprove === 'Approved' && bill.inchargeApprove === 'Approved' && bill.qualityApprove === 'Approved') {
+            if (
+                bill.adminApprove === 'Approved' && bill.accountheadApprove === 'Approved' && 
+                bill.inchargeApprove === 'Approved'
+                && bill.qualityApprove === 'Approved'
+            ) {
                 bill.approvalStatus = 'Approved'
                 await bill.save();
                 existingSite.bill.push(bill._id);
@@ -198,7 +241,46 @@ const saveBill = async (req, res) => {
                     await employee.save()
                 }
                 console.log('bill:', bill)
-                return res.status(201).json({ message: 'Bill Saved Successfuly' })
+                res.status(201).json({ message: 'Bill Saved Successfuly' })
+                
+                const contractorLedger = await Ledger.findOne({ referenceId: existingContractor._id, referenceType: 'Contractor' });
+                const siteLedger = await Ledger.findOne({ referenceId: existingSite._id, referenceType: 'Site' });
+
+                if (contractorLedger && siteLedger) {
+                    const voucherCount = await Journal.countDocuments();
+                    const voucherNo = `JRN-${String(voucherCount + 1).padStart(4, '0')}`;
+
+                    const newJournal = new Journal({
+                        voucherNo,
+                        date: new Date(),
+                        narration: `Bill for ${existingContractor.name} at site ${existingSite.name}`,
+                        entries: [
+                            {
+                                account: { name: contractorLedger.name, id: contractorLedger._id },
+                                type: 'Debit',
+                                amount: bill.totalAmount, // Contractor is to receive
+                                reference: 'Bill',
+                                referenceId: bill._id,
+                            },
+                            {
+                                account: { name: siteLedger.name, id: siteLedger._id },
+                                type: 'Credit',
+                                amount: bill.totalAmount, // Site is being charged
+                                reference: 'Bill',
+                                referenceId: bill._id,
+                            },
+                        ],
+                        createdBy: user._id,
+                    });
+
+                    await newJournal.save();
+
+                    // Optionally update ledger balance or add to transaction log
+                    contractorLedger.payable = (contractorLedger.payable || 0) + bill.totalAmount;
+                    siteLedger.paid = (siteLedger.paid || 0) + bill.totalAmount;
+                    await contractorLedger.save();
+                    await siteLedger.save();
+                }
             } else {
                 console.log('Bill is Not Approved By Every One')
                 return res.status(400).json({ message: 'Bill is Not Approved By Every One' });
@@ -207,6 +289,7 @@ const saveBill = async (req, res) => {
             console.log('Unauthorized Request')
             return res.status(401).json({ message: 'Unauthorized Request' })
         }
+
     } catch (error) {
         console.log(error)
         res.status(500).json({ message: 'Internal Server Error', error });
@@ -270,7 +353,6 @@ const updateBill = async (req, res) => {
     }
 };
 
-
 const deleteBill = async (req, res) => {
     try {
         const id = req.params.id;
@@ -303,4 +385,5 @@ module.exports = {
     siteBill,
     saveBill,
     getDraftBills,
+    generateBillNo
 }

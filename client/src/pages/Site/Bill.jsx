@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux'
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast';
 import { GrEdit } from "react-icons/gr";
 import { FaExternalLinkAlt } from "react-icons/fa";
@@ -44,7 +44,7 @@ const Bills = () => {
           console.log('Filtered contractor bills:', contractorBills);
           setContractorBill(contractorBills);
         } else {
-          setContractorBill(bills.filter((bill) => bill.billFor === 'Contractor'));
+          setContractorBill(bills);
         }
       } catch (error) {
         console.error('Error fetching bills:', error);
@@ -55,19 +55,26 @@ const Bills = () => {
       try {
         const billData = await axios.get(`/api/v1/bill/draft/${user?._id}`);
         const bills = billData.data;
-        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge' && isLoggedIn) {
-          const sites = user?.site;
-          let draftBills;
-          for (let site of sites) {
-            draftBills = bills?.filter((bill) => bill.site?.id?._id?.toString() === site.id?.toString())
-          }
+        console.log('Draft Bills Fetched:', bills);
+
+        if ((user.department === 'Site Supervisor' || user.department === 'Site Incharge') && isLoggedIn) {
+          const sites = user?.site || [];
+          const draftBills = bills?.filter((bill) => {
+            const billSiteId = bill?.site?.id?._id?.toString?.() || bill?.site?.id?.toString?.();
+            return sites?.some((site) => site.id?.toString?.() === billSiteId);
+          });
+
           setDraftBill(draftBills);
-          console.log('draftBills', draftBills)
+          console.log('Filtered Draft Bills:', draftBills);
+        } else {
+          setDraftBill(bills);
         }
       } catch (error) {
-        console.error(error)
+        console.error('Error fetching draft bills:', error);
       }
     };
+
+
     getbills();
     getDraftBills();
   }, [])
@@ -146,7 +153,7 @@ const Bills = () => {
                 {contractorBill?.map((bill) => (
                   <tr key={bill._id} className='border-b border-blue-gray-200'>
                     <td className="px-6 py-4">
-                      <p className=""> {bill.site?.name}</p>
+                      <Link to={`/bill/${bill._id}`} className=""> {bill.site?.name}</Link>
                       <p className="text-gray-500 text-sm font-semibold tracking-wide"> {bill.contractor?.name} </p>
                     </td>
                     <td className="px-6 py-4">
@@ -189,10 +196,10 @@ const Bills = () => {
                   </thead>
                   {/* Table Body */}
                   <tbody className="divide-y divide-gray-200">
-                    {draftBill?.map((bill) => (
-                      <tr key={bill?._id} className='border-b border-blue-gray-200'>
+                    {draftBill?.map((bill, index) => (
+                      <tr key={index} className='border-b border-blue-gray-200'>
                         <td className="px-6 py-4">
-                          <p className=""> {bill.site?.name}</p>
+                          <Link to={`/bill/${bill._id}`} className=""> {bill.site?.name}</Link>
                           <p className="text-gray-500 text-sm font-semibold tracking-wide"> {bill.contractor?.name} </p>
                         </td>
                         <td className="px-6 py-4">

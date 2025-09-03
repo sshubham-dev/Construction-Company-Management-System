@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast';
 import Header from '../../components/Header';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { GrEdit } from "react-icons/gr";
 import { MdAdd, MdDelete } from "react-icons/md";
@@ -106,7 +106,7 @@ const PurchaseRequest = () => {
               <tbody>
                 {purchaseRequest.map((request, index) => (
                   <tr key={index} className="bg-white border-b hover:bg-gray-50 ">
-                    <td className="p-3 text-left">{request.site.name}</td>
+                    <Link to={`/purchase-request/${request._id}`} className="p-3 text-left">{request.site.name}</Link>
                     <td className="p-3 text-left">{request.requirementFor}</td>
                     <td className="p-3 text-left">{request.category}</td>
                     <td className="p-3 text-left">{request.status}</td>
@@ -146,7 +146,7 @@ const PurchaseRequest = () => {
               <tbody>
                 {purchaseRequest.map((request, index) => (
                   <tr key={index} className="bg-white border-b hover:bg-gray-50 ">
-                    <td className="p-3 text-left">{request.site.name}</td>
+                    <Link to={`/purchase-request/${request._id}`} className="p-3 text-left">{request.site.name}</Link>
                     <td className="p-3 text-left flex flex-col">
                       <p>
                         {request.requirementFor}

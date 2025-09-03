@@ -42,12 +42,12 @@ const MorePage = ({options}) => {
       role: ['Admin', 'Company', 'Ceo', 'Account Head']
     },
 
-    // {
-    //   to: '/site-kharchi',
-    //   name: 'Expenses Record',
-    //   icon: <GiExpense size={22} />,
-    //   role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
-    // },
+    {
+      to: '/site-kharchi',
+      name: 'Expenses Record',
+      icon: <GiExpense size={22} />,
+      role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
+    },
 
     {
       to: '/approval',

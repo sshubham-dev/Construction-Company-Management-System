@@ -1,145 +1,190 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import Select from "react-select";
+
+const adjustmentMethods = [
+  { value: "Advance", label: "Advance" },
+  { value: "New Ref", label: "New Ref" },
+  { value: "Agst Ref", label: "Against Ref" },
+  { value: "On Account", label: "On Account" },
+];
 
 const CreateJournal = ({ onClose }) => {
-    const [journalType, setJournalType] = useState(''); // State for selected journal type
-    const [voucherNumber, setVoucherNumber] = useState('');
-    const [date, setDate] = useState('');
-    const [narration, setNarration] = useState('');
-    const [journalEntries, setJournalEntries] = useState([{ account: '', debit: 0, credit: 0 }]);
-    const [stockItems, setStockItems] = useState([{ item: '', quantity: 0, rate: 0, amount: 0, adjustmentType: 'Increase', reason: '' }]);
-    const [submittedData, setSubmittedData] = useState(null);
+  const [ledgers, setLedgers] = useState([]);
+  const [entries, setEntries] = useState([]);
+  const [voucherNo, setVoucherNo] = useState("");
+  const [date, setDate] = useState("");
+  const [narration, setNarration] = useState("");
+  const [loading, setLoading] = useState(false);
 
-
-    const handleJournalTypeChange = (e) => {
-        setJournalType(e.target.value);
+  useEffect(() => {
+    const fetchLedgers = async () => {
+      const res = await axios.get("/api/v1/ledger");
+      setLedgers(res.data);
     };
-
-    const addJournalEntry = (e) => {
-        e.preventDefault()
-        setJournalEntries([...journalEntries, { account: '', debit: 0, credit: 0 }]);
+    const generateVoucherNo = async () => {
+      const res = await axios.get("/api/v1/journal/next-voucher");
+      setVoucherNo(res.data.voucherNo);
     };
+    fetchLedgers();
+    generateVoucherNo();
+  }, []);
 
-    const addStockItem = (e) => {
-        e.preventDefault()
-        setStockItems([...stockItems, { item: '', quantity: 0, rate: 0, amount: 0, adjustmentType: 'Increase', reason: '' }]);
-    };
+  const addEntry = () => {
+    setEntries((prev) => [
+      ...prev,
+      {
+        account: null,
+        type: "From", // or 'To'
+        amount: 0,
+        method: null,
+        reference: "",
+      },
+    ]);
+  };
 
-    const updateJournalEntry = (index, field, value) => {
-        const newEntries = [...journalEntries];
-        newEntries[index][field] = value;
-        setJournalEntries(newEntries);
-    };
+  const updateEntry = (index, field, value) => {
+    const updated = [...entries];
+    updated[index][field] = value;
+    setEntries(updated);
+  };
 
-    const updateStockItem = (index, field, value) => {
-        const newItems = [...stockItems];
-        newItems[index][field] = value;
+  const isBalanced = () => {
+    const totalFrom = entries
+      .filter((e) => e.type === "From")
+      .reduce((acc, e) => acc + Number(e.amount || 0), 0);
+    const totalTo = entries
+      .filter((e) => e.type === "To")
+      .reduce((acc, e) => acc + Number(e.amount || 0), 0);
+    return totalFrom === totalTo;
+  };
 
-        // Calculate amount when quantity or rate changes
-        if (field === 'quantity' || field === 'rate') {
-            const quantity = Number(newItems[index].quantity);
-            const rate = Number(newItems[index].rate);
-            newItems[index].amount = quantity * rate;
-        }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!isBalanced()) {
+      alert("Debit and credit amounts must be equal!");
+      return;
+    }
+    setLoading(true);
+    try {
+      await axios.post("/api/v1/journal", {
+        voucherNo,
+        date,
+        narration,
+        entries,
+      });
+      onClose();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setStockItems(newItems);
-    };
+  return (
+    <div className="p-4 max-w-3xl mx-auto space-y-5">
+      <h2 className="text-xl font-semibold">Create Journal Entry</h2>
 
-    const totalJournalDebit = journalEntries.reduce((sum, e) => sum + Number(e.debit), 0);
-    const totalJournalCredit = journalEntries.reduce((sum, e) => sum + Number(e.credit), 0);
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <input
+          type="text"
+          value={voucherNo}
+          readOnly
+          className="border p-2 rounded w-full"
+          placeholder="Voucher No"
+        />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+      </div>
 
-    const submitForm = (e) => {
-        e.preventDefault();
-        const data = {
-            voucherNumber,
-            date,
-            narration,
-            journalType,
-            journalEntries,
-            stockItems,
-            totalDebit: totalJournalDebit,
-            totalCredit: totalJournalCredit,
-        };
-        setSubmittedData(data);
-        onClose()
-        console.log('Submitted Data:', data);
-    };
+      <div className="space-y-5">
+        {entries.map((entry, index) => (
+          <div
+            key={index}
+            className="p-4 border rounded-md space-y-3 bg-white shadow-sm"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+              <Select
+                options={ledgers.map((l) => ({
+                  value: l._id,
+                  label: l.name,
+                }))}
+                placeholder="Account"
+                value={ledgers
+                  .map((l) => ({ value: l._id, label: l.name }))
+                  .find((opt) => opt.value === entry.account)}
+                onChange={(e) => updateEntry(index, "account", e.value)}
+              />
+              <select
+                className="border p-2 rounded"
+                value={entry.type}
+                onChange={(e) => updateEntry(index, "type", e.target.value)}
+              >
+                <option value="From">From (Debit)</option>
+                <option value="To">To (Credit)</option>
+              </select>
+              <input
+                type="number"
+                placeholder="Amount"
+                value={entry.amount}
+                onChange={(e) =>
+                  updateEntry(index, "amount", parseFloat(e.target.value) || 0)
+                }
+                className="border p-2 rounded"
+              />
+              <Select
+                options={adjustmentMethods}
+                placeholder="Adjustment"
+                onChange={(e) => updateEntry(index, "method", e.value)}
+              />
+              <input
+                type="text"
+                placeholder="Reference"
+                value={entry.reference}
+                onChange={(e) =>
+                  updateEntry(index, "reference", e.target.value)
+                }
+                className="border p-2 rounded"
+              />
+            </div>
+          </div>
+        ))}
+        <button
+          onClick={addEntry}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          + Add Entry
+        </button>
+      </div>
 
-    return (
-        <div >
-            <form className="space-y-4" onSubmit={submitForm}>
-                {/* <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value={journalType} onChange={handleJournalTypeChange}>
-                        <option value="">Select Journal Type</option>
-                        <option value="journal">Journal</option>
-                        <option value="stock">Stock Journal</option>
-                    </select> */}
+      <textarea
+        className="border w-full p-2 rounded mt-4"
+        placeholder="Narration"
+        value={narration}
+        onChange={(e) => setNarration(e.target.value)}
+      />
 
-                <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Voucher Number" value={voucherNumber} onChange={(e) => setVoucherNumber(e.target.value)} />
+      <div className="flex justify-end gap-4 mt-4">
+        <button
+          type="button"
+          onClick={onClose}
+          className="bg-gray-500 text-white px-4 py-2 rounded"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSubmit}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          {loading ? "Saving..." : "Submit Journal"}
+        </button>
+      </div>
+    </div>
+  );
+};
 
-                <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Narration" value={narration} onChange={(e) => setNarration(e.target.value)} />
-
-                {/* {journalType === 'journal' && (
-                        <> */}
-                <h3 className="text-lg font-bold">Entries</h3>
-                {journalEntries.map((entry, index) => (
-                    <div key={index} className="flex flex-col sm:flex-row md:flex-row lg:flex-row gap-2">
-                        <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value={entry.account} onChange={(e) => updateJournalEntry(index, 'account', e.target.value)}>
-                            <option value="">Select Account</option>
-                        </select>
-
-                        <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" placeholder="Debit" value={entry.debit} onChange={(e) => updateJournalEntry(index, 'debit', e.target.value)} />
-
-                        <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" placeholder="Credit" value={entry.credit} onChange={(e) => updateJournalEntry(index, 'credit', e.target.value)} />
-                    </div>
-                ))}
-                <button onClick={addJournalEntry} className="mt-4 px-4 py-2 bg-gray-300 rounded">Add Journal Entry</button>
-                <div className="mt-4 flex justify-between flex-col sm:flex-row md:flex-row lg:flex-row">
-                    <strong>Total Debit: </strong>{totalJournalDebit}
-                    <strong>Total Credit: </strong>{totalJournalCredit}
-                </div>
-                {/* </>
-                    )} */}
-                {/* 
-                    {journalType === 'stock' && (
-                        <>
-                            <h3 className="text-lg font-bold">Stock Items</h3>
-                            {stockItems.map((item, index) => (
-                                <div key={index} className="grid grid-cols-3 gap-3">
-                                    <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Item ID" value={item.item} onChange={(e) => updateStockItem(index, 'item', e.target.value)} />
-                                    <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" placeholder="Quantity" value={item.quantity} onChange={(e) => updateStockItem(index, 'quantity', e.target.value)} />
-                                    <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" placeholder="Rate" value={item.rate} onChange={(e) => updateStockItem(index, 'rate', e.target.value)} />
-                                    <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" placeholder="Amount" value={item.amount} readOnly />
-                                    <select className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value={item.adjustmentType} onChange={(e) => updateStockItem(index, 'adjustmentType', e.target.value)}>
-                                        <option value="Increase">Increase</option>
-                                        <option value="Decrease">Decrease</option>
-                                    </select>
-                                    <input className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Reason" value={item.reason} onChange={(e) => updateStockItem(index, 'reason', e.target.value)} />
-                                </div>
-                            ))}
-                            <button onClick={addStockItem} className="mt-3 px-4 py-2 bg-gray-300 rounded">Add Stock Item</button>
-                        </>
-                    )} */}
-
-                <div className="flex justify-end gap-4 mt-4">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="bg-gray-500 text-white p-2 rounded"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        onClick={submitForm}
-                        className=" bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                        Submit
-                    </button>
-                </div>
-                {/* <button onClick={submitForm} className="mt-3 px-4 py-2 bg-blue-500 text-white rounded">Submit</button> */}
-            </form>
-        </div>
-    );
-
-}
-
-export default CreateJournal
+export default CreateJournal;

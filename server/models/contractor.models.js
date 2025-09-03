@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { syncLedger } = require('../utils/ledgerSync');
 
 const contractorSchema = new mongoose.Schema({
     name: {
@@ -20,11 +21,15 @@ const contractorSchema = new mongoose.Schema({
     },
     address: {
         type: String,
+        // street: String,
+        // city: String,
+        // district: String,
+        // state: String,
     },
     addhar: {
         type: String,
     },
-    pan: {
+    panNo: {
         type: String,
     },
     bank: {
@@ -72,22 +77,76 @@ const contractorSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Work_Order'
     }],
-    account: {
-        payable: {
-            type: Number,
-        },
-        paid: {
-            type: Number,
-        },
-        balance: {
-            type: Number,
-        },
-    },
     ledger: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Ledger'
+        ref: 'Ledger',
+    },
+    payments: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Payment',
+    }],
+    // Site-wise work and billing
+    projects: [{
+        site: {
+            name: String,
+            id: { type: mongoose.Schema.Types.ObjectId, ref: 'Site' },
+        },
+        workOrderValue: Number,
+        billsGenerated: Number,
+        paid: Number,
+        due: Number,
+    }],
+    // Financial summary
+    totalWorkOrder: {
+        type: Number,
+        default: 0,
+    },
+    totalBilled: {
+        type: Number,
+        default: 0,
+    },
+    totalPaid: {
+        type: Number,
+        default: 0,
+    },
+    totalDue: {
+        type: Number,
+        default: 0,
+    },
+    account: {
+        advance: Number, // Optional, if advance paid
+        pendingWorkValue: Number, // Optional
+    },
+    status: {
+        type: String,
+        default: 'Active',
+        enum: ['Active', 'Inactive', 'Blocked'],
     }
 }, { timestamps: true })
+
+contractorSchema.pre('save', async function (next) {
+    try {
+        const ledgerId = await syncLedger({
+            doc: this,
+            type: 'Contractor',
+            fieldsToWatch: ['name', 'gstNo', 'panNo', 'address', 'email', 'phone', 'whatsapp'],
+            under: 'Sundry Creditors',
+            getAddress: (doc) => ({
+                name: doc.name,
+                address: doc.address,
+            }),
+            getTaxDetails: (doc) => ({
+                gstNo: doc.gstNo || '',
+                panNo: doc.panNo || ''
+            }),
+        });
+    if (ledgerId) this.ledger = ledgerId;
+        next();
+    } catch (err) {
+        console.error('Error in contractor ledger sync:', err);
+        next(err);
+    }
+});
 
 const Contractor = mongoose.model('Contractor', contractorSchema);
 module.exports = Contractor;

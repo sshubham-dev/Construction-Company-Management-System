@@ -75,6 +75,7 @@ import ReturnOrderScreen from './screen/ReturnOrderScreen.jsx';
 import Receipt_Payment from './pages/ERP/Receipt_Payment.jsx';
 import Contra from './pages/ERP/Contra.jsx';
 import ERPReport from './pages/ERP/ERPReport.jsx';
+import LedgerList from './pages/ERP/Ledger.jsx';
 import Journal from './pages/ERP/Journal.jsx';
 import ReturnRequest from './pages/Site/Return.jsx';
 import AttendanceReport from './pages/HR/Attendance.jsx';
@@ -206,6 +207,7 @@ const App = () => {
         <Route path='/erp/inventory/purchase' element={<Purchase />} />
         <Route path='/erp/inventory/order' element={<Order />} />
         {/* <Route path='/erp/journal' element={<Journal />} /> */}
+        <Route path='/erp/ledger' element={<LedgerList  />} />
         <Route path='/erp/receipt_payment' element={<Receipt_Payment />} />
         <Route path='/erp/contra' element={<Contra />} />
         <Route path='/erp/stock/journal' element={<Order />} />
@@ -227,7 +229,7 @@ const App = () => {
         <Route path='/crm/project' element={<Project />} />
         <Route path='/crm/Invoice' element={<Invoice />} />
 
-        <Route path='/site-kharchi' element={<SiteKharchi />} />
+        <Route path='/site-kharchi' element={<Expenses />} />
 
 
         <Route path='/work-details' element={<WorkDetails />} />

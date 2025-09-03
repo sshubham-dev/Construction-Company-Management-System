@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast';
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
@@ -143,10 +143,10 @@ const PaymentSchedules = () => {
                 </thead>
 
                 <tbody className="divide-y divide-gray-200">
-                  {paymentSchedules?.map((paymentSchedule) => (
-                    <tr key={paymentSchedule._id} className='border-b border-blue-gray-200'>
+                  {paymentSchedules?.map((paymentSchedule, index) => (
+                    <tr key={index} className='border-b border-blue-gray-200'>
                       <td className="px-6 py-4">
-                        <p className=""> {paymentSchedule.site?.name} </p>
+                        <Link to={`/payment-schedule/${paymentSchedule._id}`} className=""> {paymentSchedule.site?.name} </Link>
                         <p className="text-gray-500 text-sm font-semibold tracking-wide"> {paymentSchedule.client?.name} </p>
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -191,7 +191,7 @@ const PaymentSchedules = () => {
                   {draftPaymentSchedules?.map((paymentSchedule) => (
                     <tr key={paymentSchedule._id} className='border-b border-blue-gray-200'>
                       <td className="px-6 py-4">
-                        <p className=""> {paymentSchedule.site?.name} </p>
+                        <Link to={`/payment-schedule/${paymentSchedule._id}`} className=""> {paymentSchedule.site?.name} </Link>
                         <p className="text-gray-500 text-sm font-semibold tracking-wide"> {paymentSchedule.client?.name} </p>
                       </td>
                       <td className="px-6 py-4 text-center">

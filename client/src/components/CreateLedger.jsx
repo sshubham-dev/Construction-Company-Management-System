@@ -7,8 +7,10 @@ const LedgerModal = ({ onClose }) => {
     name: "",
     alias: "",
     under: "",
-    isGSTApplicable: false,
-    isTDSDeductible: false,
+    statutoryDetails: {
+      isGSTApplicable: false,
+      isTDSDeductible: false,
+    },
     mailingDetails: {
       name: "",
       address: "",
@@ -27,6 +29,9 @@ const LedgerModal = ({ onClose }) => {
     },
     openingBalance: 0,
   });
+  const [referenceType, setReferenceType] = useState("");
+  const [referenceId, setReferenceId] = useState("");
+  const [createCostCenter, setCreateCostCenter] = useState(false);
   const [users, setUser] = useState([]);
   const [ledgerGroups, setLedgerGroup] = useState([]);
 
@@ -76,8 +81,16 @@ const LedgerModal = ({ onClose }) => {
           [bankingField]: value,
         },
       }));
-    }
-    else if (type === "checkbox") {
+    } else if (name.startsWith('statutoryDetails.')) {
+      const field = name.split('.')[1];
+      setLedger((prev) => ({
+        ...prev,
+        statutoryDetails: {
+          ...prev.statutoryDetails,
+          [field]: checked,
+        },
+      }));
+    } else if (type === "checkbox") {
       setLedger((prev) => ({ ...prev, [name]: checked }));
     } else {
       setLedger((prev) => ({ ...prev, [name]: value }));
@@ -87,8 +100,12 @@ const LedgerModal = ({ onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/v1/ledger', ledger);
-      console.log(response)
+      const response = await axios.post('/api/v1/ledger', {
+        ...ledger,
+        refrenceType: referenceType,
+        refrenceId: referenceId,
+        createCostCenter,
+      });
       console.log("Ledger Data:", ledger);
       onClose();
     } catch (error) {
@@ -99,9 +116,7 @@ const LedgerModal = ({ onClose }) => {
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Ledger Name & Alias */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
           <div>
             <label className="block text-sm font-medium">Name</label>
             <input
@@ -113,7 +128,6 @@ const LedgerModal = ({ onClose }) => {
               required
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium">Alias</label>
             <input
@@ -125,10 +139,8 @@ const LedgerModal = ({ onClose }) => {
               required
             />
           </div>
-
         </div>
 
-        {/* Account Group Selection */}
         <div>
           <label className="block text-sm font-medium">Under</label>
           <Select
@@ -139,12 +151,11 @@ const LedgerModal = ({ onClose }) => {
           />
         </div>
 
-        {/* Statutory Details */}
         <div className="flex items-center">
           <input
             type="checkbox"
-            name="isGSTApplicable"
-            checked={ledger.isGSTApplicable}
+            name="statutoryDetails.isGSTApplicable"
+            checked={ledger.statutoryDetails.isGSTApplicable}
             onChange={handleChange}
             className="mr-2"
           />
@@ -154,141 +165,83 @@ const LedgerModal = ({ onClose }) => {
         <div className="flex items-center">
           <input
             type="checkbox"
-            name="isTDSDeductible"
-            checked={ledger.isTDSDeductible}
+            name="statutoryDetails.isTDSDeductible"
+            checked={ledger.statutoryDetails.isTDSDeductible}
             onChange={handleChange}
             className="mr-2"
           />
           <label className="text-md font-medium">Is TDS Deductible</label>
         </div>
 
-        {/* Mailing Details */}
         <p className="mt-3 font-bold">Mailing Details</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium">Name</label>
-            <input
-              type="text"
-              name="mailingDetails.name"
-              value={ledger.mailingDetails.name}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Address</label>
-            <input
-              type="text"
-              name="mailingDetails.address"
-              value={ledger.mailingDetails.address}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">State</label>
-            <input
-              type="text"
-              name="mailingDetails.state"
-              value={ledger.mailingDetails.state}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-            />
-          </div>
+          <input type="text" name="mailingDetails.name" value={ledger.mailingDetails.name} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Name" />
+          <input type="text" name="mailingDetails.address" value={ledger.mailingDetails.address} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Address" />
+          <input type="text" name="mailingDetails.state" value={ledger.mailingDetails.state} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="State" />
         </div>
 
-        {/* Banking Details */}
         <h3 className="mt-3 font-bold">Banking Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium">Name</label>
-            <input
-              type="text"
-              name="bankingDetails.name"
-              value={ledger.bankingDetails.name}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Account Number</label>
-            <input
-              type="text"
-              name="bankingDetails.acNo"
-              value={ledger.bankingDetails.acNo}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">IFSC Code</label>
-            <input
-              type="text"
-              name="bankingDetails.ifscCode"
-              value={ledger.bankingDetails.ifscCode}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Bank Name</label>
-            <input
-              type="text"
-              name="bankingDetails.bankname"
-              value={ledger.bankingDetails.bankname}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Branch</label>
-            <input
-              type="text"
-              name="bankingDetails.branch"
-              value={ledger.bankingDetails.branch}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-            />
-          </div>
+          <input type="text" name="bankingDetails.name" value={ledger.bankingDetails.name} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Name" />
+          <input type="text" name="bankingDetails.acNo" value={ledger.bankingDetails.acNo} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Account Number" />
+          <input type="text" name="bankingDetails.ifscCode" value={ledger.bankingDetails.ifscCode} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="IFSC Code" />
+          <input type="text" name="bankingDetails.bankname" value={ledger.bankingDetails.bankname} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Bank Name" />
+          <input type="text" name="bankingDetails.branch" value={ledger.bankingDetails.branch} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Branch" />
         </div>
 
-        {/* Tax Details */}
         <div>
           <label className="block text-sm font-medium">PAN No</label>
-          <input
-            type="text"
-            name="taxRegistrationDetails.panNo"
-            value={ledger.taxRegistrationDetails.panNo}
-            onChange={handleChange}
-            className="w-full border px-3 py-2 rounded-md"
-          />
+          <input type="text" name="taxRegistrationDetails.panNo" value={ledger.taxRegistrationDetails.panNo} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" />
         </div>
 
         <div>
           <label className="block text-sm font-medium">GSTIN/UIN</label>
-          <input
-            type="text"
-            name="taxRegistrationDetails.gstin"
-            value={ledger.taxRegistrationDetails.gstin}
-            onChange={handleChange}
-            className="w-full border px-3 py-2 rounded-md"
-          />
+          <input type="text" name="taxRegistrationDetails.gstin" value={ledger.taxRegistrationDetails.gstin} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" />
         </div>
 
-        {/* Opening Balance */}
         <div>
           <label className="block text-sm font-medium">Opening Balance</label>
-          <input
-            type="number"
-            name="openingBalance"
-            value={ledger.openingBalance}
-            onChange={handleChange}
-            min='0'
-            className="w-full border px-3 py-2 rounded-md"
+          <input type="number" name="openingBalance" value={ledger.openingBalance} onChange={handleChange} min='0' className="w-full border px-3 py-2 rounded-md" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Reference Type</label>
+          <Select
+            value={{ label: referenceType, value: referenceType }}
+            onChange={(e) => setReferenceType(e.value)}
+            options={[
+              { label: "Client", value: "Client" },
+              { label: "Site", value: "Site" },
+              { label: "Contractor", value: "Contractor" },
+              { label: "Supplier", value: "Supplier" },
+              { label: "Employee", value: "Employee" },
+            ]}
           />
         </div>
 
-        {/* Action Buttons */}
+        <div>
+          <label className="block text-sm font-medium">Reference</label>
+          <Select
+            value={referenceId}
+            onChange={(e) => setReferenceId(e.value)}
+            options={users
+              .filter(u => u.role?.toLowerCase() === referenceType?.toLowerCase())
+              .map(u => ({ value: u._id, label: u.userName }))}
+            placeholder={`Select ${referenceType}`}
+          />
+        </div>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            name="createCostCenter"
+            checked={createCostCenter}
+            onChange={(e) => setCreateCostCenter(e.target.checked)}
+            className="mr-2"
+          />
+          <label className="text-md font-medium">Also create Cost Center</label>
+        </div>
+
         <div className="flex justify-end space-x-3 mt-4">
           <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-400 text-white rounded-md">
             Cancel

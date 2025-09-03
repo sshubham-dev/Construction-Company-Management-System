@@ -55,7 +55,7 @@ const createEmployee = async (req, res) => {
         const employeeExist = await Employee.findOne({
             $and: [{ name }, { email }, { employeeNo }]
         });
-        console.log('employeeExist',employeeExist)
+        console.log('employeeExist', employeeExist)
 
         if (employeeExist) return res.status(400).json({ error: 'Validation Error' });
 
@@ -70,7 +70,7 @@ const createEmployee = async (req, res) => {
             department,
             birthdate,
             addhar,
-            pan,
+            panNo: pan,
             cv,
             offerletter,
             bank,
@@ -82,11 +82,11 @@ const createEmployee = async (req, res) => {
         if (!createdEmployee) return res.status(500).json({ error: 'Validation Error' });
         res.status(200).json({ message: 'Employee Registration Completed Successfully' });
         console.log('saved:', createdEmployee)
-        if (createdEmployee.isUser === true) { 
+        if (createdEmployee.isUser === true) {
             console.log('Converting to user:', createdEmployee._id);
             const password = `${name}@${phone}`;
             await convertToUser(createdEmployee._id, 'Employee', password, 'Create');
-        } 
+        }
     } catch (error) {
         console.log(error)
         res.status(500).json({ error: 'Something went wrong' });
@@ -95,90 +95,90 @@ const createEmployee = async (req, res) => {
 
 
 const updateEmployeeData = async (req, res) => {
-    try {
-        const id = req.params.id;
-        const {
-            name,
-            email,
-            password,
-            contactNo,
-            whatsapp,
-            employeeNo,
-            address,
-            addhar,
-            pan,
-            cv,
-            offerletter,
-            bank,
-            joinDate,
-            department,
-            birthdate,
-            salary,
-            salarySlip,
-            isUser,
-        } = req.body;
+  try {
+    const id = req.params.id;
+    const {
+      name,
+      email,
+      password,
+      contactNo,
+      whatsapp,
+      employeeNo,
+      address,
+      addhar,
+      pan,
+      cv,
+      offerletter,
+      bank,
+      joinDate,
+      department,
+      birthdate,
+      salary,
+      salarySlip,
+      isUser,
+    } = req.body;
 
-        console.log('Received Data:', req.body);
+    console.log('Received Data:', req.body);
 
-        // Ensure `isUser` is boolean
-        const isUserBoolean = isUser === 'true' || isUser === true;
+    // Ensure `isUser` is a proper boolean
+    const isUserBoolean = isUser === 'true' || isUser === true;
 
-        // Check and update Employee
-        const updatedEmployeeData = await Employee.findByIdAndUpdate(
-            id,
-            {
-                $set: {
-                    name,
-                    email,
-                    password,
-                    contactNo,
-                    whatsapp,
-                    employeeNo,
-                    address,
-                    addhar,
-                    pan,
-                    cv,
-                    offerletter,
-                    bank,
-                    joinDate,
-                    department,
-                    birthdate,
-                    salary,
-                    salarySlip,
-                    isUser: isUserBoolean,
-                },
-            },
-            { new: true }
-        );
+    // Fetch employee
+    const employee = await Employee.findById(id);
+    if (!employee) return res.status(404).json({ error: 'Employee not found' });
 
-        if (!updatedEmployeeData) return res.status(404).json({ error: 'Employee not Found' });
+    // Update fields
+    employee.name = name;
+    employee.email = email;
+    employee.password = password;
+    employee.contactNo = contactNo;
+    employee.whatsapp = whatsapp;
+    employee.employeeNo = employeeNo;
+    employee.address = address;
+    employee.addhar = addhar;
+    employee.panNo = pan;
+    employee.cv = cv;
+    employee.offerletter = offerletter;
+    employee.bank = bank;
+    employee.joinDate = joinDate;
+    employee.department = department;
+    employee.birthdate = birthdate;
+    employee.salary = salary;
+    employee.salarySlip = salarySlip;
+    employee.isUser = isUserBoolean;
 
-        console.log('Updated Employee:', updatedEmployeeData);
+    await employee.save(); // 🔥 Triggers pre('save') hook for ledger sync
 
-        // Convert Employee to User if `isUser` is true and `userId` is missing
-        if (updatedEmployeeData.isUser === true && !updatedEmployeeData.userId) {
-            console.log('Converting to user:', updatedEmployeeData._id);
-            const employeePassword = `${updatedEmployeeData.name}@${updatedEmployeeData.contactNo}`;
-            await convertToUser(updatedEmployeeData._id, 'Employee', employeePassword, 'Create');
-        }else if (updatedEmployeeData.isUser === true && updatedEmployeeData.userId) {
-            console.log('Converting to user:', updatedEmployeeData._id);
-            const employeePassword = `${updatedEmployeeData.name}@${updatedEmployeeData.contactNo}`;
-            await convertToUser(updatedEmployeeData._id, 'Employee', employeePassword, 'Update');
-        }
-
-        res.status(200).json({ message: 'Employee Data Updated Successfully', updatedEmployeeData });
-
-    } catch (error) {
-        console.error('Error updating employee:', error);
-        res.status(500).json({ error: 'Something went wrong' });
+    // Convert to user if needed
+    if (employee.isUser === true) {
+      const employeePassword = `${employee.name}@${employee.contactNo}`;
+      const mode = employee.userId ? 'Update' : 'Create';
+      console.log(`${mode} User for:`, employee._id);
+      await convertToUser(employee._id, 'Employee', employeePassword, mode);
     }
+
+    res.status(200).json({
+      message: 'Employee Data Updated Successfully',
+      updatedEmployeeData: employee,
+    });
+
+  } catch (error) {
+    console.error('Error updating employee:', error);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
 };
+
 
 
 
 const deleteEmployee = async (req, res) => {
     try {
         const id = req.params.id;
+        console.log(id)
+        // Validate ID
+        if (!id || id === "undefined") {
+            return res.status(400).json({ message: "Invalid or missing Employee ID" });
+        }
         const deletedEmployee = await Employee.findByIdAndDelete(id);
         if (!deletedEmployee) return res.status(404).json({ error: 'Employee not Found' });
         await User.findByIdAndDelete(deletedEmployee.userId);

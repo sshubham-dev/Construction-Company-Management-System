@@ -3,11 +3,13 @@ const mongoose = require('mongoose');
 var paymentSchema = new mongoose.Schema({
   paymentNo: {
     type: String,
-    required: true
+    required: true,
+    index: true,
   },
   date: {
     type: Date,
-    required: true
+    required: true,
+    default: Date.now,
   },
   from: {
     name: String,
@@ -24,18 +26,14 @@ var paymentSchema = new mongoose.Schema({
       ref: 'Ledger',
       required: true,
     },
-    // type: {
-    //   type: String,
-    //   required: true,
-    //   enum: ['Client', 'Supplier', 'Contractor', 'User', 'Employee'], // Specify the allowed models
-    // },
   },
   referenceNo: {
     type: String, // Optional bank transaction reference for online payments
   },
   amount: {
     type: Number,
-    required: true
+    required: true,
+    min: [0, 'Amount must be positive'],
   },
   description: {
     type: String,
@@ -45,16 +43,28 @@ var paymentSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
-  invoice: [{
-    name: String,
-    id: {
-      type: mongoose.Schema.Types.ObjectId,
-    },
-    type: {
-      type: String,
-      enum: ['Invoice', 'Bill', 'ExtraWork'], // Specify the allowed models
-    },
-  }],
+  invoiceType: {
+    type: String,
+  },
+  invoice: [
+    {
+      name: String,
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        refpath: 'invoiceType', // Dynamically reference the model based on invoiceType
+      },
+      type: {
+        type: String,
+      },
+      amount: Number, // payment made against that invoice
+    }
+  ],
+  // For audit/logical mapping
+  costCenter: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CostCenter',
+  }
 }, { timestamps: true });
 
 const Payment = mongoose.model('Payment', paymentSchema)

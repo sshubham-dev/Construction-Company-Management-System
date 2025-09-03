@@ -4,10 +4,12 @@ const receiptSchema = new mongoose.Schema({
   receiptNo: {
     type: String,
     required: true,
+    index: true,
   },
   date: {
     type: Date,
     required: true,
+    default: Date.now,
   },
   from: {
     name: String,
@@ -16,11 +18,6 @@ const receiptSchema = new mongoose.Schema({
       ref: 'Ledger',
       required: true,
     },
-    // type: {
-    //   type: String,
-    //   required: true,
-    //   enum: ['Client', 'Supplier', 'Contractor', 'User', 'Employee'], // Specify the allowed models
-    // },
   },
   to: {
     name: String,
@@ -36,22 +33,32 @@ const receiptSchema = new mongoose.Schema({
   amount: {
     type: Number,
     required: true,
+    min: [0, 'Amount must be positive'],
   },
   description: {
     type: String,
     required: true,
   },
+  receiptFrom: {
+    type: String,
+  },
+  invoiceType: {
+    type: String,
+  },
   invoice: [{
     name: String,
     id: {
       type: mongoose.Schema.Types.ObjectId,
+      refpath: 'invoiceType',
+      required: true,
     },
-    type: {
-      type: String,
-      enum: ['Invoice', 'Bill', 'Extra_Work', 'Payment_Schedule', 'Return_Order'], // Specify the allowed models
-    },
+    amount: Number, // payment received against that invoice
   }],
-});
+  costCenter: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CostCenter',
+  }
+}, { timestamps: true });
 
 const Receipt = mongoose.model('Receipt', receiptSchema);
 

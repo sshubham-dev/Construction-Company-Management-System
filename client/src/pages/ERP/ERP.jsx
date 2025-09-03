@@ -14,6 +14,7 @@ import Modal from '../../components/Modal';
 import CreateStock from '../../components/CreateStock';
 import CreateStockGroup from '../../components/CreateStockGroup';
 import LedgerMaping from '../../components/LedgerMaping';
+import ExpenseForm from '../../components/CreateExpenses';
 
 
 const ERP = () => {
@@ -28,6 +29,7 @@ const ERP = () => {
   const [isContraModalOpen, setContraModalOpen] = useState(false);
   const [isReceiptPaymentModalOpen, setReceiptPaymentModalOpen] = useState(false);
   const [isJournalModalOpen, setJournalModalOpen] = useState(false);
+  const [isExpensesModalOpen, setExpensesModalOpen] = useState(false);
   // Handle adding a new item
   const handleAdd = (newItem) => {
     setData((prevData) => [...prevData, { id: Date.now(), ...newItem }]);
@@ -94,6 +96,10 @@ const ERP = () => {
                 <button
                   onClick={() => setContraModalOpen(true)}>
                   Contra
+                </button>
+                <button
+                  onClick={() => setExpensesModalOpen(true)}>
+                  Expenses
                 </button>
                 {/* <NavLink to='/erp/purchase'>Purchase / Sales</NavLink> */}
                 {/* <NavLink to='/erp/credit-note'>Credit Note</NavLink>
@@ -202,6 +208,9 @@ const ERP = () => {
         </Modal>
         <Modal isOpen={isReceiptPaymentModalOpen} onClose={() => setReceiptPaymentModalOpen(false)} head='Record Payment / Receipt'>
           <CreateReceipt_Payment onClose={() => setReceiptPaymentModalOpen(false)} />
+        </Modal>
+        <Modal isOpen={isExpensesModalOpen} onClose={() => setExpensesModalOpen(false)} head='Record Expenses'>
+          <ExpenseForm onClose={() => setExpensesModalOpen(false)} />
         </Modal>
         <Toaster
           position="top-right"

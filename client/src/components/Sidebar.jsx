@@ -64,12 +64,12 @@ const Sidebar = () => {
       role: ['Admin', 'Company', 'Ceo', 'Account Head']
     },
 
-    // {
-    //   to: '/site-kharchi',
-    //   name: 'Expenses Record',
-    //   icon: <GiExpense />,
-    //   role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
-    // },
+    {
+      to: '/site-kharchi',
+      name: 'Expenses Record',
+      icon: <GiExpense />,
+      role: ['Admin', 'Company', 'Accountant', 'Marketing', 'Ceo', 'Site Incharge', 'Site Supervisor', 'Design Head', 'Design Engineer', 'Quality Head', 'Quality Engineer', 'Account Head', 'H.R']
+    },
 
     /* ERP */
     {
@@ -85,12 +85,12 @@ const Sidebar = () => {
           icon: <MdAccountBalance />,
           role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
         },
-        // {
-        //   to: '/erp/report/account',
-        //   name: 'Report',
-        //   icon: <TbReportAnalytics />,
-        //   role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
-        // },
+        {
+          to: '/erp/ledger',
+          name: 'Report',
+          icon: <TbReportAnalytics />,
+          role: ['Admin', 'Company', 'Ceo', 'Account Head', 'Accountant'],
+        },
         {
           to: '/erp/receipt_payment',
           name: 'Receipt & Payment',

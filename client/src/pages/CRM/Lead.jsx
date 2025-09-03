@@ -8,8 +8,8 @@ axios.defaults.withCredentials = true;
 
 const Lead = () => {
   const [search, setSearch] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [leads, setLeads] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [isAddFollowUpModalOpen, setIsAddFollowUpModalOpen] = useState(false);
   // const [statusFilter, setStatusFilter] = useState("all");

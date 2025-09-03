@@ -1,10 +1,10 @@
-const User = require('../models/user.models');
-const { Group, Ledger, CostCenter } = require("../models/ledger.models");
-const Employee = require('../models/employee.models');
+
+const { Ledger, Group, CostCenter } = require('../models/ledger.models');
 const Site = require('../models/site.models');
-const Contractor = require('../models/contractor.models');
 const Client = require('../models/client.models');
-const Supplier = require('../models/supplier.models.js');
+const Contractor = require('../models/contractor.models');
+const Supplier = require('../models/supplier.models');
+const Employee = require('../models/employee.models');
 
 // CRUD for Ledger
 const createLedger = async (req, res) => {
@@ -13,34 +13,75 @@ const createLedger = async (req, res) => {
       name,
       alias,
       under,
-      isGSTApplicable,
-      isTDSDeductible,
+      statutoryDetails,
       mailingDetails,
       taxRegistrationDetails,
       bankingDetails,
       openingBalance,
+      refrenceType,
+      refrenceId,
+      createCostCenter
     } = req.body;
+
+    // Step 1: Create the ledger
     const ledger = new Ledger({
       name,
       alias,
       under,
-      isGSTApplicable,
-      isTDSDeductible,
+      statutoryDetails,
       mailingDetails,
       taxRegistrationDetails,
       bankingDetails,
       openingBalance,
       balance: openingBalance,
       paid: 0,
-      due: 0,
       receivable: 0,
       payable: 0,
       received: 0,
+      refrenceType,
+      refrenceId,
     });
+
     await ledger.save();
+
+    // Step 2: Map ledger ID to the referenced model
+    const mapLedger = async (Model) => {
+      await Model.findByIdAndUpdate(refrenceId, { ledger: ledger._id });
+    };
+
+    switch (refrenceType) {
+      case "Client":
+        await mapLedger(Client);
+        break;
+      case "Site":
+        await mapLedger(Site);
+        break;
+      case "Contractor":
+        await mapLedger(Contractor);
+        break;
+      case "Supplier":
+        await mapLedger(Supplier);
+        break;
+      case "Employee":
+        await mapLedger(Employee);
+        break;
+    }
+
+    // Step 3: Optional - Create cost center
+    if (createCostCenter) {
+      const costCenter = new CostCenter({
+        name,
+        alias,
+        isPrimary: true,
+        description: `Auto-created from ledger: ${name}`,
+      });
+      await costCenter.save();
+    }
+
     res.status(201).json(ledger);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error("Ledger creation error:", error);
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -48,16 +89,17 @@ const addLedger = async (data, under, gst, tds, type) => {
   try {
     const ledger = new Ledger({
       name: data.name,
-      alias: {
-        id: data._id,
-        type,
-      },
+      alias: data.name,
       under,
-      isGSTApplicable: gst,
-      isTDSDeductible: tds,
+      refrenceType: type,
+      refrenceId: data._id,
+      statutoryDetails: {
+        isTDSDeductible: tds,
+        isGSTApplicable: gst,
+      },
       mailingDetails: {
         name: data.name,
-        address: data.address.stree + ', ' + data.address.city + ', ' + data.address.district,
+        address: `${data.address.street}, ${data.address.city}, ${data.address.district}`,
         state: data.address.state,
       },
       taxRegistrationDetails: {
@@ -72,7 +114,9 @@ const addLedger = async (data, under, gst, tds, type) => {
         branch: '',
       },
       openingBalance: 0,
+      balance: 0,
     });
+
     await ledger.save();
   } catch (error) {
     console.log(error);
@@ -108,12 +152,11 @@ const updateLedger = async (req, res) => {
 };
 
 const mapLedger = async (req, res) => {
-  console.log("🚨 mapLedger controller CALLED");
   try {
     const { id } = req.params;
-    const { refrenceId, refrenceType } = req.body
-    console.log("refrenceType:", refrenceType);
+    const { refrenceId, refrenceType } = req.body;
     if (!refrenceType) throw new Error("Reference type is required");
+
     const ledger = await Ledger.findById(id);
     ledger.refrenceId = refrenceId;
     ledger.refrenceType = refrenceType;
@@ -157,7 +200,6 @@ const deleteLedger = async (req, res) => {
 // CRUD for Group
 const createGroup = async (req, res) => {
   try {
-    console.log(req.body)
     const group = new Group(req.body);
     await group.save();
     res.status(201).json(group);
@@ -203,6 +245,40 @@ const deleteGroup = async (req, res) => {
   }
 };
 
+const addLedgerAndCostCenterForSite = async (site) => {
+  const ledger = new Ledger({
+    name: site.name,
+    refrenceType: 'Site',
+    refrenceId: site._id,
+    alias: site.siteId,
+    under: 'Project Accounts',
+    mailingDetails: {
+      name: site.name,
+      address: site.address,
+      state: 'NA',
+    },
+    openingBalance: 0,
+    payable: 0,
+    receivable: 0,
+    paid: 0,
+    received: 0,
+    balance: 0,
+  });
+  await ledger.save();
+  site.ledger = ledger._id;
+  await site.save();
+
+  const costCenter = new CostCenter({
+    name: site.name,
+    type: 'Site',
+    isActive: true,
+    under: 'Project Accounts',
+    referenceId: site._id,
+    description: `Cost center for site ${site.name}`,
+  });
+  await costCenter.save();
+};
+
 module.exports = {
   createLedger,
   createGroup,
@@ -215,5 +291,6 @@ module.exports = {
   deleteGroup,
   deleteLedger,
   addLedger,
-  mapLedger
-}
+  mapLedger,
+  addLedgerAndCostCenterForSite,
+};

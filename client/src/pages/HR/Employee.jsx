@@ -43,6 +43,15 @@ const Employee = () => {
     setEditId(userId)
   };
 
+  const handleDelete = async (id) => {
+    try {
+      await dispatch(deleteEmployee({id}));
+      toast.success('Employee deleted successfully');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to delete employee');
+    }
+  }
 
   return (
     <div >
@@ -101,7 +110,7 @@ const Employee = () => {
                       <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                     </button>
                     <button
-                      onClick={() => dispatch(deleteEmployee(employee._id))}
+                      onClick={() => handleDelete(employee._id)}
                       className="mr-2">
                       <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                     </button>

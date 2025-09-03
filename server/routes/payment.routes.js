@@ -5,12 +5,14 @@ const {
     getPaymentById,
     getPayments,
     updatePayment,
-    deletePayment
+    deletePayment,
+    generatePaymentNo
 } = require('../controller/payment.controller');
 
 // Routes for payments
 Payment.post('/', createPayment);  // Create
 Payment.get('/', getPayments);  // Read all
+Payment.get('/next-voucher', generatePaymentNo);
 Payment.get('/:id', getPaymentById);  // Read by ID
 Payment.put('/:id', updatePayment);  // Update
 Payment.delete('/:id', deletePayment);  // Delete

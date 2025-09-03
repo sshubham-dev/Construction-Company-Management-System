@@ -53,7 +53,7 @@ const SiteIncharge = () => {
     const { user } = useSelector((state) => state.auth);
     const dispatch = useDispatch()
     useEffect(()=>{
-      dispatch(fetchSiteByUser(user._id))
+      dispatch(fetchSiteByUser({id: user._id}))
     },[dispatch])
     const fundChartData = {
     labels: ['Received', 'Spent', 'Balance', 'To Receive'],

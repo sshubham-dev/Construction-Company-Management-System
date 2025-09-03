@@ -63,7 +63,7 @@ const createContractor = async (req, res) => {
             whatsapp,
             address,
             addhar: addhar ? addhar : '', // Ensure addhar is not undefined
-            pan: pan ? pan : '', // Ensure pan is not undefined
+            panNo: pan ? pan : '', // Ensure pan is not undefined
             bank: bank ? bank : '', // Ensure bank is not undefined
             jobWork,
             isUser: isUser ? isUser : false, // Ensure isUser is not undefined
@@ -102,48 +102,58 @@ const createContractor = async (req, res) => {
 };
 
 const updateContractor = async (req, res) => {
-    try {
-        const id = req.params.id;
-        const {
-            name,
-            email,
-            phone,
-            whatsapp,
-            address,
-            addhar,
-            pan,
-            bank,
-            jobWork,
-            isUser,
-            gstNo,
-        } = req.body;
-        const updatedContractor = await Contractor.findByIdAndUpdate(id,
-            {
-                $set: {
-                    name: name ? name : '', // Ensure name is not undefined
-                    email: email ? email : '', // Ensure email is not undefined
-                    phone: phone ? phone : '', // Ensure phone is not undefined
-                    whatsapp: whatsapp ? whatsapp : '', // Ensure whatsapp is not undefined
-                    address: address ? address : '', // Ensure address is not undefined
-                    addhar: addhar ? addhar : '', // Ensure addhar is not undefined
-                    pan: pan ? pan : '', // Ensure pan is not undefined
-                    bank: bank ? bank : '', // Ensure bank is not undefined
-                    jobWork: jobWork ? jobWork : '', // Ensure jobWork is not undefined
-                    isUser: isUser ? isUser : false, // Ensure isUser is not undefined
-                    gstNo: gstNo ? gstNo : '', // Ensure gstNo is not undefined
-                }
-            }, { new: true });
-        if (!updatedContractor) return res.status(404).json({ error: 'Contractor not found' });
-        res.status(200).json(updatedContractor);
-        if (updatedContractor.isUser === true && updatedContractor.userId == '') {
-            const password = `${name}@${phone}`;
-            await convertToUser(updatedContractor._id, 'Contractor', password);
-        }
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: 'Something went wrong' });
+  try {
+    const id = req.params.id;
+    const {
+      name,
+      email,
+      phone,
+      whatsapp,
+      address,
+      addhar,
+      pan,
+      bank,
+      jobWork,
+      isUser,
+      gstNo,
+    } = req.body;
+
+    // 🧠 Fetch contractor to trigger pre-save hook
+    const contractor = await Contractor.findById(id);
+    if (!contractor) return res.status(404).json({ error: 'Contractor not found' });
+
+    // 🛠️ Update fields
+    contractor.name = name?.trim() || '';
+    contractor.email = email?.trim() || '';
+    contractor.phone = phone?.trim() || '';
+    contractor.whatsapp = whatsapp?.trim() || '';
+    contractor.address = address || '';
+    contractor.addhar = addhar?.trim() || '';
+    contractor.panNo = pan?.trim() || '';
+    contractor.bank = bank || '';
+    contractor.jobWork = jobWork || '';
+    contractor.gstNo = gstNo?.trim() || '';
+    contractor.isUser = isUser === true || isUser === 'true';
+
+    // 💾 Save (triggers ledger sync)
+    const updatedContractor = await contractor.save();
+
+    // 🔑 Convert to user if needed
+    if (updatedContractor.isUser && !updatedContractor.userId) {
+      const password = `${updatedContractor.name}@${updatedContractor.phone}`;
+      await convertToUser(updatedContractor._id, 'Contractor', password);
     }
+
+    return res.status(200).json({
+      message: 'Contractor updated successfully',
+      updatedContractor,
+    });
+  } catch (error) {
+    console.error('Error updating contractor:', error);
+    return res.status(500).json({ error: 'Something went wrong' });
+  }
 };
+
 
 const deleteContractor = async (req, res) => {
     try {

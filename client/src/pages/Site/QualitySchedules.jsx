@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast';
 import { GrEdit } from "react-icons/gr";
 import { MdAdd, MdDelete } from "react-icons/md";
@@ -80,11 +80,11 @@ const QualitySchedules = () => {
             </thead>
 
             <tbody>
-              {qualitySchedules.map((qualitySchedule) => (
-                <tr key={qualitySchedule._id} className="bg-white border-b hover:bg-gray-50 ">
-                  <td className="px-6 py-4">
+              {qualitySchedules.map((qualitySchedule, index) => (
+                <tr key={index} className="bg-white border-b hover:bg-gray-50 ">
+                  <Link to={`/quality-schedule/${qualitySchedule._id}`} className="px-6 py-4">
                     {qualitySchedule.site?.name}
-                  </td>
+                  </Link>
                   <td className="px-6 py-4 text-center">{moment(qualitySchedule.date).format('DD-MM-YYYY')}</td>
                   <td className="px-6 py-4 text-center">{qualitySchedule.approvalStatus}</td>
                   {/* <td className="px-6 py-4 text-center">{work.startedAt ? moment(work.startedAt).format('DD-MM-YYYY') : '-'}</td> */}

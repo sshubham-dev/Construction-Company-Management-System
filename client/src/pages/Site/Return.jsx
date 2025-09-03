@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { MdDelete, MdAdd } from "react-icons/md";
 import { useSelector } from 'react-redux';
@@ -100,9 +100,9 @@ const ReturnRequest = () => {
                             {returnRequests.length > 0 ? (
                                 returnRequests.map((returnRequest, index) => (
                                     <tr key={index} className='border-b border-blue-gray-200'>
-                                        <td className="px-6 py-4">
+                                        <Link to={`/sites/return/${returnRequest._id}`} className="px-6 py-4">
                                             {returnRequest.site?.name}
-                                        </td>
+                                        </Link>
                                         <td className="px-6 py-4 text-center">{returnRequest?.materialType}</td>
                                         <td className="px-6 py-4 text-center">{returnRequest?.returnable.length || 0}</td>
                                         <td className="px-6 py-4 text-center">{moment(returnRequest?.date).format('DD-MM-YYYY') || 0}</td>

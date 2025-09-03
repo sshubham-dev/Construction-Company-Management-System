@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast';
 import { GrEdit } from "react-icons/gr";
 import { MdAdd, MdDelete } from "react-icons/md";
@@ -150,10 +150,10 @@ const ProjectSchedules = () => {
               </thead>
 
               <tbody className="divide-y divide-gray-200">
-                {projectSchedules.map((projectSchedule) => (
-                  <tr key={projectSchedule._id} className='border-b border-blue-gray-200'>
+                {projectSchedules.map((projectSchedule, index) => (
+                  <tr key={index} className='border-b border-blue-gray-200'>
                     <td className="px-6 py-4">
-                      <p className=""> {projectSchedule.site.name} </p>
+                      <Link to={`/project-schedule/${projectSchedule._id}`} className=""> {projectSchedule.site.name} </Link>
                       <p className="text-gray-500 text-sm font-semibold tracking-wide"> {projectSchedule.site?.id.client.name} </p>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -195,7 +195,7 @@ const ProjectSchedules = () => {
                 {draftProjectSchedules.map((projectSchedule) => (
                   <tr key={projectSchedule._id} className='border-b border-blue-gray-200'>
                     <td className="px-6 py-4">
-                      <p className=""> {projectSchedule.site.name} </p>
+                       <Link to={`/project-schedule/${projectSchedule._id}`} className=""> {projectSchedule.site.name} </Link>
                       <p className="text-gray-500 text-sm font-semibold tracking-wide"> {projectSchedule.site?.id.client.name} </p>
                     </td>
                     <td className="px-6 py-4 text-center">

@@ -96,19 +96,21 @@ const convertToUser = async (id, role, password, status) => {
         switch (role) {
             case 'Employee':
                 const employee = await Employee.findById(id)
-                console.log('employee', employee)
-                if (!employee) return res.status(500).json({ error: 'Employee not Found' });
+                // console.log('employee', employee)
+                if (!employee) return 'Employee not Found';
                 const employeeUser = await User.findOne({
                     $and: [{ userName: employee.name }, { department: employee.department }]
                 });
-                if (employeeUser) return res.status(400).json({ error: 'Validation Error' });
+                if (employeeUser) return 'Validation Error';
                 if (status === 'Update') {
                     employeeUser.userName = employee.name || employeeUser.userName,
                         employeeUser.userMail = employee.email || employeeUser.userMail,
                         employeeUser.phone = employee.phone || employeeUser.phone,
                         employeeUser.whatsapp = employee.whatsapp || employeeUser.whatsapp,
                         employeeUser.department = employee.department || employeeUser.department,
-                        await employeeUser.save();
+                        employeeUser.role = role || employeeUser.role,
+                        employeeUser.password = password || employeeUser.password;
+                    await employeeUser.save();
                 } else if (status === 'Create') {
                     const newEmployeeUser = new User({
                         userName: employee.name,
@@ -119,9 +121,9 @@ const convertToUser = async (id, role, password, status) => {
                         role,
                         department: employee.department,
                     });
-                    console.log('newEmployeeUser', newEmployeeUser)
+                    // console.log('newEmployeeUser', newEmployeeUser)
                     const savedEmployeeUser = await newEmployeeUser.save();
-                    console.log('savedEmployeeUser', savedEmployeeUser)
+                    // console.log('savedEmployeeUser', savedEmployeeUser)
                     employee.userId = savedEmployeeUser._id;
                     await employee.save({ validateBeforeSave: false });
                 }
@@ -129,11 +131,11 @@ const convertToUser = async (id, role, password, status) => {
 
             case 'Client':
                 const client = await Client.findById(id)
-                if (!client) return res.status(404).json({ message: 'Client not Found' });
+                if (!client) return 'Client not Found';
                 const clientUser = await User.findOne({
                     $and: [{ userName: client.name }, { department: 'Client' }]
                 });
-                if (clientUser) return res.status(400).json({ error: 'Validation Error' });
+                if (clientUser) return 'Validation Error';
                 const newClientUser = new User({
                     userName: client.name,
                     userMail: client.email,
@@ -150,11 +152,11 @@ const convertToUser = async (id, role, password, status) => {
 
             case 'Contractor':
                 const contractor = await Contractor.findById(id)
-                if (!contractor) return res.status(404).json({ error: 'Contractor not found' });
+                if (!contractor) return 'Contractor not found';
                 const contractorUser = await User.findOne({
                     $and: [{ userName: contractor.name }, { department: 'Contractor' }]
                 });
-                if (contractorUser) return res.status(400).json({ error: 'Validation Error' });
+                if (contractorUser) return 'Validation Error';
                 const newContractorUser = new User({
                     userName: contractor.name,
                     userMail: contractor.email,
@@ -172,12 +174,12 @@ const convertToUser = async (id, role, password, status) => {
             case 'Supplier':
                 const supplier = await Supplier.findById(id);
                 if (!supplier) {
-                    return res.status(404).json({ error: 'Supplier not found' });
+                    return 'Supplier not found';
                 }
                 const supplierUser = await User.findOne({
                     $and: [{ userName: supplier.name }, { department: 'Supplier' }]
                 });
-                if (supplierUser) return res.status(400).json({ error: 'Validation Error' });
+                if (supplierUser) return 'Validation Error';
                 const newSupplierUser = new User({
                     userName: supplier.name,
                     userMail: supplier.email,
@@ -197,7 +199,7 @@ const convertToUser = async (id, role, password, status) => {
         }
 
     } catch (error) {
-        console.log(error.message)
+        console.log("error.message", error.message)
     }
 };
 
@@ -209,7 +211,7 @@ const login = async (req, res) => {
         const user = await User.findOne({
             $or: [{ userMail: auth }, { phone: auth }]
         });
-        console.log('user')
+        // console.log('user')
 
         if (!user) return res.status(400).json({ error: 'Invalid User Credentials' });
 

@@ -12,51 +12,55 @@ const CreateContra = ({ onClose }) => {
         description: "",
     });
     const [accounts, setAccounts] = useState([]);
+
     useEffect(() => {
         const fetchAccount = async () => {
             try {
                 const response = await axios.get('/api/v1/ledger');
-                const Ledgers = Array.isArray(response.data) ? response.data : []; // Ensure it's an array
-        
-                // console.log("All Ledgers:", Ledgers);
-                // console.log("Ledger under values:", Ledgers.map(l => l.under)); // Debugging
-        
-                const accountLedger = Ledgers.filter(ledger => 
-                    ledger?.under && ledger.under.toLowerCase().includes("account") // Case-insensitive check
+                const Ledgers = Array.isArray(response.data) ? response.data : [];
+                const accountLedger = Ledgers.filter(ledger =>
+                    ledger?.under && ledger.under.toLowerCase().includes("account")
                 );
                 setAccounts(accountLedger);
-                // console.log("Filtered Ledgers:", accountLedger);
             } catch (error) {
                 console.error("Error fetching ledgers:", error);
             }
         };
-        
-        
-        fetchAccount()
-    }, [])
+
+        const fetchVoucherNo = async () => {
+            try {
+                const response = await axios.get('/api/v1/contra/next-voucher');
+                console.log(response.data);
+                setForm(prev => ({ ...prev, voucherNo: response.data.voucherNo }));
+            } catch (error) {
+                console.error("Error fetching voucher number:", error);
+            }
+        };
+
+        fetchAccount();
+        fetchVoucherNo();
+    }, []);
 
     const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // setLoading(true);
+        setLoading(true);
 
-        console.log("Voucher created:", form);
         try {
             const response = await axios.post("/api/v1/contra", form);
-            console.log(response)
-            // Reset form
             setForm({
                 voucherNo: "",
                 date: "",
                 from: "",
                 to: "",
-                amount: "",
+                amount: 0,
                 description: "",
-            })
-            onClose()
+            });
+            onClose();
         } catch (error) {
             console.error("Error creating voucher:", error);
         } finally {
@@ -65,7 +69,7 @@ const CreateContra = ({ onClose }) => {
     };
 
     return (
-        <div >
+        <div>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 mb-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700">Voucher No</label>
@@ -73,8 +77,8 @@ const CreateContra = ({ onClose }) => {
                         name="voucherNo"
                         type="text"
                         value={form.voucherNo}
-                        onChange={handleChange}
-                        required
+                        readOnly
+                        disabled  // Prevent user changes
                         className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
                 </div>
@@ -100,8 +104,8 @@ const CreateContra = ({ onClose }) => {
                         required
                         className="mt-1 block w-full px-2 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">Select Account</option>
-                        {accounts.map((account, index) => (
-                            <option key={index} value={account._id}>{account.name}</option>
+                        {accounts.map((account) => (
+                            <option key={account._id} value={account._id}>{account.name}</option>
                         ))}
                     </select>
                 </div>
@@ -115,8 +119,8 @@ const CreateContra = ({ onClose }) => {
                         required
                         className="mt-1 block w-full px-2 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">Select Account</option>
-                        {accounts.map((account, index) => (
-                            <option key={index} value={account._id}>{account.name}</option>
+                        {accounts.map((account) => (
+                            <option key={account._id} value={account._id}>{account.name}</option>
                         ))}
                     </select>
                 </div>
@@ -129,6 +133,7 @@ const CreateContra = ({ onClose }) => {
                         value={form.amount}
                         onChange={handleChange}
                         required
+                        min={1}
                         className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
                 </div>
@@ -155,7 +160,7 @@ const CreateContra = ({ onClose }) => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className=" bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         {loading ? "Saving..." : "Create Voucher"}
                     </button>
@@ -165,4 +170,4 @@ const CreateContra = ({ onClose }) => {
     );
 };
 
-export default CreateContra
+export default CreateContra;

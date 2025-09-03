@@ -162,8 +162,8 @@ const WorkOrders = () => {
               <tbody className="divide-y divide-gray-200">
                 {workOrders.map((workOrder) => (
                   <tr key={workOrder._id} className='border-b border-blue-gray-200'>
-                    <td className="px-6 py-4">
-                      <p className=""> {workOrder?.workOrderName} </p>
+                    <td className="px-6 py-4" >
+                      <p className="" onClick={() => handleRedirect(workOrder?._id)}> {workOrder?.workOrderName} </p>
                       <p className="text-gray-500 text-sm font-semibold tracking-wide"> {workOrder.contractor?.name} </p>
                     </td>
                     <td className="px-6 py-4">{workOrder.site?.name}</td>
@@ -209,7 +209,7 @@ const WorkOrders = () => {
                 {draftWorkOrders.map((workOrder) => (
                   <tr key={workOrder._id} className='border-b border-blue-gray-200'>
                     <td className="px-6 py-4">
-                      <p className=""> {workOrder?.workOrderName} </p>
+                      <p className="" onClick={() => handleRedirect(workOrder?._id)}> {workOrder?.workOrderName} </p>
                       <p className="text-gray-500 text-sm font-semibold tracking-wide"> {workOrder.contractor?.name} </p>
                     </td>
                     <td className="px-6 py-4">{workOrder.site?.name}</td>

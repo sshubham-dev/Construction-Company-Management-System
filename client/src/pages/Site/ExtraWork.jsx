@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import toast, { Toaster } from 'react-hot-toast';
 import { Tabs } from 'antd';
 import { GrEdit } from "react-icons/gr";
@@ -132,7 +132,7 @@ const ExtraWork = () => {
                 {clientExtraWorks?.map((extraWork) => (
                   <tr key={extraWork._id} className='border-b border-blue-gray-200'>
                     <td className="px-6 py-4">
-                      <p className=""> {extraWork.site?.name} </p>
+                      <Link to={`/extra-work/${extraWork._id}`} className=""> {extraWork.site?.name} </Link>
                       <p className="text-gray-500 text-sm font-semibold tracking-wide"> {extraWork.client?.name} </p>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -170,7 +170,7 @@ const ExtraWork = () => {
                 {contractorExtraWorks?.map((extraWork) => (
                   <tr key={extraWork._id} className='border-b border-blue-gray-200'>
                     <td className="px-6 py-4">
-                      <p className=""> {extraWork.site?.name} </p>
+                      <Link to={`/extra-work/${extraWork._id}`} className=""> {extraWork.site?.name} </Link>
                       <p className="text-gray-500 text-sm font-semibold tracking-wide"> {extraWork.contractor?.name} </p>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -210,7 +210,7 @@ const ExtraWork = () => {
                     {draftExtraWorks?.map((extraWork) => (
                       <tr key={extraWork._id} className='border-b border-blue-gray-200'>
                         <td className="px-6 py-4">
-                          <p className=""> {extraWork.site?.name} </p>
+                          <Link to={`/extra-work/${extraWork._id}`} className=""> {extraWork.site?.name} </Link>
                           <p className="text-gray-500 text-sm font-semibold tracking-wide"> {extraWork.contractor?.name ? extraWork.contractor.name : extraWork.client?.name} </p>
                         </td>
                         <td className="px-6 py-4 text-center">

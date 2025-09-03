@@ -1,15 +1,16 @@
 const express = require('express');
 const Journal = express.Router();
 const journalController = require('../controller/journal.controller');
-const { createJournal, getAllJournals, getJournalByVoucherNo, updateJournal, deleteJournal } = require('../controller/journal.controller');
+const { createJournal, getJournals, getJournalByVoucherNo, updateJournal, deleteJournal, getNextJournalNo } = require('../controller/journal.controller');
 const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 // Journal Routes
 Journal.post('/', createJournal);
-Journal.get('/', getAllJournals);
-Journal.get('/:voucherNo', getJournalByVoucherNo);
+Journal.get('/', getJournals);
+// Journal.get('/:voucherNo', getJournalByVoucherNo);
 Journal.put('/:voucherNo', updateJournal);
 Journal.delete('/:voucherNo', deleteJournal);
+Journal.get("/next-voucher", getNextJournalNo);
 // Stock Journal Routes
 // router.post('/stock-journals', stockcreateStockJournal);
 // router.get('/stock-journals', stockgetAllStockJournals);

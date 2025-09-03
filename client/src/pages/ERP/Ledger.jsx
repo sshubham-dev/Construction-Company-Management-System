@@ -1,84 +1,109 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
-const Ledger = () => {
+const LedgerList = () => {
   const [ledgers, setLedgers] = useState([]);
-  const [groups, setGroups] = useState([]);
-  const [costCenters, setCostCenters] = useState([]);
-  const [formData, setFormData] = useState({ name: "", under: "", alias: "" });
+  const [filtered, setFiltered] = useState([]);
+  const [search, setSearch] = useState('');
+  const [selectedLedger, setSelectedLedger] = useState(null);
 
   useEffect(() => {
-    fetchData();
+    const fetchLedgers = async () => {
+      try {
+        const res = await axios.get('/api/v1/ledger');
+        setLedgers(res.data);
+        setFiltered(res.data);
+      } catch (err) {
+        console.error('Error fetching ledgers', err);
+      }
+    };
+    fetchLedgers();
   }, []);
 
-  const fetchData = async () => {
-    const ledgerRes = await fetch(`${API_URL}/ledgers`);
-    const groupRes = await fetch(`${API_URL}/groups`);
-    const costCenterRes = await fetch(`${API_URL}/costCenters`);
-    setLedgers(await ledgerRes.json());
-    setGroups(await groupRes.json());
-    setCostCenters(await costCenterRes.json());
+  const handleSearch = (e) => {
+    const keyword = e.target.value.toLowerCase();
+    setSearch(keyword);
+    const filtered = ledgers.filter(l => l.name.toLowerCase().includes(keyword));
+    setFiltered(filtered);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await fetch(`${API_URL}/ledgers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-    setFormData({ name: "", under: "", alias: "" });
-    fetchData();
+  const badgeColor = (nature) => {
+    return {
+      Assets: 'bg-green-100 text-green-700',
+      Liability: 'bg-red-100 text-red-700',
+      Income: 'bg-blue-100 text-blue-700',
+      Expenses: 'bg-yellow-100 text-yellow-700'
+    }[nature] || 'bg-gray-100 text-gray-700';
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Ledger Management</h1>
-      <form onSubmit={handleSubmit} className="mb-6">
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-xl font-bold">Ledger Overview</h1>
         <input
           type="text"
-          placeholder="Name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="border p-2 w-full mb-2"
+          value={search}
+          onChange={handleSearch}
+          placeholder="Search by ledger name..."
+          className="border px-3 py-2 rounded w-72"
         />
-        <input
-          type="text"
-          placeholder="Under"
-          value={formData.under}
-          onChange={(e) => setFormData({ ...formData, under: e.target.value })}
-          className="border p-2 w-full mb-2"
-        />
-        <input
-          type="text"
-          placeholder="Alias"
-          value={formData.alias}
-          onChange={(e) => setFormData({ ...formData, alias: e.target.value })}
-          className="border p-2 w-full mb-2"
-        />
-        <button className="bg-blue-500 text-white px-4 py-2">Add Ledger</button>
-      </form>
-      
-      <h2 className="text-xl font-semibold">Ledgers</h2>
-      <table className="table-auto w-full border-collapse border border-gray-300 mt-4">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border border-gray-300 px-4 py-2">Name</th>
-            <th className="border border-gray-300 px-4 py-2">Under</th>
-            <th className="border border-gray-300 px-4 py-2">Alias</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ledgers.map((ledger) => (
-            <tr key={ledger._id} className="border border-gray-300">
-              <td className="border border-gray-300 px-4 py-2">{ledger.name}</td>
-              <td className="border border-gray-300 px-4 py-2">{ledger.under}</td>
-              <td className="border border-gray-300 px-4 py-2">{ledger.alias}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filtered.map((ledger) => (
+          <div
+            key={ledger._id}
+            onClick={() => setSelectedLedger(ledger)}
+            className="bg-white shadow hover:shadow-lg p-4 rounded cursor-pointer border"
+          >
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-lg font-semibold">{ledger.name}</h2>
+              <span className={`text-xs px-2 py-1 rounded ${badgeColor(ledger?.under)}`}>
+                {ledger?.under}
+              </span>
+            </div>
+
+            <div className="text-sm space-y-1">
+              <p>Alias: {ledger.alias || '-'}</p>
+              <p className="text-green-700">Receivable: ₹{ledger.receivable}</p>
+              <p className="text-red-700">Payable: ₹{ledger.payable}</p>
+              <p>Opening: ₹{ledger.openingBalance}</p>
+              <p>Current: ₹{ledger.currentBalance}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Ledger Detail Modal */}
+      {selectedLedger && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-xl p-6 relative">
+            <button
+              onClick={() => setSelectedLedger(null)}
+              className="absolute top-2 right-2 text-xl text-gray-500 hover:text-black"
+            >
+              &times;
+            </button>
+            <h2 className="text-2xl font-bold mb-4">{selectedLedger.name}</h2>
+
+            <div className="space-y-2 text-sm">
+              <p><strong>Alias:</strong> {selectedLedger.alias || 'N/A'}</p>
+              <p><strong>Group:</strong> {selectedLedger.under}</p>
+              <p><strong>Current Balance:</strong> ₹{selectedLedger.currentBalance}</p>
+              <p><strong>Payable:</strong> ₹{selectedLedger.payable}</p>
+              <p><strong>Receivable:</strong> ₹{selectedLedger.receivable}</p>
+              <p><strong>Paid:</strong> ₹{selectedLedger.paid}</p>
+              <p><strong>Received:</strong> ₹{selectedLedger.received}</p>
+              <p><strong>PAN:</strong> {selectedLedger.taxRegistrationDetails?.panNo || '-'}</p>
+              <p><strong>GST:</strong> {selectedLedger.taxRegistrationDetails?.gstNo || '-'}</p>
+              <p><strong>Address:</strong> {selectedLedger.mailingDetails?.address || '-'}</p>
+              <p><strong>Bank:</strong> {selectedLedger.bankingDetails?.bankName || '-'}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default Ledger;
+export default LedgerList;

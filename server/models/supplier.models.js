@@ -1,4 +1,28 @@
 const mongoose = require('mongoose');
+const { syncLedger } = require('../utils/ledgerSync');
+
+const deliveryRecordSchema = new mongoose.Schema({
+    purchaseOrder: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Purchase_Order',
+    },
+    site: {
+        name: String,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Site',
+        },
+    },
+    items: [{
+        name: String,
+        quantity: Number,
+        rate: Number,
+        amount: Number,
+        unit: String,
+    }],
+    deliveryDate: Date,
+    remarks: String,
+});
 
 const supplierSchema = new mongoose.Schema({
     name: {
@@ -19,6 +43,10 @@ const supplierSchema = new mongoose.Schema({
     },
     address: {
         type: String,
+        // street: String,
+        // city: String,
+        // district: String,
+        // state: String,
     },
     gstNo: {
         type: String,
@@ -46,22 +74,57 @@ const supplierSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Purchase_Order',
     }],
-    accounts: {
-        payable: {
-            type: Number,
-        },
-        paid: {
-            type: Number,
-        },
-        balance: {
-            type: Number,
-        },
-    },
     ledger: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Ledger'
+        ref: 'Ledger',
+    },
+    deliveries: [deliveryRecordSchema], // ← From Purchase Orders
+    payments: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Payment',
+    }],
+    totalSupplied: {
+        type: Number,
+        default: 0,
+    },
+    totalPaid: {
+        type: Number,
+        default: 0,
+    },
+    totalDue: {
+        type: Number,
+        default: 0,
+    },
+    status: {
+        type: String,
+        default: 'Active',
+        enum: ['Active', 'Inactive', 'Blacklisted'],
     }
 }, { timestamps: true })
+
+supplierSchema.pre('save', async function (next) {
+  try {
+    const ledgerId = await syncLedger({
+      doc: this,
+      type: 'Supplier',
+      fieldsToWatch: ['name', 'gstNo', 'address', 'email', 'phone', 'whatsapp'],
+      under: 'Sundry Creditors',
+      getAddress: (doc) => ({
+        name: doc.name,
+        address: doc.address,
+      }),
+      getTaxDetails: (doc) => ({
+        gstNo: doc.gstNo || ''
+      }),
+    });
+    this.ledger = ledgerId;
+    next();
+  } catch (err) {
+    console.error('Error in supplier ledger sync:', err);
+    next(err);
+  }
+});
+
 
 const Supplier = mongoose.model('Supplier', supplierSchema);
 module.exports = Supplier;

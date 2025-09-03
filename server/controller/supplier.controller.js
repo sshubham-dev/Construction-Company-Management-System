@@ -58,27 +58,51 @@ const createSupplier = async (req, res) => {
 
 const updateSupplier = async (req, res) => {
     try {
-        const _id = req.params.id;
-        const { name, email, phone, whatsapp, address, gstNo, bank, isUser } = req.body;
-        const updatedSupplier = await Supplier.findByIdAndUpdate(
-            _id,
-            req.body,
-            { new: true }
-        );
-        if (!updatedSupplier) {
+        const id = req.params.id;
+        const {
+            name,
+            email,
+            phone,
+            whatsapp,
+            address,
+            gstNo,
+            bank,
+            isUser,
+        } = req.body;
+
+        const supplier = await Supplier.findById(id);
+        if (!supplier) {
             return res.status(404).json({ error: 'Supplier not found' });
         }
-        res.status(200).json({ message: 'Details Updated Successfully', updatedSupplier });
-        if (updatedSupplier.isUser === true && updatedSupplier.userId === '') {
-            console.log(isUser)
-            const password = `${name}@${phone}`;
+
+        // 🛠 Update fields
+        supplier.name = name?.trim() || supplier.name;
+        supplier.email = email?.trim() || supplier.email;
+        supplier.phone = phone?.trim() || supplier.phone;
+        supplier.whatsapp = whatsapp?.trim() || supplier.whatsapp;
+        supplier.address = address || supplier.address;
+        supplier.gstNo = gstNo?.trim() || supplier.gstNo;
+        supplier.bank = bank || supplier.bank;
+        supplier.isUser = isUser === true || isUser === 'true';
+
+        const updatedSupplier = await supplier.save(); // 💥 Triggers hooks
+
+        // 🔐 Convert to user if needed
+        if (updatedSupplier.isUser && !updatedSupplier.userId) {
+            const password = `${updatedSupplier.name}@${updatedSupplier.phone}`;
             await convertToUser(updatedSupplier._id, 'Supplier', password);
         }
+
+        return res.status(200).json({
+            message: 'Details Updated Successfully',
+            updatedSupplier,
+        });
     } catch (error) {
-        console.log(error);
+        console.error('Error updating supplier:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const deleteSupplier = async (req, res) => {
     try {

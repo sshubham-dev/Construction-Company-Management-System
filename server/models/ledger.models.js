@@ -4,84 +4,62 @@ const ledgerSchema = new mongoose.Schema({
   name: {
     type: String,
   },
-  refrenceType:{
+
+  referenceType: {
     type: String,
   },
-  refrenceId:{
+
+  referenceId: {
     type: mongoose.Schema.Types.ObjectId,
+    unique: true,
+    refPath: 'referenceType', // dynamic reference
   },
+
   alias: {
     type: String,
   },
+
   under: {
     type: String,
   },
+
   statutoryDetails: {
-    isTDSDeductible: {
-      type: Boolean,
-      default: false,
-    },
-    isGSTApplicable: {
-      type: Boolean,
-      default: false,
-    },
+    isTDSDeductible: { type: Boolean, default: false },
+    isGSTApplicable: { type: Boolean, default: false },
   },
+
   mailingDetails: {
-    name: {
-      type: String,
-    },
-    address: {
-      type: String,
-    },
-    state: {
-      type: String,
-    },
-  },
-  bankingDetails: {
     name: String,
-    acNo: Number,
+    address: String,
+    state: String,
+  },
+
+  bankingDetails: {
+    accountHolder: String,
+    accountNumber: String,
     ifscCode: String,
-    bankname: String,
+    bankName: String,
     branch: String,
   },
+
   taxRegistrationDetails: {
-    panNo: {
-      type: String,
-    },
-    gstin: {
-      type: String,
-    },
+    panNo: String,
+    gstNo: String,
   },
-  openingBalance: {
-    type: Number,
-    default: 0,
-  },
-  payable: {
-    type: Number,
-  },
-  receivable: {
-    type: Number,
-  },
-  paid: {
-    type: Number,
-  },
-  received:{
-    type: Number,
-  },
-  balance:{
-    type:Number,
-  },
-  transaction:[{
-    id:{
-      type:mongoose.Schema.Types.ObjectId,
-    },
-    type:{
-      type: String,
-      enum:['Contra', 'Payment', 'Receipt', 'Journal']
-    },
-    amount:{
-      type: Number,
-    }
+
+  openingBalance: { type: Number, default: 0 },
+  currentBalance: { type: Number, default: 0 },
+
+  // Summary stats (optional for reporting)
+  payable: { type: Number, default: 0 },
+  receivable: { type: Number, default: 0 },
+  paid: { type: Number, default: 0 },
+  received: { type: Number, default: 0 },
+  transaction: [{
+    id: { type: mongoose.Schema.Types.ObjectId },
+    type: { type: String, enum: ['Contra', 'Payment', 'Receipt', 'Journal', 'Expenses'] },
+    amount: { type: Number },
+    date: { type: Date, default: Date.now },
   }]
 }, { timestamps: true });
 
@@ -101,14 +79,13 @@ const Group = mongoose.model("Group", groupSchema);
 
 const costCenterSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },  // Cost Center Name
-  alias: { type: String },  // Alternative Name
-  under: { type: mongoose.Schema.Types.ObjectId, ref: "CostCenter", default: null },  // Parent Cost Center
-  isPrimary: { type: Boolean, default: false },  // Primary Cost Center
+  type: { type: String, required: true },
+  under: { type: String, default: 'Primary' },  // Parent Cost Center
   isActive: { type: Boolean, default: true },  // Active/Inactive Status
   description: { type: String },  // Additional Notes
-  createdAt: { type: Date, default: Date.now },  // Creation Date
+  referenceId: { type: mongoose.Schema.Types.ObjectId, refPath: 'type' },  // Dynamic reference
 }, { timestamps: true });
 
 const CostCenter = mongoose.model("CostCenter", costCenterSchema);
 
-module.exports = {Ledger, Group, CostCenter};
+module.exports = { Ledger, Group, CostCenter };

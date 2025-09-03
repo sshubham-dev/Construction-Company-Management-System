@@ -86,8 +86,8 @@ const billSchema = new mongoose.Schema({
 billSchema.pre('save', function (next) {
     const amount = parseFloat(this.amount) || 0;
     const paidAmount = parseFloat(this.paidAmount) || 0;
-    console.log('billamount:', amount)
-    console.log('billpaid:', paidAmount)
+    // console.log('billamount:', amount)
+    // console.log('billpaid:', paidAmount)
     const payment = amount - paidAmount;
 
     if (!isNaN(payment) && isFinite(payment)) {
