@@ -16,6 +16,8 @@ Bill.get('/', getBills);
 Bill.get('/site/:id', userAuth, siteBill);
 Bill.get('/draft/:id', getDraftBills);
 Bill.post('/', userAuth, createBill);
+// Bill.post('/extra', userAuth, createBill);
+// Bill.post('/supply', userAuth, createBill);
 Bill.route('/:id')
 .get(getBill)
 .put(userAuth, updateBill)

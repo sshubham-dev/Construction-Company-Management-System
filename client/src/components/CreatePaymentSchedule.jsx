@@ -1,42 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import toast, { Toaster } from 'react-hot-toast';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchNotifications } from '../features/notification/notificationSlice';
-import Select from 'react-select';
-import moment from 'moment';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchNotifications } from "../features/notification/notificationSlice";
+import Select from "react-select";
+import moment from "moment";
 
 axios.defaults.withCredentials = true;
 
 const CreatePaymentSchedule = ({ onClose, id, index }) => {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
-    site: '',
-    client: '',
-    paymentDetails: [{
-      workDescription: '',
-      amount: '',
-      dueDate: '',
-    }],
+    site: "",
+    client: "",
+    paymentDetails: [
+      {
+        workDescription: "",
+        amount: "",
+        dueDate: "",
+      },
+    ],
   });
   const [paymentDetail, setPaymentDetail] = useState({
-    workDescription: '',
-    amount: '',
-    paymentDate: '',
-    status: '',
-    dueDate: '',
+    workDescription: "",
+    amount: "",
+    paymentDate: "",
+    status: "",
+    dueDate: "",
   });
   const [scheduleIdToEdit, setScheduleIdToEdit] = useState(null);
-  const [paymentToEdit, setPaymentToEdit] = useState({ id: '', index: '' });
+  const [paymentToEdit, setPaymentToEdit] = useState({ id: "", index: "" });
   const [client, setClient] = useState({});
   const [workDetails, setWorkDetails] = useState([]);
   const [sites, setSite] = useState([]);
-  const [data, setData] = useState({ site: '' });
+  const [data, setData] = useState({ site: "" });
   const { user } = useSelector((state) => state.auth);
-  const statusOptions = ['Paid', 'Pending', 'Partially Paid'];
+  const statusOptions = ["Paid", "Pending", "Partially Paid"];
   const [clients, setClients] = useState([]);
-  const [selectedClient, setSelectedClient] = useState({ name: '', id: '' });
+  const [selectedClient, setSelectedClient] = useState({ name: "", id: "" });
   const dispatch = useDispatch();
+    const [loading, setLoading] = useState(false);
   // useEffect(() => {
   //   const fetchClients = async () => {
   //     try {
@@ -57,39 +60,48 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
       siteData = sites.filter((site) => site._id === siteId);
     }
 
-    setClient(siteData[0]?.client || '');
+    setClient(siteData[0]?.client || "");
   }, [formData.site]);
   formData.client = client.name;
 
   useEffect(() => {
     const fetchSite = async () => {
       try {
-        const response = await axios.get('/api/v1/site');
-        if (user.department === 'Site Incharge' || user.department === 'Site Supervisor') {
+        const response = await axios.get("/api/v1/site");
+        if (
+          user.department === "Site Incharge" ||
+          user.department === "Site Supervisor"
+        ) {
           const existingSites = user?.site;
           let SitesData = [];
           for (let site of response.data) {
-            if (existingSites?.some(existingSite => existingSite.id === site._id)) {
+            if (
+              existingSites?.some(
+                (existingSite) => existingSite.id === site._id
+              )
+            ) {
               SitesData.push(site);
             }
           }
-          setSite(SitesData)
+          setSite(SitesData);
           // console.log(SitesData)
         } else {
-          setSite(response.data)
+          setSite(response.data);
         }
       } catch (error) {
-        console.error(error.message)
+        console.error(error.message);
       }
     };
 
     const fetchWorkDetails = async () => {
       try {
-        const title = 'Payment Schedule';
-        const workData = await axios.post('/api/v1/work-details/name', { title });
+        const title = "Payment Schedule";
+        const workData = await axios.post("/api/v1/work-details/name", {
+          title,
+        });
         setWorkDetails(workData.data.description);
       } catch (error) {
-        console.log('Error fetching work details:', error.message);
+        console.log("Error fetching work details:", error.message);
       }
     };
 
@@ -107,7 +119,9 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
 
   const fetchPaymentDetail = async (id, index) => {
     try {
-      const response = await axios.get(`/api/v1/payment-schedule/${id}/paymentDetails`);
+      const response = await axios.get(
+        `/api/v1/payment-schedule/${id}/paymentDetails`
+      );
       const detail = response.data[index];
       setPaymentDetail({
         workDescription: detail?.workDescription,
@@ -117,7 +131,7 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
         status: detail?.status,
       });
     } catch (error) {
-      console.log('Error fetching Payment Detail:', error);
+      console.log("Error fetching Payment Detail:", error);
     }
   };
 
@@ -129,21 +143,21 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
       setFormData({
         site: {
           name: payment.site?.name,
-          id: payment.site?.id
+          id: payment.site?.id,
         },
         client: {
           name: payment.client?.name,
-          id: payment.client?.id
+          id: payment.client?.id,
         },
-        paymentDetails: [{ workDescription: '', amount: '', paymentDate: '' }],
+        paymentDetails: [{ workDescription: "", amount: "", paymentDate: "" }],
       });
     } catch (error) {
-      console.log('Error fetching Payment Schedule:', error);
+      console.log("Error fetching Payment Schedule:", error);
     }
   };
 
   const handleChange = (field, value) => {
-    setFormData(prevState => ({
+    setFormData((prevState) => ({
       ...prevState,
       [field]: {
         ...prevState[field],
@@ -153,7 +167,7 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
   };
 
   const handleSiteChange = async (siteId) => {
-    setFormData(prevState => ({
+    setFormData((prevState) => ({
       ...prevState,
       site: siteId,
     }));
@@ -162,13 +176,19 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
       const response = await axios.get(`/api/v1/clients?siteId=${siteId}`);
       setClients(response.data);
       if (response.data.length > 0) {
-        setSelectedClient({ id: response.data[0]._id, name: response.data[0].name });
-        handleChange('client', { id: response.data[0]._id, name: response.data[0].name });
+        setSelectedClient({
+          id: response.data[0]._id,
+          name: response.data[0].name,
+        });
+        handleChange("client", {
+          id: response.data[0]._id,
+          name: response.data[0].name,
+        });
       } else {
-        setSelectedClient({ id: '', name: '' });
+        setSelectedClient({ id: "", name: "" });
       }
     } catch (error) {
-      console.error('Error fetching clients:', error.message);
+      console.error("Error fetching clients:", error.message);
     }
   };
 
@@ -176,9 +196,12 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
     if (step < formData.paymentDetails.length) {
       setStep(step + 1);
     } else {
-      setFormData(prevState => ({
+      setFormData((prevState) => ({
         ...prevState,
-        paymentDetails: [...prevState.paymentDetails, { workDescription: '', amount: '', paymentDate: '' }],
+        paymentDetails: [
+          ...prevState.paymentDetails,
+          { workDescription: "", amount: "", paymentDate: "" },
+        ],
       }));
       setStep(step + 1);
     }
@@ -189,24 +212,27 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
   };
 
   const handleWorkChange = (field, value) => {
-    setFormData(prevState => {
+    setFormData((prevState) => {
       const updatedPaymentDetails = [...prevState.paymentDetails];
-      updatedPaymentDetails[step - 1] = { ...updatedPaymentDetails[step - 1], [field]: value };
+      updatedPaymentDetails[step - 1] = {
+        ...updatedPaymentDetails[step - 1],
+        [field]: value,
+      };
       return { ...prevState, paymentDetails: updatedPaymentDetails };
     });
   };
 
   const handleReset = () => {
     setFormData({
-      site: '',
-      client: '',
-      paymentDetails: [{ workDescription: '', amount: '', paymentDate: '' }],
+      site: "",
+      client: "",
+      paymentDetails: [{ workDescription: "", amount: "", paymentDate: "" }],
     });
     setStep(0);
   };
 
   const handleUpdate = (field, value) => {
-    setPaymentDetail(prevState => ({
+    setPaymentDetail((prevState) => ({
       ...prevState,
       [field]: value,
     }));
@@ -214,26 +240,33 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData)
+    setLoading(true);
+    console.log(formData);
     try {
       if (scheduleIdToEdit) {
-        const response = await axios.put(`/api/v1/payment-schedule/${scheduleIdToEdit}`, formData);
+        const response = await axios.put(
+          `/api/v1/payment-schedule/${scheduleIdToEdit}`,
+          formData
+        );
         toast.success(response.data.message);
-        onClose()
+        onClose();
         dispatch(fetchNotifications(user._id));
       } else if (paymentToEdit.id && paymentToEdit.index !== undefined) {
-        const response = await axios.put(`/api/v1/payment-schedule/${paymentToEdit.id}/paymentDetails/${paymentToEdit.index}`, paymentDetail);
+        const response = await axios.put(
+          `/api/v1/payment-schedule/${paymentToEdit.id}/paymentDetails/${paymentToEdit.index}`,
+          paymentDetail
+        );
         toast.success(response.data.message);
-        onClose()
+        onClose();
         dispatch(fetchNotifications(user._id));
       } else {
-        const response = await axios.post('/api/v1/payment-schedule', formData);
+        const response = await axios.post("/api/v1/payment-schedule", formData);
         toast.success(response.data.message);
-        onClose()
+        onClose();
         dispatch(fetchNotifications(user._id));
       }
     } catch (error) {
-      console.log('Error submitting payment schedule:', error.message);
+      console.log("Error submitting payment schedule:", error.message);
       toast.error(error.message);
     }
   };
@@ -243,72 +276,120 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
       <form onSubmit={handleSubmit} className="mb-4 w-full max-w-md">
         {paymentToEdit.id && paymentToEdit.index !== undefined ? (
           <>
-            <div className='mb-4'>
-              <label htmlFor='workDescription' className="block text-sm font-semibold text-gray-600">Work Detail</label>
+            <div className="mb-4">
+              <label
+                htmlFor="workDescription"
+                className="block text-sm font-semibold text-gray-600"
+              >
+                Work Detail
+              </label>
               <Select
-                value={{ value: paymentDetail.workDescription, label: paymentDetail.workDescription }}
-                onChange={(selectedOption) => handleUpdate('workDescription', selectedOption.value)}
-                options={workDetails.map(workDetail => ({ value: workDetail.work, label: workDetail.work }))}
+                value={{
+                  value: paymentDetail.workDescription,
+                  label: paymentDetail.workDescription,
+                }}
+                onChange={(selectedOption) =>
+                  handleUpdate("workDescription", selectedOption.value)
+                }
+                options={workDetails.map((workDetail) => ({
+                  value: workDetail.work,
+                  label: workDetail.work,
+                }))}
                 placeholder="Select Work Detail"
               />
             </div>
 
             <div className="mb-4">
-              <label htmlFor='amount' className="block text-sm font-semibold text-gray-600">Amount</label>
+              <label
+                htmlFor="amount"
+                className="block text-sm font-semibold text-gray-600"
+              >
+                Amount
+              </label>
               <input
                 type="number"
-                name='amount'
+                name="amount"
                 value={paymentDetail.amount}
-                onChange={(e) => handleUpdate('amount', e.target.value)}
+                onChange={(e) => handleUpdate("amount", e.target.value)}
                 placeholder="Amount"
                 className="border p-2 rounded w-full"
               />
             </div>
 
             <div className="mb-4">
-              <label htmlFor='paymentDate' className="block text-sm font-semibold text-gray-600">Date of Payment: {moment(paymentDetail.paymentDate).format('DD MM YYYY')}</label>
+              <label
+                htmlFor="paymentDate"
+                className="block text-sm font-semibold text-gray-600"
+              >
+                Date of Payment:{" "}
+                {moment(paymentDetail.paymentDate).format("DD MM YYYY")}
+              </label>
               <input
                 type="date"
-                name='paymentDate'
+                name="paymentDate"
                 value={paymentDetail.paymentDate}
-                onChange={(e) => handleUpdate('paymentDate', e.target.value)}
+                onChange={(e) => handleUpdate("paymentDate", e.target.value)}
                 className="border p-2 rounded w-full"
               />
             </div>
 
             <div className="mb-4">
-              <label htmlFor='dueDate' className="block text-sm font-semibold text-gray-600">Date of Due: {moment(paymentDetail.dueDate).format('DD MM YYYY')}</label>
+              <label
+                htmlFor="dueDate"
+                className="block text-sm font-semibold text-gray-600"
+              >
+                Date of Due:{" "}
+                {moment(paymentDetail.dueDate).format("DD MM YYYY")}
+              </label>
               <input
                 type="date"
-                name='dueDate'
+                name="dueDate"
                 value={paymentDetail.dueDate}
-                onChange={(e) => handleUpdate('dueDate', e.target.value)}
+                onChange={(e) => handleUpdate("dueDate", e.target.value)}
                 className="border p-2 rounded w-full"
               />
             </div>
 
             <div className="mb-4">
-              <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">Status</label>
+              <label
+                htmlFor="status"
+                className="block text-gray-700 text-sm font-bold mb-2"
+              >
+                Status
+              </label>
               <select
                 value={paymentDetail.status}
-                onChange={(e) => handleUpdate('status', e.target.value)}
+                onChange={(e) => handleUpdate("status", e.target.value)}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               >
-                <option>{paymentDetail.status || 'Select Status'}</option>
+                <option>{paymentDetail.status || "Select Status"}</option>
                 {statusOptions.map((status, index) => (
-                  <option key={index} value={status}>{status}</option>
+                  <option key={index} value={status}>
+                    {status}
+                  </option>
                 ))}
               </select>
             </div>
 
-            <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Submit</button>
+            <button
+              type="submit"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              disabled={loading}
+            >
+              {loading ? "Submitting..." : "Submit"}
+            </button>
           </>
         ) : (
           <>
             {step === 0 && (
               <>
                 <div className="mb-4">
-                  <label htmlFor="site" className="block text-sm font-medium text-gray-600">Select a Site</label>
+                  <label
+                    htmlFor="site"
+                    className="block text-sm font-medium text-gray-600"
+                  >
+                    Select a Site
+                  </label>
                   <select
                     name="site"
                     value={formData.site.id}
@@ -317,55 +398,126 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
                   >
                     <option value="">Select Site</option>
                     {sites.map((site, index) => (
-                      <option key={index} value={site._id}>{site.name}</option>
+                      <option key={index} value={site._id}>
+                        {site.name}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="client" className="block text-sm font-medium text-gray-600">Client</label>
-                  <p className="block text-md font-medium text-gray-600">{formData?.client || 'No client selected'}</p>
+                  <label
+                    htmlFor="client"
+                    className="block text-sm font-medium text-gray-600"
+                  >
+                    Client
+                  </label>
+                  <p className="block text-md font-medium text-gray-600">
+                    {formData?.client || "No client selected"}
+                  </p>
                 </div>
-                <button type="button" onClick={() => setStep(step + 1)} className="bg-blue-500 text-white p-2 rounded">Add Work</button>
+                <button
+                  type="button"
+                  onClick={() => setStep(step + 1)}
+                  className="bg-blue-500 text-white p-2 rounded"
+                >
+                  Add Work
+                </button>
               </>
             )}
 
             <div className="my-4">
               {step > 0 && (
                 <div>
-                  <label htmlFor='workDescription' className="block text-sm font-semibold text-gray-600 mt-3">Work Detail</label>
+                  <label
+                    htmlFor="workDescription"
+                    className="block text-sm font-semibold text-gray-600 mt-3"
+                  >
+                    Work Detail
+                  </label>
                   <Select
-                    value={{ value: formData.paymentDetails[step - 1]?.workDescription, label: formData.paymentDetails[step - 1]?.workDescription }}
-                    onChange={(selectedOption) => handleWorkChange('workDescription', selectedOption.value)}
-                    options={workDetails.map(workDetail => ({ value: workDetail.work, label: workDetail.work }))}
+                    value={{
+                      value: formData.paymentDetails[step - 1]?.workDescription,
+                      label: formData.paymentDetails[step - 1]?.workDescription,
+                    }}
+                    onChange={(selectedOption) =>
+                      handleWorkChange("workDescription", selectedOption.value)
+                    }
+                    options={workDetails.map((workDetail) => ({
+                      value: workDetail.work,
+                      label: workDetail.work,
+                    }))}
                     placeholder="Select Work Detail"
                   />
-                  <label htmlFor='amount' className="block text-sm font-semibold text-gray-600 mt-4">Amount</label>
+                  <label
+                    htmlFor="amount"
+                    className="block text-sm font-semibold text-gray-600 mt-4"
+                  >
+                    Amount
+                  </label>
                   <input
                     type="number"
-                    name='amount'
-                    value={formData.paymentDetails[step - 1]?.amount || ''}
-                    onChange={(e) => handleWorkChange('amount', e.target.value)}
+                    name="amount"
+                    value={formData.paymentDetails[step - 1]?.amount || ""}
+                    onChange={(e) => handleWorkChange("amount", e.target.value)}
                     placeholder="Amount"
                     className="border p-2 rounded w-full"
                   />
-                  <label htmlFor='dueDate' className="block text-sm font-semibold text-gray-600 mt-4">Date of Due</label>
+                  <label
+                    htmlFor="dueDate"
+                    className="block text-sm font-semibold text-gray-600 mt-4"
+                  >
+                    Date of Due
+                  </label>
                   <input
                     type="date"
-                    name='dueDate'
-                    value={formData.paymentDetails[step - 1]?.dueDate || ''}
-                    onChange={(e) => handleWorkChange('dueDate', e.target.value)}
+                    name="dueDate"
+                    value={formData.paymentDetails[step - 1]?.dueDate || ""}
+                    onChange={(e) =>
+                      handleWorkChange("dueDate", e.target.value)
+                    }
                     className="border p-2 rounded w-full"
                   />
                 </div>
               )}
               <div className="mt-4">
                 {step > 0 && (
-                  <div className='flex justify-between'>
-                    <button type="button" onClick={handlePrevious} className="bg-gray-500 text-white p-2 rounded">Previous</button>
-                    <button type="button" onClick={handleReset} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600">Reset</button>
-                    <button type="submit" className="bg-green-500 text-white p-2 rounded">Submit</button>
-                    <button type="button" onClick={handleNext} className="bg-blue-500 text-white p-2 rounded">Next</button>
-                  </div>
+                  <>
+                    {/* Top: Previous + Next */}
+                    <div className="flex flex-row justify-between gap-4 mb-4">
+                      <button
+                        type="button"
+                        onClick={handlePrevious}
+                        className="bg-gray-500 text-white p-2 rounded w-full md:w-auto"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleNext}
+                        className="bg-blue-500 text-white p-2 rounded w-full md:w-auto"
+                      >
+                        Next
+                      </button>
+                    </div>
+
+                    {/* Bottom: Submit + Reset */}
+                    <div className="flex flex-row justify-end items-end gap-4">
+                      <button
+                        type="submit"
+                        className="bg-green-500 text-white p-2 rounded w-full md:w-auto"
+              disabled={loading}
+            >
+              {loading ? "Submitting..." : "Submit"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleReset}
+                        className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600 w-full md:w-auto"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             </div>

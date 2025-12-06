@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const receiptSchema = new mongoose.Schema({
   receiptNo: {
     type: String,
-    required: true,
     index: true,
   },
   date: {

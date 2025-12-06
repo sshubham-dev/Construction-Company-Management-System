@@ -19,8 +19,9 @@ const CreateContra = ({ onClose }) => {
                 const response = await axios.get('/api/v1/ledger');
                 const Ledgers = Array.isArray(response.data) ? response.data : [];
                 const accountLedger = Ledgers.filter(ledger =>
-                    ledger?.under && ledger.under.toLowerCase().includes("account")
+                    ledger?.under && ledger.under.toLowerCase().includes("accounts")
                 );
+                console.log("ledger", accountLedger)
                 setAccounts(accountLedger);
             } catch (error) {
                 console.error("Error fetching ledgers:", error);

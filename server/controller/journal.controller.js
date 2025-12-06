@@ -1,5 +1,6 @@
 const { Journal } = require("../models/journal.models");
 const Ledger = require("../models/ledger.models");
+const { sendNotification } = require("./notification.controller.js");
 
 // Utility to update ledger transactions
 const updateLedgerBalances = async (entries, mode = "add") => {

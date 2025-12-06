@@ -26,7 +26,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
       fetchContractor(isEdit)
     }
   }, [isEdit])
-
+  const [loading, setLoading] = useState(false);
   const fetchContractor = async (id) => {
     try {
       const contractorData = await axios.get(`/api/v1/contractor/${id}`);
@@ -77,6 +77,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log(contractor)
+    setLoading(true);
     try {
       if (contractorToEdit) {
         const response = await axios.put(`/api/v1/contractor/${contractorToEdit}`, {
@@ -299,8 +300,10 @@ const CreateContractor = ({ onClose, isEdit }) => {
           </button>
           <button
             type='submit'
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" >
-            Create
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" 
+                          disabled={loading}
+            >
+              {loading ? "Submitting..." : "Submit"}
           </button>
           <button type="button" onClick={handleReset}
             className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">

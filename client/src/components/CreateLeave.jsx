@@ -15,7 +15,7 @@ const CreateLeave = ({ onClose, isEdit }) => {
     });
     const { user, isLoggedIn } = useSelector((state) => state.auth);
     const dispatch = useDispatch();
-
+  const [loading, setLoading] = useState(false);
     useEffect(() => {
         if (isEdit) {
             fetchLeave(isEdit)
@@ -42,6 +42,7 @@ const CreateLeave = ({ onClose, isEdit }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
             console.log(leave);
             if (isEdit) {
@@ -74,7 +75,7 @@ const CreateLeave = ({ onClose, isEdit }) => {
     };
 
     return (
-        <div>
+        <div className='z-50'>
             <form
                 onSubmit={handleSubmit}
                 className="space-y-4">
@@ -116,7 +117,11 @@ const CreateLeave = ({ onClose, isEdit }) => {
                     <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
                         Cancel
                     </button>
-                    <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600">Submit</button>
+                    <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
+                                  disabled={loading}
+            >
+              {loading ? "Submitting..." : "Submit"}
+                        </button>
                     <button type="button" onClick={() => setLeave({
                         reportingDate: moment().format('YYYY-MM-DD'),
                         from: moment().format('YYYY-MM-DD'),

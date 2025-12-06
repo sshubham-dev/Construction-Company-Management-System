@@ -1,335 +1,381 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import toast, { Toaster } from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 import { MdOutlineRemoveCircle, MdOutlineAddCircle } from "react-icons/md";
-import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { createEmployee, fetchEmployeeById, updateEmployee } from '../features/hr/employeeSlice';
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  createEmployee,
+  fetchEmployeeById,
+  updateEmployee,
+} from "../features/hr/employeeSlice";
 axios.defaults.withCredentials = true;
 
 const CreateEmployee = ({ onClose, isEdit }) => {
-    const [employee, setEmployee] = useState({
-        name: "",
-        email: "",
-        phone: 0,
-        whatsapp: 0,
-        employeeNo: "",
-        joinDate: "",
-        birthdate: "",
-        address: "",
-        addhar: "",
-        pan: "",
-        cv: "",
-        offerletter: "",
-        bank: "",
-        isUser: false,
-        department: '',
-    });
-    const departments = [
-        'Company',
-        'Accountant',
-        'Marketing',
-        'Ceo',
-        'Site Incharge',
-        'Site Supervisor',
-        'Design Engineer',
-        'Quality Engineer',
-        'Store Incharge',
-        'H.R',
-        'Account Head',
-        'Store Helper'
-    ];
-    const [error, setError] = useState(null);
-    const dispatch = useDispatch();
-
-    // const exitEmployee = useSelector((state) => state.employee.selected);
-    useEffect(() => {
-        const fetchEmployee = async () => {
-            try {
-                const resultAction = await dispatch(fetchEmployeeById({ id: isEdit }));
-                if (fetchEmployeeById.fulfilled.match(resultAction)) {
-                    const exitEmployee = resultAction.payload;
-                    setEmployee({
-                        name: exitEmployee.name || "",
-                        email: exitEmployee.email || "",
-                        phone: exitEmployee.phone || "",
-                        whatsapp: exitEmployee.whatsapp || "",
-                        employeeNo: exitEmployee.employeeNo || "",
-                        joinDate: exitEmployee.joinDate || "",
-                        birthdate: exitEmployee.birthdate || "",
-                        address: exitEmployee.address || "",
-                        isUser: exitEmployee.isUser || false,
-                        department: exitEmployee.department || "",
-                    });
-                } else {
-                    toast.error("Failed to fetch employee data");
-                }
-            } catch (err) {
-                toast.error("Error fetching employee data");
-            }
-        };
-
-        if (isEdit) {
-            fetchEmployee();
-        }
-    }, [dispatch, isEdit]);
-
-
-    // const fetchEmployee = async (id) => {
-    //     const exitEmployee = dispatch(fetchEmployeeById(id))
-    //     console.log(exitEmployee)
-    //     setEmployee({
-    //         name: exitEmployee.name,
-    //         email: exitEmployee.email,
-    //         phone: exitEmployee.phone,
-    //         whatsapp: exitEmployee.whatsapp,
-    //         employeeNo: exitEmployee.employeeNo,
-    //         joinDate: exitEmployee.joinDate,
-    //         birthdate: exitEmployee.birthdate,
-    //         address: exitEmployee.address,
-    //         isUser: exitEmployee.isUser,
-    //         department: exitEmployee.department,
-    //     });
-    // }
-
-    const handleReset = () => {
-        setEmployee({
-            name: "",
-            email: "",
-            phone: '',
-            whatsapp: '',
-            employeeNo: "",
-            joinDate: "",
-            birthdate: "",
-            address: "",
-            addhar: "",
-            pan: "",
-            cv: "",
-            offerletter: "",
-            bank: "",
-            isUser: '',
-            department: ''
-        })
-    }
-
-    const inputData = (data, field) => {
-        const { name, value, type } = data.target;
-        if (type === 'file') {
-            setEmployee((prevEmployee) => ({
-                ...prevEmployee,
-                [field]: data.target.files[0],
-            }));
+  const [employee, setEmployee] = useState({
+    name: "",
+    email: "",
+    phone: 0,
+    whatsapp: 0,
+    employeeNo: "",
+    joinDate: "",
+    birthdate: "",
+    address: "",
+    addhar: "",
+    pan: "",
+    cv: "",
+    offerletter: "",
+    bank: "",
+    isUser: false,
+    department: "",
+    status:"Active",
+  });
+  const departments = [
+    "Company",
+    "Accountant",
+    "Marketing",
+    "Ceo",
+    "Site Incharge",
+    "Site Supervisor",
+    "Design Engineer",
+    "Quality Engineer",
+    "Store Incharge",
+    "H.R",
+    "Account Head",
+    "Store Helper",
+  ];
+  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  // const exitEmployee = useSelector((state) => state.employee.selected);
+  useEffect(() => {
+    const fetchEmployee = async () => {
+      try {
+        const resultAction = await dispatch(fetchEmployeeById({ id: isEdit }));
+        if (fetchEmployeeById.fulfilled.match(resultAction)) {
+          const existEmployee = resultAction.payload;
+          setEmployee({
+            name: existEmployee.name || "",
+            email:existEmployee.email || "",
+            phone: existEmployee.phone || "",
+            whatsapp: existEmployee.whatsapp || "",
+            employeeNo: existEmployee.employeeNo || "",
+            joinDate: existEmployee.joinDate || "",
+            birthdate: existEmployee.birthdate || "",
+            address: existEmployee.address || "",
+            isUser: existEmployee.isUser || false,
+            department: existEmployee.department || "",
+            status: existEmployee.status || "",
+          });
         } else {
-            setEmployee((prevEmployee) => ({ ...prevEmployee, [name]: value }));
+          toast.error("Failed to fetch employee data");
         }
+      } catch (err) {
+        toast.error("Error fetching employee data");
+      }
     };
 
-    const formSubmit = async (e) => {
-        e.preventDefault();
+    if (isEdit) {
+      fetchEmployee();
+    }
+  }, [dispatch, isEdit]);
 
-        try {
-            console.log(employee);
-            if (isEdit) {
-                const response = await dispatch(updateEmployee({ id: isEdit, data: employee }));
-                if (response) {
-                    console.log(response);
-                    toast.success('Employee Updated successfully!');
-                }
-                onClose()
-            } else {
 
-                const response = await dispatch(createEmployee({data:employee}));
+  const handleReset = () => {
+    setEmployee({
+      name: "",
+      email: "",
+      phone: "",
+      whatsapp: "",
+      employeeNo: "",
+      joinDate: "",
+      birthdate: "",
+      address: "",
+      addhar: "",
+      pan: "",
+      cv: "",
+      offerletter: "",
+      bank: "",
+      isUser: "",
+      department: "",
+      status:'',
+    });
+  };
 
-                if (response) {
-                    console.log(response);
-                    toast.success('Employee Created successfully!');
-                }
-                onClose()
-            }
-        } catch (error) {
-            toast.error(error.message);
-            setError(error.message);
+  const inputData = (data, field) => {
+    const { name, value, type } = data.target;
+    if (type === "file") {
+      setEmployee((prevEmployee) => ({
+        ...prevEmployee,
+        [field]: data.target.files[0],
+      }));
+    } else {
+      setEmployee((prevEmployee) => ({ ...prevEmployee, [name]: value }));
+    }
+  };
+
+  const formSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      console.log(employee);
+      if (isEdit) {
+        const response = await dispatch(
+          updateEmployee({ id: isEdit, data: employee })
+        );
+        if (response) {
+          console.log(response);
+          toast.success("Employee Updated successfully!");
         }
-    };
+        onClose();
+      } else {
+        const response = await dispatch(createEmployee({ data: employee }));
 
-    return (
-        <div>
-            <form
-                className='space-y-4'
-                onSubmit={formSubmit}>
+        if (response) {
+          console.log(response);
+          toast.success("Employee Created successfully!");
+        }
+        onClose();
+      }
+    } catch (error) {
+      toast.error(error.message);
+      setError(error.message);
+    }
+  };
 
-                <div className='mb-4'>
-                    <label className='block text-gray-700 text-sm font-bold mb-1' htmlFor='name'>
-                        Full Name
-                    </label>
-                    <input
-                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                        type='text'
-                        name='name'
-                        placeholder='Enter Full Name here'
-                        autoComplete='off'
-                        value={employee.name}
-                        onChange={inputData}
-                    />
-                </div>
-
-                <div className='mb-4'>
-                    <label className='block text-gray-700 text-sm font-bold mb-1' htmlFor='email'>
-                        Email
-                    </label>
-                    <input
-                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                        type='email'
-                        name='email'
-                        placeholder='Enter Your Email here'
-                        autoComplete='off'
-                        value={employee.email}
-                        onChange={inputData}
-                    />
-                </div>
-
-                <div className='mb-4'>
-                    <label htmlFor='phone'
-                        className='block text-gray-700 text-sm font-bold mb-1'>
-                        Contact Number:
-                    </label>
-                    <input
-                        className='py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500'
-                        type='number'
-                        name='phone'
-                        id='phone'
-                        placeholder='Enter Your Contact Number'
-                        autoComplete='off'
-                        value={employee.phone}
-                        onChange={inputData}
-                    />
-                </div>
-
-                <div className='mb-4'>
-                    <label htmlFor='whatsapp'
-                        className='block text-gray-700 text-sm font-bold mb-1'>
-                        Whatsapp Number:
-                    </label>
-                    <input
-                        className='py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500'
-                        type='number'
-                        name='whatsapp'
-                        id='whatsapp'
-                        placeholder='Enter Your Whatsapp Number'
-                        autoComplete='off'
-                        value={employee.whatsapp}
-                        onChange={inputData}
-                    />
-                </div>
-
-                <div className='mb-4'>
-                    <label htmlFor='employeeNo' className='block text-gray-700 text-sm font-bold mb-1'>Employee ID</label>
-                    <input
-                        type='text'
-                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                        name='employeeNo'
-                        placeholder='Enter Your Employee ID here'
-                        autoComplete='off'
-                        value={employee.employeeNo}
-                        onChange={inputData}
-                    />
-                </div>
-
-                <div className='mb-4'>
-                    <label htmlFor="address" className="block text-gray-700 text-sm font-bold mb-1">
-                        Address
-                    </label>
-                    <input
-                        type="text"
-                        id="address"
-                        name="address"
-                        placeholder="Address"
-                        value={employee.address}
-                        onChange={inputData}
-                        className="py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500"
-                    />
-                </div>
-
-                <div className='mb-4'>
-                    <label
-                        htmlFor='joining'
-                        className='block text-gray-700 text-sm font-bold mb-1'>
-                        Joining Date: {employee.joinDate}
-                    </label>
-                    <input
-                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                        type='date'
-                        name='joinDate'
-                        value={employee.joinDate}
-                        onChange={inputData}
-                    />
-                </div>
-
-                <div className='mb-6'>
-                    <label htmlFor='birthdate' className='block text-gray-700 text-sm font-bold mb-1'>DOB: {employee.birthdate}</label>
-                    <input
-                        className='appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-                        type='date'
-                        name='birthdate'
-                        value={employee.birthdate}
-                        onChange={inputData}
-                    />
-                </div>
-
-                <div className="mb-6">
-                    <label htmlFor="access" className="block text-gray-700 text-sm font-bold mb-2">
-                        Department
-                    </label>
-                    <select
-                        name='department'
-                        onChange={inputData}
-                        required
-                        value={employee.department}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    >
-                        <option>Department</option>
-                        {departments.map((department, index) => (
-                            <option key={index} value={department}>
-                                {department}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="flex items-center mb-4">
-                    <input
-                        type="checkbox"
-                        name="isUser"
-                        className="border-none rounded-lg focus:outline-none mr-2"
-                        onChange={inputData}
-                        value='true' />
-                    <label htmlFor="isUser" className="block text-md font-medium text-gray-600">Is a User</label>
-                </div>
-
-                <div className="flex justify-end gap-2 mt-6">
-                    <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
-                        Cancel
-                    </button>
-                    <button
-                        type='submit'
-                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" >
-                        Create
-                    </button>
-                    <button type="button" onClick={handleReset}
-                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
-                        Reset
-                    </button>
-                </div>
-
-                {error && <p className="text-red-500 mt-4">{error}</p>}
-            </form>
-            <Toaster
-                position="top-right"
-                reverseOrder={false}
-            />
+  return (
+    <div>
+      <form className="space-y-4" onSubmit={formSubmit}>
+        <div className="mb-4">
+          <label
+            className="block text-gray-700 text-sm font-bold mb-1"
+            htmlFor="name"
+          >
+            Full Name
+          </label>
+          <input
+            className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            type="text"
+            name="name"
+            placeholder="Enter Full Name here"
+            autoComplete="off"
+            value={employee.name}
+            onChange={inputData}
+          />
         </div>
-    )
-}
 
+        <div className="mb-4">
+          <label
+            className="block text-gray-700 text-sm font-bold mb-1"
+            htmlFor="email"
+          >
+            Email
+          </label>
+          <input
+            className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            type="email"
+            name="email"
+            placeholder="Enter Your Email here"
+            autoComplete="off"
+            value={employee.email}
+            onChange={inputData}
+          />
+        </div>
 
-export default CreateEmployee
+        <div className="mb-4">
+          <label
+            htmlFor="phone"
+            className="block text-gray-700 text-sm font-bold mb-1"
+          >
+            Contact Number:
+          </label>
+          <input
+            className="py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500"
+            type="number"
+            name="phone"
+            id="phone"
+            placeholder="Enter Your Contact Number"
+            autoComplete="off"
+            value={employee.phone}
+            onChange={inputData}
+          />
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="whatsapp"
+            className="block text-gray-700 text-sm font-bold mb-1"
+          >
+            Whatsapp Number:
+          </label>
+          <input
+            className="py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500"
+            type="number"
+            name="whatsapp"
+            id="whatsapp"
+            placeholder="Enter Your Whatsapp Number"
+            autoComplete="off"
+            value={employee.whatsapp}
+            onChange={inputData}
+          />
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="employeeNo"
+            className="block text-gray-700 text-sm font-bold mb-1"
+          >
+            Employee ID
+          </label>
+          <input
+            type="text"
+            className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            name="employeeNo"
+            placeholder="Enter Your Employee ID here"
+            autoComplete="off"
+            value={employee.employeeNo}
+            onChange={inputData}
+          />
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="address"
+            className="block text-gray-700 text-sm font-bold mb-1"
+          >
+            Address
+          </label>
+          <input
+            type="text"
+            id="address"
+            name="address"
+            placeholder="Address"
+            value={employee.address}
+            onChange={inputData}
+            className="py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="joining"
+            className="block text-gray-700 text-sm font-bold mb-1"
+          >
+            Joining Date: {employee.joinDate}
+          </label>
+          <input
+            className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            type="date"
+            name="joinDate"
+            value={employee.joinDate}
+            onChange={inputData}
+          />
+        </div>
+
+        <div className="mb-6">
+          <label
+            htmlFor="birthdate"
+            className="block text-gray-700 text-sm font-bold mb-1"
+          >
+            DOB: {employee.birthdate}
+          </label>
+          <input
+            className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            type="date"
+            name="birthdate"
+            value={employee.birthdate}
+            onChange={inputData}
+          />
+        </div>
+
+        <div className="mb-6">
+          <label
+            htmlFor="access"
+            className="block text-gray-700 text-sm font-bold mb-2"
+          >
+            Department
+          </label>
+          <select
+            name="department"
+            onChange={inputData}
+            required
+            value={employee.department}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          >
+            <option>Department</option>
+            {departments.map((department, index) => (
+              <option key={index} value={department}>
+                {department}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-6">
+          <label
+            htmlFor="access"
+            className="block text-gray-700 text-sm font-bold mb-2"
+          >
+            Status
+          </label>
+          <select
+            name="status"
+            onChange={inputData}
+            required
+            value={employee.status}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          >
+            <option value='Active'>Active</option>
+            <option value='Inactive'>Inactive</option>
+            <option value='Resigned'>Resigned</option>
+          </select>
+        </div>
+
+        <div className="flex items-center mb-4">
+          <input
+            type="checkbox"
+            name="isUser"
+            className="border-none rounded-lg focus:outline-none mr-2"
+            onChange={inputData}
+            value="true"
+          />
+          <label
+            htmlFor="isUser"
+            className="block text-md font-medium text-gray-600"
+          >
+            Is a User
+          </label>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-red-400 text-white rounded-md"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            disabled={loading}
+          >
+            {loading ? "Submitting..." : "Submit"}
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400"
+          >
+            Reset
+          </button>
+        </div>
+
+        {error && <p className="text-red-500 mt-4">{error}</p>}
+      </form>
+      <Toaster position="top-right" reverseOrder={false} />
+    </div>
+  );
+};
+
+export default CreateEmployee;

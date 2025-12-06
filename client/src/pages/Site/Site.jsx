@@ -25,7 +25,7 @@ const Sites = () => {
 
   useEffect(() => {
     if (user && user.department === 'Site Incharge') {
-      console.log(user._id)
+      console.log(user.site)
       getUserSites(user._id);
     } else if (user && user.department === 'Site Supervisor') {
       console.log(user)
@@ -79,70 +79,138 @@ const Sites = () => {
   };
 
 
-  return (
-    <div>
-      <section className="overflow-x-auto scrollbar-hide">
-        <Header category="Page" title="Site Management" />
-        <div className="w-full mx-auto mb-6 text-gray-700 py-1 flex flex-row sm:flex-row justify-between items-center">
-          <h2 className="text-lg sm:text-md md:text-lg lg:text-xl text-green-600 mb-2 sm:mb-0 sm:mr-4">Total Sites: {sites?.length}</h2>
-          {user.department === 'Ceo' || user.department === 'Account Head' && (
-            <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2">
-              <MdAdd className='text-xl' />
-            </button>
-          )}
-        </div>
+return (
+    <div className="p-2 max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg sm:text-xl font-semibold text-green-600">
+          Total Sites: {sites?.length}
+        </h2>
+        {(user?.department === "Ceo" || user?.department === "Account Head") && (
+          <button
+            onClick={() => setCreateModal(true)}
+            className="bg-green-500 hover:bg-green-600 rounded-full p-2 text-white shadow"
+          >
+            <MdAdd className="text-xl" />
+          </button>
+        )}
+      </div>
 
-        <div className="overflow-x-auto scrollbar-hide">
-          <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
-            <thead className="bg-gray-300">
-              <tr className=" text-left">
-                <th className="font-semibold text-sm uppercase px-6 py-4 "> Name </th>
-                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Total Floor </th>
-                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Incharge </th>
-                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Project Type </th>
-                <th className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {sites?.map((site) => (
-                <tr key={site._id} className='border-b border-blue-gray-200'>
-                  <td className="px-6 py-4">
-                    <Link to={`/site/${site._id}`}> {site?.name} </Link>
-                    <p className="text-gray-500 text-sm font-semibold tracking-wide"> {site?.client?.name} </p>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    {site?.floors}
-                  </td>
-                  <td className="px-6 py-4 text-center">{site?.incharge?.name}</td>
-                  <td className="px-6 py-4 text-center">{site?.projectType}</td>
-                  <td className="px-6 py-4 text-center">
-                    <button onClick={() => handleRedirect(site?._id)} className="mr-2">
-                      <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+      {/* Mobile First: Card Layout */}
+      <div className="grid gap-4 sm:hidden">
+        {sites?.map((site) => (
+          <div
+            key={site._id}
+            className="bg-white shadow rounded-lg p-4 space-y-2"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <Link
+                  to={`/site/${site._id}`}
+                  className="text-lg font-semibold text-gray-800 hover:text-green-600"
+                >
+                  {site?.name}
+                </Link>
+                <p className="text-sm text-gray-500">{site?.client?.name}</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => handleRedirect(site?._id)}>
+                  <FaExternalLinkAlt className="text-blue-500 hover:text-blue-700 text-lg" />
+                </button>
+                {user?.role !== "Client" && (
+                  <button onClick={() => handleEdit(site?._id)}>
+                    <GrEdit className="text-blue-500 hover:text-blue-700 text-lg" />
+                  </button>
+                )}
+                {(user?.department === "Ceo" ||
+                  user?.department === "Account Head") && (
+                  <button onClick={() => handleDelete(site?._id)}>
+                    <MdDelete className="text-red-500 hover:text-red-600 text-xl" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="text-sm text-gray-700 grid grid-cols-2 gap-2 mt-2">
+              <p>
+                <span className="font-medium">Incharge:</span>{" "}
+                {site?.incharge?.name}
+              </p>
+              <p>
+                <span className="font-medium">Type:</span> {site?.projectType}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: Table */}
+      <div className="hidden sm:block overflow-x-auto">
+        <table className="w-full bg-white shadow rounded-lg overflow-hidden">
+          <thead className="bg-gray-100 text-gray-700 text-sm uppercase">
+            <tr>
+              <th className="px-4 py-3 text-left">Name</th>
+              <th className="px-4 py-3 text-center">Incharge</th>
+              <th className="px-4 py-3 text-center">Project Type</th>
+              <th className="px-4 py-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sites?.map((site) => (
+              <tr
+                key={site._id}
+                className="border-b hover:bg-gray-50 transition"
+              >
+                <td className="px-4 py-3">
+                  <Link
+                    to={`/site/${site._id}`}
+                    className="font-medium text-gray-800 hover:text-green-600"
+                  >
+                    {site?.name}
+                  </Link>
+                  <p className="text-xs text-gray-500">{site?.client?.name}</p>
+                </td>
+                <td className="px-4 py-3 text-center">{site?.incharge?.name}</td>
+                <td className="px-4 py-3 text-center">{site?.projectType}</td>
+                <td className="px-4 py-3 text-center space-x-2">
+                  <button onClick={() => handleRedirect(site?._id)}>
+                    <FaExternalLinkAlt className="text-blue-500 hover:text-blue-700 text-lg" />
+                  </button>
+                  {user?.role !== "Client" && (
+                    <button onClick={() => handleEdit(site?._id)}>
+                      <GrEdit className="text-blue-500 hover:text-blue-700 text-lg" />
                     </button>
-                    {user.role !== 'Client' && (
-                      <button onClick={() => handleEdit(site?._id)} className="mr-2">
-                        <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
-                      </button>)}
-                    {user.department === 'Ceo' || user.department === 'Account Head' && (
-                      <button onClick={() => handleDelete(site?._id)} className="mr-2">
-                        <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
-                      </button>)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  )}
+                  {(user?.department === "Ceo" ||
+                    user?.department === "Account Head") && (
+                    <button onClick={() => handleDelete(site?._id)}>
+                      <MdDelete className="text-red-500 hover:text-red-600 text-xl" />
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-        {error && <p className="text-red-500">{error}</p>}
-        <Toaster position="top-right" reverseOrder={false} />
-        <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Site' >
-          <CreateSite onClose={() => setCreateModal(false)} />
-        </Modal>
-        <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Site' >
-          <CreateSite onClose={() => setEditModal(false)} isEdit={editId} />
-        </Modal>
-      </section>
+      {error && <p className="text-red-500 mt-3">{error}</p>}
+
+      {/* Modals */}
+      <Toaster position="top-right" reverseOrder={false} />
+      <Modal
+        isOpen={createModal}
+        onClose={() => setCreateModal(false)}
+        head="Create Site"
+      >
+        <CreateSite onClose={() => setCreateModal(false)} />
+      </Modal>
+      <Modal
+        isOpen={editModal}
+        onClose={() => setEditModal(false)}
+        head="Edit Site"
+      >
+        <CreateSite onClose={() => setEditModal(false)} isEdit={editId} />
+      </Modal>
     </div>
   );
 }

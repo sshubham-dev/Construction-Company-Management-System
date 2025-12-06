@@ -1,5 +1,6 @@
 const Payment = require('../models/payment.models');
 const { Ledger } = require("../models/ledger.models");
+const { sendNotification } = require("./notification.controller.js");
 
 const generatePaymentNo = async (req, res) => {
   try {
@@ -84,7 +85,7 @@ const createPayment = async (req, res) => {
       from: { id: from, name: (await Ledger.findById(from))?.name },
       to: { id: to, name: (await Ledger.findById(to))?.name },
       referenceNo,
-      amount,
+      amount: Number(amount),
       description,
       paymentFor,
       invoiceType,
@@ -97,8 +98,8 @@ const createPayment = async (req, res) => {
     await updateLedgersAndModels(payment, "add");
 
     // Update ledger balances
-    await Ledger.findByIdAndUpdate(from, { $inc: { paid: amount, balance: -amount } });
-    await Ledger.findByIdAndUpdate(to, { $inc: { balance: amount } });
+    await Ledger.findByIdAndUpdate(from, { $inc: { paid:  Number(amount), balance: - Number(amount) } });
+    await Ledger.findByIdAndUpdate(to, { $inc: { balance:  Number(amount) } });
 
     res.status(201).json(payment);
   } catch (error) {
@@ -195,5 +196,5 @@ module.exports = {
   getPayments,
   updatePayment,
   deletePayment,
-  generatePaymentNo
+  generatePaymentNo,
 }

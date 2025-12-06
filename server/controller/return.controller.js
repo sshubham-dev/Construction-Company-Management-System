@@ -9,6 +9,7 @@ const {
 } = require('./approval.controller.js');
 const Site = require('../models/site.models');
 const User = require('../models/user.models');
+const { sendNotification } = require("./notification.controller.js");
 
 // Create a return
 const createReturn = async (req, res) => {

@@ -1,75 +1,88 @@
-// controllers/notification.controller.js
-const admin = require("../middlewares/firebaseAdmin");
-const User = require("../models/user.models"); // Adjust path to your user model
+const webpush = require("web-push");
+const Subscription = require("../models/subscription.models");
 
-const registerToken = async (req, res) => {
-  const { userId, token } = req.body;
+webpush.setVapidDetails(
+  "mailto:bhuviconsultants09@gmail.com",
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
-  if (!userId || !token) {
-    return res.status(400).json({ message: "Missing userId or token" });
-  }
-
+const saveSubscription = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(userId, { fcmToken: token });
-    res.status(200).json({ message: "Token registered successfully" });
-  } catch (error) {
-    console.error("Error registering token:", error);
-    res.status(500).json({ message: "Failed to register token" });
+    const { subscription, user } = req.body;
+
+    await Subscription.deleteOne({
+      "subscription.endpoint": subscription?.endpoint
+    });
+
+    const newSubscription = new Subscription({
+      user,
+      subscription,
+    });
+
+    await newSubscription.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false });
   }
 };
 
-const removeToken = async (req, res) => {
-  const { userId } = req.body;
-
-  if (!userId) {
-    return res.status(400).json({ message: "Missing userId" });
-  }
-
+const unsubscribe = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(userId, { fcmToken: null });
-    res.status(200).json({ message: "Token removed successfully" });
-  } catch (error) {
-    console.error("Error removing token:", error);
-    res.status(500).json({ message: "Failed to remove token" });
-  }
-};
-
-const sendNotification = async (req, res) => {
-  const { userId, title, message } = req.body;
-
-  try {
-    const user = await User.findById(userId);
-    const fcmToken = user?.fcmToken;
-
-    if (!fcmToken) {
-      return res.status(400).json({ message: "User has no FCM token" });
+    const { endpoint, user } = req.body;
+    if (!endpoint) {
+      return res.status(400).json({ success: false, message: "No endpoint provided" });
     }
 
-    const payload = {
-      notification: {
-        title,
-        body: message,
-      },
-      token: fcmToken,
-    };
+    await Subscription.deleteOne({ "subscription.endpoint": endpoint, user });
 
-    const response = await admin.messaging().send(payload);
-
-    res.status(200).json({
-      message: "Notification sent",
-      firebaseResponse: response,
-    });
-  } catch (error) {
-    console.error("FCM send error:", error);
-    res.status(500).json({
-      message: "Error sending notification",
-      error: error.message,
-    });
+    return res.json({ success: true, message: "Unsubscribed" });
+  } catch (err) {
+    console.log("Unsubscribe error", err);
+    res.status(500).json({ success: false });
   }
 };
 
+const sendNotification = async (userId, message) => {
+  try {
+    const subscriptions = await Subscription.find({ user: userId });
+
+    for (const sub of subscriptions) {
+      try {
+        await webpush.sendNotification(
+          sub.subscription,
+          JSON.stringify({
+            title: "Bhuvi Manager",
+            body: message,
+          })
+        );
+      } catch (err) {
+        console.log("Push error:", err.statusCode);
+
+        // 410 or 404 = expired subscription → remove it
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          console.log("Expired subscription removed:", sub.subscription.endpoint);
+          await Subscription.deleteOne({
+            "subscription.endpoint": sub.subscription.endpoint
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.log("Error in sendNotification:", err);
+  }
+};
+
+
+
+
+
+
+
 module.exports = {
-  registerToken,
-  removeToken,
-  sendNotification
-}
+  saveSubscription,
+  unsubscribe,
+  sendNotification,
+};

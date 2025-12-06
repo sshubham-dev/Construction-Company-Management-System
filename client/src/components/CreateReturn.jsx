@@ -1,17 +1,23 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchNotifications } from '../features/notification/notificationSlice';
+import { useDispatch, useSelector } from "react-redux";
+import { fetchNotifications } from "../features/notification/notificationSlice";
 import moment from "moment";
 
 axios.defaults.withCredentials = true;
 
-const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => {
+const ReturnFormModal = ({
+  onClose,
+  onSave,
+  returnData,
+  editId,
+  editIndex,
+}) => {
   const [formData, setFormData] = useState({
     site: "",
     materialType: "New",
     date: "",
-    returnable: [{ item: "", quantity: 0, unit: "", }],
+    returnable: [{ item: "", quantity: 0, unit: "" }],
   });
   const [sites, setSite] = useState([]);
   const { user } = useSelector((state) => state.auth);
@@ -23,12 +29,12 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
       receivedQuantity: 0,
       remarks: "",
       rate: 0,
-    }
+    },
   ]);
   const [requestIdToEdit, setRequestIdToEdit] = useState(null);
-  const [ItemToEdit, setItemToEdit] = useState({ id: '', index: '' });
+  const [ItemToEdit, setItemToEdit] = useState({ id: "", index: "" });
   const dispatch = useDispatch();
-
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (editId && editIndex !== undefined) {
       fetchReturnDetail(editId, editIndex);
@@ -40,23 +46,25 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
   }, [editId]);
   const fetchReturnRequest = async (id) => {
     try {
-      const response = await axios.get(`/api/v1/return/${id}`)
-      console.log(response.data)
+      const response = await axios.get(`/api/v1/return/${id}`);
+      console.log(response.data);
       setFormData({
         site: response.data.site?.id._id || "",
         materialType: response.data.materialType || "New",
-        date: response.data.date ? new Date(response.data.date).toISOString().split("T")[0] : "",
-        returnable: [{ item: "", quantity: 0, unit: "", }],
+        date: response.data.date
+          ? new Date(response.data.date).toISOString().split("T")[0]
+          : "",
+        returnable: [{ item: "", quantity: 0, unit: "" }],
       });
       setRequestIdToEdit(id);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
   const fetchReturnDetail = async (id, index) => {
     try {
-      const response = await axios.get(`/api/v1/return/${id}/item`)
-      console.log(response.data)
+      const response = await axios.get(`/api/v1/return/${id}/item`);
+      console.log(response.data);
       const returnableItem = response.data[index];
       setReturnable({
         item: returnableItem.item || "",
@@ -67,53 +75,57 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
         rate: returnableItem.rate || 0,
       });
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
   useEffect(() => {
-    if (user && user.department === 'Site Incharge') {
-      console.log(user._id)
+    if (user && user?.department === "Site Incharge") {
+      console.log(user._id);
       getUserSites(user._id);
-    } else if (user && user.department === 'Site Supervisor') {
-      console.log(user)
+    } else if (user && user?.department === "Site Supervisor") {
+      console.log(user);
       getUserSites(user._id);
-    } else if (user && user.department === 'Client') {
-      console.log(user)
+    } else if (user && user?.department === "Client") {
+      console.log(user);
       getUserSites(user._id);
     } else {
       const getSites = async () => {
         try {
-          const siteData = await axios.get('/api/v1/site');
+          const siteData = await axios.get("/api/v1/site");
           setSite(siteData.data);
-          console.log(siteData.data)
+          console.log(siteData.data);
         } catch (error) {
-          console.error(error)
+          console.error(error);
           setError(error.message);
         }
-      }
+      };
       getSites();
     }
-  }, [])
+  }, []);
 
   const getUserSites = async (id) => {
     try {
       const siteData = await axios.get(`/api/v1/site/user/${id}`);
-      console.log(siteData.data)
+      console.log(siteData.data);
       setSite(siteData.data);
     } catch (error) {
-      console.error(error)
+      console.error(error);
       setError(error.message);
     }
-  }
-  console.log(sites)
+  };
+  console.log(sites);
 
   useEffect(() => {
     if (returnData) {
       setFormData({
         site: returnData.site?.name || "",
         materialType: returnData.materialType || "New",
-        date: returnData.date ? new Date(returnData.date).toISOString().split("T")[0] : "",
-        returnable: returnData.returnable || [{ item: "", quantity: 0, receivedQuantity: 0, unit: "", remarks: "" }],
+        date: returnData.date
+          ? new Date(returnData.date).toISOString().split("T")[0]
+          : "",
+        returnable: returnData.returnable || [
+          { item: "", quantity: 0, receivedQuantity: 0, unit: "", remarks: "" },
+        ],
       });
     }
   }, [returnData]);
@@ -121,13 +133,13 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
   const handleChange = (e, index = null, field = null) => {
     const { name, value } = e.target;
 
-    setFormData(prevState => {
+    setFormData((prevState) => {
       if (index !== null) {
         // Updating a specific returnable item
         const updatedReturnables = [...prevState.returnable];
         updatedReturnables[index] = {
           ...updatedReturnables[index],
-          [field]: value,  // Ensure deep update
+          [field]: value, // Ensure deep update
         };
         return { ...prevState, returnable: updatedReturnables };
       } else {
@@ -137,16 +149,19 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
     });
   };
   const handleReturnableChange = (field, value) => {
-    setReturnable(prevState => ({
+    setReturnable((prevState) => ({
       ...prevState,
-      [field]: value,  // Ensure deep update
+      [field]: value, // Ensure deep update
     }));
   };
 
   const handleAddItem = () => {
     setFormData({
       ...formData,
-      returnable: [...formData.returnable, { item: "", quantity: 0, receivedQuantity: 0, unit: "", remarks: "" }],
+      returnable: [
+        ...formData.returnable,
+        { item: "", quantity: 0, receivedQuantity: 0, unit: "", remarks: "" },
+      ],
     });
   };
 
@@ -157,29 +172,36 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      console.log(formData)
+      console.log(formData);
       if (ItemToEdit.id && ItemToEdit.index !== undefined) {
-        const response = await axios.put(`/api/v1/return/${ItemToEdit.id}/item/${ItemToEdit.index}`, returnable);
+        const response = await axios.put(
+          `/api/v1/return/${ItemToEdit.id}/item/${ItemToEdit.index}`,
+          returnable
+        );
         console.log(response);
         onClose();
         dispatch(fetchNotifications(user._id));
       } else if (requestIdToEdit) {
-        console.log(formData)
-        const response = await axios.put(`/api/v1/return/${requestIdToEdit}`, formData);
+        console.log(formData);
+        const response = await axios.put(
+          `/api/v1/return/${requestIdToEdit}`,
+          formData
+        );
         console.log(response.data);
         onClose();
         dispatch(fetchNotifications(user._id));
         // onSave(formData);
       } else {
-        const response = await axios.post('/api/v1/return', formData)
+        const response = await axios.post("/api/v1/return", formData);
         console.log(response);
         onClose();
         onSave(formData);
         dispatch(fetchNotifications(user._id));
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
@@ -188,20 +210,33 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
       site: "",
       materialType: "New",
       date: "",
-      returnable: [{ item: "", quantity: 0, unit: "", }],
+      returnable: [{ item: "", quantity: 0, unit: "" }],
     });
-    setReturnable([{ item: "", quantity: 0, unit: "", receivedQuantity: 0, remarks: "", rate: 0 }]);
-    setItemToEdit({ id: '', index: '' });
+    setReturnable([
+      {
+        item: "",
+        quantity: 0,
+        unit: "",
+        receivedQuantity: 0,
+        remarks: "",
+        rate: 0,
+      },
+    ]);
+    setItemToEdit({ id: "", index: "" });
   };
 
-
   return (
-    <div >
+    <div>
       <form onSubmit={handleSubmit}>
         {ItemToEdit.id && ItemToEdit.index !== undefined ? (
           <div className="">
             <div className="mb-2">
-              <label htmlFor="item" className="block text-sm font-semibold text-gray-600">Item</label>
+              <label
+                htmlFor="item"
+                className="block text-sm font-semibold text-gray-600"
+              >
+                Item
+              </label>
               <input
                 type="text"
                 name="item"
@@ -214,91 +249,153 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
               <div className="mb-2">
-                <label htmlFor="quantity" className="block text-sm font-semibold text-gray-600">Quantity:</label>
+                <label
+                  htmlFor="quantity"
+                  className="block text-sm font-semibold text-gray-600"
+                >
+                  Quantity:
+                </label>
                 <input
                   type="number"
                   name="quantity"
                   placeholder="Qty"
                   className="border p-2 rounded"
                   value={returnable.quantity}
-                  onChange={(e) => handleReturnableChange("quantity", e.target.value)}
+                  onChange={(e) =>
+                    handleReturnableChange("quantity", e.target.value)
+                  }
                 />
               </div>
               <div className="mb-2">
-                <label htmlFor="unit" className="block text-sm font-semibold text-gray-600">Unit:</label>
+                <label
+                  htmlFor="unit"
+                  className="block text-sm font-semibold text-gray-600"
+                >
+                  Unit:
+                </label>
                 <input
                   type="text"
                   name="unit"
                   placeholder="Unit"
                   className="border p-2 rounded"
                   value={returnable.unit}
-                  onChange={(e) => handleReturnableChange("unit", e.target.value)}
+                  onChange={(e) =>
+                    handleReturnableChange("unit", e.target.value)
+                  }
                 />
               </div>
             </div>
-            {user && user.department === 'Accountant' && (
+            {user && user.department === "Accountant" && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
                   <div className="mb-2">
-                    <label htmlFor="receivedQuantity" className="block text-sm font-semibold text-gray-600">Received Quantity:</label>
+                    <label
+                      htmlFor="receivedQuantity"
+                      className="block text-sm font-semibold text-gray-600"
+                    >
+                      Received Quantity:
+                    </label>
                     <input
                       type="number"
                       name="receivedQuantity"
                       placeholder="Received Qty"
                       className="border p-2 rounded"
                       value={returnable.receivedQuantity}
-                      onChange={(e) => handleReturnableChange("receivedQuantity", e.target.value)}
+                      onChange={(e) =>
+                        handleReturnableChange(
+                          "receivedQuantity",
+                          e.target.value
+                        )
+                      }
                     />
                   </div>
                   <div className="mb-2">
-                    <label htmlFor="rate" className="block text-sm font-semibold text-gray-600">Rate:</label>
+                    <label
+                      htmlFor="rate"
+                      className="block text-sm font-semibold text-gray-600"
+                    >
+                      Rate:
+                    </label>
                     <input
                       type="number"
                       name="rate"
                       placeholder="rate"
                       className="border p-2 rounded"
                       value={returnable.rate}
-                      onChange={(e) => handleReturnableChange("rate", e.target.value)}
+                      onChange={(e) =>
+                        handleReturnableChange("rate", e.target.value)
+                      }
                     />
                   </div>
                 </div>
                 <div className="mb-2">
-                  <label htmlFor="remarks" className="block text-sm font-semibold text-gray-600">Remarks:</label>
+                  <label
+                    htmlFor="remarks"
+                    className="block text-sm font-semibold text-gray-600"
+                  >
+                    Remarks:
+                  </label>
                   <input
                     type="text"
                     name="remarks"
                     placeholder="Remarks"
                     className="w-full border p-2 rounded"
                     value={returnable.remarks}
-                    onChange={(e) => handleReturnableChange("remarks", e.target.value)}
+                    onChange={(e) =>
+                      handleReturnableChange("remarks", e.target.value)
+                    }
                   />
                 </div>
-              </>)}
+              </>
+            )}
             <div>
-              <button type="button" onClick={handleReset} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600">Reset</button>
-              <button type="submit" className="bg-blue-500 hover:bg-blue-700 ml-6 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                Submit
+              <button
+                type="button"
+                onClick={handleReset}
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600"
+              >
+                Reset
+              </button>
+              <button
+                type="submit"
+                className="bg-blue-500 hover:bg-blue-700 ml-6 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                disabled={loading}
+              >
+                {loading ? "Submitting..." : "Submit"}
               </button>
             </div>
           </div>
-        ) :
-          (<>
+        ) : (
+          <>
             <div className="space-y-3">
               <div className="mb-4">
-                <label htmlFor="site" className="block text-sm font-semibold text-gray-600">Site</label>
+                <label
+                  htmlFor="site"
+                  className="block text-sm font-semibold text-gray-600"
+                >
+                  Site
+                </label>
                 <select
                   name="site"
                   value={formData.site}
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  onChange={handleChange}>
+                  onChange={handleChange}
+                >
                   <option>Select Site</option>
                   {sites.map((site, index) => (
-                    <option key={index} value={site._id}>{site.name}</option>
+                    <option key={index} value={site._id}>
+                      {site.name}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="mb-4">
-                <label htmlFor="materialType" className="block text-sm font-semibold text-gray-600">Material Type</label>
+                <label
+                  htmlFor="materialType"
+                  className="block text-sm font-semibold text-gray-600"
+                >
+                  Material Type
+                </label>
                 <select
                   name="materialType"
                   className="w-full border p-2 rounded"
@@ -311,7 +408,12 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
                 </select>
               </div>
               <div className="mb-4">
-                <label htmlFor="date" className="block text-sm font-semibold text-gray-600">Date: {moment(formData.date).format('DD-MM-YYYY')}</label>
+                <label
+                  htmlFor="date"
+                  className="block text-sm font-semibold text-gray-600"
+                >
+                  Date: {moment(formData.date).format("DD-MM-YYYY")}
+                </label>
                 <input
                   type="date"
                   name="date"
@@ -322,9 +424,14 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
               </div>
             </div>
 
-            <h3 className="text-lg font-semibold mt-4 mb-2">Returnable Items</h3>
+            <h3 className="text-lg font-semibold mt-6 mb-2">
+              Returnable Items
+            </h3>
             {formData.returnable.map((item, index) => (
-              <div key={index} className="mb-3 p-4 border rounded relative flex flex-col gap-1">
+              <div
+                key={index}
+                className="mb-3 p-2 relative flex flex-col gap-1"
+              >
                 {formData.returnable.length > 1 && (
                   <button
                     type="button"
@@ -335,7 +442,12 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
                   </button>
                 )}
                 <div className="mb-2">
-                  <label htmlFor="item" className="block text-sm font-semibold text-gray-600">Item</label>
+                  <label
+                    htmlFor="item"
+                    className="block text-sm font-semibold text-gray-600"
+                  >
+                    Item
+                  </label>
                   <input
                     type="text"
                     placeholder="Item Name"
@@ -352,7 +464,12 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
                     value={item.receivedQuantity}
                     onChange={(e) => handleChange(e, index, "receivedQuantity")}
                   /> */}
-                  <label htmlFor="quantity" className="block text-sm font-semibold text-gray-600">Quantity:</label>
+                  <label
+                    htmlFor="quantity"
+                    className="block text-sm font-semibold text-gray-600"
+                  >
+                    Quantity:
+                  </label>
                   <input
                     type="number"
                     placeholder="Qty"
@@ -360,7 +477,12 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
                     value={item.quantity}
                     onChange={(e) => handleChange(e, index, "quantity")}
                   />
-                  <label htmlFor="unit" className="block text-sm font-semibold text-gray-600">Unit:</label>
+                  <label
+                    htmlFor="unit"
+                    className="block text-sm font-semibold text-gray-600"
+                  >
+                    Unit:
+                  </label>
                   <input
                     type="text"
                     placeholder="Unit"
@@ -376,7 +498,6 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
                   value={item.remarks}
                   onChange={(e) => handleChange(e, index, "remarks")}
                 /> */}
-
               </div>
             ))}
 
@@ -389,14 +510,23 @@ const ReturnFormModal = ({ onClose, onSave, returnData, editId, editIndex }) => 
             </button>
 
             <div className="flex justify-end space-x-2 mt-4">
-              <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              >
                 Cancel
               </button>
-              <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                Add
+              <button
+                type="submit"
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              disabled={loading}
+            >
+              {loading ? "Submitting..." : "Submit"}
               </button>
             </div>
-          </>)}
+          </>
+        )}
       </form>
     </div>
   );

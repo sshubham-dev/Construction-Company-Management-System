@@ -1,10 +1,10 @@
-
 const { Ledger, Group, CostCenter } = require('../models/ledger.models');
 const Site = require('../models/site.models');
 const Client = require('../models/client.models');
 const Contractor = require('../models/contractor.models');
 const Supplier = require('../models/supplier.models');
 const Employee = require('../models/employee.models');
+const { sendNotification } = require("./notification.controller.js");
 
 // CRUD for Ledger
 const createLedger = async (req, res) => {
@@ -246,7 +246,18 @@ const deleteGroup = async (req, res) => {
 };
 
 const addLedgerAndCostCenterForSite = async (site) => {
-  const ledger = new Ledger({
+
+  // inside addLedgerAndCostCenterForSite()
+const existingCostCenter = await CostCenter.findOne({ name: site.name });
+const existingLedger = await Ledger.findOne({ name: site.name });
+
+if (existingCostCenter) {
+  console.log(`[Site Ledger Sync] Cost center already exists for ${site.name}`);
+  existingCostCenter.referenceId = site._id;
+  existingCostCenter.mailingDetails = { name: site.name, address: site.address };
+  await existingCostCenter.save();
+} else {
+    const ledger = new Ledger({
     name: site.name,
     refrenceType: 'Site',
     refrenceId: site._id,
@@ -277,6 +288,10 @@ const addLedgerAndCostCenterForSite = async (site) => {
     description: `Cost center for site ${site.name}`,
   });
   await costCenter.save();
+  console.log(`[Site Ledger Sync] Created cost center for ${site.name}`);
+}
+
+
 };
 
 module.exports = {

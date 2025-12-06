@@ -1,18 +1,32 @@
-import { useSelector } from 'react-redux';
-import AttendanceSummary from '../../components/UI/AttendanceSummary';
+import { useSelector } from "react-redux";
+import Attendance from "../../components/UI/Attendance";
+import ProfileCard from "../../components/UI/ProfileCard";
+import Approvals from "../../components/UI/Approvals";
+import Performance from "../../components/UI/Performance";
+import { useState } from "react";
+import Section from '../../components/UI/Section';
+import Actions from '../../components/UI/Actions';
 
 const Layout = ({ children }) => {
-    const { user } = useSelector((state) => state.auth);
-    return (
-        <div>
-            <div className="overflow-x-auto h-full space-y-4 mb-10">
-                <h1 className="text-xl font-semibold text-green-900 mb-6">Welcome Back, <b className='text-3xl'>{user.userName}</b></h1>
-                {/* Attendance Section */}
-                <AttendanceSummary />
-                {children}
-            </div>
-        </div>
-    )
-}
+  const { user } = useSelector((state) => state.auth);
+  const [showApprovals, setShowApprovals] = useState(false);
+  return (
+    <div className="space-y-6">
+      <ProfileCard name={user?.userName} role={user?.department} avatar={user?.avatar} />
+      <Attendance />
+      {user?.department !== 'Ceo' && 
+      <Performance />
+      }
+      {children}
+      <Approvals
+        setShowApprovals={setShowApprovals}
+        showApprovals={showApprovals}
+      />
+      <Section title="General Action">
+        <Actions role={user?.department} />
+      </Section>
+    </div>
+  );
+};
 
-export default Layout
+export default Layout;

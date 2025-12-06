@@ -10,6 +10,7 @@ const checklistSchema = new mongoose.Schema({
     },
     checklistId: {
         type: String,
+        trim: true,
     },
     site: {
         name: String,
@@ -82,6 +83,7 @@ const checklistSchema = new mongoose.Schema({
         default: 'Pending',
     }
 }, { timestamps: true });
+
 
 const Checklist = mongoose.model('Checklist', checklistSchema);
 module.exports = Checklist;

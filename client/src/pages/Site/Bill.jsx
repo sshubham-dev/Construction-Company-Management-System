@@ -12,6 +12,7 @@ import moment from 'moment';
 import Modal from '../../components/Modal';
 import CreateBill from '../../components/CreateBill';
 import Header from '../../components/Header';
+// import { DotsVerticalIcon } from "@heroicons/react/solid"; // heroicons needed
 
 
 axios.defaults.withCredentials = true;
@@ -34,7 +35,7 @@ const Bills = () => {
 
         console.log('Bills Fetched:', bills);
 
-        if ((user.department === 'Site Supervisor' || user.department === 'Site Incharge') && isLoggedIn) {
+        if ((user?.department === 'Site Supervisor' || user?.department === 'Site Incharge') && isLoggedIn) {
           const sites = user?.site;
           const contractorBills = bills.filter((bill) =>
             sites.some((site) =>
@@ -57,7 +58,7 @@ const Bills = () => {
         const bills = billData.data;
         console.log('Draft Bills Fetched:', bills);
 
-        if ((user.department === 'Site Supervisor' || user.department === 'Site Incharge') && isLoggedIn) {
+        if ((user?.department === 'Site Supervisor' || user?.department === 'Site Incharge') && isLoggedIn) {
           const sites = user?.site || [];
           const draftBills = bills?.filter((bill) => {
             const billSiteId = bill?.site?.id?._id?.toString?.() || bill?.site?.id?.toString?.();
@@ -179,7 +180,7 @@ const Bills = () => {
           </div>
         )}
 
-        {user.department === 'Site Incharge' && (
+        {user?.department === 'Site Incharge'  && (
           <>
             {activeTab === "draft" && (
               <div className="overflow-x-auto scrollbar-hide">

@@ -12,7 +12,7 @@ const GroupModal = ({ onClose }) => {
   });
 
   const [ledgerGroups, setLedgerGroup] = useState([]);
-
+  const [loading, setLoading] = useState(false);
   useEffect(()=>{
     const fetchGroup = async () => {
       const response = await axios.get('/api/v1/ledger-group')
@@ -31,6 +31,7 @@ const GroupModal = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const response = await axios.post('/api/v1/ledger-group', group)
       console.log("Group Data:", group);
@@ -110,8 +111,10 @@ const GroupModal = ({ onClose }) => {
           <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-400 text-white rounded-md">
             Cancel
           </button>
-          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md">
-            Save Group
+          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                        disabled={loading}
+            >
+              {loading ? "Submitting..." : "Submit"}
           </button>
         </div>
       </form>

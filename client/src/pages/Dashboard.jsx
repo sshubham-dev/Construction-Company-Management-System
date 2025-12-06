@@ -32,7 +32,7 @@ const Dashboard = () => {
             navigate('/marketing');
             break;
           case 'Ceo':
-            navigate('/admin');
+            navigate('/ceo');
             break;
           case 'Site Incharge':
             navigate('/site-incharge');
@@ -51,6 +51,12 @@ const Dashboard = () => {
             break;
           case 'Store Helper':
             navigate('/store-helper');
+            break;
+          case 'Store Incharge':
+            navigate('/store-incharge');
+            break;
+          case 'HR':
+            navigate('/hr');
             break;
           default:
             console.log("Not exists");

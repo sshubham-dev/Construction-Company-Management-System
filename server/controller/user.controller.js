@@ -311,7 +311,7 @@ const resetPasswd = async (req, res) => {
             .select('-refreshToken')
             .exec();
         if (!existingUser) return res.status(404).json({ error: 'User not found' });
-        console.log(existingUser)
+        // console.log(existingUser)
         existingUser.password = password;
         await existingUser.save();
         return res.status(201).json({ message: 'Password Reset successful!' });

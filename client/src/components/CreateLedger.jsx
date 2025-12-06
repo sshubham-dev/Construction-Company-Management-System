@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Select from 'react-select';
 
-const LedgerModal = ({ onClose }) => {
+const CreateLedger = ({ onClose }) => {
   const [ledger, setLedger] = useState({
     name: "",
     alias: "",
@@ -34,7 +34,7 @@ const LedgerModal = ({ onClose }) => {
   const [createCostCenter, setCreateCostCenter] = useState(false);
   const [users, setUser] = useState([]);
   const [ledgerGroups, setLedgerGroup] = useState([]);
-
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -99,6 +99,7 @@ const LedgerModal = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const response = await axios.post('/api/v1/ledger', {
         ...ledger,
@@ -246,8 +247,10 @@ const LedgerModal = ({ onClose }) => {
           <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-400 text-white rounded-md">
             Cancel
           </button>
-          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md">
-            Save Ledger
+          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                        disabled={loading}
+            >
+              {loading ? "Submitting..." : "Save ledger"}
           </button>
         </div>
       </form>
@@ -255,4 +258,4 @@ const LedgerModal = ({ onClose }) => {
   );
 };
 
-export default LedgerModal;
+export default CreateLedger;

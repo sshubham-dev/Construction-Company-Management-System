@@ -20,10 +20,6 @@ const workDetailSchema = new mongoose.Schema({
         type: String,
         default: 'Pending',
     },
-    checklist:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Checklist'
-    }
 });
 
 const qualityScheduleSchema = new mongoose.Schema({
@@ -48,10 +44,6 @@ const qualityScheduleSchema = new mongoose.Schema({
     },
     workDetails: [workDetailSchema],
     qualityApprove: {
-        type: String,
-        default: 'Pending'
-    },
-    adminApprove: {
         type: String,
         default: 'Pending'
     },

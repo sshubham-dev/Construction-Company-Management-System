@@ -1,4 +1,5 @@
 const Sales = require('../models/sales.models');
+const { sendNotification } = require("./notification.controller.js");
 
 // Create a new sale
 const createSale = async (req, res) => {

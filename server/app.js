@@ -4,7 +4,7 @@ const app = express();
 const cors = require('cors');
 const UserRouter = require('./routes/user.routes');
 const Site = require('./routes/site.routes');
-const { WorkOrder, WorkDetail } = require('./routes/workorder.routes');
+const { WorkOrder, WorkDetail, WorkTemplate } = require('./routes/workorder.routes');
 const Employee = require('./routes/employee.routes');
 const Client = require('./routes/client.routes');
 const Contractor = require('./routes/contractor.routes');
@@ -21,7 +21,7 @@ const PurchaseOrder = require('./routes/purchaseorder.routes');
 const Todo = require('./routes/todo.routes');
 const Approval = require('./routes/approval.routes');
 const path = require('path');
-const { Attendances, Leaves } = require('./routes/attendance.routes');
+const { Attendances, Leaves, LabourAttendances } = require('./routes/attendance.routes');
 const Journal = require('./routes/journal.routes');
 const Contra = require('./routes/contra.routes');
 const Payment = require('./routes/payment.routes');
@@ -34,6 +34,9 @@ const PurchaseRequest = require('./routes/purchaserequest.routes');
 const Expenses = require('./routes/expenses.routes');
 const Notification = require('./routes/notification.routes');
 const Blogs = require('./routes/blog.routes');
+const BusinessUnit = require('./routes/bu.routes');
+const Store = require('./routes/store.routes');
+const { Rates, Quotation, Packages } = require('./routes/quote.routes');
 // midellware
 
 const allowedOrigins = process.env.CORS_ORIGIN.split(',');
@@ -70,6 +73,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(buildpath));
 app.use(helmet())
+// app.use(async (req, res, next) => {
+//   const start = process.hrtime.bigint();
+//   res.on('finish', () => {
+//     const ms = Number(process.hrtime.bigint() - start) / 1e6;
+//     console.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${ms.toFixed(2)}ms`);
+//   });
+//   next();
+// });
+
 
 app.use('/api/v1/user', UserRouter);
 app.use('/api/v1/attendance', Attendances);
@@ -103,7 +115,14 @@ app.use('/api/v1/ledger', Ledger);
 app.use('/api/v1/ledger-group', Group);
 app.use('/api/v1/expenses', Expenses);
 app.use('/api/v1/notification', Notification)
-app.use('api/v1/blog', Blogs);
+app.use('/api/v1/blog', Blogs);
+app.use('/api/v1/labour-attendance', LabourAttendances);
+app.use('/api/v1/work-template', WorkTemplate);
+app.use('/api/v1/business-unit', BusinessUnit);
+app.use('/api/v1/store', Store);
+app.use("/api/v1/calculator/quote", Quotation);
+app.use("/api/v1/calculator/rate", Rates);
+app.use("/api/v1/calculator/packages", Packages);
 app.use((err, req, res, next) => {
   console.error(err.stack);
   console.log(err)

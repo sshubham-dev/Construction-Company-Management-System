@@ -77,6 +77,7 @@ const ResetPasswd = () => {
                                 onChange={handleChange}
                                 placeholder="••••••••"
                                 className="w-full border-none outline-none p-2 text-gray-900 sm:text-sm"
+                                autoComplete="current-password"
                                 required="" />
                             <span
                                 className="block text-gray-700 text-xl font-bold cursor-pointer p-2"

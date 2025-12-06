@@ -2,6 +2,7 @@ const Supplier = require('../models/supplier.models.js');
 const User = require('../models/user.models.js');
 const { addLedger } = require('./ledger.controller.js');
 const { convertToUser } = require('./user.controller.js');
+const { sendNotification } = require("./notification.controller.js");
 
 const getSuppliers = async (req, res) => {
     try {
@@ -44,8 +45,8 @@ const createSupplier = async (req, res) => {
         console.log(newSupplier)
         const savedSupplier = await newSupplier.save();
         res.status(201).json({ message: 'Supplier Created Successfully', savedSupplier });
-        const isGSTApplicable = gstNo !== '' ? true : false;
-        addLedger(savedContractor, 'Sundry Creditor', isGSTApplicable, false, 'supplier')
+        // const isGSTApplicable = gstNo !== '' ? true : false;
+        // addLedger(savedContractor, 'Sundry Creditor', isGSTApplicable, false, 'supplier')
         if (savedSupplier.isUser === true) {
             const password = name + '@' + phone
             await convertToUser(savedSupplier._id, 'Supplier', password);

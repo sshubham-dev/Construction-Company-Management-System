@@ -17,13 +17,20 @@ const expenseSchema = new mongoose.Schema({
     ref: 'Ledger',
     required: true
   },
-  purpose: { type: String },
-  photo: { type: String },
+  purpose: { type: String, required: true },
+  photo: String ,
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
-  }
+  },
+  approval: { type: String, default: 'Pending' },
+status: {
+  type: String,
+  enum: ["for approval", "approved", "paid", "rejected"],
+  default: "for approval"
+}
 }, { timestamps: true });
 
-module.exports = mongoose.model('Expense', expenseSchema);
+const Expenses = mongoose.model('Expense', expenseSchema);
+module.exports = Expenses;

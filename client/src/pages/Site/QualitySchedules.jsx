@@ -15,7 +15,7 @@ axios.defaults.withCredentials = true;
 const QualitySchedules = () => {
   const navigate = useNavigate();
   const [qualitySchedules, setQualitySchedule] = useState([]);
-  const { user } = useSelector((state) => state.auth);
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [editId, setEditId] = useState('');
@@ -24,7 +24,20 @@ const QualitySchedules = () => {
     const getqualitySchedules = async () => {
       try {
         const qualitySchedulesData = await axios.get('/api/v1/quality-schedule');
-        setQualitySchedule(qualitySchedulesData.data);
+       
+        if ((user.department === 'Site Supervisor' || user.department === 'Site Incharge') && isLoggedIn) {
+          const sites = user.site;
+          // console.log(user)
+          let QualitySchedules = [];
+          for (let site of sites) {
+            const filteredQualitySchedules = qualitySchedulesData.data.filter((qualitySchedule) => qualitySchedule.site?.id._id === site.id)
+            QualitySchedules = [...QualitySchedules, ...filteredQualitySchedules]
+          }
+           setQualitySchedule(QualitySchedules);
+          console.log("QualitySchedules for all sites:", QualitySchedules);
+        } else {
+          setQualitySchedule(qualitySchedulesData.data);
+        }
         console.log(qualitySchedulesData.data)
       } catch (error) {
         console.error(error);
@@ -71,7 +84,7 @@ const QualitySchedules = () => {
           <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
             <thead className="bg-gray-300">
               <tr className=" text-left">
-                <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Site</th>
+                <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Site</th>
                 <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Date</th>
                 <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Approval Status</th>
                 {/* <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Actual Date</th> */}
@@ -82,9 +95,11 @@ const QualitySchedules = () => {
             <tbody>
               {qualitySchedules.map((qualitySchedule, index) => (
                 <tr key={index} className="bg-white border-b hover:bg-gray-50 ">
+                  <td className="px-6 py-4 text-center">
                   <Link to={`/quality-schedule/${qualitySchedule._id}`} className="px-6 py-4">
                     {qualitySchedule.site?.name}
                   </Link>
+                  </td>
                   <td className="px-6 py-4 text-center">{moment(qualitySchedule.date).format('DD-MM-YYYY')}</td>
                   <td className="px-6 py-4 text-center">{qualitySchedule.approvalStatus}</td>
                   {/* <td className="px-6 py-4 text-center">{work.startedAt ? moment(work.startedAt).format('DD-MM-YYYY') : '-'}</td> */}

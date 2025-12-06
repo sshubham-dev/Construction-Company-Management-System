@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react'
-import toast, { Toaster } from 'react-hot-toast';
-import Header from '../../components/Header';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import Header from "../../components/Header";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { GrEdit } from "react-icons/gr";
 import { MdAdd, MdDelete } from "react-icons/md";
 import { FaExternalLinkAlt } from "react-icons/fa";
-import CreatePurchaseRequest from '../../components/CreatePurchaseRequest';
-import Modal from '../../components/Modal';
-import axios from 'axios';
-import moment from 'moment';
+import CreatePurchaseRequest from "../../components/CreatePurchaseRequest";
+import Modal from "../../components/Modal";
+import axios from "axios";
+import moment from "moment";
 
 const PurchaseRequest = () => {
   const navigate = useNavigate();
@@ -18,17 +18,17 @@ const PurchaseRequest = () => {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("approved");
   const [editModal, setEditModal] = useState(false);
-  const [editId, setEditId] = useState('');
+  const [editId, setEditId] = useState("");
   const { user, isLoggedIn } = useSelector((state) => state.auth);
 
   useEffect(() => {
     const fetchPurchaseRequest = async () => {
-      const response = await axios.get('/api/v1/purchase-request')
-      console.log(...response.data)
-      setPurchaseRequest(response.data)
-    }
+      const response = await axios.get("/api/v1/purchase-request");
+      console.log(...response.data);
+      setPurchaseRequest(response.data);
+    };
     fetchPurchaseRequest();
-  }, [])
+  }, []);
 
   const handleRedirect = (id) => {
     navigate(`/purchase-request/${id}`);
@@ -41,21 +41,23 @@ const PurchaseRequest = () => {
 
   const handleEdit = (id) => {
     setEditModal(true);
-    setEditId(id)
+    setEditId(id);
   };
 
   const handleDelete = async (request) => {
     try {
-      await axios.delete(`/api/v1/purchase-request/${request}`)
-      setPurchaseRequest((prevpurchaseRequests) => prevpurchaseRequests.filter((l) => l !== purchaseRequest));
+      await axios.delete(`/api/v1/purchase-request/${request}`);
+      setPurchaseRequest((prevpurchaseRequests) =>
+        prevpurchaseRequests.filter((l) => l !== purchaseRequest)
+      );
       toast.success("purchaseRequest deleted successfully!");
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
   return (
-    <div >
+    <div>
       <section className="overflow-x-auto scrollbar-hide">
         <Header category="Page" title="Purchase Request" />
         <div className="flex flex-col md:flex-row justify-between mb-4 space-y-4 md:space-y-0">
@@ -76,15 +78,24 @@ const PurchaseRequest = () => {
           </div>
         </div>
 
+
         <div className="flex space-x-4 border-b-2 mb-4 w-full md:w-auto">
           <button
-            className={`px-4 py-2 ${activeTab === "approved" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
+            className={`px-4 py-2 ${
+              activeTab === "approved"
+                ? "border-b-4 border-blue-500 font-bold"
+                : "text-gray-500"
+            }`}
             onClick={() => setActiveTab("approved")}
           >
             Approved
           </button>
           <button
-            className={`px-4 py-2 ${activeTab === "request" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
+            className={`px-4 py-2 ${
+              activeTab === "request"
+                ? "border-b-4 border-blue-500 font-bold"
+                : "text-gray-500"
+            }`}
             onClick={() => setActiveTab("request")}
           >
             Request
@@ -92,36 +103,57 @@ const PurchaseRequest = () => {
         </div>
 
         {activeTab === "approved" && (
-          <div className='bg-white rounded-lg shadow overflow-x-auto scrollbar-hide'>
+          <div className="bg-white rounded-lg shadow overflow-x-auto scrollbar-hide">
             <table className="w-full border-collapse overflow-x-auto table-auto whitespace-nowrap">
               <thead>
                 <tr className="bg-gray-300">
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Site</th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Requirement For</th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Category</th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                    Site
+                  </th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                    Requirement For
+                  </th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                    Category
+                  </th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                    Status
+                  </th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {purchaseRequest.map((request, index) => (
-                  <tr key={index} className="bg-white border-b hover:bg-gray-50 ">
-                    <Link to={`/purchase-request/${request._id}`} className="p-3 text-left">{request.site.name}</Link>
+                  <tr
+                    key={index}
+                    className="bg-white border-b hover:bg-gray-50 "
+                  >
+                    <td className="p-3 text-left">
+                      {" "}
+                      <Link to={`/purchase-request/${request._id}`}>
+                        {request.site.name}
+                      </Link>
+                    </td>
                     <td className="p-3 text-left">{request.requirementFor}</td>
                     <td className="p-3 text-left">{request.category}</td>
                     <td className="p-3 text-left">{request.status}</td>
                     <td className="px-6 py-4">
-                      <button onClick={() => handleRedirect(request._id)} className="mr-2">
-                        <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                      <button
+                        onClick={() => handleRedirect(request._id)}
+                        className="mr-2"
+                      >
+                        <FaExternalLinkAlt className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>
                       <button
                         onClick={() => handleEdit(request._id)}
-                        className="mr-2">
+                        className="mr-2"
+                      >
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>
-                      <button
-                        onClick={() => handleDelete(request._id)}>
-                        <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
+                      <button onClick={() => handleDelete(request._id)}>
+                        <MdDelete className="text-red-500 hover:text-red-600 text-xl" />
                       </button>
                     </td>
                   </tr>
@@ -132,42 +164,58 @@ const PurchaseRequest = () => {
         )}
 
         {activeTab === "request" && (
-          <div className='bg-white rounded-lg shadow overflow-x-auto scrollbar-hide'>
+          <div className="bg-white rounded-lg shadow overflow-x-auto scrollbar-hide">
             <table className="w-full border-collapse overflow-x-auto table-auto whitespace-nowrap">
               <thead>
                 <tr className="bg-gray-300">
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Site</th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Requirement For</th>
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Request Date</th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                    Site
+                  </th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                    Requirement For
+                  </th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                    Request Date
+                  </th>
                   {/* <th className="p-3 text-left text-sm font-semibold text-gray-700">Approval status</th> */}
-                  <th className="p-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                  <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {purchaseRequest.map((request, index) => (
-                  <tr key={index} className="bg-white border-b hover:bg-gray-50 ">
-                    <Link to={`/purchase-request/${request._id}`} className="p-3 text-left">{request.site.name}</Link>
-                    <td className="p-3 text-left flex flex-col">
-                      <p>
-                        {request.requirementFor}
-                      </p>
-                      <p>
-                        {request?.category}
-                      </p>
+                  <tr
+                    key={index}
+                    className="bg-white border-b hover:bg-gray-50 "
+                  >
+                    <td className="p-3 text-left">
+                      <Link to={`/purchase-request/${request._id}`}>
+                        {request.site.name}
+                      </Link>
                     </td>
-                    <td className="p-3 text-left">{moment(request?.reqDate).format('DD-MM-YYYY')}</td>
+                    <td className="p-3 text-left flex flex-col">
+                      <p>{request.requirementFor}</p>
+                      <p>{request?.category}</p>
+                    </td>
+                    <td className="p-3 text-left">
+                      {moment(request?.reqDate).format("DD-MM-YYYY")}
+                    </td>
                     <td className="px-6 py-4">
-                      <button onClick={() => handleRedirect(request._id)} className="mr-2">
-                        <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                      <button
+                        onClick={() => handleRedirect(request._id)}
+                        className="mr-2"
+                      >
+                        <FaExternalLinkAlt className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>
                       <button
                         onClick={() => handleEdit(request._id)}
-                        className="mr-2">
+                        className="mr-2"
+                      >
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>
-                      <button
-                        onClick={() => handleDelete(request._id)}>
-                        <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
+                      <button onClick={() => handleDelete(request._id)}>
+                        <MdDelete className="text-red-500 hover:text-red-600 text-xl" />
                       </button>
                     </td>
                   </tr>
@@ -177,21 +225,29 @@ const PurchaseRequest = () => {
           </div>
         )}
 
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-        />
+        <Toaster position="top-right" reverseOrder={false} />
       </section>
 
       {/* Work Order Modal */}
-      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Purchase Request' >
+      <Modal
+        isOpen={createModal}
+        onClose={() => setCreateModal(false)}
+        head="Create Purchase Request"
+      >
         <CreatePurchaseRequest onClose={() => setCreateModal(false)} />
       </Modal>
-      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Purchase Request' >
-        <CreatePurchaseRequest onClose={() => setEditModal(false)} id={editId} />
+      <Modal
+        isOpen={editModal}
+        onClose={() => setEditModal(false)}
+        head="Update Purchase Request"
+      >
+        <CreatePurchaseRequest
+          onClose={() => setEditModal(false)}
+          id={editId}
+        />
       </Modal>
     </div>
-  )
-}
+  );
+};
 
-export default PurchaseRequest
+export default PurchaseRequest;

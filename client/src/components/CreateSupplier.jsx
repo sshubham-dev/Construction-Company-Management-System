@@ -19,7 +19,7 @@ const CreateSupplier = ({ onClose, isEdit }) => {
   });
   const [error, setError] = useState(null);
   const [supplierIdToEdit, setSupplierIdToEdit] = useState(null);
-
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (isEdit) {
       setSupplierIdToEdit(isEdit);
@@ -78,7 +78,7 @@ const CreateSupplier = ({ onClose, isEdit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+setLoading(true);
     const formData = new FormData();
     Object.entries(supplier).forEach(([key, value]) => {
       if (value instanceof File) {
@@ -234,8 +234,9 @@ const CreateSupplier = ({ onClose, isEdit }) => {
           <button
             type="submit"
             className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:shadow-outline-blue active:bg-blue-800"
-          >
-            Create
+              disabled={loading}
+            >
+              {loading ? "Submitting..." : "Submit"}
           </button>
           <button type="button" onClick={handleReset}
             className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">

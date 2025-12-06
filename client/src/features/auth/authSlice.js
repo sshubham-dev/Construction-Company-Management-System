@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 const token = sessionStorage.getItem("token");
+import axios from "axios";
 
 const initialState = token
     ? { isLoggedIn: true, user: {} }
@@ -15,12 +16,15 @@ export const authSlice = createSlice({
         },
         logout: (state) => {
             sessionStorage.removeItem("token");
+            localStorage.removeItem("user");
             state.isLoggedIn = false;
             state.user = null;
             console.log('Logout action triggered');
         },
     },
 })
+
+
 
 export const { login, logout } = authSlice.actions
 

@@ -6,6 +6,7 @@ const {
     sendApproveByAccountHead,
 } = require('./approval.controller.js');
 const User = require('../models/user.models.js');
+const { sendNotification } = require("./notification.controller.js");
 
 const getPaymentSchedules = async (req, res) => {
     try {
@@ -89,7 +90,7 @@ const createPaymentSchedule = async (req, res) => {
         const clientPaymentSchedule = await newClientPaymentSchedule.save();
         if (!clientPaymentSchedule) return res.status(401).json({ error: 'Payment Schedule is not saved', error })
         sendApproveByAdmin(clientPaymentSchedule, 'Payment Schedule', user?._id)
-        sendApproveByAccountHead(clientPaymentSchedule, 'Payment Schedule', user?._id)
+        // sendApproveByAccountHead(clientPaymentSchedule, 'Payment Schedule', user?._id)
         const existingUser = await User.findById(user._id).select('-password -refreshToken');
         const employees = await User.find({ role: "Employee" });
 
@@ -121,7 +122,7 @@ const savePaymentSchedule = async (req, res) => {
         if (!paymentSchedule) return res.status(404).json({ message: 'No paymentSchedule Found' });
         const existingSite = await Site.findById(paymentSchedule?.site?.id);
         if (paymentSchedule.createdBy.toString() === user?._id.toString()) {
-            if (paymentSchedule.adminApprove === 'Approved' && paymentSchedule.accountheadApprove === 'Approved') {
+            if (paymentSchedule.adminApprove === 'Approved') {
                 paymentSchedule.approvalStatus = 'Approved'
                 await paymentSchedule.save();
                 existingSite.paymentSchedule = paymentSchedule._id;

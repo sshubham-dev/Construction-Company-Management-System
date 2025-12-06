@@ -12,7 +12,7 @@ const Receipt = require('../models/receipt.models');  // Adjust path as needed
 const Bill = require('../models/bill.models');
 const ExtraWork = require('../models/extrawork.models');
 const PaymentSchedule = require('../models/paymentschedule.models');
-// Add others as needed
+const { sendNotification } = require("./notification.controller.js");
 
 const getReceiptWithInvoices = async (req, res) => {
   try {

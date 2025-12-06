@@ -1,92 +1,103 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const requirementSchema = new mongoose.Schema({
-    item: {
-        type: String,
-        // id: {
-        //     type: mongoose.Schema.Types.ObjectId,
-        //     ref: 'Stock',
-        // }
+const prItemSchema = new mongoose.Schema(
+  {
+    itemId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Stock",
+      required: true,
     },
-    request: {
-        quantity: Number,
-        unit: String,
-        remarks: String,
-    },
-    approved: {
-        quantity: Number,
-        unit: String,
-        rate: Number,
-        remarks: String,
-    },
-    delivered: {
-        quantity: Number,
-        unit: String,
-        remarks: String,
-    }
-}, { timestamps: true });
+    item: String,
+    unit: String,
+    requestedQty: { type: Number, required: true },
+  },
+  { timestamps: true }
+);
 
-const purchaseRequestSchema = new mongoose.Schema({
-    site: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Site',
-        }
+const purchaseRequestSchema = new mongoose.Schema(
+  {
+    prNumber: {
+      type: String,
+      unique: true,
+      trim: true,
     },
-    date: {
-        type: Date,
-        default: Date.now,
-    },
-    to: {
-        name: String,
-        // id: {
-        //     type: mongoose.Schema.Types.ObjectId,
-        //     ref: 'Inventory',
-        // }
-    },
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-    },
-    requirementFor: {
-        type: String,
-    },
-    category: {
-        type: String,
-        required: true,
-    },
-    requirement: [requirementSchema],
-    status: {
-        type: String,
-        default: 'request',
-        enum: ['request', 'approved', 'delivery', 'delivered']
-    },
+    createdDate: { type: Date, default: Date.now },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    category: String,
+    requirementFor: String,
     reqDate: Date,
+    // Site
+    site: {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Site",
+        required: true,
+      },
+      name: String,
+    },
+
+    // store assigned later during approval / issue
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+    },
+    items: [prItemSchema],
+    // Approval flow
+    storeApprove: {
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+      default: "Pending",
+    },
     adminApprove: {
-        type: String,
-        default: 'Pending'
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+      default: "Pending",
     },
-    accountantApprove: {
-        type: String,
-        default: 'Pending'
-    },
-    accountheadApprove: {
-        type: String,
-        default: 'Pending'
+    accountsApprove: {
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+      default: "Pending",
     },
     inchargeApprove: {
-        type: String,
-        default: 'Pending'
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+      default: "Pending",
     },
     approvalStatus: {
-        type: String,
-        default: 'Pending'
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+      default: "Pending",
     },
-}, { timestamps: true });
 
+    deliveryStatus: {
+      type: String,
+      enum: ["Pending", "Partially Delivered", "Delivered"],
+      default: "Pending",
+    },
+    deliveryNotes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Delivery_Note",
+      },
+    ],
 
-const PurchaseRequest = mongoose.model('Purchase_Request', purchaseRequestSchema);
+    paymentStatus: {
+      type: String,
+      enum: ["Pending", "Partially Paid", "Paid"],
+      default: "Pending",
+    },
+    salesInvoiceId: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "SalesInvoice",
+      },
+    ],
+  },
+  { timestamps: true }
+);
+
+const PurchaseRequest = mongoose.model(
+  "PurchaseRequest",
+  purchaseRequestSchema
+);
 module.exports = PurchaseRequest;
-
-

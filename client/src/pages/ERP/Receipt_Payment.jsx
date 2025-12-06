@@ -52,7 +52,7 @@ const Receipt_Payment = () => {
 
         {activeTab === "receipts" && (
           <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full whitespace-nowrap text-sm overflow-x-auto scrollbar-hide">
+            <table className="w-full whitespace-nowrap text-sm overflow-x-auto scrollbar-hide bg-white">
               <thead className="bg-gray-200">
                 <tr className=" text-left">
                   <th className="px-4 py-2">Receipt No</th>
@@ -67,9 +67,9 @@ const Receipt_Payment = () => {
               </thead>
               <tbody>
                 {receipts?.map((r, index) => (
-                  <tr key={index} className="text-left">
+                  <tr key={index} className="text-left ">
                     <td className="px-4 py-2">{r.receiptNo}</td>
-                    <td className="px-4 py-2">{moment(r.date).format('DD MMM YYYY')}</td>
+                    <td className="px-4 py-2">{moment(r.date).format('DD-MMM-YYYY')}</td>
                     <td className="px-4 py-2">{r.from.name}</td>
                     <td className="px-4 py-2">{r.to.name}</td>
                     <td className="px-4 py-2">{r.amount}</td>
@@ -82,8 +82,8 @@ const Receipt_Payment = () => {
         )}
 
         {activeTab === "payments" && (
-          <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full whitespace-nowrap text-sm overflow-x-auto scrollbar-hide">
+          <div className="overflow-x-auto scrollbar-hide ">
+            <table className="w-full whitespace-nowrap text-sm overflow-x-auto scrollbar-hide bg-white">
               <thead>
                 <tr className="bg-gray-200 text-left">
                   <th className="px-4 py-2">Payment No</th>
@@ -97,9 +97,9 @@ const Receipt_Payment = () => {
               </thead>
               <tbody>
                 {payments?.map((p, index) => (
-                  <tr key={index} className="text-left">
+                  <tr key={index} className="text-left ">
                     <td className="px-4 py-2">{p.paymentNo}</td>
-                    <td className="px-4 py-2">{moment(p.date).format("DD MM YYYY")}</td>
+                    <td className="px-4 py-2">{moment(p.date).format("DD-MM-YYYY")}</td>
                     <td className="px-4 py-2">{p.from.name}</td>
                     <td className="px-4 py-2">{p.to.name}</td>
                     <td className="px-4 py-2">{p.amount}</td>

@@ -1,4 +1,5 @@
 const Blog = require('../models/blog.models');
+const { sendNotification } = require("./notification.controller.js");
 
 const createBlog = async (req, res) => {
   try {

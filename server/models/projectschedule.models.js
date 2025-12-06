@@ -1,70 +1,76 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const projectDetailSchema = new mongoose.Schema({
-    workDetail: {
-        type: String,
+  workDetail: {
+    type: String,
+  },
+  planned: Date,
+  // new array for future updates
+  rePlannedDates: [
+    {
+      date: Date,
+      reason: String,
     },
-    startingStatus: {
-        toStart: Date,
-        startedAt: Date,
-        difference: String,
-        reason: String,
-    },
-    completingStatus: {
-        toComplete: Date,
-        completedAt: Date,
-        difference: String,
-        reason: String,
-    },
-    status: {
-        type: String,
-        default: 'Pending',
-    }
+  ],
+  actual: Date,
+  difference: Number,
+  reason: String,
+  status: {
+    type: String,
+    enum: ["Started", "Completed", "Pending", "Partially Completed"],
+    default: "Pending",
+  },
 });
 
-const projectScheduleSchema = new mongoose.Schema({
+const projectScheduleSchema = new mongoose.Schema(
+  {
     site: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Site',
-        }
+      name: String,
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Site",
+      },
     },
     date: {
-        type: Date,
-        default: Date.now,
+      type: Date,
+      default: Date.now,
     },
     scheduleId: {
-        type: String,
-        trim: true,
+      type: String,
+      trim: true,
     },
     createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     projectDetail: [projectDetailSchema],
     clientApprove: {
-        type: String,
-        default: 'Pending'
+      type: String,
+      default: "Pending",
     },
     adminApprove: {
-        type: String,
-        default: 'Pending'
+      type: String,
+      default: "Pending",
     },
     accountheadApprove: {
-        type: String,
-        default: 'Pending'
+      type: String,
+      default: "Pending",
     },
     inchargeApprove: {
-        type: String,
-        default: 'Pending'
+      type: String,
+      default: "Pending",
     },
-    approvalStatus:{
-        type:String,
-        default: 'Pending'
-    }
-}, { timestamps: true });
+    approvalStatus: {
+      type: String,
+      default: "Pending",
+    },
+  },
+  { timestamps: true }
+);
 
-const ProjectSchedule = mongoose.model('Project_Schedule', projectScheduleSchema);
+const ProjectSchedule = mongoose.model(
+  "Project_Schedule",
+  projectScheduleSchema
+);
 
 module.exports = ProjectSchedule;

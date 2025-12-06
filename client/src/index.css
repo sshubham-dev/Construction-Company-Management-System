@@ -1,11 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.cdnfonts.com/css/sukar');
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 @layer base {
   html {
     @apply text-gray-800;
-  } 
+  }
 }
 @layer base {
   input[type="number"]::-webkit-inner-spin-button,
@@ -15,32 +16,35 @@
   }
 }
 
+:root {
+  --font-primary: 'font-sukar', sans-serif;
+  --font-secondary: 'font-sans', sans-serif;
+}
 
 @media (max-width: 768px) {
-    .max-w-md {
-      max-width: 100%;
-    }
-    .text-2xl {
-      font-size: 1.5rem;
-    }
-    .p-2 {
-      padding: 0.5rem;
-    }
-    .mt-5 {
-      margin-top: 1.25rem;
-    }
+  .max-w-md {
+    max-width: 100%;
   }
-  
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+  .p-2 {
+    padding: 0.5rem;
+  }
+  .mt-5 {
+    margin-top: 1.25rem;
+  }
+}
 
 body {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    /* background-color: #ebeae7; */
-    background-color: rgb(249 250 251);
-    color: #373636;
-    font-family: 'Poppins', sans-serif;
-    touch-action: manipulation;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* background-color: #ebeae7; */
+  background-color: rgb(249 250 251);
+  color: #373636;
+  /* font-family: "Poppins", sans-serif; */
+  touch-action: manipulation;
 }
 
 .navbar {
@@ -50,8 +54,8 @@ body {
 .navbar {
   z-index: 10000;
 }
-@media  screen and (max-width:800px) {
-  .sidebar{
+@media screen and (max-width: 800px) {
+  .sidebar {
     z-index: 100;
   }
   .navbar {
@@ -59,7 +63,8 @@ body {
   }
 }
 
-.e-dlg-center-center, .e-quick-popup-wrapper.e-device{
+.e-dlg-center-center,
+.e-quick-popup-wrapper.e-device {
   z-index: 1000000 !important;
 }
 
@@ -73,7 +78,6 @@ body {
 ::-webkit-scrollbar-track {
   background-color: transparent;
 }
-
 
 .transition-all {
   transition: all 0.3s ease-in-out;
@@ -103,16 +107,37 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
-.scrollbar-hide {
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
-  scrollbar-width: none; /* Firefox */
-}
 
 /* Hide scrollbar but keep scrolling */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;     /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;             /* Chrome, Safari, Opera */
+  display: none; /* Chrome, Safari, Opera */
 }
+/* 
+.quill {
+  min-height: 300px;
+} */
+
+/* .quill .ql-container {
+  min-height: 300px;
+  font-size: 16px;
+  font-family: var(--font-primary);
+} */
+
+/* .quill .ql-editor {
+  min-height: 300px;
+  padding-bottom: 50px;
+  color: #1f2937;
+} */
+
+.ql-toolbar.ql-snow {
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.ql-container.ql-snow {
+  border-radius: 0 0 0.5rem 0.5rem;
+}
+

@@ -186,6 +186,7 @@ const Register = () => {
                                 autoComplete='off'
                                 value={user.password}
                                 onChange={inputData}
+                                
                             />
                             <span
                                 className="block text-gray-700 text-xl font-bold cursor-pointer p-2"
@@ -208,6 +209,7 @@ const Register = () => {
                                 // required
                                 value={user.newPassword}
                                 onChange={inputData}
+                                
                             />
                             <span
                                 className="block text-gray-700 text-xl font-bold cursor-pointer p-2"

@@ -5,7 +5,10 @@ const leadSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    date: Date,
+    date: {
+        type: Date,
+        default: Date.now,
+    },
     contact: {
         phoneNo: String,
         whatsapp: String,
@@ -25,7 +28,6 @@ const leadSchema = new mongoose.Schema({
     status: {
         type: String,
         default:'lead',
-        enum:['customer', 'lead', 'irrelevent', 'client'],
     },
     requirement:{
         service: {
@@ -46,9 +48,10 @@ const leadSchema = new mongoose.Schema({
         // ref:'User'
         type:String
     },
-    quotation:{
-        type:String,
-    },
+    quotation:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Quote'
+    }],
     isClient: Boolean,
 }, { timestamps: true })
 

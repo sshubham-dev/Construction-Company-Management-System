@@ -22,7 +22,7 @@ const CreateClient = ({ onClose, isEdit }) => {
     gstNo:''
   });
   const [clientId, setClientId] = useState('');
-
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (isEdit) {
       setClientId(isEdit)
@@ -85,9 +85,10 @@ const CreateClient = ({ onClose, isEdit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     console.log('Before data submitted:', client);
     try {
-      if (clientId) {
+      if (clientId !== undefined) {
         const response = await axios.put(`/api/v1/client/${clientId}`, client);
         if (response.data) {
           toast.success(response.data.message)
@@ -103,6 +104,7 @@ const CreateClient = ({ onClose, isEdit }) => {
         }
       }
     } catch (error) {
+      console.log(error)
       toast.error(error.message)
     }
   };
@@ -274,8 +276,11 @@ const CreateClient = ({ onClose, isEdit }) => {
           </button>
           <button
             type='submit'
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" >
-            {clientId ? 'Update' : 'Create'} Client
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" 
+                          disabled={loading}
+            >
+              {loading ? "Submitting..." : `${clientId ? 'Update' : 'Create'} Client`}
+           
           </button>
           <button type="button" onClick={handleReset}
             className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">

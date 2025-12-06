@@ -34,3 +34,4 @@ const blogSchema = new moongose.Schema({
 }, { timestamps: true });
 
 const Blog = moongose.model('Blog', blogSchema);
+module.exports = Blog

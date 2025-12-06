@@ -1,38 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import toast, { Toaster } from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 import { IoEyeOff, IoEye } from "react-icons/io5";
 axios.defaults.withCredentials = true;
 
 const CreateUser = ({ onClose, isEdit }) => {
   const [userData, setUserData] = useState({
-    userName: '',
-    userMail: '',
-    password: '',
-    phone: '',
-    role: '',
-    department: '',
+    userName: "",
+    userMail: "",
+    password: "",
+    phone: "",
+    role: "",
+    department: "",
   });
-  const roles = ['Admin', 'Client', 'Supplier', 'Employee'];
+  const roles = ["Admin", "Client", "Supplier", "Employee"];
   const departments = [
-    'Company',
-    'Client',
-    'Accountant',
-    'Marketing',
-    'Ceo',
-    'Supplier',
-    'Site Incharge',
-    'Site Supervisor',
-    'Design Head',
-    'Design Engineer',
-    'Quality Head',
-    'Quality Engineer',
-    'Store Incharge',
-    'H.R',
-    'Account Head'
+    "Company",
+    "Client",
+    "Accountant",
+    "Marketing",
+    "Ceo",
+    "Supplier",
+    "Site Incharge",
+    "Site Supervisor",
+    "Design Head",
+    "Design Engineer",
+    "Quality Head",
+    "Quality Engineer",
+    "Store Incharge",
+    "H.R",
+    "Account Head",
+    "Store Incharge"
   ];
   const [userIdToEdit, setUserIdToEdit] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (isEdit) {
       setUserIdToEdit(isEdit);
@@ -52,7 +54,7 @@ const CreateUser = ({ onClose, isEdit }) => {
         department: user.department,
       });
     } catch (error) {
-      console.log('Error fetching user details:', error);
+      console.log("Error fetching user details:", error);
     }
   };
 
@@ -62,29 +64,30 @@ const CreateUser = ({ onClose, isEdit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       if (userIdToEdit) {
         await axios.put(`/api/v1/user/${userIdToEdit}`, userData);
-        toast.success('User edited successfully');
+        toast.success("User edited successfully");
       } else {
-        await axios.post('/api/v1/user', userData);
-        toast.success('User created successfully');
+        await axios.post("/api/v1/user", userData);
+        toast.success("User created successfully");
       }
-      onClose()
+      onClose();
     } catch (error) {
-      console.log('Error submitting user data:', error);
-      toast.error(error.response?.data?.message || 'An error occurred');
+      console.log("Error submitting user data:", error);
+      toast.error(error.response?.data?.message || "An error occurred");
     }
   };
 
-
   return (
-    <div >
-      <form
-        onSubmit={handleSubmit}
-        className="mb-4 w-full max-w-md">
+    <div>
+      <form onSubmit={handleSubmit} className="mb-4 w-full max-w-md">
         <div className="mb-4">
-          <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">
+          <label
+            htmlFor="name"
+            className="block text-gray-700 text-sm font-bold mb-2"
+          >
             UserName
           </label>
           <input
@@ -98,7 +101,10 @@ const CreateUser = ({ onClose, isEdit }) => {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="userMail" className="block text-gray-700 text-sm font-bold mb-2">
+          <label
+            htmlFor="userMail"
+            className="block text-gray-700 text-sm font-bold mb-2"
+          >
             Email
           </label>
           <input
@@ -113,28 +119,36 @@ const CreateUser = ({ onClose, isEdit }) => {
 
         {/* Make Password Auto Generated and send to phone no by backend with details */}
         <div className="mb-4">
-          <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">
+          <label
+            htmlFor="password"
+            className="block text-gray-700 text-sm font-bold mb-2"
+          >
             Password
           </label>
-          <div className='flex flex-row border rounded-md justify-between items-center '>
+          <div className="flex flex-row border rounded-md justify-between items-center ">
             <input
               type={showPassword ? "text" : "password"}
               name="password"
-              placeholder={userIdToEdit ? 'Change Password' : "Password"}
+              placeholder={userIdToEdit ? "Change Password" : "Password"}
               value={userData.password}
               onChange={handleChange}
+              autoComplete="current-password"
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             />
             <span
               className="block text-gray-700 text-xl font-bold cursor-pointer p-2"
-              onClick={() => setShowPassword(!showPassword)}>
+              onClick={() => setShowPassword(!showPassword)}
+            >
               {showPassword ? <IoEyeOff /> : <IoEye />}
             </span>
           </div>
         </div>
 
         <div className="mb-4">
-          <label htmlFor="phone" className="block text-gray-700 text-sm font-bold mb-2">
+          <label
+            htmlFor="phone"
+            className="block text-gray-700 text-sm font-bold mb-2"
+          >
             Phone
           </label>
           <input
@@ -149,16 +163,19 @@ const CreateUser = ({ onClose, isEdit }) => {
 
         {/* Make access field selectable */}
         <div className="mb-4">
-          <label htmlFor="access" className="block text-gray-700 text-sm font-bold mb-2">
+          <label
+            htmlFor="access"
+            className="block text-gray-700 text-sm font-bold mb-2"
+          >
             Role
           </label>
           <select
-            name='role'
+            name="role"
             required
             onChange={handleChange}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           >
-            <option>{userIdToEdit ? userData?.role : 'Role'}</option>
+            <option>{userIdToEdit ? userData?.role : "Role"}</option>
             {roles.map((role, index) => (
               <option key={index} value={role}>
                 {role}
@@ -168,16 +185,21 @@ const CreateUser = ({ onClose, isEdit }) => {
         </div>
 
         <div className="mb-6">
-          <label htmlFor="access" className="block text-gray-700 text-sm font-bold mb-2">
+          <label
+            htmlFor="access"
+            className="block text-gray-700 text-sm font-bold mb-2"
+          >
             Department
           </label>
           <select
-            name='department'
+            name="department"
             onChange={handleChange}
             required
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           >
-            <option>{userIdToEdit ? userData?.department : 'Department'}</option>
+            <option>
+              {userIdToEdit ? userData?.department : "Department"}
+            </option>
             {departments.map((department, index) => (
               <option key={index} value={department}>
                 {department}
@@ -188,14 +210,14 @@ const CreateUser = ({ onClose, isEdit }) => {
 
         <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-          {userIdToEdit ? 'Edit User' : 'Add User'}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          disabled={loading}
+        >
+          {loading ? "Submitting..." : `${userIdToEdit ? "Edit User" : "Add User"}`}
+          
         </button>
       </form>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-      />
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };

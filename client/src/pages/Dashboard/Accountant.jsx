@@ -9,7 +9,6 @@ const Accountant = () => {
 
   return (
     <Layout>
-
     </Layout>
   );
 }

@@ -15,7 +15,7 @@ const CreateLead = ({ onClose, onSubmit, isEdit }) => {
         }
     );
     const [users, setUsers] = useState([]);
-
+  const [loading, setLoading] = useState(false);
     useEffect(() => {
         const getUsers = async () => {
             try {
@@ -68,6 +68,7 @@ const CreateLead = ({ onClose, onSubmit, isEdit }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
             console.log(lead)
             if(isEdit){
@@ -218,7 +219,7 @@ const CreateLead = ({ onClose, onSubmit, isEdit }) => {
                 >
                     <option value="">Contact Agent</option>
                     {users.map((user, index) => (
-                        <option key={index} value={user._id}>{user.userName}</option>
+                        <option key={index} value={user.userName}>{user.userName}</option>
                     ))}
                 </select>
 
@@ -236,8 +237,9 @@ const CreateLead = ({ onClose, onSubmit, isEdit }) => {
                     <button
                         type="submit"
                         className=" bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
-                    >
-                        Submit
+              disabled={loading}
+            >
+              {loading ? "Submitting..." : "Submit"}
                     </button>
                     <button type="button" onClick={handleReset}
                         className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">

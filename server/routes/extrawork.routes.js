@@ -10,13 +10,15 @@ const {
     deleteExtraWork,
     deleteWork,
     siteExtraWork,
-    saveExtraWork
+    saveExtraWork,
+getExtraBySiteAndContractor
 } = require('../controller/extrawork.controller.js');
 const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 ExtraWork.get('/', getExtraWorks);
 ExtraWork.get('/:id/work', getWork);
 ExtraWork.get('/site/:id', siteExtraWork);
+ExtraWork.get('/:site/:contractor', getExtraBySiteAndContractor);
 ExtraWork.post('/', userAuth, createExtraWork);
 ExtraWork.put('/save/:id', userAuth, saveExtraWork);
 ExtraWork.route('/:id')

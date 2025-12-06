@@ -7,8 +7,8 @@ const upload = require('../middlewares/Upload');
 
 Expenses.post('/', userAuth, upload.single('photo'), createExpense);
 Expenses.get('/', userAuth, getAllExpenses);
-Expenses.get('/:id', getExpenseById);
-Expenses.put('/:id', updateExpense);
-Expenses.delete('/:id', deleteExpense);
+Expenses.get('/:id', userAuth, getExpenseById);
+Expenses.put('/:id', userAuth, upload.single('photo'), updateExpense);
+Expenses.delete('/:id', adminAuth, deleteExpense);
 
 module.exports = Expenses;

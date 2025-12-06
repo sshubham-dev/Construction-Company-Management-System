@@ -1,17 +1,18 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom'
-import toast, { Toaster } from 'react-hot-toast';
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
-import moment from 'moment';
+import moment from "moment";
 import { FaExternalLinkAlt } from "react-icons/fa";
-import { useSelector } from 'react-redux';
-import Header from '../../components/Header';
-import { Tabs } from 'antd';
+import { useSelector } from "react-redux";
+import Header from "../../components/Header";
+import { Tabs } from "antd";
 import { FcApproval } from "react-icons/fc";
-import Modal from '../../components/Modal';
-import CreateWorkOrder from '../../components/CreateWorkOrder';
+import Modal from "../../components/Modal";
+import CreateWorkOrder from "../../components/CreateWorkOrder";
+import CreateWOTemplate from "../../components/CreateWOTemplate";
 axios.defaults.withCredentials = true;
 
 const WorkOrders = () => {
@@ -22,17 +23,22 @@ const WorkOrders = () => {
   const { user } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState("approved");
   const [editModal, setEditModal] = useState(false);
-  const [editId, setEditId] = useState('');
+  const [editId, setEditId] = useState("");
+  const [templateModal, setTemplateModal] = useState(false);
+  const [templates, setTemplates] = useState([]);
 
   useEffect(() => {
     const fetchWorkorders = async () => {
       try {
-        const workOrdersData = await axios.get('/api/v1/work-order');
+        const workOrdersData = await axios.get("/api/v1/work-order");
         console.log("workOrdersData.data:", workOrdersData.data);
 
-        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
+        if (
+          user?.department?.toLowerCase() === "site supervisor" ||
+          user?.department?.toLowerCase() === "site incharge"
+        ) {
           const sites = user.site;
-          console.log("site:", sites);
+          // console.log("site:", sites);
           let WorkOrders = [];
 
           for (let site of sites) {
@@ -43,7 +49,7 @@ const WorkOrders = () => {
             WorkOrders = [...WorkOrders, ...filteredWorkOrders];
           }
           setWorkOrder(WorkOrders);
-          console.log("workOrders for all sites:", WorkOrders);
+          // console.log("workOrders for all sites:", WorkOrders);
         } else {
           // If user is not Site Supervisor or Site Incharge, set workOrdersData directly
           setWorkOrder(workOrdersData.data);
@@ -58,16 +64,26 @@ const WorkOrders = () => {
         const workOrdersData = await axios.get(`/api/v1/work-order/draft`);
         console.log("DraftWorkOrdersData.data:", workOrdersData.data);
 
-        if (user.department === 'Site Supervisor' || user.department === 'Site Incharge') {
+        if (
+          user?.department?.toLowerCase() === "site incharge"
+        ) {
           const sites = user.site;
+          console.log(sites)
           let draftWorkOrders = [];
-
           for (let site of sites) {
             // Filter workOrdersData based on site id
-            const filteredWorkOrders = workOrdersData.data.filter((workOrder) => workOrder.site?.id === site.id);
+            const filteredWorkOrders = workOrdersData.data.filter(
+              (workOrder) => workOrder.site?.id === site.id
+            );
+            console.log(filteredWorkOrders, "sdff")
             // Concatenate filteredWorkOrders to draftWorkOrders
             draftWorkOrders = [...draftWorkOrders, ...filteredWorkOrders];
-            console.log("Draft work orders for site", site, ":", filteredWorkOrders);
+            // console.log(
+            //   "Draft work orders for site",
+            //   site,
+            //   ":",
+            //   filteredWorkOrders
+            // );
           }
           setDraftWorkOrder(draftWorkOrders);
           console.log("Draft work orders for all sites:", draftWorkOrders);
@@ -81,11 +97,23 @@ const WorkOrders = () => {
 
     fetchWorkorders();
     fetchDraftWorkorders();
-  }, [])
+  }, []);
+
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const res = await axios.get("/api/v1/work-template");
+        setTemplates(res.data);
+      } catch (err) {
+        toast.error("Failed to fetch templates");
+      }
+    };
+    fetchTemplates();
+  }, [user.department?.toLowerCase() === "ceo" || user.department?.toLowerCase() === "account head"]);
 
   const handleEdit = (id) => {
-    setEditModal(true)
-    setEditId(id)
+    setEditModal(true);
+    setEditId(id);
   };
 
   const handleRedirect = (id) => {
@@ -95,11 +123,14 @@ const WorkOrders = () => {
   const handleSave = async (id) => {
     try {
       const response = await axios.put(`/api/v1/work-order/save/${id}`);
-      setDraftWorkOrder(draftWorkOrders.filter((workOrder) => workOrder._id !== id));
+      console.log("response", response.data)
+      setDraftWorkOrder(
+        draftWorkOrders.filter((workOrder) => workOrder._id !== id)
+      );
       toast.success(response.data?.message);
     } catch (error) {
-      console.error(error)
-      toast.error(error.message)
+      console.error(error);
+      toast.error(error.message);
     }
   };
 
@@ -107,79 +138,186 @@ const WorkOrders = () => {
     try {
       const response = await axios.delete(`/api/v1/work-order/${id}`);
       setWorkOrder(workOrders.filter((workOrder) => workOrder._id !== id));
-      setDraftWorkOrder(draftWorkOrders.filter((workOrder) => workOrder._id !== id));
-      toast.success(response.data.message)
-      console.log(response.data)
+      setDraftWorkOrder(
+        draftWorkOrders.filter((workOrder) => workOrder._id !== id)
+      );
+      toast.success(response.data.message);
+      // console.log(response.data);
     } catch (error) {
-      toast.error(error.message)
+      console.log(error);
+      toast.error(error.message);
     }
   };
 
+  const handleTemplateDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this template?"))
+      return;
+    try {
+      await axios.delete(`/api/v1/work-template/${id}`);
+      toast.success("Template deleted");
+      setTemplates((prev) => prev.filter((t) => t._id !== id));
+    } catch (err) {
+      toast.error("Delete failed");
+    }
+  };
+
+  const handleViewTemplate = (id) => {
+    navigate(`/work-order/template/${id}`);
+  };
+
   return (
-    <div >
+    <div>
       <section className="overflow-x-auto scrollbar-hide">
         <Header category="Page" title="Work-Order's" />
         <div className="text-sm text-gray-700 py-1 flex flex-row sm:flex-row items-center justify-between">
-          <h2 className="text-lg sm:text-xl text-green-600 mb-2 sm:mb-0 sm:mr-4">Total Work Orders: {workOrders.length}</h2>
-          <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white p-2 mt-2 sm:mt-0">
-            <MdAdd className='text-xl' />
+          <h2 className="text-lg sm:text-xl text-green-600 mb-2 sm:mb-0 sm:mr-4">
+            Total Work Orders: {workOrders.length}
+          </h2>
+          <button
+            onClick={() => setCreateModal(true)}
+            className="bg-green-500 rounded-full text-white p-2 mt-2 sm:mt-0"
+          >
+            <MdAdd className="text-xl" />
           </button>
         </div>
 
         <div className="flex space-x-4 border-b-2 mb-4 w-full md:w-auto">
           <button
-            className={`px-4 py-2 ${activeTab === "approved" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
+            className={`px-4 py-2 ${
+              activeTab === "approved"
+                ? "border-b-4 border-blue-500 font-bold"
+                : "text-gray-500"
+            }`}
             onClick={() => setActiveTab("approved")}
           >
             Approved
           </button>
           <button
-            className={`px-4 py-2 ${activeTab === "draft" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
+            className={`px-4 py-2 ${
+              activeTab === "draft"
+                ? "border-b-4 border-blue-500 font-bold"
+                : "text-gray-500"
+            }`}
             onClick={() => setActiveTab("draft")}
           >
             Drafts
           </button>
+          {user.department.toLowerCase() === "ceo" ||
+          user.department.toLowerCase() === "account head" ? (
+            <button
+              className={`px-4 py-2 ${
+                activeTab === "template"
+                  ? "border-b-4 border-blue-500 font-bold"
+                  : "text-gray-500"
+              }`}
+              onClick={() => setActiveTab("template")}
+            >
+              Templates
+            </button>
+          ) : null}
         </div>
 
         {activeTab === "approved" && (
-          <div className="overflow-x-auto scrollbar-hide"
+          <div
+            className="overflow-x-auto scrollbar-hide"
             style={{
-              scrollbarWidth: 'none',
-              '-ms-overflow-style': 'none',
-            }}>
-            <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
+              scrollbarWidth: "none",
+              "-ms-overflow-style": "none",
+            }}
+          >
+            <table className="w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden">
               <thead className="bg-gray-300">
                 <tr className="text-left">
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Work-Order Name</th>
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Site</th>
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Total Value</th>
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Paid Amount</th>
-                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Due Amount </th>
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Duration</th>
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4"
+                  >
+                    Work-Order Name
+                  </th>
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4"
+                  >
+                    Site
+                  </th>
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4 text-center"
+                  >
+                    Total Value
+                  </th>
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4 text-center"
+                  >
+                    Paid Amount
+                  </th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">
+                    {" "}
+                    Due Amount{" "}
+                  </th>
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4 text-center"
+                  >
+                    Duration
+                  </th>
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4 text-center"
+                  ></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {workOrders.map((workOrder) => (
-                  <tr key={workOrder._id} className='border-b border-blue-gray-200'>
-                    <td className="px-6 py-4" >
-                      <p className="" onClick={() => handleRedirect(workOrder?._id)}> {workOrder?.workOrderName} </p>
-                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {workOrder.contractor?.name} </p>
+                  <tr
+                    key={workOrder._id}
+                    className="border-b border-blue-gray-200"
+                  >
+                    <td className="px-6 py-4">
+                      <p
+                        className=""
+                        onClick={() => handleRedirect(workOrder?._id)}
+                      >
+                        {" "}
+                        {workOrder?.workOrderName}{" "}
+                      </p>
+                      <p className="text-gray-500 text-sm font-semibold tracking-wide">
+                        {" "}
+                        {workOrder.contractor?.name}{" "}
+                      </p>
                     </td>
                     <td className="px-6 py-4">{workOrder.site?.name}</td>
-                    <td className="px-6 py-4 text-center">{workOrder.workOrderValue}</td>
-                    <td className="px-6 py-4 text-center">{workOrder.totalPaid ? workOrder.totalPaid : '0'}</td>
-                    <td className="px-6 py-4 text-center">{workOrder.totalDue ? workOrder.totalDue : '0'}</td>
-                    <td className="px-6 py-4 text-center">{moment(workOrder.duration).format('DD-MM-YYYY')}</td>
                     <td className="px-6 py-4 text-center">
-                      <button onClick={() => handleRedirect(workOrder?._id)} className="mr-2">
-                        <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                      {workOrder.totalValue}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {workOrder.totalPaid ? workOrder.totalPaid : "0"}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {workOrder.totalDue ? workOrder.totalDue : "0"}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {moment(workOrder.duration).format("DD-MM-YYYY")}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleRedirect(workOrder?._id)}
+                        className="mr-2"
+                      >
+                        <FaExternalLinkAlt className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>
-                      <button onClick={() => handleEdit(workOrder?._id)} className="mr-2">
+                      <button
+                        onClick={() => handleEdit(workOrder?._id)}
+                        className="mr-2"
+                      >
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>
-                      <button onClick={() => handleDelete(workOrder?._id)} className="mr-2">
-                        <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
+                      <button
+                        onClick={() => handleDelete(workOrder?._id)}
+                        className="mr-2"
+                      >
+                        <MdDelete className="text-red-500 hover:text-red-600 text-xl" />
                       </button>
                     </td>
                   </tr>
@@ -193,42 +331,105 @@ const WorkOrders = () => {
         {/* <> */}
         {activeTab === "draft" && (
           <div className="overflow-x-auto scrollbar-hide">
-            <table className='w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden'>
+            <table className="w-full whitespace-nowrap bg-white divide-y divide-gray-300 overflow-hidden">
               <thead className="bg-gray-300">
-                <tr className="text-white text-left">
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Work-Order Name</th>
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4">Site</th>
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Total Value</th>
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Paid Amount</th>
-                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center"> Due Amount </th>
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center">Duration</th>
-                  <th scope="col" className="font-semibold text-sm uppercase px-6 py-4 text-center"></th>
+                <tr className="text-black text-left">
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4"
+                  >
+                    Work-Order Name
+                  </th>
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4"
+                  >
+                    Site
+                  </th>
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4 text-center"
+                  >
+                    Total Value
+                  </th>
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4 text-center"
+                  >
+                    Paid Amount
+                  </th>
+                  <th className="font-semibold text-sm uppercase px-6 py-4 text-center">
+                    {" "}
+                    Due Amount{" "}
+                  </th>
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4 text-center"
+                  >
+                    Duration
+                  </th>
+                  <th
+                    scope="col"
+                    className="font-semibold text-sm uppercase px-6 py-4 text-center"
+                  ></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {draftWorkOrders.map((workOrder) => (
-                  <tr key={workOrder._id} className='border-b border-blue-gray-200'>
+                  <tr
+                    key={workOrder._id}
+                    className="border-b border-blue-gray-200"
+                  >
                     <td className="px-6 py-4">
-                      <p className="" onClick={() => handleRedirect(workOrder?._id)}> {workOrder?.workOrderName} </p>
-                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {workOrder.contractor?.name} </p>
+                      <p
+                        className=""
+                        onClick={() => handleRedirect(workOrder?._id)}
+                      >
+                        {" "}
+                        {workOrder?.workOrderName}{" "}
+                      </p>
+                      <p className="text-gray-500 text-sm font-semibold tracking-wide">
+                        {" "}
+                        {workOrder.contractor?.name}{" "}
+                      </p>
                     </td>
                     <td className="px-6 py-4">{workOrder.site?.name}</td>
-                    <td className="px-6 py-4 text-center">{workOrder.workOrderValue}</td>
-                    <td className="px-6 py-4 text-center">{workOrder.totalPaid ? workOrder.totalPaid : '0'}</td>
-                    <td className="px-6 py-4 text-center">{workOrder.totalDue ? workOrder.totalDue : '0'}</td>
-                    <td className="px-6 py-4 text-center">{moment(workOrder.duration).format('DD-MM-YYYY')}</td>
                     <td className="px-6 py-4 text-center">
-                      <button onClick={() => handleSave(workOrder._id)} className=" mr-2">
+                      {workOrder.totalValue}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {workOrder.totalPaid ? workOrder.totalPaid : "0"}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {workOrder.totalDue ? workOrder.totalDue : "0"}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {moment(workOrder.duration).format("DD-MM-YYYY")}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleSave(workOrder._id)}
+                        className=" mr-2"
+                      >
                         <FcApproval className="text-green-500 hover:text-green-700 text-xl" />
                       </button>
-                      <button onClick={() => handleRedirect(workOrder._id)} className="mr-2">
-                        <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
+                      <button
+                        onClick={() => handleRedirect(workOrder._id)}
+                        className="mr-2"
+                      >
+                        <FaExternalLinkAlt className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>
-                      <button onClick={() => handleEdit(workOrder._id)} className="mr-2">
+                      <button
+                        onClick={() => handleEdit(workOrder._id)}
+                        className="mr-2"
+                      >
                         <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                       </button>
-                      <button onClick={() => handleDelete(workOrder._id)} className="mr-2">
-                        <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
+                      <button
+                        onClick={() => handleDelete(workOrder._id)}
+                        className="mr-2"
+                      >
+                        <MdDelete className="text-red-500 hover:text-red-600 text-xl" />
                       </button>
                     </td>
                   </tr>
@@ -239,18 +440,125 @@ const WorkOrders = () => {
         )}
         {/* </> */}
         {/* )} */}
+        {user.department.toLowerCase() === "ceo" ||
+        user.department.toLowerCase() === "account head" ? (
+          <>
+            {activeTab === "template" && (
+              <div className=" space-y-4">
+                <div
+                  className="overflow-x-auto scrollbar-hide"
+                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                >
+                  <table className="w-full bg-white divide-y divide-gray-300">
+                    <thead className="bg-gray-300 text-black">
+                      <tr className="text-left text-sm">
+                        <th className="font-semibold uppercase px-4 sm:px-6 py-3">
+                          Template Title
+                        </th>
+                        <th className="font-semibold uppercase px-4 sm:px-6 py-3 text-center">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-gray-200 text-sm sm:text-base">
+                      {templates.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan="5"
+                            className="text-center text-gray-500 py-6 italic text-sm"
+                          >
+                            No templates found
+                          </td>
+                        </tr>
+                      ) : (
+                        templates.map((t) => {
+                          return (
+                            <tr
+                              key={t._id}
+                              className="hover:bg-gray-50 border-b border-gray-200 transition"
+                            >
+                              <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                                <div
+                                  className="font-medium text-gray-800 text-sm sm:text-base"
+                                  onClick={() => handleViewTemplate(t._id)}
+                                >
+                                  {t.title}
+                                </div>
+                                <div className="text-gray-500 text-xs sm:hidden mt-1">
+                                  {moment(t.createdAt).format("DD MMM YYYY")}
+                                </div>
+                              </td>
+
+                              <td className="px-3 sm:px-6 py-3 text-center">
+                                <div className="flex items-center justify-center gap-3">
+                                  <button
+                                    onClick={() => handleViewTemplate(t._id)}
+                                    title="View"
+                                    className="text-blue-500 hover:text-blue-700"
+                                  >
+                                    <FaExternalLinkAlt className="text-base sm:text-lg" />
+                                  </button>
+                                  {/* <button
+                                    // onClick={() => handleEditTemplate(t._id)}
+                                    title="Edit"
+                                    className="text-blue-500 hover:text-blue-700"
+                                  >
+                                    <GrEdit className="text-base sm:text-lg" />
+                                  </button> */}
+                                  <button
+                                    onClick={() => handleTemplateDelete(t._id)}
+                                    title="Delete"
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    <MdDelete className="text-lg sm:text-xl" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <button
+                  onClick={() => setTemplateModal(true)}
+                  className="bg-green-500 rounded-md text-white p-2 mt-5 sm:mt-0 block text-right ml-auto"
+                >
+                  Create Work Template
+                </button>
+              </div>
+            )}
+          </>
+        ) : null}
 
         <Toaster position="top-right" reverseOrder={false} />
       </section>
       {/* Work Order Modal */}
-      <Modal isOpen={createModal} onClose={() => setCreateModal(false)} head='Create Work Order' >
+      <Modal
+        isOpen={createModal}
+        onClose={() => setCreateModal(false)}
+        head="Create Work Order"
+      >
         <CreateWorkOrder onClose={() => setCreateModal(false)} />
       </Modal>
-      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Update Work Order' >
+      <Modal
+        isOpen={editModal}
+        onClose={() => setEditModal(false)}
+        head="Update Work Order"
+      >
         <CreateWorkOrder onClose={() => setEditModal(false)} id={editId} />
       </Modal>
+      <Modal
+        isOpen={templateModal}
+        onClose={() => setTemplateModal(false)}
+        head="Work Order Templates"
+      >
+        <CreateWOTemplate onClose={() => setTemplateModal(false)} />
+      </Modal>
     </div>
-  )
-}
+  );
+};
 
-export default WorkOrders
+export default WorkOrders;

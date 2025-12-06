@@ -1,11 +1,12 @@
 const Site = require('../models/site.models');
 const Contractor = require('../models/contractor.models');
-const WorkOrder = require('../models/workorder.models');
+const{ WorkOrder} = require('../models/workorder.models');
 const Bill = require('../models/bill.models.js');
 const ExtraWork = require('../models/extrawork.models.js');
 const { convertToUser } = require('./user.controller.js');
 const { addLedger } = require('./ledger.controller.js');
 const User = require('../models/user.models.js');
+const { sendNotification } = require("./notification.controller.js");
 
 const getContractors = async (req, res) => {
     try {
@@ -125,8 +126,8 @@ const updateContractor = async (req, res) => {
     // 🛠️ Update fields
     contractor.name = name?.trim() || '';
     contractor.email = email?.trim() || '';
-    contractor.phone = phone?.trim() || '';
-    contractor.whatsapp = whatsapp?.trim() || '';
+    contractor.phone = phone || '';
+    contractor.whatsapp = whatsapp || '';
     contractor.address = address || '';
     contractor.addhar = addhar?.trim() || '';
     contractor.panNo = pan?.trim() || '';
@@ -153,7 +154,6 @@ const updateContractor = async (req, res) => {
     return res.status(500).json({ error: 'Something went wrong' });
   }
 };
-
 
 const deleteContractor = async (req, res) => {
     try {

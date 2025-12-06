@@ -1,16 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import moment from 'moment';
 import axios from 'axios';
 import { GrEdit } from "react-icons/gr";
-import { MdDelete, MdAdd } from "react-icons/md";
+import { MdDelete, MdAdd, MdDownload } from "react-icons/md";
 import toast, { Toaster } from 'react-hot-toast';
 import Header from '../components/Header';
+import Reject from "../components/UI/Reject";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import PurchaseOrderPdf from '../pdf/PurchaseOrderPdf';
+import ApprovalTimeLine from '../components/UI/ApprovalTimeLine';
+axios.defaults.withCredentials = true;
 
 const PurchaseOrderScreen = () => {
   const [purchaseOrder, setPurchaseOrder] = useState({});
+  const [rejectModal, setRejectModal] = useState(false);
+  const [rejectId, setRejectId] = useState("");
+  const { id, approvalId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
-  const { id } = useParams();
 
   useEffect(() => {
     if (id) {
@@ -39,6 +47,25 @@ const PurchaseOrderScreen = () => {
       setPurchaseOrder(response.data.purchaseOrder);
     } catch (error) {
       toast.error(error.message)
+    }
+  };
+    const handleApprove = async (id) => {
+    try {
+      // console.log(id)
+      const response = await axios.put(`/api/v1/approval/${id}`);
+      toast.success(response.data.message);
+      navigate(-1);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleReject = async (id) => {
+    try {
+      setRejectId(id);
+      setRejectModal(true);
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -89,6 +116,29 @@ const PurchaseOrderScreen = () => {
   return (
     <div >
       <Header category="Page" title="Purchase Order" />
+              <div className="flex justify-between items-center mt-4 mb-6">
+                <button
+                  onClick={() => handleAdd(purchaseOrder._id)}
+                  className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-600"
+                >
+                  <MdAdd /> Add
+                </button>
+                  <PDFDownloadLink
+                    document={<PurchaseOrderPdf Work={purchaseOrder} />}
+                    fileName={`PO-${purchaseOrder?._id || "download"}.pdf`}
+                  >
+                    {({ loading }) => (
+                      <button
+                        type="button"
+                        className="bg-blue-600 text-white px-5 py-2 rounded-lg shadow hover:bg-blue-700 transition flex items-center justify-center"
+                      >
+                        <MdDownload className="mr-2" />{" "}
+                        {loading ? "Preparing..." : "Download"}
+                      </button>
+                    )}
+                  </PDFDownloadLink>
+              </div>
+              <ApprovalTimeLine item={purchaseOrder} module="purchaseOrder" />
       <div className="grid grid-cols-1 md:grid-cols-2 w-full lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {purchaseOrder.requirement?.map((req, index) => (
           <div key={index} className='bg-white shadow-lg rounded-xl'>
@@ -103,6 +153,30 @@ const PurchaseOrderScreen = () => {
           </div>
         ))}
       </div>
+            {/* Bottom Action Buttons (Approve/Reject) */}
+      {location.pathname !== `/purchase-order/${id}` && (
+        <div className="fixed bottom-14 lg:bottom-0 left-0 bg-white right-0 border-t p-3 flex justify-around md:justify-center md:gap-6 text-md">
+          <button
+            onClick={() => handleApprove(approvalId)}
+            className="bg-green-500 text-white px-6 py-2 rounded-full font-medium hover:bg-green-600 transition-all"
+          >
+            Approve
+          </button>
+          <button
+            onClick={() => handleReject(approvalId)}
+            className="bg-red-500 text-white px-6 py-2 rounded-full font-medium hover:bg-red-600 transition-all"
+          >
+            Reject
+          </button>
+        </div>
+      )}
+              <Modal
+          isOpen={rejectModal}
+          onClose={() => setRejectModal(false)}
+          head="Reject Reason"
+        >
+          <Reject onClose={() => setRejectModal(false)} Id={rejectId} />
+        </Modal>
       <Toaster
         position="top-right"
         reverseOrder={false}

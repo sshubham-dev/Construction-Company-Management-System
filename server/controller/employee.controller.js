@@ -1,8 +1,8 @@
 const Employee = require('../models/employee.models');
 const User = require('../models/user.models');
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcryptjs");
 const { convertToUser } = require('./user.controller');
-
+const { sendNotification } = require("./notification.controller.js");
 
 const employeeById = async (req, res) => {
     try {
@@ -50,6 +50,7 @@ const createEmployee = async (req, res) => {
             bank,
             isUser,
             department,
+            status,
         } = req.body;
 
         const employeeExist = await Employee.findOne({
@@ -74,6 +75,7 @@ const createEmployee = async (req, res) => {
             cv,
             offerletter,
             bank,
+            status,
             isUser
         });
 
@@ -116,6 +118,7 @@ const updateEmployeeData = async (req, res) => {
       salary,
       salarySlip,
       isUser,
+      status,
     } = req.body;
 
     console.log('Received Data:', req.body);
@@ -146,6 +149,7 @@ const updateEmployeeData = async (req, res) => {
     employee.salary = salary;
     employee.salarySlip = salarySlip;
     employee.isUser = isUserBoolean;
+    employee.status = status;
 
     await employee.save(); // 🔥 Triggers pre('save') hook for ledger sync
 

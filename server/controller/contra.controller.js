@@ -1,5 +1,7 @@
 const Contra = require('../models/contra.models');
 const { Ledger } = require('../models/ledger.models');
+const { sendNotification } = require("./notification.controller.js");
+
 
 // Create Contra voucher
 const createContra = async (req, res) => {
@@ -22,15 +24,17 @@ const createContra = async (req, res) => {
       date,
       from: { id: from, name: fromLedger.name },
       to: { id: to, name: toLedger.name },
-      amount,
+      amount:  Number(amount),
       description,
     });
 
-    fromLedger.balance = (fromLedger.balance || 0) - amount;
-    toLedger.balance = (toLedger.balance || 0) + amount;
+    fromLedger.currentBalance = Number(fromLedger.currentBalance || 0) -  Number(amount);
+    fromLedger.paid = Number(fromLedger.paid || 0) +  Number(amount)
+    toLedger.currentBalance = Number(toLedger.currentBalance || 0) +  Number(amount);
+    toLedger.received = Number(toLedger.received || 0) +  Number(amount);
 
-    fromLedger.transaction.push({ id: contra._id, type: "Contra", amount: -amount });
-    toLedger.transaction.push({ id: contra._id, type: "Contra", amount });
+    fromLedger.transaction.push({ id: contra._id, type: "Contra", amount: - Number(amount) });
+    toLedger.transaction.push({ id: contra._id, type: "Contra", amount:  Number(amount) });
 
     await contra.save();
     await fromLedger.save();

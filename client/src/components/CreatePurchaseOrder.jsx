@@ -23,7 +23,7 @@ const CreatePurchaseOrder = ({ onClose, id, index }) => {
       amount: '',
     }],
   });
-
+  const [loading, setLoading] = useState(false);
   const [requirement, setRequirement] = useState({
     material: '',
     rate: '',
@@ -65,7 +65,7 @@ const CreatePurchaseOrder = ({ onClose, id, index }) => {
     const fetchSite = async () => {
       try {
         const response = await axios.get('/api/v1/site');
-        if (user.department === 'Site Incharge' || user.department === 'Site Supervisor') {
+        if (user?.department === 'Site Incharge' || user?.department === 'Site Supervisor') {
           const existingSites = user?.site;
           let SitesData = [];
           for (let site of response.data) {
@@ -129,7 +129,7 @@ const CreatePurchaseOrder = ({ onClose, id, index }) => {
         setFormData({
           supplier: response.data?.supplier._id,
           site: response.data?.site._id,
-          purchaseOrderNo: response.data?.purchaseOrderNo,
+          // purchaseOrderNo: response.data?.purchaseOrderNo,
           createdBy: response.data?.createdBy?._id,
         });
       }
@@ -182,7 +182,7 @@ const CreatePurchaseOrder = ({ onClose, id, index }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+setLoading(true);
     const updatedFormData = {
       ...formData,
       requirement: formData.requirement.map(detail => {
@@ -286,7 +286,10 @@ const CreatePurchaseOrder = ({ onClose, id, index }) => {
               </select>
             </div>
 
-            <button type="submit" className="bg-blue-500 hover:bg-blue-700 mt-4 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Update Requirement</button>
+            <button type="submit" className="bg-blue-500 hover:bg-blue-700 mt-4 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"              
+            disabled={loading}
+            >
+              {loading ? "Submitting..." : "Update requirement"}</button>
           </>
         ) : (
           <>
@@ -414,8 +417,11 @@ const CreatePurchaseOrder = ({ onClose, id, index }) => {
               </button>
             </div>
 
-            <button type="submit" className="bg-green-500 text-white p-2 rounded mt-2">
-              {purchaseOrderToEdit ? 'Update Purchase Order' : 'Create Purchase Order'}
+            <button type="submit" className="bg-green-500 text-white p-2 rounded mt-2"
+                          disabled={loading}
+            >
+              {loading ? "Submitting..." : `${purchaseOrderToEdit ? 'Update Purchase Order' : 'Create Purchase Order'}`}
+              
             </button>
           </>
         )}

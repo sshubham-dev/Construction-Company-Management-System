@@ -11,6 +11,11 @@ import Layout from './Layout.jsx';
 axios.defaults.baseURL = import.meta.env.VITE_SERVER_URI;
 axios.defaults.withCredentials = true;
 // console.log(import.meta.env.VITE_SERVER_URI)
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js");
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <>
       <Provider store={store}>
