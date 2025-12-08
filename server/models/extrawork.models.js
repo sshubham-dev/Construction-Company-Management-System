@@ -15,13 +15,13 @@ const workSchema = new mongoose.Schema({
     type: Number,
   },
   amount: {
-    type: String,
+    type: Number,
   },
   paid: {
-    type: String,
+    type: Number,
   },
   due: {
-    type: String,
+    type: Number,
   },
   date: {
     type: Date,
@@ -73,10 +73,10 @@ const extraWorkSchema = new mongoose.Schema(
       type: String,
     },
     paid: {
-      type: String,
+      type: Number,
     },
     due: {
-      type: String,
+       type: Number,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

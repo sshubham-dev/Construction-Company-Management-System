@@ -1,9 +1,8 @@
-// ExtraWorkPdf.jsx
 import {
+  Document,
   Page,
   Text,
   View,
-  Document,
   StyleSheet,
   Image,
 } from "@react-pdf/renderer";
@@ -11,253 +10,260 @@ import moment from "moment";
 import logo from "../asset/bhuvihomes.png";
 
 const accent = "#4CAF50"; // modern green accent
-const lightBg = "#f9f9f9";
+const lightBg = "#f9f9f9"; // light background
 
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
-    fontSize: 11,
+    padding: 24,
+    fontSize: 10,
     fontFamily: "Helvetica",
     color: "#333",
     backgroundColor: "#eeffda",
   },
+
+  /* ---------- HEADER ---------- */
   header: {
-    borderBottom: `2px solid ${accent}`,
-    paddingBottom: 12,
-    marginBottom: 20,
+    flexDirection: "row",
     alignItems: "center",
+    borderBottom: `2px solid ${accent}`,
+    paddingBottom: 8,
+    marginBottom: 14,
   },
-  logo: {
-    width: 90,
-    height: 90,
-    objectFit: "contain",
-  },
-  companyName: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: accent,
-  },
-  contact: {
-    fontSize: 10,
-    color: "#555",
-  },
+  logo: { width: 55, marginRight: 12 },
+  headerRight: { flex: 1 },
+  companyName: { fontSize: 16, fontWeight: "bold", color: accent },
+  contact: { fontSize: 9, color: "#555" },
+
+  /* ---------- SECTION ---------- */
   section: {
-    marginBottom: 16,
-    padding: 12,
+    marginBottom: 12,
+    padding: 10,
     backgroundColor: lightBg,
-    borderRadius: 6,
+    borderRadius: 4,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "bold",
-    marginBottom: 8,
     color: accent,
+    marginBottom: 6,
+    borderBottom: `1px solid ${accent}`,
+    paddingBottom: 3,
   },
+
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 4,
   },
-  label: {
-    fontWeight: "bold",
-    color: "#444",
-  },
-  value: {
-    textAlign: "right",
-  },
-  table: {
-    marginTop: 6,
-    border: `1px solid ${accent}`,
-    borderRadius: 4,
-    overflow: "hidden",
-  },
+  label: { fontWeight: "bold", color: "#333" },
+
+  /* ---------- TABLE ---------- */
+  table: { marginTop: 6 },
   tableRow: {
     flexDirection: "row",
     borderBottom: "1px solid #ddd",
+    paddingVertical: 5,
   },
   tableHeader: {
-    backgroundColor: accent,
-    color: "#fff",
-    fontWeight: "bold",
-    padding: 6,
     flex: 1,
-    fontSize: 11,
-    textAlign: "center",
+    fontWeight: "bold",
+    color: accent,
   },
   tableCell: {
-    padding: 6,
     flex: 1,
-    fontSize: 11,
-    textAlign: "center",
+    color: "#333",
   },
-  notes: {
-    fontSize: 10,
+
+  /* ---------- SUMMARY ---------- */
+  summaryBox: {
     marginTop: 8,
-    fontStyle: "italic",
-    color: "#666",
+    paddingTop: 6,
+    borderTop: `1px solid ${accent}`,
   },
-  footer: {
-    marginTop: 30,
-    borderTop: "1px solid #eee",
-    paddingTop: 8,
-    fontSize: 9,
-    textAlign: "center",
-    color: "#777",
-  },
+
+  /* ---------- SIGNATURE ---------- */
   signatures: {
+    marginTop: 26,
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 40,
   },
-  signatureBox: {
-    width: "22%", // 4 boxes fit in one row with spacing
-    alignItems: "center",
-  },
+  signatureBox: { width: "22%", textAlign: "center" },
   signatureLine: {
-    borderTop: "1px solid #444",
-    width: "100%",
-    textAlign: "center",
+    marginTop: 28,
+    borderTop: "1px solid #000",
     paddingTop: 4,
-    fontSize: 10,
+    fontSize: 9,
+  },
+
+  footer: {
+    position: "absolute",
+    bottom: 20,
+    left: 24,
+    right: 24,
+    textAlign: "center",
+    fontSize: 9,
+    color: "#666",
   },
 });
 
-const ExtraWorkPdf = ({ ExtraWork }) => {
-  if (!ExtraWork) return <Document />;
-console.log(ExtraWork)
+const ExtraWorkPdf = ({ Work }) => {
+  if (!Work) return <Document />;
+
+  const partyName =
+    Work.extraFor === "Contractor" ? Work.contractor?.name : Work.client?.name;
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
+        {/* ✅ HEADER */}
         <View style={styles.header}>
-          {/* ✅ Fix logo src to use public folder */}
           <Image src={logo} style={styles.logo} />
-          <Text style={styles.companyName}>Bhuvi Consultants</Text>
-          <Text style={styles.contact}>123 Main Street, Ranchi, Jharkhand</Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.companyName}>Bhuvi Consultants</Text>
           <Text style={styles.contact}>
-            Contact: +91 9876543210 | info@bhuvi.com
+            The Western Tower, Ratu Road, Ranchi, Jharkhand
           </Text>
+          <Text style={styles.contact}>
+            Contact: +91 8986699600 | bhuviconsultant@yahoo.in
+          </Text>
+          </View>
         </View>
 
-        {/* ExtraWork Info */}
-        {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ExtraWork Information</Text>
+        {/* ✅ BASIC INFO */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Extra Work Information</Text>
+
           <View style={styles.row}>
-            <Text style={styles.label}>ExtraWork To:</Text>
-            <Text style={styles.value}>{ExtraWork?.contractor?.name || "-"}</Text>
+            <Text style={styles.label}>Extra Work For:</Text>
+            <Text>{Work.extraFor}</Text>
           </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Name:</Text>
+            <Text>{partyName || "-"}</Text>
+          </View>
+
           <View style={styles.row}>
             <Text style={styles.label}>Site:</Text>
-            <Text style={styles.value}>{ExtraWork?.site?.name || "-"}</Text>
+            <Text>{Work.site?.name || "-"}</Text>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Date:</Text>
-            <Text style={styles.value}>
-              {ExtraWork?.startdate
-                ? moment(ExtraWork.startdate).format("DD-MM-YYYY")
-                : "-"}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Duration:</Text>
-            <Text style={styles.value}>
-              {ExtraWork?.duration
-                ? moment(ExtraWork.duration).format("MM-YYYY")
-                : "-"}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>ExtraWork No:</Text>
-            <Text style={styles.value}>
-              {ExtraWork.ExtraWorkNo ? `BHC/${ExtraWork?.ExtraWorkNo}` : "-"}
-            </Text>
-          </View>
-        </View> */}
 
-        {/* Work Details */}
-        {/* <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Created Date:</Text>
+            <Text>{moment(Work.createdAt).format("DD-MM-YYYY")}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Payment Status:</Text>
+            <Text>{Work.paymentStatus}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Approval Status:</Text>
+            <Text>{Work.approvalStatus}</Text>
+          </View>
+        </View>
+
+        {/* ✅ WORK DETAILS TABLE */}
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Work Details</Text>
+
           <View style={styles.table}>
             <View style={styles.tableRow}>
-              <Text style={styles.tableHeader}>Description</Text>
+              <Text style={styles.tableHeader}>Work</Text>
               <Text style={styles.tableHeader}>Rate</Text>
-              <Text style={styles.tableHeader}>Quantity</Text>
-              <Text style={styles.tableHeader}>Total</Text>
+              <Text style={styles.tableHeader}>Qty</Text>
+              <Text style={styles.tableHeader}>Amount</Text>
+              <Text style={styles.tableHeader}>Paid</Text>
+              <Text style={styles.tableHeader}>Due</Text>
+              <Text style={styles.tableHeader}>Status</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableCell}>
-                {ExtraWork?.ExtraWorkOf?.workDetail || "-"}
-              </Text>
-              <Text style={styles.tableCell}>
-                ₹{ExtraWork?.ExtraWorkOf?.rate || "0"}/{ExtraWork?.ExtraWorkOf?.unit}
-              </Text>
-              <Text style={styles.tableCell}>
-                {ExtraWork?.ExtraWorkOf?.area || "0"} {ExtraWork?.ExtraWorkOf?.unit}
-              </Text>
-              <Text style={styles.tableCell}>
-                ₹{ExtraWork?.ExtraWorkOf?.amount || "0"}
-              </Text>
+
+            {Work.WorkDetail?.map((item, index) => (
+              <View key={index} style={styles.tableRow}>
+                <Text style={styles.tableCell}>{item.work}</Text>
+                <Text style={styles.tableCell}>
+                  ₹{item.rate}/{item.unit}
+                </Text>
+                <Text style={styles.tableCell}>{item.area}</Text>
+                <Text style={styles.tableCell}>₹{item.amount}</Text>
+                <Text style={styles.tableCell}>₹{item.paid || 0}</Text>
+                <Text style={styles.tableCell}>₹{item.due || 0}</Text>
+                <Text style={styles.tableCell}>{item.status}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* ✅ FINANCIAL SUMMARY */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Financial Summary</Text>
+
+          <View style={styles.summaryBox}>
+            <View style={styles.row}>
+              <Text style={styles.label}>Total Amount:</Text>
+              <Text>₹{Work.totalAmount}</Text>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.label}>Total Paid:</Text>
+              <Text>₹{Work.paid}</Text>
+            </View>
+
+            <View style={styles.row}>
+              <Text style={styles.label}>Total Due:</Text>
+              <Text>₹{Work.due}</Text>
             </View>
           </View>
         </View>
 
-        {/* Payment Details */}
-        {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Details</Text>
-          <View style={styles.row}>
-            <Text style={styles.label}>Payment Date:</Text>
-            <Text style={styles.value}>
-              {ExtraWork?.dateOfPayment
-                ? moment(ExtraWork.dateOfPayment).format("DD-MM-YYYY")
-                : "-"}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Total Amount:</Text>
-            <Text style={styles.value}>₹{ExtraWork?.amount || "0"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>To Pay:</Text>
-            <Text style={styles.value}>₹{ExtraWork?.toPay || "0"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Paid:</Text>
-            <Text style={styles.value}>₹{ExtraWork?.paidAmount || "0"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Due:</Text>
-            <Text style={styles.value}>₹{ExtraWork?.dueAmount || "0"}</Text>
-          </View>
-        </View> */}
+        {/* ✅ APPROVAL TRACKING */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Approval Status</Text>
 
-        {/* Notes */}
-        {/* {ExtraWork?.reason && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Notes</Text>
-            <Text style={styles.notes}>{ExtraWork?.reason}</Text>
+          <View style={styles.row}>
+            <Text>Client:</Text>
+            <Text>{Work.clientApprove}</Text>
           </View>
-        )} */}
 
-        {/* Signature */}
-        {/* <View style={styles.signatures}>
-          <View style={styles.signatureBox}>
-            <Text style={styles.signatureLine}>Contractor</Text>
+          <View style={styles.row}>
+            <Text>Contractor:</Text>
+            <Text>{Work.contractorApprove}</Text>
           </View>
-          <View style={styles.signatureBox}>
-            <Text style={styles.signatureLine}>ExtraWorking Manager</Text>
+
+          <View style={styles.row}>
+            <Text>Authority:</Text>
+            <Text>{Work.adminApprove}</Text>
           </View>
-          <View style={styles.signatureBox}>
-            <Text style={styles.signatureLine}>Quality</Text>
+
+          <View style={styles.row}>
+            <Text>Account Head:</Text>
+            <Text>{Work.accountheadApprove}</Text>
           </View>
+        </View>
+
+        {/* ✅ SIGNATURES */}
+        <View style={styles.signatures}>
+          {Work.extraFor === "Contractor" ? (
+            <View style={styles.signatureBox}>
+              <Text style={styles.signatureLine}>Contractor</Text>
+            </View>
+          ) : (
+            <View style={styles.signatureBox}>
+              <Text style={styles.signatureLine}>Client</Text>
+            </View>
+          )}
           <View style={styles.signatureBox}>
             <Text style={styles.signatureLine}>Authority</Text>
           </View>
-        </View>  */}
+          <View style={styles.signatureBox}>
+            <Text style={styles.signatureLine}>Account Head</Text>
+          </View>
+        </View>
 
-        {/* Footer */}
+        {/* ✅ FOOTER */}
         <Text style={styles.footer}>
-          This is a system-generated ExtraWork. For any queries contact Bhuvi
-          Consultants office.
+          This is a system-generated Extra Work document. For any queries contact Bhuvi Consultants office.
         </Text>
       </Page>
     </Document>

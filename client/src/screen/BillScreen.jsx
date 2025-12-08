@@ -41,11 +41,11 @@ const BillScreen = () => {
     setEditId(id);
   };
 
-const handleApprove = async () => {
+  const handleApprove = async () => {
     try {
       await axios.post(`/api/v1/bill/${id}/approve`);
       toast.success("Bill Approved");
-      getBills(id);
+      getbills(id);
     } catch (error) {
       toast.error(error.message);
     }
@@ -55,7 +55,7 @@ const handleApprove = async () => {
     try {
       await axios.post(`/api/v1/bill/${id}/reject`);
       toast.success("Bill Rejected");
-      getBills(id);
+      getbills(id);
     } catch (error) {
       toast.error(error.message);
     }
@@ -71,10 +71,10 @@ const handleApprove = async () => {
             Bhuvi Consultants
           </div>
           <div className="text-gray-600 text-sm mt-1">
-            123 Main Street, Ranchi, Jharkhand
+            3rd Floor, The Western Tower, Ratu Road, Ranchi, Jharkhand
           </div>
           <div className="text-gray-600 text-sm">
-            Contact: +91 9876543210 | info@bhuvi.com
+            Contact: +91 7019943376 | bhuvihomes@gmail.com
           </div>
         </div>
 
@@ -95,72 +95,142 @@ const handleApprove = async () => {
               ? "-"
               : `BHC/${bill?.site?.name}${bill?.billNo ? bill?.billNo : ""}`}
           </p>
+          <div className="text-sm text-gray-700">
+  Bill Type:{" "}
+  <span className="font-semibold uppercase">
+    {bill?.billType}
+  </span>
+</div>
+
         </div>
 
         {/* Work Details Card */}
         <div className="border border-gray-300 rounded-xl p-4 mb-6 shadow-sm">
           <h3 className="font-semibold text-lg mb-3">Work Details</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-gray-500">Description</p>
-              <p className="font-medium">{bill.billOf?.workDetail}</p>
+
+          {/* WORK ORDER */}
+          {bill?.billType === "workorder" && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-gray-500">Work Name</p>
+                <p className="font-medium">{bill?.billOf?.workName}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Stage</p>
+                <p className="font-medium">{bill?.billOf?.stageName}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Quantity ({bill?.billOf?.unit})</p>
+                <p className="font-medium">{bill?.billOf?.qty}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Rate</p>
+                <p className="font-medium">₹{bill?.billOf?.rate}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-gray-500">Rate/{bill.billOf?.unit}</p>
-              <p className="font-medium">₹{bill.billOf?.rate}</p>
+          )}
+
+          {/* EXTRA WORK */}
+          {bill?.billType === "extrawork" && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-gray-500">Work Name</p>
+                <p className="font-medium">{bill?.billOf?.workName}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Quantity ({bill?.billOf?.unit})</p>
+                <p className="font-medium">{bill?.billOf?.qty}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Rate</p>
+                <p className="font-medium">₹{bill?.billOf?.rate}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-gray-500">Quantity ({bill.billOf?.unit})</p>
-              <p className="font-medium">{bill.billOf?.area}</p>
+          )}
+
+          {/* SUPPLY LABOUR */}
+          {bill?.billType === "supplylabour" && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-gray-500">Skilled Male</p>
+                <p className="font-medium">
+                  {bill?.billOf?.skilledMale} × ₹{bill?.billOf?.skilledMaleRate}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500">Skilled Female</p>
+                <p className="font-medium">
+                  {bill?.billOf?.skilledFemale} × ₹
+                  {bill?.billOf?.skilledFemaleRate}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500">Unskilled Male</p>
+                <p className="font-medium">
+                  {bill?.billOf?.unskilledMale} × ₹
+                  {bill?.billOf?.unskilledMaleRate}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500">Unskilled Female</p>
+                <p className="font-medium">
+                  {bill?.billOf?.unskilledFemale} × ₹
+                  {bill?.billOf?.unskilledFemaleRate}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-gray-500">Total</p>
-              <p className="font-medium">₹{bill.billOf?.amount}</p>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Payment Details */}
-        <div className="border border-gray-300 rounded-xl p-4 mb-6 shadow-sm">
-          <h3 className="font-semibold text-lg mb-3">Payment Details</h3>
-          <p className="text-gray-700 mb-2">
-            Payment Date:{" "}
-            {bill?.dateOfPayment
-              ? moment(bill?.dateOfPayment).format("DD-MM-YYYY")
-              : "-"}
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-gray-500">Total Amount</p>
-              <p className="font-medium">₹{bill?.amount}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">To Pay</p>
-              <p className="font-medium">₹{bill?.toPay}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Paid</p>
-              <p className="font-medium">₹{bill?.paidAmount || "0"}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Due</p>
-              <p className="font-medium">₹{bill?.dueAmount || "0"}</p>
-            </div>
-          </div>
-        </div>
+{/* Payment Details */}
+<div className="border border-gray-300 rounded-xl p-4 mb-6 shadow-sm">
+  <h3 className="font-semibold text-lg mb-3">Payment Details</h3>
+
+  <p className="text-gray-700 mb-2">
+    Payment Date:{" "}
+    {bill?.dateOfPayment
+      ? moment(bill?.dateOfPayment).format("DD-MM-YYYY")
+      : "-"}
+  </p>
+
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div>
+      <p className="text-gray-500">Total Amount</p>
+      <p className="font-medium">₹{bill?.toPay || 0}</p>
+    </div>
+
+    <div>
+      <p className="text-gray-500">Paid</p>
+      <p className="font-medium">₹{bill?.paidAmount || 0}</p>
+    </div>
+
+    <div>
+      <p className="text-gray-500">Due</p>
+      <p className="font-medium">₹{bill?.due || 0}</p>
+    </div>
+
+    <div>
+      <p className="text-gray-500">Status</p>
+      <p className="font-medium">{bill?.paymentStatus}</p>
+    </div>
+  </div>
+</div>
+
 
         {/* Notes */}
         <div className="pt-2">
           <p className="text-gray-700">{bill?.reason}</p>
         </div>
 
-        <ApprovalTimeLine item={bill} module='bill' />
+        <ApprovalTimeLine item={bill} module="bill" />
 
         {/* Action Buttons */}
         <div className="flex flex-wrap justify-end mt-6 gap-3">
           <PDFDownloadLink
             document={<BillPdf bill={bill} />}
-            fileName={`Bill-${bill?.billNo || "download"}.pdf`}
+            fileName={`${
+              bill.site?.name + "-" + bill?.billNo || "download"
+            }.pdf`}
           >
             {({ loading }) => (
               <button
@@ -171,13 +241,13 @@ const handleApprove = async () => {
               </button>
             )}
           </PDFDownloadLink>
-          <button
+          {/* <button
             type="button"
             className="bg-green-600 flex justify-center items-center gap-3 text-white px-5 py-2 rounded-lg shadow hover:bg-green-700 transition"
             onClick={() => handleEdit(bill._id)}
           >
             <GrEdit /> Edit
-          </button>
+          </button> */}
           <button
             type="button"
             className="bg-emerald-600 text-white px-5 py-2 rounded-lg shadow hover:bg-emerald-700 transition"

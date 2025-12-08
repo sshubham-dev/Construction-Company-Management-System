@@ -133,7 +133,9 @@ const BillPdf = ({ bill }) => {
           {/* ✅ Fix logo src to use public folder */}
           <Image src={logo} style={styles.logo} />
           <Text style={styles.companyName}>Bhuvi Consultants</Text>
-          <Text style={styles.contact}>The Western Tower, Ratu Road, Ranchi, Jharkhand</Text>
+          <Text style={styles.contact}>
+            The Western Tower, Ratu Road, Ranchi, Jharkhand
+          </Text>
           <Text style={styles.contact}>
             Contact: +91 8986699600 | bhuviconsultant@yahoo.in
           </Text>
@@ -164,38 +166,123 @@ const BillPdf = ({ bill }) => {
               {bill ? `BHC/${bill?.site?.name}${bill?.billNo || ""}` : "-"}
             </Text>
           </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Bill Type:</Text>
+            <Text style={styles.value}>{bill?.billType?.toUpperCase()}</Text>
+          </View>
         </View>
 
         {/* Work Details */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Work Details</Text>
           <View style={styles.table}>
+            {/* TABLE HEADER */}
             <View style={styles.tableRow}>
               <Text style={styles.tableHeader}>Description</Text>
               <Text style={styles.tableHeader}>Rate</Text>
               <Text style={styles.tableHeader}>Quantity</Text>
               <Text style={styles.tableHeader}>Total</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableCell}>
-                {bill?.billOf?.workDetail || "-"}
-              </Text>
-              <Text style={styles.tableCell}>
-                ₹{bill?.billOf?.rate || "0"}/{bill?.billOf?.unit}
-              </Text>
-              <Text style={styles.tableCell}>
-                {bill?.billOf?.area || "0"} {bill?.billOf?.unit}
-              </Text>
-              <Text style={styles.tableCell}>
-                ₹{bill?.billOf?.amount || "0"}
-              </Text>
-            </View>
+
+            {/* WORK ORDER */}
+            {bill?.billType === "workorder" && (
+              <View style={styles.tableRow}>
+                <Text style={styles.tableCell}>
+                  {bill?.billOf?.workName} ({bill?.billOf?.stageName})
+                </Text>
+                <Text style={styles.tableCell}>
+                  ₹{bill?.billOf?.rate}/{bill?.billOf?.unit}
+                </Text>
+                <Text style={styles.tableCell}>
+                  {bill?.billOf?.qty} {bill?.billOf?.unit}
+                </Text>
+                <Text style={styles.tableCell}>₹{bill?.toPay}</Text>
+              </View>
+            )}
+
+            {/* EXTRA WORK */}
+            {bill?.billType === "extrawork" && (
+              <View style={styles.tableRow}>
+                <Text style={styles.tableCell}>{bill?.billOf?.workName}</Text>
+                <Text style={styles.tableCell}>
+                  ₹{bill?.billOf?.rate}/{bill?.billOf?.unit}
+                </Text>
+                <Text style={styles.tableCell}>
+                  {bill?.billOf?.qty} {bill?.billOf?.unit}
+                </Text>
+                <Text style={styles.tableCell}>₹{bill?.toPay}</Text>
+              </View>
+            )}
+
+            {/* SUPPLY LABOUR */}
+            {bill?.billType === "supplylabour" && (
+              <>
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCell}>Skilled Male</Text>
+                  <Text style={styles.tableCell}>
+                    ₹{bill?.billOf?.skilledMaleRate}
+                  </Text>
+                  <Text style={styles.tableCell}>
+                    {bill?.billOf?.skilledMale}
+                  </Text>
+                  <Text style={styles.tableCell}>
+                    ₹{bill?.billOf?.skilledMale * bill?.billOf?.skilledMaleRate}
+                  </Text>
+                </View>
+
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCell}>Skilled Female</Text>
+                  <Text style={styles.tableCell}>
+                    ₹{bill?.billOf?.skilledFemaleRate}
+                  </Text>
+                  <Text style={styles.tableCell}>
+                    {bill?.billOf?.skilledFemale}
+                  </Text>
+                  <Text style={styles.tableCell}>
+                    ₹
+                    {bill?.billOf?.skilledFemale *
+                      bill?.billOf?.skilledFemaleRate}
+                  </Text>
+                </View>
+
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCell}>Unskilled Male</Text>
+                  <Text style={styles.tableCell}>
+                    ₹{bill?.billOf?.unskilledMaleRate}
+                  </Text>
+                  <Text style={styles.tableCell}>
+                    {bill?.billOf?.unskilledMale}
+                  </Text>
+                  <Text style={styles.tableCell}>
+                    ₹
+                    {bill?.billOf?.unskilledMale *
+                      bill?.billOf?.unskilledMaleRate}
+                  </Text>
+                </View>
+
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCell}>Unskilled Female</Text>
+                  <Text style={styles.tableCell}>
+                    ₹{bill?.billOf?.unskilledFemaleRate}
+                  </Text>
+                  <Text style={styles.tableCell}>
+                    {bill?.billOf?.unskilledFemale}
+                  </Text>
+                  <Text style={styles.tableCell}>
+                    ₹
+                    {bill?.billOf?.unskilledFemale *
+                      bill?.billOf?.unskilledFemaleRate}
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
         </View>
 
         {/* Payment Details */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment Details</Text>
+
           <View style={styles.row}>
             <Text style={styles.label}>Payment Date:</Text>
             <Text style={styles.value}>
@@ -204,21 +291,25 @@ const BillPdf = ({ bill }) => {
                 : "-"}
             </Text>
           </View>
+
           <View style={styles.row}>
             <Text style={styles.label}>Total Amount:</Text>
-            <Text style={styles.value}>₹{bill?.amount || "0"}</Text>
+            <Text style={styles.value}>₹{bill?.toPay || 0}</Text>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>To Pay:</Text>
-            <Text style={styles.value}>₹{bill?.toPay || "0"}</Text>
-          </View>
+
           <View style={styles.row}>
             <Text style={styles.label}>Paid:</Text>
-            <Text style={styles.value}>₹{bill?.paidAmount || "0"}</Text>
+            <Text style={styles.value}>₹{bill?.paidAmount || 0}</Text>
           </View>
+
           <View style={styles.row}>
             <Text style={styles.label}>Due:</Text>
-            <Text style={styles.value}>₹{bill?.dueAmount || "0"}</Text>
+            <Text style={styles.value}>₹{bill?.due || 0}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Payment Status:</Text>
+            <Text style={styles.value}>{bill?.paymentStatus}</Text>
           </View>
         </View>
 
@@ -248,8 +339,7 @@ const BillPdf = ({ bill }) => {
 
         {/* Footer */}
         <Text style={styles.footer}>
-          This is a system-generated bill. For any queries contact Bhuvi
-          Consultants office.
+          This is a system-generated bill. For any queries contact Bhuvi Consultants office.
         </Text>
       </Page>
     </Document>

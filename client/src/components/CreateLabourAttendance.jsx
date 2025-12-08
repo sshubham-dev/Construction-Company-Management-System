@@ -217,7 +217,7 @@ const CreateLabourAttendance = ({ onClose, id }) => {
             <div key={qtyField} className="border p-3 rounded-lg">
               
               <label className="text-sm font-semibold capitalize">
-                {qtyField.replace(/([A-Z])/g, " $1")}
+                {qtyField.replace(/([A-Z])/g, " $1")}:
               </label>
 
               <input
@@ -225,20 +225,23 @@ const CreateLabourAttendance = ({ onClose, id }) => {
                 name={qtyField}
                 value={form[qtyField]}
                 onChange={handleChange}
-                className="w-full mt-1 border p-2 rounded"
+                className="w-full mt-1 mb-2 border p-2 rounded"
                 min="0"
               />
 
               {selectedContractor === "Supply Labour" && (
+                <label className="text-sm font-semibold capitalize mt-2">
+                  Rate: 
                 <input
                   type="number"
                   name={rateField}
                   value={form[rateField]}
                   onChange={handleChange}
-                  className="w-full mt-2 border p-2 rounded"
+                  className="w-full  border p-2 rounded"
                   placeholder="Rate"
                   min="0"
-                />
+                  />
+                  </label>
               )}
             </div>
           ))}

@@ -19,6 +19,9 @@ const billSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     },
+    billType:{
+        type: String,
+    },
     billOf: {
         type: Object,
     },
@@ -31,11 +34,9 @@ const billSchema = new mongoose.Schema({
         default: Date.now,
     },
     toPay: {
-        type: String,
-    },
-    amount: {
         type: Number,
     },
+    reference:Object,
     paymentStatus: {
         type: String,
         default: 'Pending'
@@ -68,10 +69,10 @@ const billSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    paidAmount: {
+    paid: {
         type: Number,
     },
-    dueAmount: {
+    due: {
         type: Number,
     },
     reason: {
@@ -84,16 +85,16 @@ const billSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 billSchema.pre('save', function (next) {
-    const amount = parseFloat(this.amount) || 0;
-    const paidAmount = parseFloat(this.paidAmount) || 0;
+    const amount = parseFloat(this.toPay) || 0;
+    const paid = parseFloat(this.paid) || 0;
     // console.log('billamount:', amount)
     // console.log('billpaid:', paidAmount)
-    const payment = amount - paidAmount;
+    const payment = amount - paid;
 
     if (!isNaN(payment) && isFinite(payment)) {
-        this.dueAmount = Math.max(0, payment.toFixed(2));
+        this.due = Math.max(0, payment.toFixed(2));
     } else {
-        this.dueAmount = null;
+        this.due = null;
     }
 
     next();

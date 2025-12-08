@@ -255,60 +255,145 @@ const saveExtraWork = async (req, res) => {
 const updateExtraWork = async (req, res) => {
   try {
     const id = req.params.id;
-    const { contractor, site, extraFor, WorkDetail } = req.body;
-    const existingSite = await Site.findById(site);
-    const existingExtraWork = await ExtraWork.findById(id);
-    if (!existingExtraWork)
-      return res.status(401).json({ message: "No Extra Work Found" });
-    const existingClient = await Client.findOne()
-      .where("site.id")
-      .equals(site)
-      .exec();
+    const { contractor, client, site, extraFor, WorkDetail } = req.body;
 
-    if (existingSite) {
+    const existingExtraWork = await ExtraWork.findById(id);
+    if (!existingExtraWork) {
+      return res.status(404).json({ message: "No Extra Work Found" });
+    }
+
+    // ✅ Lock after full approval
+    if (existingExtraWork.approvalStatus === "Approved") {
+      return res.status(403).json({
+        message: "Approved Extra Work cannot be modified",
+      });
+    }
+
+    /* ================================
+       ✅ SAFE SITE UPDATE (ID OR OBJECT)
+    ================================= */
+    if (site) {
+      const siteId = typeof site === "object" ? site.id : site;
+      const existingSite = await Site.findById(siteId);
+
+      if (!existingSite) {
+        return res.status(400).json({ message: "Invalid Site ID" });
+      }
+
       existingExtraWork.site = {
         name: existingSite.name,
         id: existingSite._id,
       };
     }
-    existingExtraWork.contractor = {
-      id: existingSite?.contractor.id || existingExtraWork.contractor.id,
-      name: existingSite?.contractor.name || existingExtraWork.contractor.name,
-    };
-    existingExtraWork.extraFor = extraFor || existingExtraWork.extraFor;
-    existingExtraWork.client = {
-      id: existingSite?.client.id || existingExtraWork.client.id,
-      name: existingSite?.client.name || existingExtraWork?.client.name,
-    };
 
-    if (Array.isArray(WorkDetail) && WorkDetail.length > 0) {
-      for (const wk of WorkDetail) {
-        if (
-          wk.work !== "" &&
-          wk.rate !== "" &&
-          wk.area !== "" &&
-          wk.unit !== "" &&
-          wk.amount !== ""
-        ) {
-          const newWorkDetail = {
-            work: wk.work,
-            rate: wk.rate,
-            area: wk.area,
-            unit: wk.unit,
-            amount: wk.amount,
-          };
-          console.log("Pushing:", newWorkDetail);
-          existingExtraWork.WorkDetail.push(newWorkDetail);
+    /* ================================
+       ✅ SAFE EXTRA FOR + PARTY UPDATE
+    ================================= */
+    if (extraFor) {
+      existingExtraWork.extraFor = extraFor;
+
+      // ✅ CONTRACTOR (ID OR OBJECT)
+      if (extraFor === "Contractor" && contractor) {
+        const contractorId =
+          typeof contractor === "object" ? contractor.id : contractor;
+
+        const existingContractor = await Contractor.findById(contractorId);
+        if (!existingContractor) {
+          return res.status(400).json({ message: "Invalid Contractor ID" });
         }
+
+        existingExtraWork.contractor = {
+          id: existingContractor._id,
+          name: existingContractor.name,
+        };
+
+        existingExtraWork.client = undefined;
+      }
+
+      // ✅ CLIENT (ID OR OBJECT)
+      if (extraFor === "Client" && client) {
+        const clientId =
+          typeof client === "object" ? client.id : client;
+
+        const existingClient = await Client.findById(clientId);
+        if (!existingClient) {
+          return res.status(400).json({ message: "Invalid Client ID" });
+        }
+
+        existingExtraWork.client = {
+          id: existingClient._id,
+          name: existingClient.name,
+        };
+
+        existingExtraWork.contractor = undefined;
       }
     }
+
+    /* ================================
+       ✅ ADD NEW WORK ONLY (NO REPLACE)
+    ================================= */
+    if (Array.isArray(WorkDetail) && WorkDetail.length > 0) {
+      const newWorks = WorkDetail.map((wk) => {
+        const rate = Number(wk.rate || 0);
+        const area = Number(wk.area || 0);
+        const amount = Number(wk.amount || rate * area || 0);
+
+        return {
+          work: wk.work,
+          rate,
+          area,
+          unit: wk.unit,
+          amount,
+          paid: 0,
+          due: amount,
+          status: "Pending",
+          date: wk.date || new Date(),
+        };
+      });
+
+      existingExtraWork.WorkDetail.push(...newWorks);
+
+      // ✅ Reset approvals ONLY because new work is added
+      existingExtraWork.clientApprove = "Pending";
+      existingExtraWork.contractorApprove = "Pending";
+      existingExtraWork.adminApprove = "Pending";
+      existingExtraWork.accountheadApprove = "Pending";
+      existingExtraWork.approvalStatus = "Pending";
+    }
+
+    /* ================================
+       ✅ RE-CALCULATE TOTALS (SAFE)
+    ================================= */
+    const totalAmount = existingExtraWork.WorkDetail.reduce(
+      (sum, item) => sum + Number(item.amount || 0),
+      0
+    );
+
+    const totalPaid = existingExtraWork.WorkDetail.reduce(
+      (sum, item) => sum + Number(item.paid || 0),
+      0
+    );
+
+    const totalDue = Math.max(totalAmount - totalPaid, 0);
+
+    existingExtraWork.totalAmount = totalAmount;
+    existingExtraWork.paid = totalPaid;
+    existingExtraWork.due = totalDue;
+    existingExtraWork.paymentStatus =
+      totalDue === 0 ? "Completed" : "Pending";
+
     await existingExtraWork.save({ validateBeforeSave: false });
-    res.status(201).json({ message: "Updation Successfully" });
+
+    res.status(200).json({
+      message: "Extra Work Updated Successfully",
+      data: existingExtraWork,
+    });
   } catch (error) {
-    console.log(error);
+    console.error("Update Extra Work Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 
 const deleteExtraWork = async (req, res) => {
   try {
@@ -337,29 +422,98 @@ const getWork = async (req, res) => {
   }
 };
 
+// const updateWork = async (req, res) => {
+//   try {
+//     const { id, index } = req.params;
+//     const { work, rate, area, unit, status, date, amount } = req.body;
+//     const extraWork = await ExtraWork.findById(id);
+//     if (!extraWork)
+//       return res.status(401).json({ message: "No Extra Work Found" });
+//     extraWork.WorkDetail[index] = {
+//       work: work || extraWork.WorkDetail[index].work,
+//       rate: rate || extraWork.WorkDetail[index].rate,
+//       area: area || extraWork.WorkDetail[index].area,
+//       unit: unit || extraWork.WorkDetail[index].unit,
+//       date: date || extraWork.WorkDetail[index].date,
+//       status: status || extraWork.WorkDetail[index].status,
+//       amount: amount || extraWork.WorkDetail[index].amount,
+//     };
+//     await extraWork.save();
+//     res.status(201).json({ message: "Work Detail Updated Successfully" });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };
+
+
 const updateWork = async (req, res) => {
   try {
     const { id, index } = req.params;
-    const { work, rate, area, unit, status, date, amount } = req.body;
+    const { work, rate, area, unit, date, paid } = req.body;
+
     const extraWork = await ExtraWork.findById(id);
-    if (!extraWork)
-      return res.status(401).json({ message: "No Extra Work Found" });
+    if (!extraWork) {
+      return res.status(404).json({ message: "No Extra Work Found" });
+    }
+
+    // ✅ Index validation
+    if (!extraWork.WorkDetail[index]) {
+      return res.status(400).json({ message: "Invalid Work Index" });
+    }
+
+    const existing = extraWork.WorkDetail[index];
+
+    // ✅ Recalculate amount safely
+    const finalRate = rate ?? existing.rate;
+    const finalArea = area ?? existing.area;
+    const finalAmount = Number(finalRate) * Number(finalArea);
+
+    const finalPaid = paid ?? existing.paid ?? 0;
+    const finalDue = finalAmount - finalPaid;
+
     extraWork.WorkDetail[index] = {
-      work: work || extraWork.WorkDetail[index].work,
-      rate: rate || extraWork.WorkDetail[index].rate,
-      area: area || extraWork.WorkDetail[index].area,
-      unit: unit || extraWork.WorkDetail[index].unit,
-      date: date || extraWork.WorkDetail[index].date,
-      status: status || extraWork.WorkDetail[index].status,
-      amount: amount || extraWork.WorkDetail[index].amount,
+      ...existing,
+      work: work ?? existing.work,
+      rate: finalRate,
+      area: finalArea,
+      unit: unit ?? existing.unit,
+      date: date ?? existing.date,
+      amount: finalAmount,
+      paid: finalPaid,
+      due: finalDue,
+      status: finalDue === 0 ? "Paid" : "Pending",
     };
+
+    // ✅ Recalculate root totals
+    const totalAmount = extraWork.WorkDetail.reduce(
+      (sum, item) => sum + Number(item.amount || 0),
+      0
+    );
+
+    const totalPaid = extraWork.WorkDetail.reduce(
+      (sum, item) => sum + Number(item.paid || 0),
+      0
+    );
+
+    const totalDue = totalAmount - totalPaid;
+
+    extraWork.totalAmount = totalAmount;
+    extraWork.paid = totalPaid;
+    extraWork.due = totalDue;
+    extraWork.paymentStatus = totalDue === 0 ? "Completed" : "Pending";
+
     await extraWork.save();
-    res.status(201).json({ message: "Work Detail Updated Successfully" });
+    res.status(200).json({
+      message: "Work Detail Updated Successfully",
+      data: extraWork,
+    });
   } catch (error) {
-    console.log(error);
+    console.error("Update Work Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 
 const deleteWork = async (req, res) => {
   try {

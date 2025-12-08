@@ -37,6 +37,7 @@ const Blogs = require('./routes/blog.routes');
 const BusinessUnit = require('./routes/bu.routes');
 const Store = require('./routes/store.routes');
 const { Rates, Quotation, Packages } = require('./routes/quote.routes');
+const timing = require('./middlewares/timing')
 // midellware
 
 const allowedOrigins = process.env.CORS_ORIGIN.split(',');
@@ -73,6 +74,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(buildpath));
 app.use(helmet())
+app.use(timing)
 // app.use(async (req, res, next) => {
 //   const start = process.hrtime.bigint();
 //   res.on('finish', () => {

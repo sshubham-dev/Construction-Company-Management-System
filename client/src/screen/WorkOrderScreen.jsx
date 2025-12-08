@@ -88,41 +88,65 @@ const WorkOrderScreen = () => {
 
   return (
     <div className="p-4 space-y-6">
-      
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between border-b pb-4">
         <div className="flex items-center gap-4 mb-4 sm:mb-0">
           <img src={logo} className="w-20 h-20" alt="Logo" />
           <div className="ml-4">
-            <h1 className="text-2xl font-bold text-gray-800">Bhuvi Consultants</h1>
-            <p className="text-sm text-gray-600 text-wrap ">3rd Floor, The Western Tower, Ratu Road, Ranchi, Jharkhand</p>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Bhuvi Consultants
+            </h1>
+            <p className="text-sm text-gray-600 text-wrap ">
+              3rd Floor, The Western Tower, Ratu Road, Ranchi, Jharkhand
+            </p>
           </div>
         </div>
 
         <div className="text-sm text-gray-600">
-          <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
-          <p><strong>Work Order:</strong> {workOrder.workOrderNo}</p>
+          <p>
+            <strong>Date:</strong> {new Date().toLocaleDateString()}
+          </p>
+          <p>
+            <strong>Work Order:</strong> {workOrder.workOrderNo}
+          </p>
         </div>
       </div>
 
       {/* Site and Contractor */}
       <div className="grid sm:grid-cols-2 gap-4">
-        
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="font-semibold text-gray-700 mb-2">Site Details</h2>
-          <p><strong>Name:</strong> {workOrder.site?.name}</p>
-          <p><strong>Structure:</strong> {workOrder.site?.id?.structureType || "N/A"}</p>
-          <p><strong>Incharge:</strong> {workOrder.site?.id?.incharge?.name || "N/A"}</p>
-          <p><strong>Supervisor:</strong> {workOrder.site?.id?.supervisor?.name || "N/A"}</p>
+          <p>
+            <strong>Name:</strong> {workOrder.site?.name}
+          </p>
+          <p>
+            <strong>Structure:</strong>{" "}
+            {workOrder.site?.id?.structureType || "N/A"}
+          </p>
+          <p>
+            <strong>Incharge:</strong>{" "}
+            {workOrder.site?.id?.incharge?.name || "N/A"}
+          </p>
+          <p>
+            <strong>Supervisor:</strong>{" "}
+            {workOrder.site?.id?.supervisor?.name || "N/A"}
+          </p>
         </div>
 
         <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="font-semibold text-gray-700 mb-2">Contractor Details</h2>
-          <p><strong>Name:</strong> {workOrder.contractor?.name}</p>
-          <p><strong>Phone:</strong> {workOrder.contractor?.id?.phone}</p>
-          <p><strong>GST:</strong> {workOrder.contractor?.id?.gst || "N/A"}</p>
+          <h2 className="font-semibold text-gray-700 mb-2">
+            Contractor Details
+          </h2>
+          <p>
+            <strong>Name:</strong> {workOrder.contractor?.name}
+          </p>
+          <p>
+            <strong>Phone:</strong> {workOrder.contractor?.id?.phone}
+          </p>
+          <p>
+            <strong>GST:</strong> {workOrder.contractor?.id?.gst || "N/A"}
+          </p>
         </div>
-
       </div>
 
       {/* Summary */}
@@ -133,11 +157,15 @@ const WorkOrderScreen = () => {
         </div>
         <div>
           <p className="text-xs text-gray-500">Paid</p>
-          <h3 className="text-lg font-bold text-green-600">₹{workOrder.totalPaid}</h3>
+          <h3 className="text-lg font-bold text-green-600">
+            ₹{workOrder.totalPaid}
+          </h3>
         </div>
         <div>
           <p className="text-xs text-gray-500">Due</p>
-          <h3 className="text-lg font-bold text-red-500">₹{workOrder.totalDue}</h3>
+          <h3 className="text-lg font-bold text-red-500">
+            ₹{workOrder.totalDue}
+          </h3>
         </div>
       </div>
 
@@ -147,14 +175,21 @@ const WorkOrderScreen = () => {
 
         {workOrder.works?.map((w, i) => (
           <div key={i} className="border rounded-lg p-3 mb-4 bg-gray-50">
-
             <h3 className="font-semibold mb-2">{w.name}</h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-              <p><strong>Qty:</strong> {w.qty}</p>
-              <p><strong>Unit:</strong> {w.unit}</p>
-              <p><strong>Rate:</strong> ₹{w.rate}</p>
-              <p><strong>Amount:</strong> ₹{w.amount}</p>
+              <p>
+                <strong>Qty:</strong> {w.qty}
+              </p>
+              <p>
+                <strong>Unit:</strong> {w.unit}
+              </p>
+              <p>
+                <strong>Rate:</strong> ₹{w.rate}
+              </p>
+              <p>
+                <strong>Amount:</strong> ₹{w.amount}
+              </p>
             </div>
 
             {/* Stages */}
@@ -208,7 +243,6 @@ const WorkOrderScreen = () => {
 
       {/* Footer Buttons */}
       <div className="flex flex-col sm:flex-row justify-between gap-3">
-
         <div className="flex gap-3">
           <button
             onClick={() => handleEdit(workOrder._id)}
@@ -219,8 +253,10 @@ const WorkOrderScreen = () => {
           </button>
 
           <PDFDownloadLink
-            document={<WorkOrderPdf Work={workOrder} />}
-            fileName={`WO-${workOrder.workOrderNo}.pdf`}
+            document={<WorkOrderPdf workOrder={workOrder} />}
+            fileName={`${
+              workOrder.site.name + "-" + workOrder.workOrderNo
+            }.pdf`}
           >
             {({ loading }) => (
               <button className="bg-green-600 text-white px-4 py-2 rounded">
@@ -251,12 +287,23 @@ const WorkOrderScreen = () => {
       </div>
 
       {/* Modals */}
-      <Modal isOpen={rejectModal} onClose={() => setRejectModal(false)} head="Reject Reason">
+      <Modal
+        isOpen={rejectModal}
+        onClose={() => setRejectModal(false)}
+        head="Reject Reason"
+      >
         <Reject onClose={() => setRejectModal(false)} Id={rejectId} />
       </Modal>
 
-      <Modal isOpen={editModal} onClose={() => setEditModal(false)} head="Update Work Order">
-        <CreateWorkOrder onClose={() => setEditModal(false)} existingWorkOrder={workOrder} />
+      <Modal
+        isOpen={editModal}
+        onClose={() => setEditModal(false)}
+        head="Update Work Order"
+      >
+        <CreateWorkOrder
+          onClose={() => setEditModal(false)}
+          existingWorkOrder={workOrder}
+        />
       </Modal>
 
       <Modal
@@ -275,6 +322,5 @@ const WorkOrderScreen = () => {
     </div>
   );
 };
-
 
 export default WorkOrderScreen;
