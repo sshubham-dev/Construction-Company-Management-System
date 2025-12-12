@@ -249,7 +249,8 @@ const EditWorkModal = ({ open, work, onClose, onSave, units }) => {
 
 /* ----------------------------- MAIN COMPONENT ----------------------------- */
 const CreateWorkOrder = ({
-  existingWorkOrder = null,
+  id,
+  index,
   onClose = () => {},
   onSuccess = () => {},
 }) => {
@@ -258,7 +259,7 @@ const CreateWorkOrder = ({
   const [sites, setSites] = useState([]);
   const [contractors, setContractors] = useState([]);
   const [units, setUnits] = useState(DEFAULT_UNITS);
-
+  const { user } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
   const [expandedIdx, setExpandedIdx] = useState(null);
   const [editModal, setEditModal] = useState({
@@ -282,16 +283,14 @@ const CreateWorkOrder = ({
   useEffect(() => {
     (async () => {
       try {
-        const [tplRes, siteRes, contRes, unitRes] = await Promise.allSettled([
+        const [tplRes, contRes, unitRes] = await Promise.allSettled([
           axios.get("/api/v1/work-template"),
-          axios.get("/api/v1/site"),
           axios.get("/api/v1/contractor"),
           axios.post("/api/v1/work-details/name", { title: "Unit" }),
         ]);
 
         if (tplRes.status === "fulfilled")
           setTemplates(tplRes.value.data || []);
-        if (siteRes.status === "fulfilled") setSites(siteRes.value.data || []);
         if (contRes.status === "fulfilled")
           setContractors(contRes.value.data || []);
         if (
@@ -310,29 +309,75 @@ const CreateWorkOrder = ({
     })();
   }, []);
 
+    useEffect(() => {
+    if (user && user?.department === "Site Incharge") {
+      console.log(user._id);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Site Supervisor") {
+      console.log(user);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Client") {
+      console.log(user);
+      getUserSites(user._id);
+    } else {
+      const getSites = async () => {
+        try {
+          const siteData = await axios.get("/api/v1/site");
+          setSites(siteData.data);
+          console.log(siteData.data);
+        } catch (error) {
+          console.error(error);
+          setError(error.message);
+        }
+      };
+      getSites();
+    }
+  }, []);
+
+  const getUserSites = async (id) => {
+    try {
+      const siteData = await axios.get(`/api/v1/site/user/${id}`);
+      console.log(siteData.data);
+      setSites(siteData.data);
+    } catch (error) {
+      console.error(error);
+      setError(error.message);
+    }
+  };
+
   /* ------------------- load existing WO to edit ------------------- */
   useEffect(() => {
-    if (!existingWorkOrder) return;
-    // map existing to our form shape and recalc
-    const mapped = {
+    if(id && index !== undefined){
+      fetchWorkDetail(id,index)
+    }else{
+      fetchWorkOrder(id)
+    }
+  }, [id]);
+
+    const fetchWorkOrder = async (id) => {
+      try {
+        const res = await axios.get(`/api/v1/work-order/${id}`);
+        const existingWorkOrder = res.data
+        console.log(existingWorkOrder)
+            const mapped = {
       workOrderName: existingWorkOrder.workOrderName || "",
       templateId:
         existingWorkOrder.templateRef || existingWorkOrder.templateId || "",
-      siteId: existingWorkOrder.site?.id || existingWorkOrder.siteId || "",
+      siteId: existingWorkOrder.site?.id._id || existingWorkOrder.site?.id || "",
       contractorId:
-        existingWorkOrder.contractor?.id ||
-        existingWorkOrder.contractorId ||
-        "",
+        existingWorkOrder.contractor?.id || existingWorkOrder.contractor?.id._id || "",
       startDate: existingWorkOrder.startDate
         ? existingWorkOrder.startDate.slice(0, 10)
         : "",
       durationMonths: existingWorkOrder.durationMonths || "",
-      works: (existingWorkOrder.works || []).map((w) => recalcStagesForWork(w)),
+      works: existingWorkOrder.works,
       serial: existingWorkOrder.serial || null,
     };
     setForm(mapped);
-  }, [existingWorkOrder]);
-
+      } catch (error) {
+        console.log(error)
+      }
+    };
   /* ------------------- generate works from template + site ------------------- */
   useEffect(() => {
     const buildFromTemplateAndSite = async () => {
@@ -756,7 +801,7 @@ const CreateWorkOrder = ({
         contractor: form.contractorId,
         site: form.siteId,
         startDate: form.startDate,
-        durationMonths: Number(form.durationMonths) || 0,
+        durationMonths: form.durationMonths,
         works: form.works.map((w) => ({
           id: w.id,
           name: w.name,
@@ -776,8 +821,8 @@ const CreateWorkOrder = ({
         serial: form.serial || null,
       };
 
-      if (existingWorkOrder && existingWorkOrder._id) {
-        await axios.put(`/api/v1/work-order/${existingWorkOrder._id}`, payload);
+      if (id !== undefined) {
+        await axios.put(`/api/v1/work-order/${id}`, payload);
         onClose();
         toast.success("Work Order updated");
       } else {
@@ -1264,7 +1309,7 @@ const CreateWorkOrder = ({
                 >
                   {loading
                     ? "Processing..."
-                    : existingWorkOrder
+                    : id
                     ? "Update Work Order"
                     : "Create Work Order"}
                 </button>

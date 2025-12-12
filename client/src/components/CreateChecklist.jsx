@@ -201,12 +201,13 @@ const CreateChecklist = ({ onClose, isEdit }) => {
       } else {
         const response = await axios.post("/api/v1/checklist", formData);
         console.log(response);
-        onClose();
         setLoading(false);
+        onClose();
         dispatch(fetchNotifications(user._id));
       }
     } catch (error) {
       console.log(error);
+      setLoading(false);
     }
   };
 

@@ -49,7 +49,7 @@ const WorkOrders = () => {
             WorkOrders = [...WorkOrders, ...filteredWorkOrders];
           }
           setWorkOrder(WorkOrders);
-          // console.log("workOrders for all sites:", WorkOrders);
+          console.log("workOrders for all sites:", WorkOrders);
         } else {
           // If user is not Site Supervisor or Site Incharge, set workOrdersData directly
           setWorkOrder(workOrdersData.data);
@@ -69,6 +69,7 @@ const WorkOrders = () => {
         ) {
           const sites = user.site;
           console.log(sites)
+          console.log(user)
           let draftWorkOrders = [];
           for (let site of sites) {
             // Filter workOrdersData based on site id
@@ -109,7 +110,7 @@ const WorkOrders = () => {
       }
     };
     fetchTemplates();
-  }, [user.department?.toLowerCase() === "ceo" || user.department?.toLowerCase() === "account head"]);
+  }, [user?.department?.toLowerCase() === "ceo" || user.department?.toLowerCase() === "account head"]);
 
   const handleEdit = (id) => {
     setEditModal(true);
@@ -404,7 +405,7 @@ const WorkOrders = () => {
                       {workOrder.totalDue ? workOrder.totalDue : "0"}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {moment(workOrder.duration).format("DD-MM-YYYY")}
+                      {moment(workOrder.durationMonths).format("MM-YYYY")}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button

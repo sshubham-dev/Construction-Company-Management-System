@@ -70,33 +70,28 @@ const CreatePurchaseRequest = ({ onClose, id, index }) => {
   }, [id, index]);
 
   useEffect(() => {
-    const fetchSite = async () => {
-      try {
-        const response = await axios.get("/api/v1/site");
-        if (
-          user?.department === "Site Incharge" ||
-          user?.department === "Site Supervisor"
-        ) {
-          const existingSites = user?.site;
-          let SitesData = [];
-          for (let site of response.data) {
-            if (
-              existingSites?.some(
-                (existingSite) => existingSite.id === site._id
-              )
-            ) {
-              SitesData.push(site);
-            }
-          }
-          setSite(SitesData);
-          // console.log(SitesData)
-        } else {
-          setSite(response.data);
+    if (user && user?.department === "Site Incharge") {
+      console.log(user._id);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Site Supervisor") {
+      console.log(user);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Client") {
+      console.log(user);
+      getUserSites(user._id);
+    } else {
+      const getSites = async () => {
+        try {
+          const siteData = await axios.get("/api/v1/site");
+          setSite(siteData.data);
+          console.log(siteData.data);
+        } catch (error) {
+          console.error(error);
+          setError(error.message);
         }
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
+      };
+      getSites();
+    }
     const fetchCategory = async () => {
       try {
         const response = await axios.get("/api/v1/stock-group");
@@ -107,8 +102,18 @@ const CreatePurchaseRequest = ({ onClose, id, index }) => {
       }
     };
     fetchCategory();
-    fetchSite();
   }, [user]);
+
+  const getUserSites = async (id) => {
+    try {
+      const siteData = await axios.get(`/api/v1/site/user/${id}`);
+      console.log(siteData.data);
+      setSite(siteData.data);
+    } catch (error) {
+      console.error(error);
+      setError(error.message);
+    }
+  };
 
   useEffect(() => {
     const selectedSite = sites.filter((site) => site._id === formData.site)[0];
@@ -396,8 +401,7 @@ const CreatePurchaseRequest = ({ onClose, id, index }) => {
                 className="border p-2 rounded w-full"
               >
                 <option value="">Select a Unit</option>
-                {
-                units.map((unit, index) => (
+                {units.map((unit, index) => (
                   <option key={index} value={unit}>
                     {unit}
                   </option>
@@ -564,13 +568,11 @@ const CreatePurchaseRequest = ({ onClose, id, index }) => {
                   }
                   className="border p-2 rounded w-full"
                 >
-                  {
-                    units.map((unit, index) => (
-                      <option key={index} value={unit}>
-                        {unit}
-                      </option>
-                    ))
-                  }
+                  {units.map((unit, index) => (
+                    <option key={index} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}

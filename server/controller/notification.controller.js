@@ -10,21 +10,31 @@ webpush.setVapidDetails(
 const saveSubscription = async (req, res) => {
   try {
     const { subscription, user } = req.body;
+    const deviceId = req.headers["user-agent"];
 
+    if (!subscription || !subscription.endpoint) {
+      return res.status(400).json({ success: false, message: "Invalid subscription" });
+    }
+
+    // Delete only duplicate subscription of SAME DEVICE
     await Subscription.deleteOne({
-      "subscription.endpoint": subscription?.endpoint
+      user,
+      deviceId
     });
 
     const newSubscription = new Subscription({
       user,
+      deviceId,
       subscription,
+      createdAt: new Date()
     });
 
     await newSubscription.save();
 
     res.json({ success: true });
+
   } catch (err) {
-    console.log(err);
+    console.log("saveSubscription error:", err);
     res.status(500).json({ success: false });
   }
 };
@@ -33,7 +43,9 @@ const unsubscribe = async (req, res) => {
   try {
     const { endpoint, user } = req.body;
     if (!endpoint) {
-      return res.status(400).json({ success: false, message: "No endpoint provided" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No endpoint provided" });
     }
 
     await Subscription.deleteOne({ "subscription.endpoint": endpoint, user });
@@ -45,12 +57,50 @@ const unsubscribe = async (req, res) => {
   }
 };
 
+const checkSubscription = async (req, res) => {
+  try {
+    const { user, endpoint } = req.body;
+    const deviceId = req.headers["user-agent"];
+
+    // Find existing subscription for same user + same device
+    const exists = await Subscription.findOne({
+      user,
+      deviceId
+    });
+
+    if (exists) {
+      return res.json({
+        existsInDB: true,
+        endpointMatches: exists.subscription.endpoint === endpoint
+      });
+    }
+
+    return res.json({
+      existsInDB: false
+    });
+
+  } catch (err) {
+    console.log("checkSubscription error:", err);
+    res.status(500).json({ success: false });
+  }
+};
+
 const sendNotification = async (userId, message) => {
   try {
     const subscriptions = await Subscription.find({ user: userId });
 
     for (const sub of subscriptions) {
       try {
+        if (
+          !sub?.subscription?.endpoint ||
+          !sub?.subscription?.keys?.p256dh ||
+          !sub?.subscription?.keys?.auth
+        ) {
+          console.log("Invalid subscription removed");
+          await Subscription.deleteOne({ _id: sub._id });
+          continue;
+        }
+
         await webpush.sendNotification(
           sub.subscription,
           JSON.stringify({
@@ -61,28 +111,21 @@ const sendNotification = async (userId, message) => {
       } catch (err) {
         console.log("Push error:", err.statusCode);
 
-        // 410 or 404 = expired subscription → remove it
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          console.log("Expired subscription removed:", sub.subscription.endpoint);
-          await Subscription.deleteOne({
-            "subscription.endpoint": sub.subscription.endpoint
-          });
+        // Remove all unusable subscriptions
+        if ([400, 403, 404, 410].includes(err.statusCode)) {
+          console.log("Invalid/Expired subscription removed");
+          await Subscription.deleteOne({ _id: sub._id });
         }
       }
     }
   } catch (err) {
-    console.log("Error in sendNotification:", err);
+    console.log("Error in sendNotification:", err.message);
   }
 };
-
-
-
-
-
-
 
 module.exports = {
   saveSubscription,
   unsubscribe,
   sendNotification,
+  checkSubscription,
 };

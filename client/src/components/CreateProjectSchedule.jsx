@@ -105,51 +105,57 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
       toast.error("Failed to fetch project schedule.");
     }
   };
-  useEffect(() => {
-    const fetchSite = async () => {
-      try {
-        const response = await axios.get("/api/v1/site");
-        if (
-          user?.department === "Site Incharge" ||
-          user?.department === "Site Supervisor"
-        ) {
-          const existingSites = user?.site;
-          let SitesData = [];
-          for (let site of response.data) {
-            if (
-              existingSites?.some(
-                (existingSite) => existingSite.id === site._id
-              )
-            ) {
-              SitesData.push(site);
-            }
-          }
-          setSite(SitesData);
-          // console.log(SitesData)
-        } else {
-          setSite(response.data);
-        }
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
 
+  useEffect(() => {
     const fetchWork = async () => {
-      try {
+            try {
         const title = "Project Schedule";
         const workData = await axios.post("/api/v1/work-details/name", {
           title,
         });
+        console.log(workData);
         setWorkDetails(workData.data.description);
       } catch (error) {
-        console.error("Error fetching work details:", error);
-        toast.error("Failed to fetch work details.");
+        console.log("Error fetching work details:", error.message);
+        toast.error(error.message);
       }
     };
-
-    fetchSite();
     fetchWork();
+    if (user && user?.department === "Site Incharge") {
+      console.log(user._id);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Site Supervisor") {
+      console.log(user);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Client") {
+      console.log(user);
+      getUserSites(user._id);
+    } else {
+      const getSites = async () => {
+        try {
+          const siteData = await axios.get("/api/v1/site");
+          setSite(siteData.data);
+          console.log(siteData.data);
+        } catch (error) {
+          console.error(error);
+          setError(error.message);
+        }
+      };
+      getSites();
+    }
   }, []);
+
+  const getUserSites = async (id) => {
+    try {
+      const siteData = await axios.get(`/api/v1/site/user/${id}`);
+      console.log(siteData.data);
+      setSite(siteData.data);
+    } catch (error) {
+      console.error(error);
+      setError(error.message);
+    }
+  };
+  
   const handleChange = (field, value) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -274,6 +280,7 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
           formData
         );
         toast.success(response.data.message);
+         setLoading(false)
         onClose();
         dispatch(fetchNotifications(user._id));
       } else if (projectToEdit.id !== "" && projectToEdit.index !== "") {
@@ -284,16 +291,19 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
         );
         toast.success("Edited successfully");
         console.log("first", resposnse.data?.updatedWork);
+         setLoading(false)
         onClose();
         dispatch(fetchNotifications(user._id));
       } else {
         console.log("first", formData);
         const response = await axios.post("/api/v1/project-schedule", formData);
         toast.success(response.data.message);
+        setLoading(false)
         onClose();
         dispatch(fetchNotifications(user._id));
       }
     } catch (error) {
+      setLoading(false)
       console.error("Error submitting project schedule:", error);
       toast.error("Failed to submit project schedule.");
     }

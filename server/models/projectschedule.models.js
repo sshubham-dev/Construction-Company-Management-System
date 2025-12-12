@@ -12,7 +12,10 @@ const projectDetailSchema = new mongoose.Schema({
       reason: String,
     },
   ],
-  actual: Date,
+  actual: {
+    type: Date,
+    default: Date.now
+  },
   difference: Number,
   reason: String,
   status: {
@@ -67,6 +70,22 @@ const projectScheduleSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+projectScheduleSchema.pre("save", async function (next){
+  try {
+        const schedule = this.projectDetail;
+    schedule.flatMap((work) => {
+      const planned = new Date(work.rePlannedDates[-1] ? work.rePlannedDates[-1].date : work.planned);
+      const actual = new Date(work.actual);
+      work.difference = Math.ceil((actual - planned) / (1000 * 60 * 60 * 24));
+      // work.reason = "Delay in work completion"
+    });
+    next();
+  } catch (err) {
+    console.error("Error in project schedule:", err);
+    next(err);
+  }
+})
 
 const ProjectSchedule = mongoose.model(
   "Project_Schedule",

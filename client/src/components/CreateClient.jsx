@@ -88,11 +88,12 @@ const CreateClient = ({ onClose, isEdit }) => {
     setLoading(true);
     console.log('Before data submitted:', client);
     try {
-      if (clientId !== undefined) {
+      if (isEdit !== undefined) {
         const response = await axios.put(`/api/v1/client/${clientId}`, client);
         if (response.data) {
           toast.success(response.data.message)
           console.log(response.data)
+          setLoading(false)
           onClose()
         }
       } else {
@@ -100,11 +101,13 @@ const CreateClient = ({ onClose, isEdit }) => {
         if (response.data) {
           toast.success(response.data.message)
           console.log(response.data)
+          setLoading(false)
           onClose()
         }
       }
     } catch (error) {
       console.log(error)
+      setLoading(false)
       toast.error(error.message)
     }
   };

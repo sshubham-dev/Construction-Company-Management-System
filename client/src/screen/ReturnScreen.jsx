@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import moment from 'moment';
 import axios from 'axios';
 import { GrEdit } from "react-icons/gr";
@@ -19,7 +19,6 @@ const ReturnScreen = () => {
   const [rejectModal, setRejectModal] = useState(false);
   const [rejectId, setRejectId] = useState("");
   const { id, approvalId } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
   const [editModal, setEditModal] = useState(false);
   const [addModal, setAddModal] = useState(false);
@@ -165,7 +164,7 @@ const ReturnScreen = () => {
             </div>
           ))}
         </div>
-              {location.pathname !== `/sites/return/${id}` && (
+              {approvalId !== undefined && (
         <div className="fixed bottom-14 lg:bottom-0 left-0 bg-white right-0 border-t p-3 flex justify-around md:justify-center md:gap-6 text-md">
           <button
             onClick={() => handleApprove(approvalId)}

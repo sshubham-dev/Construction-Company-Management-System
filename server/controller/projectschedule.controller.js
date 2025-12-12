@@ -86,7 +86,14 @@ const getMonthlyProjectSchedule = async (req, res) => {
   try {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59
+    );
 
     const allowedSites =
       req.user?.site?.map((s) => new mongoose.Types.ObjectId(s.id)) || [];
@@ -147,7 +154,11 @@ const getMonthlyProjectSchedule = async (req, res) => {
     ];
 
     // ✅ Apply site restriction for non-admin users
-    if (!["Ceo", "Admin", "Account Head", "Marketing"].includes(req.user.department)) {
+    if (
+      !["Ceo", "Admin", "Account Head", "Marketing"].includes(
+        req.user.department
+      )
+    ) {
       pipeline.push({
         $match: { "site.id": { $in: allowedSites } },
       });
@@ -171,7 +182,7 @@ const getMonthlyProjectSchedule = async (req, res) => {
 
     const projectSchedules = await ProjectSchedule.aggregate(pipeline);
 
-    console.log("Filtered Monthly Project Schedules:", projectSchedules.length);
+    // console.log("Filtered Monthly Project Schedules:", projectSchedules.length);
     res.status(200).json(projectSchedules);
   } catch (error) {
     console.error("Error in getMonthlyProjectSchedule:", error);
@@ -212,6 +223,10 @@ const createProjectSchedule = async (req, res) => {
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
+      sendNotification(
+        employee._id,
+        `Project Schedule for ${existingSite.name} has been created by ${existingUser.userName}.`
+      );
       employee.notification.push({
         title: "Project Schedule Alert",
         message: `A Project Schedule created by ${existingUser.userName} for ${existingSite.name}`,

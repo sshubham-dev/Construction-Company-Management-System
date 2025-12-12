@@ -61,7 +61,7 @@ const contractorSchema = new mongoose.Schema(
     extraWork: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Extra_Work",
+        ref: "ExtraWork",
       },
     ],
 

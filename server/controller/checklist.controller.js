@@ -8,6 +8,7 @@ const User = require("../models/user.models");
 const QualitySchedule = require("../models/qualityschedule.models.js");
 const ProjectSchedule = require("../models/projectschedule.models.js");
 const { sendNotification } = require("./notification.controller.js");
+// const moment = require("moment")
 
 // Create a new checklist
 const createChecklist = async (req, res) => {
@@ -24,7 +25,7 @@ const createChecklist = async (req, res) => {
       observation,
     } = req.body;
 
-    const existingSite = await Site.findById(site);
+    const existingSite = await Site.findById(site)
     if (!existingSite) {
       return res.status(400).json({ message: "Site not found" });
     }
@@ -67,6 +68,7 @@ const createChecklist = async (req, res) => {
           work.status?.toLowerCase() === "pending"
         ) {
           work.status = "Checked";
+          work.checkedAt = new Date();
           console.log({
             workInDB: work.work,
             workStatus: work.status,
@@ -76,7 +78,7 @@ const createChecklist = async (req, res) => {
         }
       });
 
-      // await schedule.save();
+      await schedule.save();
     }
 
     // Normalize the checklist work name
@@ -84,7 +86,7 @@ const createChecklist = async (req, res) => {
     const keywords = checkFor
       .toLowerCase()
       .split(" ")
-      .filter((w) => w.length > 1 && !ignoreWords.includes(w));  // remove very short words like 'of', 'at', etc.
+      .filter((w) => w.length > 1 && !ignoreWords.includes(w)); // remove very short words like 'of', 'at', etc.
 
     // ======= STEP 2: UPDATE PROJECT SCHEDULE =======
     const projectSchedules = await ProjectSchedule.find({
@@ -106,6 +108,7 @@ const createChecklist = async (req, res) => {
 
         if (isMatch && detail.status?.toLowerCase() !== "completed") {
           detail.status = "Completed";
+          detail.actual = new Date();
           console.log({
             workInDB: detail.workDetail,
             workStatus: detail.status,
@@ -116,7 +119,7 @@ const createChecklist = async (req, res) => {
       });
 
       if (updated) {
-        // await project.save();
+        await project.save();
         console.log("✅ Project Schedule Updated:", project._id);
       }
     }
@@ -128,6 +131,10 @@ const createChecklist = async (req, res) => {
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
+      sendNotification(
+        employee._id,
+        `Checklist for ${savedChecklist.checkFor} of ${existingSite.name} has been checked by ${existingUser.userName}.`
+      );
       employee.notification.push({
         title: "Checklist Alert",
         message: `A Check List added for ${savedChecklist.checkFor} on ${existingSite.name} by ${existingUser.userName}`,

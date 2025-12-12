@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import moment from "moment";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
@@ -23,7 +23,6 @@ const Project_ScheduleScreen = () => {
   const [rejectModal, setRejectModal] = useState(false);
   const [rejectId, setRejectId] = useState("");
   const { id, approvalId } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -241,7 +240,7 @@ const Project_ScheduleScreen = () => {
       </section>
 
       {/* Bottom Action Buttons (Approve/Reject) */}
-      {location.pathname !== `/project-schedule/${id}` && (
+      {approvalId !== undefined && (
         <div className="fixed bottom-14 lg:bottom-0 left-0 bg-white right-0 border-t p-3 flex justify-around md:justify-center md:gap-6 text-md">
           <button
             onClick={() => handleApprove(approvalId)}

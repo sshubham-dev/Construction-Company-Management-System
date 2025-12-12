@@ -7,7 +7,6 @@ const ApprovalTimeLine = ({ item, module }) => {
 
     purchaseRequest: [
       { label: "In-Charge", key: "inchargeApprove" },
-      { label: "Account Head", key: "accountheadApprove" },
       { label: "Admin", key: "adminApprove" },
       { label: "Store", key: "storeApprove" },
     ],
@@ -19,7 +18,6 @@ const ApprovalTimeLine = ({ item, module }) => {
     ],
 
     workOrder: [
-      { label: "In-Charge", key: "inchargeApprove" },
       { label: "Account Head", key: "accountheadApprove" },
       { label: "Contractor", key: "contractorApprove" },
       { label: "Admin", key: "adminApprove" },
@@ -49,10 +47,12 @@ const ApprovalTimeLine = ({ item, module }) => {
 
     clientExtraWork: [
       { label: "Admin", key: "adminApprove" },
+      { label: "Account Head", key: "accountheadApprove" },
       { label: "Client", key: "clientApprove" },
     ],
     contractorExtraWork: [
       { label: "Admin", key: "adminApprove" },
+      { label: "Account Head", key: "accountheadApprove" },
       { label: "Contractor", key: "contractorApprove" },
     ],
   };
@@ -92,7 +92,10 @@ const ApprovalTimeLine = ({ item, module }) => {
             : "bg-gray-300";
 
           return (
-            <div key={idx} className="flex items-center min-w-fit scrollbar-hide">
+            <div
+              key={idx}
+              className="flex items-center min-w-fit scrollbar-hide"
+            >
               <div className="flex flex-col items-center scrollbar-hide">
                 <div
                   className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full

@@ -194,10 +194,20 @@ const Approval = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleApprovedDelete = async (id) => {
     try {
       console.log(id);
-      const response = await axios.delete(`/api/v1/approval/${id}`);
+      const response = await axios.delete(`/api/v1/approval/approved/${id}`);
+      setApproved(approved.filter((approved) => approved._id !== id));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleApprovalDelete = async (id) => {
+    try {
+      console.log(id);
+      const response = await axios.delete(`/api/v1/approval/approval/${id}`);
       setApproved(approved.filter((approved) => approved._id !== id));
     } catch (error) {
       console.error(error);
@@ -213,31 +223,39 @@ const Approval = () => {
     }
   };
 
-  const navigateTo = (approvalOf, id, data, approvalId) => {
+  const navigateTo = (approvalOf, id, data, approvalId ) => {
     switch (approvalOf) {
       case "Bill":
-        navigate(`/bill/${id}/approval/${approvalId}`);
+        approvalId !== undefined ?  navigate(`/bill/${id}/approval/${approvalId}`) : navigate(`/bill/${id}`)
         break;
       case "Purchase Order":
-        navigate(`/purchase-order/${id}/approval/${approvalId}`);
+        approvalId !== undefined ?
+        navigate(`/purchase-order/${id}/approval/${approvalId}`): navigate(`/purchase-order/${id}`);
         break;
       case "Project Schedule":
-        navigate(`/project-schedule/${id}/approval/${approvalId}`);
+        approvalId !== undefined ?
+        navigate(`/project-schedule/${id}/approval/${approvalId}`): navigate(`/project-schedule/${id}`);
         break;
       case "Payment Schedule":
-        navigate(`/payment-schedule/${id}/approval/${approvalId}`);
+        approvalId !== undefined ?
+        navigate(`/payment-schedule/${id}/approval/${approvalId}`): navigate(`/payment-schedule/${id}`);
         break;
       case "Quality Schedule":
-        navigate(`/quality-schedule/${id}/approval/${approvalId}`);
+        approvalId !== undefined ?
+        navigate(`/quality-schedule/${id}/approval/${approvalId}`):  navigate(`/quality-schedule/${id}`);
         break;
       case "Purchase Request":
-        navigate(`/purchase-request/${id}/approval/${approvalId}`);
+        approvalId !== undefined ?
+        navigate(`/purchase-request/${id}/approval/${approvalId}`):  navigate(`/purchase-request/${id}`);
         break;
       case "Extra Work":
-        navigate(`/extra-work/${id}/approval/${approvalId}`);
+        approvalId !== undefined ?
+        navigate(`/extra-work/${id}/approval/${approvalId}`) :
+        navigate(`/extra-work/${id}`);
         break;
       case "Work Order":
-        navigate(`/work-order/${id}/approval/${approvalId}`);
+        approvalId !== undefined ?
+        navigate(`/work-order/${id}/approval/${approvalId}`) : navigate(`/work-order/${id}`);
         break;
       case "Leave":
         handleLeaveView(data);
@@ -256,6 +274,7 @@ const Approval = () => {
     view,
     approve,
     reject,
+    remove
   }) => {
     return (
       <div className=" px-4 py-6 ">
@@ -294,6 +313,13 @@ const Approval = () => {
             >
               <LuShieldX className="inline-block mr-1" />
               Reject
+            </button>
+            <button
+              onClick={remove}
+              className="text-red-500 hover:text-red-700"
+            >
+              <MdDelete className="inline-block mr-1" />
+              Delete
             </button>
           </div>
         </div>
@@ -439,11 +465,12 @@ const Approval = () => {
                       approval.approvalOf,
                       approval?.data?._id,
                       approval,
-                      approval?._id
+                      approval._id
                     )
                   }
                   approve={() => handleApprove(approval?._id)}
                   reject={() => handleReject(approval?._id)}
+                  remove={()=> handleApprovalDelete(approval?._id)}
                 />
               </div>
             ))}
@@ -464,11 +491,12 @@ const Approval = () => {
                   view={() =>
                     navigateTo(
                       approved.approvalOf,
-                      approved?.data?._id,
-                      approved?.data
+                      approved?.data?.data?._id,
+                      approved,
+                      undefined
                     )
                   }
-                  remove={() => handleDelete(approved?._id)}
+                  remove={() => handleApprovedDelete(approved?._id)}
                 />
               </div>
             ))}
@@ -487,8 +515,9 @@ const Approval = () => {
                   view={() =>
                     navigateTo(
                       reject.approvalOf,
-                      reject?.data?._id,
-                      reject?.data
+                      reject?.data?.data?._id,
+                      reject,
+                      undefined
                     )
                   }
                   // remove={() => handleDelete(approved?._id)}

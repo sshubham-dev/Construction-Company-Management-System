@@ -49,36 +49,40 @@ const CreateExtraWork = ({ onClose, id, index }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   useEffect(() => {
-    const fetchSite = async () => {
-      try {
-        const response = await axios.get("/api/v1/site");
-        if (
-          user?.department === "Site Incharge" ||
-          user?.department === "Site Supervisor"
-        ) {
-          const existingSites = user?.site;
-          console.log(response.data, existingSites);
-          let SitesData = [];
-          for (let site of response.data) {
-            if (
-              existingSites?.some(
-                (existingSite) => existingSite.id === site._id
-              )
-            ) {
-              SitesData.push(site);
-            }
-          }
-          setSite(SitesData);
-          console.log(SitesData);
-        } else {
-          setSite(response.data);
+    if (user && user?.department === "Site Incharge") {
+      console.log(user._id);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Site Supervisor") {
+      console.log(user);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Client") {
+      console.log(user);
+      getUserSites(user._id);
+    } else {
+      const getSites = async () => {
+        try {
+          const siteData = await axios.get("/api/v1/site");
+          setSite(siteData.data);
+          console.log(siteData.data);
+        } catch (error) {
+          console.error(error);
+          setError(error.message);
         }
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
-    fetchSite();
+      };
+      getSites();
+    }
   }, []);
+
+  const getUserSites = async (id) => {
+    try {
+      const siteData = await axios.get(`/api/v1/site/user/${id}`);
+      console.log(siteData.data);
+      setSite(siteData.data);
+    } catch (error) {
+      console.error(error);
+      setError(error.message);
+    }
+  };
 
   console.log(id, index);
   useEffect(() => {

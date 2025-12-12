@@ -94,67 +94,107 @@ const reject = async (req, res) => {
     if (!approval)
       return res.status(400).json({ message: "No Approval Available" });
 
-    const rejectDoc = async (Model, field, label) => {
-      const doc = await Model.findById(approval?.data?._id);
-      if (!doc)
+    const rejectDoc = async (doc, field, label) => {
+      if (!approval?.data?._id) {
+        return res.status(400).json({
+          message: "Approval data not linked with any document",
+        });
+      }
+
+      if (!doc) {
         return res
           .status(404)
           .json({ message: `${label} not found for this approval` });
+      }
 
       approval.isApproved = false;
       await approval.save();
+
       doc[field] = "Rejected";
       await doc.save();
 
-      saveReject(approval, user?._id, label, message);
+      await saveReject(approval, user?._id, label, message);
       await Approval.findByIdAndDelete(approval?._id);
-
-      return res.status(201).json({ message: `${label} has been Rejected` });
+      const employees = await User.find({ role: "Employee" });
+      console.log(doc);
+      for (let emp of employees) {
+        sendNotification(emp._id, `${approval.approvalOf} of ${approval.data?.site?.name} has been rejected By ${user.userName}.`);
+        // emp.notification.push({
+        //   title: "Approval Alert",
+        //   message: `A Bill created by ${existingUser.userName} for ${existingSite.name}`,
+        //   createdAt: newBill.createdAt
+        //     ? newBill.createdAt.toLocaleString()
+        //     : new Date().toLocaleString(),
+        //   link: `/bill/${newBill.id}`,
+        // });
+        await emp.save();
+      }
+      return res.status(201).json({
+        message: `${label} has been Rejected`,
+      });
     };
 
     switch (user.department) {
       case "Ceo":
         switch (approval.approvalOf) {
           case "Bill":
-            return await rejectDoc(Bill, "adminApprove", "Bill");
+            const bill = await Bill.findById(approval.data._id);
+            return await rejectDoc(bill, "adminApprove", "Bill");
 
           case "Purchase Order":
+            const purchaseOrder = await PurchaseOrder.findById(
+              approval?.data._id
+            );
             return await rejectDoc(
-              PurchaseOrder,
+              purchaseOrder,
               "adminApprove",
               "Purchase Order"
             );
 
           case "Purchase Request":
+            const purchaseRequest = await PurchaseRequest.findById(
+              approval?.data._id
+            );
             return await rejectDoc(
-              PurchaseRequest,
+              purchaseRequest,
               "adminApprove",
               "Purchase Request"
             );
 
           case "Work Order":
-            return await rejectDoc(WorkOrder, "adminApprove", "Work Order");
+            const workOrder = await WorkOrder.findById(approval.data._id);
+            return await rejectDoc(workOrder, "adminApprove", "Work Order");
 
           case "Extra Work":
-            return await rejectDoc(ExtraWork, "adminApprove", "Extra Work");
+            const extraWork = await ExtraWork.findById(approval.data._id);
+            return await rejectDoc(extraWork, "adminApprove", "Extra Work");
 
           case "Payment Schedule":
+            const paymentSchedule = await Payment_Schedule.findById(
+              approval.data._id
+            );
             return await rejectDoc(
-              Payment_Schedule,
+              paymentSchedule,
               "adminApprove",
               "Payment Schedule"
             );
 
           case "Project Schedule":
+            const projectSchedule = await ProjectSchedule.findById(
+              approval.data._id
+            );
             return await rejectDoc(
-              ProjectSchedule,
+              projectSchedule,
               "adminApprove",
               "Project Schedule"
             );
 
           case "Quality Schedule":
+            const qualitySchedule = await QualitySchedule.findById(
+              approval.data._id
+            );
             return await rejectDoc(
-              QualitySchedule,
+              qualitySchedule,
               "adminApprove",
               "Quality Schedule"
             );
@@ -184,13 +224,15 @@ const reject = async (req, res) => {
       case "Accountant":
         switch (approval.approvalOf) {
           case "Bill":
-            return await rejectDoc(Bill, "accountantApprove", "Bill");
-          case "Purchase Request":
-            return await rejectDoc(
-              PurchaseRequest,
-              "accountantApprove",
-              "Purchase Request"
-            );
+            const bill = await Bill.findById(approval.data._id);
+            return await rejectDoc(bill, "accountantApprove", "Bill");
+          // case "Purchase Request":
+
+          //   return await rejectDoc(
+          //     PurchaseRequest,
+          //     "accountantApprove",
+          //     "Purchase Request"
+          //   );
           default:
             return res.status(400).json({ message: "Invalid approval type" });
         }
@@ -199,8 +241,11 @@ const reject = async (req, res) => {
       case "Store Incharge":
         switch (approval.approvalOf) {
           case "Purchase Request":
+            const purchaseRequest = await PurchaseRequest.findById(
+              approval?.data._id
+            );
             return await rejectDoc(
-              PurchaseRequest,
+              purchaseRequest,
               "accountantApprove",
               "Purchase Request"
             );
@@ -212,40 +257,55 @@ const reject = async (req, res) => {
       case "Account Head":
         switch (approval.approvalOf) {
           case "Bill":
-            return await rejectDoc(Bill, "accountheadApprove", "Bill");
+            const bill = await Bill.findById(approval.data._id);
+            return await rejectDoc(bill, "accountheadApprove", "Bill");
           case "Purchase Order":
+            const purchaseOrder = await PurchaseOrder.findById(
+              approval?.data._id
+            );
             return await rejectDoc(
-              PurchaseOrder,
+              purchaseOrder,
               "accountheadApprove",
               "Purchase Order"
             );
           case "Work Order":
+            const workOrder = await WorkOrder.findById(approval.data._id);
             return await rejectDoc(
-              WorkOrder,
+              workOrder,
               "accountheadApprove",
               "Work Order"
             );
           case "Extra Work":
+            const extraWork = await ExtraWork.findById(approval.data._id);
             return await rejectDoc(
-              ExtraWork,
+              extraWork,
               "accountheadApprove",
               "Extra Work"
             );
           case "Payment Schedule":
+            const paymentSchedule = await Payment_Schedule.findById(
+              approval.data._id
+            );
             return await rejectDoc(
-              Payment_Schedule,
+              paymentSchedule,
               "accountheadApprove",
               "Payment Schedule"
             );
           case "Project Schedule":
+            const projectSchedule = await ProjectSchedule.findById(
+              approval.data._id
+            );
             return await rejectDoc(
-              ProjectSchedule,
+              projectSchedule,
               "accountheadApprove",
               "Project Schedule"
             );
           case "Purchase Request":
+            const purchaseRequest = await PurchaseRequest.findById(
+              approval?.data._id
+            );
             return await rejectDoc(
-              PurchaseRequest,
+              purchaseRequest,
               "accountheadApprove",
               "Purchase Request"
             );
@@ -257,24 +317,35 @@ const reject = async (req, res) => {
       case "Site Incharge":
         switch (approval.approvalOf) {
           case "Bill":
-            return await rejectDoc(Bill, "inchargeApprove", "Bill");
+            const bill = await Bill.findById(approval.data._id);
+            return await rejectDoc(bill, "inchargeApprove", "Bill");
           case "Work Order":
-            return await rejectDoc(WorkOrder, "inchargeApprove", "Work Order");
+            const workOrder = await WorkOrder.findById(approval.data._id);
+            return await rejectDoc(workOrder, "inchargeApprove", "Work Order");
           case "Project Schedule":
+            const projectSchedule = await ProjectSchedule.findById(
+              approval.data._id
+            );
             return await rejectDoc(
-              ProjectSchedule,
+              projectSchedule,
               "inchargeApprove",
               "Project Schedule"
             );
           case "Purchase Request":
+            const purchaseRequest = await PurchaseRequest.findById(
+              approval?.data._id
+            );
             return await rejectDoc(
-              PurchaseRequest,
+              purchaseRequest,
               "inchargeApprove",
               "Purchase Request"
             );
           case "Quality Schedule":
+            const qualitySchedule = await QualitySchedule.findById(
+              approval.data._id
+            );
             return await rejectDoc(
-              QualitySchedule,
+              qualitySchedule,
               "inchargeApprove",
               "Quality Schedule"
             );
@@ -286,10 +357,14 @@ const reject = async (req, res) => {
       case "Quality Engineer":
         switch (approval.approvalOf) {
           case "Bill":
-            return await rejectDoc(Bill, "qualityApprove", "Bill");
+            const bill = await Bill.findById(approval.data._id);
+            return await rejectDoc(bill, "qualityApprove", "Bill");
           case "Quality Schedule":
+            const qualitySchedule = await QualitySchedule.findById(
+              approval.data._id
+            );
             return await rejectDoc(
-              QualitySchedule,
+              qualitySchedule,
               "qualityApprove",
               "Quality Schedule"
             );
@@ -301,10 +376,12 @@ const reject = async (req, res) => {
       case "Contractor":
         switch (approval.approvalOf) {
           case "Bill":
-            return await rejectDoc(Bill, "contractorApprove", "Bill");
+            const bill = await Bill.findById(approval.data._id);
+            return await rejectDoc(bill, "contractorApprove", "Bill");
           case "Work Order":
+            const workOrder = await WorkOrder.findById(approval.data._id);
             return await rejectDoc(
-              WorkOrder,
+              workOrder,
               "contractorApprove",
               "Work Order"
             );
@@ -314,13 +391,17 @@ const reject = async (req, res) => {
         break;
 
       case "Supplier":
-        if (approval.approvalOf === "Purchase Order")
+        if (approval.approvalOf === "Purchase Order") {
+          const purchaseOrder = await PurchaseOrder.findById(
+            approval?.data._id
+          );
           return await rejectDoc(
-            PurchaseOrder,
+            purchaseOrder,
             "supplierApprove",
             "Purchase Order"
           );
-        return res.status(400).json({ message: "Invalid approval type" });
+          return res.status(400).json({ message: "Invalid approval type" });
+        }
         break;
 
       default:
@@ -398,11 +479,25 @@ const deleteApproved = async (req, res) => {
   }
 };
 
+const deleteApproval = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const approval = await Approval.findByIdAndDelete(id);
+    if (!approval)
+      return res.status(400).json({ message: "No Approval Avaliable" });
+    return res.status(201).json({ message: "Deleted Sucessfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(501).json({ message: "Internal Server Error", error });
+  }
+};
+
 const approve = async (req, res) => {
   try {
     const id = req.params.id;
     const user = req.user;
-    // console.log('user:'
+    console.log(req.params);
+    const employees = await User.find({ role: "Employee" });
     const approval = await Approval.findById(id);
     if (!approval)
       return res.status(400).json({ message: "No Approval Avaliable" });
@@ -415,12 +510,19 @@ const approve = async (req, res) => {
             (approval.isApproved = true), await approval.save();
             (bill.adminApprove = "Approved"), await bill.save();
 
-            saveApproved(approval, user._id, "Bill"),
-              await Approval.findByIdAndDelete(approval?._id);
+            saveApproved(approval, user._id, "Bill");
+            await Approval.findByIdAndDelete(approval?._id);
             // bill.createdBy.message.push('Bill has been Approved By Parveen Sir');
-            res
-              .status(201)
-              .json({ message: "Bill has been Approved By Parveen Sir" });
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
+            res.status(201).json({
+              message: `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`,
+            });
             break;
 
           case "Purchase Order":
@@ -436,6 +538,13 @@ const approve = async (req, res) => {
             purchaseOrder.createdBy?.message.push(
               "Purchase Order has been Approved By Parveen Sir"
             );
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res.status(201).json({
               message: "Purchase Order has been Approved By Parveen Sir",
             });
@@ -451,9 +560,13 @@ const approve = async (req, res) => {
             console.log(purchaseRequest);
             saveApproved(approval, user._id, "Purchase Request");
             await Approval.findByIdAndDelete(approval?._id);
-            purchaseRequest.createdBy?.message.push(
-              "Purchase Request has been Approved By Parveen Sir"
-            );
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res.status(201).json({
               message: "Purchase Request has been Approved By Parveen Sir",
             });
@@ -467,7 +580,20 @@ const approve = async (req, res) => {
             // console.log(workOrder)
             saveApproved(approval, user?._id, "Work Order");
             await Approval.findByIdAndDelete(approval?._id);
-            // workOrder.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res
               .status(201)
               .json({ message: "Work Order has been Approved By Parveen Sir" });
@@ -481,7 +607,20 @@ const approve = async (req, res) => {
             // console.log(workOrder)
             saveApproved(approval, user?._id, "Extra Work");
             await Approval.findByIdAndDelete(approval?._id);
-            // workOrder.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res
               .status(201)
               .json({ message: "Extra Work has been Approved By Parveen Sir" });
@@ -501,7 +640,20 @@ const approve = async (req, res) => {
             // console.log(workOrder)
             saveApproved(approval, user?._id, "Payment Schedule");
             await Approval.findByIdAndDelete(approval?._id);
-            // workOrder.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res.status(201).json({
               message: "Payment Schedule has been Approved By Parveen Sir",
             });
@@ -521,7 +673,13 @@ const approve = async (req, res) => {
             // console.log(workOrder)
             saveApproved(approval, user?._id, "Project Schedule");
             await Approval.findByIdAndDelete(approval?._id);
-            // workOrder.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res.status(201).json({
               message: "Project Schedule has been Approved By Parveen Sir",
             });
@@ -541,7 +699,13 @@ const approve = async (req, res) => {
             // console.log(qualitySchedule)
             saveApproved(approval, user?._id, "Quality Schedule");
             await Approval.findByIdAndDelete(approval?._id);
-            // qualitySchedule.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res.status(201).json({
               message: "Quality Schedule has been Approved By Parveen Sir",
             });
@@ -564,6 +728,13 @@ const approve = async (req, res) => {
             leave.user?.id.message.push(
               "Leave has been Approved By Parveen Sir"
             );
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${leave.user?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res
               .status(201)
               .json({ message: "Leave has been Approved By Parveen Sir" });
@@ -608,6 +779,13 @@ const approve = async (req, res) => {
             saveApproved(approval, user._id, "Bill"),
               await Approval.findByIdAndDelete(approval?._id);
             bill.createdBy.message.push("Bill has been Approved By Accountant");
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res
               .status(201)
               .json({ message: "Bill has been Approved By Accountant" });
@@ -625,6 +803,13 @@ const approve = async (req, res) => {
             saveApproved(approval, user._id, "Purchase Request");
             await Approval.findByIdAndDelete(approval?._id);
             // purchaseRequest.createdBy?.message.push('Purchase Request has been Approved By Accounts');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res.status(201).json({
               message: "Purchase Request has been Approved By Accounts",
             });
@@ -648,6 +833,13 @@ const approve = async (req, res) => {
             saveApproved(approval, user._id, "Purchase Request");
             await Approval.findByIdAndDelete(approval?._id);
             // purchaseRequest.createdBy?.message.push('Purchase Request has been Approved By Accounts');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res.status(201).json({
               message: "Purchase Request has been Approved By Accounts",
             });
@@ -670,10 +862,17 @@ const approve = async (req, res) => {
             saveApproved(approval, user._id, "Bill"),
               await Approval.findByIdAndDelete(approval?._id);
             bill.createdBy.message.push("Bill has been Approved By Accounts");
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res
               .status(201)
               .json({ message: "Bill has been Approved By Accounts" });
-            // console.log('bill:', bill)
+            console.log("bill:", bill);
             break;
 
           case "Purchase Order":
@@ -686,9 +885,13 @@ const approve = async (req, res) => {
             console.log(purchaseOrder);
             saveApproved(approval, user._id, "Purchase Order");
             await Approval.findByIdAndDelete(approval?._id);
-            purchaseOrder.createdBy.message.push(
-              "Purchase Order has been Approved By Accounts"
-            );
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res
               .status(201)
               .json({ message: "Bill has been Approved By Accounts" });
@@ -703,14 +906,16 @@ const approve = async (req, res) => {
             console.log(workOrder);
             saveApproved(approval, user?._id, "Work Order");
             await Approval.findByIdAndDelete(approval?._id);
-            workOrder.createdBy?.message.push(
-              "Purchase Order has been Approved By Accounts"
-            );
-            res
-              .status(201)
-              .json({
-                message: "Work Order has been Approved By Account Head",
-              });
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
+            res.status(201).json({
+              message: "Work Order has been Approved By Account Head",
+            });
             break;
 
           case "Extra Work":
@@ -721,7 +926,13 @@ const approve = async (req, res) => {
             // console.log(workOrder)
             saveApproved(approval, user?._id, "Extra Work");
             await Approval.findByIdAndDelete(approval?._id);
-            // workOrder.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res
               .status(201)
               .json({ message: "Extra Work has been Approved By Accounts" });
@@ -741,7 +952,13 @@ const approve = async (req, res) => {
             // console.log(workOrder)
             saveApproved(approval, user?._id, "Payment Schedule");
             await Approval.findByIdAndDelete(approval?._id);
-            // workOrder.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res
               .status(201)
               .json({ message: "Extra Work has been Approved By Accounts" });
@@ -761,7 +978,13 @@ const approve = async (req, res) => {
             // console.log(workOrder)
             saveApproved(approval, user?._id, "Project Schedule");
             await Approval.findByIdAndDelete(approval?._id);
-            // workOrder.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res
               .status(201)
               .json({ message: "Extra Work has been Approved By Accounts" });
@@ -777,7 +1000,13 @@ const approve = async (req, res) => {
             console.log(purchaseRequest);
             saveApproved(approval, user._id, "Purchase Request");
             await Approval.findByIdAndDelete(approval?._id);
-            // purchaseRequest.createdBy?.message.push('Purchase Request has been Approved By Accounts');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res.status(201).json({
               message: "Purchase Request has been Approved By Accounts",
             });
@@ -799,6 +1028,13 @@ const approve = async (req, res) => {
             await bill.save();
             saveApproved(approval, user._id, "Bill"),
               await Approval.findByIdAndDelete(approval?._id);
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             bill.createdBy.message.push("Bill has been Approved By Incharge");
             res
               .status(201)
@@ -815,6 +1051,13 @@ const approve = async (req, res) => {
             console.log(workOrder);
             saveApproved(approval, user?._id, "Work Order");
             await Approval.findByIdAndDelete(approval?._id);
+                        for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             workOrder.createdBy?.message.push(
               "Purchase Order has been Approved By Parveen Sir"
             );
@@ -837,7 +1080,13 @@ const approve = async (req, res) => {
             // console.log(workOrder)
             saveApproved(approval, user?._id, "Project Schedule");
             await Approval.findByIdAndDelete(approval?._id);
-            // workOrder.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
+            for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             res.status(201).json({
               message: "Project Schedule has been Approved By Incharge",
             });
@@ -853,6 +1102,13 @@ const approve = async (req, res) => {
             console.log(purchaseRequest);
             saveApproved(approval, user._id, "Purchase Request");
             await Approval.findByIdAndDelete(approval?._id);
+                        for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             purchaseRequest.createdBy?.message.push(
               "Purchase Request has been Approved By Incharge"
             );
@@ -875,6 +1131,13 @@ const approve = async (req, res) => {
             // console.log(qualitySchedule)
             saveApproved(approval, user?._id, "Quality Schedule");
             await Approval.findByIdAndDelete(approval?._id);
+                        for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             // qualitySchedule.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
             res.status(201).json({
               message: "Quality Schedule has been Approved By Incharge",
@@ -897,6 +1160,13 @@ const approve = async (req, res) => {
             await bill.save();
             saveApproved(approval, user._id, "Bill"),
               await Approval.findByIdAndDelete(approval?._id);
+                          for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             bill.createdBy.message.push("Bill has been Approved By Quality");
             res
               .status(201)
@@ -918,6 +1188,13 @@ const approve = async (req, res) => {
             // console.log(qualitySchedule)
             saveApproved(approval, user?._id, "Quality Schedule");
             await Approval.findByIdAndDelete(approval?._id);
+                        for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             // qualitySchedule.createdBy?.message.push('Work Order has been Approved By Parveen Sir');
             res.status(201).json({
               message: "Quality Schedule has been Approved By Quality",
@@ -938,6 +1215,13 @@ const approve = async (req, res) => {
             await bill.save();
             saveApproved(approval, user._id, "Bill"),
               await Approval.findByIdAndDelete(approval?._id);
+                          for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             bill.createdBy.message.push(
               "Bill has been Approved By Parveen Sir"
             );
@@ -963,6 +1247,13 @@ const approve = async (req, res) => {
             console.log(purchaseOrder);
             saveApproved(approval, user._id, "Purchase Order");
             await Approval.findByIdAndDelete(approval?._id);
+                        for (let emp of employees) {
+              sendNotification(
+                emp._id,
+                `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
+              );
+              await emp.save();
+            }
             purchaseOrder.createdBy.message.push(
               "Purchase Order has been Approved By Parveen Sir"
             );
@@ -988,7 +1279,7 @@ const approve = async (req, res) => {
 
 const sendApproveByAdmin = async (data, approvalof, by) => {
   try {
-    const admin = await User.findOne({department: "Ceo"})
+    const admin = await User.findOne({ department: "Ceo" })
       .select("-password -refreshToken")
       .exec();
 
@@ -1065,7 +1356,7 @@ const sendApproveByIncharge = async (data, approvalof, by) => {
   try {
     // console.log('data', data)
     // console.log('data:', { data })
-    const existingIncharge = await User.findOne({department: "Site Incharge"})
+    const existingIncharge = await User.findOne({ department: "Site Incharge" })
       .where("site.id")
       .equals(data.site.id)
       .select("-password -refreshToken")
@@ -1391,4 +1682,5 @@ module.exports = {
   deleteApproved,
   reject,
   getAllRejects,
+  deleteApproval,
 };

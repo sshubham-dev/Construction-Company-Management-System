@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import "./screen.css";
 import { GrEdit } from "react-icons/gr";
 import {
@@ -36,17 +36,18 @@ const WorkOrderScreen = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (id) fetchWorkOrder(id);
+    const fetchWorkOrder = async () => {
+      try {
+        const res = await axios.get(`/api/v1/work-order/${id}`);
+        setWorkOrder(res.data);
+        console.log(res.data);
+      } catch (err) {
+        console.log(err);
+        toast.error("Error fetching work order");
+      }
+    };
+    fetchWorkOrder();
   }, [id]);
-
-  const fetchWorkOrder = async (id) => {
-    try {
-      const res = await axios.get(`/api/v1/work-order/${id}`);
-      setWorkOrder(res.data);
-    } catch (err) {
-      toast.error("Error fetching work order");
-    }
-  };
 
   const handleEdit = (id) => {
     setEditId(id);
@@ -221,12 +222,12 @@ const WorkOrderScreen = () => {
 
             {/* Action Buttons */}
             <div className="mt-3 flex gap-2">
-              <button
+              {/* <button
                 onClick={() => editWork(workOrder._id, i)}
                 className="bg-blue-500 text-white px-3 py-1 rounded text-xs"
               >
                 <MdEdit />
-              </button>
+              </button> */}
 
               <button
                 onClick={() => deleteWork(workOrder._id, i)}
@@ -266,24 +267,25 @@ const WorkOrderScreen = () => {
             )}
           </PDFDownloadLink>
         </div>
+        {approvalId !== undefined && (
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleApprove(approvalId)}
+              className="bg-green-600 text-white px-4 py-2 rounded"
+            >
+              <MdCheckCircle className="inline mr-2" />
+              Approve
+            </button>
 
-        <div className="flex gap-3">
-          <button
-            onClick={() => handleApprove(approvalId)}
-            className="bg-green-600 text-white px-4 py-2 rounded"
-          >
-            <MdCheckCircle className="inline mr-2" />
-            Approve
-          </button>
-
-          <button
-            onClick={() => handleReject(approvalId)}
-            className="bg-red-600 text-white px-4 py-2 rounded"
-          >
-            <MdCancel className="inline mr-2" />
-            Reject
-          </button>
-        </div>
+            <button
+              onClick={() => handleReject(approvalId)}
+              className="bg-red-600 text-white px-4 py-2 rounded"
+            >
+              <MdCancel className="inline mr-2" />
+              Reject
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
@@ -302,6 +304,7 @@ const WorkOrderScreen = () => {
       >
         <CreateWorkOrder
           onClose={() => setEditModal(false)}
+          id={editId}
           existingWorkOrder={workOrder}
         />
       </Modal>
@@ -314,6 +317,7 @@ const WorkOrderScreen = () => {
         <CreateWorkOrder
           onClose={() => setEditDetailModal(false)}
           existingWorkOrder={workOrder}
+          id={editId}
           index={editIndex}
         />
       </Modal>

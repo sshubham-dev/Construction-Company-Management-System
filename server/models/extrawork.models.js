@@ -172,5 +172,5 @@ extraWorkSchema.pre("save", function (next) {
 });
 
 
-const ExtraWork = mongoose.model("Extra_Work", extraWorkSchema);
+const ExtraWork = mongoose.model("ExtraWork", extraWorkSchema);
 module.exports = ExtraWork;

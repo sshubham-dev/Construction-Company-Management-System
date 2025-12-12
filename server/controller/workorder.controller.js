@@ -13,6 +13,17 @@ const {
 } = require("./approval.controller.js");
 const { sendNotification } = require("./notification.controller.js");
 
+const recalcTotals = (works = []) => {
+  const totalValue = works.reduce((s, w) => s + (Number(w.amount) || 0), 0);
+  const totalPaid = works.reduce((s, w) => s + (Number(w.paid) || 0), 0);
+  const totalDue = Number((totalValue - totalPaid).toFixed(2));
+  return {
+    totalValue: Number(totalValue.toFixed(2)),
+    totalPaid: Number(totalPaid.toFixed(2)),
+    totalDue,
+  };
+};
+
 const getWorkorders = async (req, res) => {
   try {
     const workOrders = await WorkOrder.find()
@@ -198,6 +209,10 @@ const createWorkorder = async (req, res) => {
     );
     const employees = await User.find({ role: "Employee" });
     for (const emp of employees) {
+      sendNotification(
+        emp._id,
+        `A ${saved.workOrderName} Work Order for ${site.name} has been created by ${existingUser.userName}.`
+      );
       emp.notification.push({
         title: "Work Order Created",
         message: `${existingUser.userName} created WO ${saved.workOrderName} for site ${site.name}`,
@@ -210,13 +225,11 @@ const createWorkorder = async (req, res) => {
     sendApproveByAccountHead(saved, "Work Order", user._id);
     sendApproveByAdmin(saved, "Work Order", user._id);
 
-    return res
-      .status(201)
-      .json({
-        message: "Work Order Created Successfully",
-        workOrderId: saved._id,
-        workOrder: saved,
-      });
+    return res.status(201).json({
+      message: "Work Order Created Successfully",
+      workOrderId: saved._id,
+      workOrder: saved,
+    });
   } catch (err) {
     console.error("createWorkorder error:", err);
     return res
@@ -237,7 +250,10 @@ const saveWorkOrder = async (req, res) => {
     if (!workOrder) {
       return res.status(404).json({ message: "Work order not found" });
     }
-    if (workOrder.accountheadApprove === "Approved" && workOrder.adminApprove === "Approved") {
+    if (
+      workOrder.accountheadApprove === "Approved" &&
+      workOrder.adminApprove === "Approved"
+    ) {
       workOrder.approvalStatus = "Approved";
       await workOrder.save();
       const existingSite = await Site.findById(workOrder?.site.id);
@@ -279,23 +295,77 @@ const saveWorkOrder = async (req, res) => {
 const updateWorkOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const { works, ...rest } = req.body;
-
+    const {
+      works,
+      workOrderName,
+      contractor,
+      site,
+      startDate,
+      durationMonths,
+      templateRef,
+    } = req.body;
+    const user = req.user;
     const wo = await WorkOrder.findById(id);
     if (!wo) return res.status(404).json({ message: "Work Order not found" });
 
+    const existingSite = await Site.findById(site).lean();
+    if (!site) return res.status(400).json({ message: "Site not found" });
+    const existingContractor = await Contractor.findById(contractor);
+    console.log(existingContractor);
+    if (!existingContractor)
+      return res.status(400).json({ message: "Contractor not found" });
+
+    const template = templateRef
+      ? await WorkOrderTemplate.findById(templateRef).lean()
+      : null;
+
+          const autoName = `${
+      (template && template.title) || workOrderName || "Work Order"
+    } - ${existingSite.name} - ${String(wo.workOrderNo).padStart(3, "0")}`;
+
+    // create doc
+    (wo.workOrderName = autoName),
+      (wo.workOrderNo = wo.workOrderNo),
+      (wo.contractor = {
+        id: existingContractor._id,
+        name: existingContractor.name,
+      }),
+      (wo.site = { id: existingSite._id, name: existingSite.name }),
+      (wo.createdBy = user._id),
+      (wo.templateRef = templateRef || template._id),
+      (wo.startDate = startDate),
+      (wo.durationMonths = durationMonths),
+      (wo.works = works),
+      await wo.save();
     // update meta fields
-    Object.assign(wo, rest);
+    // Object.assign(wo, rest);
 
-    if (Array.isArray(works)) {
-      wo.works = works.map((w) => recalcWorkItem(w));
-    }
+    // if (Array.isArray(works)) {
+    //   wo.works = recalcWorkItem(works);
+    // }
 
-    Object.assign(wo, recalcTotals(wo.works));
+    // Object.assign(wo, recalcTotals(wo.works));
 
     await wo.save();
+    const employees = await User.find({ role: "Employee" });
+    for (const emp of employees) {
+      sendNotification(
+        emp._id,
+        `${user.userName} has updated the ${wo.workOrderName} of ${existingSite.name}`
+      );
+      emp.notification.push({
+        title: "Work Order Updated",
+        message: `${user.userName} has updated the ${wo.workOrderName} of ${existingSite.name}`,
+        link: `/work-order/${wo._id}`,
+        createdAt: new Date(),
+      });
+      await emp.save();
+    }
+    sendApproveByAccountHead(wo, "Work Order", user._id);
+    sendApproveByAdmin(wo, "Work Order", user._id);
     res.status(200).json({ message: "Updated", workOrder: wo });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Server Error", error: err.message });
   }
 };
@@ -370,12 +440,10 @@ const replaceContractor = async (req, res) => {
       totalDue: remainingWorks.reduce((s, r) => s + (Number(r.amount) || 0), 0),
     });
     await newWO.save();
-    return res
-      .status(201)
-      .json({
-        message: "Contractor replaced; new WO created",
-        newWorkOrderId: newWO._id,
-      });
+    return res.status(201).json({
+      message: "Contractor replaced; new WO created",
+      newWorkOrderId: newWO._id,
+    });
   } catch (err) {
     console.error("replaceContractor err", err);
     return res
@@ -452,7 +520,7 @@ const updateWork = async (req, res) => {
     if (idx === -1)
       return res.status(404).json({ message: "Work item not found" });
 
-    wo.works[idx] = recalcWorkItem({ ...wo.works[idx], ...update });
+    // wo.works[idx] = recalcWorkItem({ ...wo.works[idx], ...update });
 
     Object.assign(wo, recalcTotals(wo.works));
     await wo.save();

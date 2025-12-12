@@ -33,7 +33,7 @@ const getSites = async (req, res) => {
 const getSite = async (req, res) => {
   try {
     const id = req.params.id;
-    if (id === "") return res.status(500).json({ error: "Id undefined" });
+    if (id === undefined) return res.status(500).json({ error: "Id undefined" });
     const site = await Site.findById(id)
       .populate("bill")
       .populate("purchaseOrder")
@@ -58,11 +58,6 @@ const siteByUser = async (req, res) => {
       const inchargeSite = await Site.find()
         .where("incharge.id")
         .equals(user?._id)
-        .populate("bill")
-        .populate("purchaseOrder")
-        .populate("projectSchedule")
-        .populate("paymentSchedule")
-        .populate("workOrder")
         .exec();
 
       if (inchargeSite.length === 0)
@@ -72,24 +67,13 @@ const siteByUser = async (req, res) => {
       const supervisorSite = await Site.find()
         .where("supervisor.id")
         .equals(user?._id)
-        .populate("bill")
-        .populate("purchaseOrder")
-        .populate("projectSchedule")
-        .populate("paymentSchedule")
-        .populate("workOrder")
         .exec();
       if (supervisorSite.length === 0)
         return res.status(500).json({ error: "Sites Not Found" });
       return res.status(201).json(supervisorSite);
     } else if (user.department === "Client") {
       const existingClient = await Client.findOne({ userId: user?._id });
-      const clientSite = await Site.find({ _id: existingClient?.site.id })
-        .populate("bill")
-        .populate("purchaseOrder")
-        .populate("projectSchedule")
-        .populate("paymentSchedule")
-        .populate("workOrder")
-        .exec();
+      const clientSite = await Site.find({ _id: existingClient?.site.id });
       if (clientSite.length === 0)
         return res.status(500).json({ error: "Sites Not Found" });
       return res.status(201).json(clientSite);
@@ -176,7 +160,18 @@ const createSite = async (req, res) => {
 
     const savedSite = await newSite.save();
     await assignSiteToUsers(savedSite, existingIncharge, existingSupervisor);
+    const employees = await User.find({ role: "Employee" });
 
+    for (const employee of employees) {
+      sendNotification(
+        employee._id,
+       `Congratulations Team 🎉 we have a new project Confirmed in ${savedSite.address}.`
+      );
+      sendNotification(
+        employee._id,
+       `${savedSite.name} have been assigned to you ${savedSite.incharge.name}.`
+      );
+    }
     res.status(201).json({
       message: "Site created successfully",
       savedSite,
@@ -251,10 +246,10 @@ const updateSite = async (req, res) => {
         id: existingIncharge._id,
         name: existingIncharge.userName,
       };
-      existingIncharge.site = {
-        id: existingSite._id,
-        name: existingSite.name,
-      };
+      // existingIncharge.site = {
+      //   id: existingSite._id,
+      //   name: existingSite.name,
+      // };
       await existingIncharge.save();
     }
 
@@ -263,10 +258,10 @@ const updateSite = async (req, res) => {
         id: existingSupervisor._id,
         name: existingSupervisor.userName,
       };
-      existingSupervisor.site = {
-        id: existingSite._id,
-        name: existingSite.name,
-      };
+      // existingSupervisor.site = {
+      //   id: existingSite._id,
+      //   name: existingSite.name,
+      // };
       await existingSupervisor.save();
     }
 
@@ -275,10 +270,10 @@ const updateSite = async (req, res) => {
         id: existingQuality._id,
         name: existingQuality.userName,
       };
-      existingQuality.site = {
-        id: existingSite._id,
-        name: existingSite.name,
-      };
+      // existingQuality.site = {
+      //   id: existingSite._id,
+      //   name: existingSite.name,
+      // };
       await existingQuality.save();
     }
 

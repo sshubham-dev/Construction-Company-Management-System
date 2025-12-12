@@ -22,6 +22,7 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
   const [workDetails, setWorkDetails] = useState([]);
   const [data, setData] = useState("");
   const [sites, setSite] = useState([]);
+  const [scheduleFor, setScheduleFor] = useState([]);
   const [scheduleIdToEdit, setScheduleIdToEdit] = useState(null);
   const [workToEdit, setWorkToEdit] = useState({ id: "", index: "" });
   const [workDetail, setWorkDetail] = useState({
@@ -43,16 +44,66 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
   const [showCustomWork, setShowCustomWork] = useState(false);
   const [customWork, setCustomWork] = useState("");
   const dispatch = useDispatch();
-useEffect(() => {
-  if (id && index !== undefined) {
-    fetchScheduleDetail(id, index);
-    setWorkToEdit({ id, index });
-  } else if (id) {
-    fetchQualitySchedule(id);
-    setScheduleIdToEdit(id);
-  }
-}, [id, index]);
 
+  useEffect(() => {
+    // const fetchWork = async () => {
+    //   try {
+    //     const title = "Quality Schedule";
+    //     const workData = await axios.post("/api/v1/work-details/name", {
+    //       title,
+    //     });
+    //     console.log(workData);
+    //     setWorkDetails(workData.data.description);
+    //   } catch (error) {
+    //     console.log("Error fetching work details:", error.message);
+    //     toast.error(error.message);
+    //   }
+    // };
+    // fetchWork();
+    if (user && user?.department === "Site Incharge") {
+      console.log(user._id);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Site Supervisor") {
+      console.log(user);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Client") {
+      console.log(user);
+      getUserSites(user._id);
+    } else {
+      const getSites = async () => {
+        try {
+          const siteData = await axios.get("/api/v1/site");
+          setSite(siteData.data);
+          console.log(siteData.data);
+        } catch (error) {
+          console.error(error);
+          setError(error.message);
+        }
+      };
+      getSites();
+    }
+  }, []);
+
+  const getUserSites = async (id) => {
+    try {
+      const siteData = await axios.get(`/api/v1/site/user/${id}`);
+      console.log(siteData.data);
+      setSite(siteData.data);
+    } catch (error) {
+      console.error(error);
+      setError(error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (id && index !== undefined) {
+      fetchScheduleDetail(id, index);
+      setWorkToEdit({ id, index });
+    } else if (id) {
+      fetchQualitySchedule(id);
+      setScheduleIdToEdit(id);
+    }
+  }, [id, index]);
 
   const fetchScheduleDetail = async (id, index) => {
     try {
@@ -90,51 +141,41 @@ useEffect(() => {
   };
 
   useEffect(() => {
-    const fetchSite = async () => {
+    const selectedSite = sites.filter((site) => site._id === formData.site)[0];
+    // console.log(selectedSite);
+    console.log(selectedSite?.projectSchedule?.projectDetail);
+    setScheduleFor(
+      Array.isArray(selectedSite?.projectSchedule?.projectDetail)
+        ? selectedSite.projectSchedule.projectDetail
+        : []
+    );
+    // setWorkDetails(selectedSite?.projectSchedule?.projectDetail);
+    const fetchProjectSchedule = async () => {
       try {
-        const response = await axios.get("/api/v1/site");
-        if (
-          user?.department === "Site Incharge" ||
-          user?.department === "Site Supervisor"
-        ) {
-          const existingSites = user?.site;
-          let SitesData = [];
-          for (let site of response.data) {
-            if (
-              existingSites?.some(
-                (existingSite) => existingSite.id === site._id
-              )
-            ) {
-              SitesData.push(site);
-            }
-          }
-          setSite(SitesData);
-          // console.log(SitesData)
-        } else {
-          setSite(response.data);
-        }
+        const projectScheduleData = await axios.get(`/api/v1/project-schedule`);
+        // console.log(projectScheduleData.data);
+        const filteredProjectSchedules = projectScheduleData.data.filter(
+          (projectSchedule) => projectSchedule.site?.id._id === formData.site
+        )[0];
+        const filteredProjectDetail =
+          filteredProjectSchedules?.projectDetail.filter(
+            (detail) =>
+              detail?.status?.toLowerCase() !== "completed" &&
+              detail?.status?.toLowerCase() !== "pending"
+          );
+
+        // console.log(filteredProjectSchedules);
+        console.log(filteredProjectDetail);
+        setScheduleFor(
+          Array.isArray(filteredProjectDetail) ? filteredProjectDetail : []
+        );
+        // setWorkDetails(filteredProjectDetail);
       } catch (error) {
-        console.error(error.message);
+        console.error(error);
       }
     };
-
-    const fetchWork = async () => {
-      try {
-        const title = "Quality Schedule";
-        const workData = await axios.post("/api/v1/work-details/name", {
-          title,
-        });
-        console.log(workData)
-        setWorkDetails(workData.data.description);
-      } catch (error) {
-        console.log("Error fetching work details:", error.message);
-        toast.error(error.message);
-      }
-    };
-
-    fetchSite();
-    fetchWork();
-  }, []);
+    fetchProjectSchedule();
+  }, [formData.site]);
 
   const handleChange = (field, value) => {
     setFormData((prevState) => ({
@@ -189,7 +230,7 @@ useEffect(() => {
         toast.success(response.data.message);
         onClose();
         dispatch(fetchNotifications(user._id));
-      } else if (workToEdit.id && workToEdit.index !== undefined){
+      } else if (workToEdit.id && workToEdit.index !== undefined) {
         await axios.put(
           `/api/v1/quality-schedule/${workToEdit.id}/workDetails/${workToEdit.index}`,
           workDetail
@@ -410,6 +451,52 @@ useEffect(() => {
                           });
                         }}
                         options={[
+                          ...(Array.isArray(scheduleFor) ? scheduleFor : []).map((work) => ({
+                            value: work.workDetail,
+                            label: work.workDetail,
+                          })),
+                          { value: "other", label: "Other" },
+                        ]}
+                        placeholder="Select Work Detail"
+                      />
+
+                      {formData.workDetails[index].isOther && (
+                        <input
+                          type="text"
+                          placeholder="Enter new work detail"
+                          value={workItem.work}
+                          onChange={(e) =>
+                            handleWorkChange(index, "work", e.target.value)
+                          }
+                          className="mt-2 border p-2 rounded w-full"
+                        />
+                      )}
+                    </div>
+
+                    {/* <div>
+                      <label className="block text-sm font-semibold text-gray-600">
+                        Work to Check:
+                      </label>
+                      <Select
+                        value={
+                          workItem.work
+                            ? { value: workItem.work, label: workItem.work }
+                            : null
+                        }
+                        onChange={(selectedOption) => {
+                          const isOther =
+                            selectedOption.value.toLowerCase() === "other";
+                          const updatedWorkDetails = [...formData.workDetails];
+                          updatedWorkDetails[index].isOther = isOther;
+                          updatedWorkDetails[index].work = isOther
+                            ? ""
+                            : selectedOption.value;
+                          setFormData({
+                            ...formData,
+                            workDetails: updatedWorkDetails,
+                          });
+                        }}
+                        options={[
                           ...workDetails.map((workDetail) => ({
                             value: workDetail.work,
                             label: workDetail.work,
@@ -430,7 +517,7 @@ useEffect(() => {
                           className="mt-2 border p-2 rounded w-full"
                         />
                       )}
-                    </div>
+                    </div> */}
 
                     <div>
                       <label

@@ -127,7 +127,7 @@ const createExtraWork = async (req, res, next) => {
         });
         await employee.save();
         sendNotification(
-          employee.userId,
+          employee._id,
           `${user.userName} has created extra work for ${existingSite.name}`
         );
       }

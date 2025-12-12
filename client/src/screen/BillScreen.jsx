@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import {  useParams } from "react-router-dom";
 import logo from "../asset/logo.png";
 import moment from "moment";
 import axios from "axios";
@@ -10,31 +10,35 @@ import CreateBill from "../components/CreateBill";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import BillPdf from "../pdf/BillPdf";
 import ApprovalTimeLine from "../components/UI/ApprovalTimeLine";
+import Reject from "../components/UI/Reject";
+// import { reject } from "../../../server/controller/approval.controller";
 
 const BillScreen = () => {
-  const { id } = useParams();
+  const { id, approvalId } = useParams();
   const [bill, setBill] = useState("");
   const [contractorBill, setContractorBill] = useState({});
   const [editModal, setEditModal] = useState(false);
+  const [rejectModal, setRejectModal] = useState(false);
+  const [rejectId, setRejectId] = useState("");
   const [editId, setEditId] = useState("");
-
   useEffect(() => {
-    if (id) {
-      getbills(id);
-    }
-  }, []);
-
-  const getbills = async (id) => {
+  const getbills = async () => {
     try {
       if (id) {
         const billData = await axios.get(`/api/v1/bill/${id}`);
+        console.log(billData)
         setBill(billData.data);
         setContractorBill(billData.data);
       }
     } catch (error) {
+      console.log(error)
       toast.error(error.message);
     }
   };
+      getbills();
+
+  }, [id]);
+
 
   const handleEdit = (id) => {
     setEditModal(true);
@@ -43,21 +47,21 @@ const BillScreen = () => {
 
   const handleApprove = async () => {
     try {
-      await axios.post(`/api/v1/bill/${id}/approve`);
+      await axios.put(`/api/v1/approval/${approvalId}`);
       toast.success("Bill Approved");
       getbills(id);
     } catch (error) {
+      console.log(error);
       toast.error(error.message);
     }
   };
 
-  const handleReject = async () => {
+  const handleReject = async (id) => {
     try {
-      await axios.post(`/api/v1/bill/${id}/reject`);
-      toast.success("Bill Rejected");
-      getbills(id);
+      setRejectId(id);
+      setRejectModal(true);
     } catch (error) {
-      toast.error(error.message);
+      console.error(error);
     }
   };
 
@@ -96,12 +100,9 @@ const BillScreen = () => {
               : `BHC/${bill?.site?.name}${bill?.billNo ? bill?.billNo : ""}`}
           </p>
           <div className="text-sm text-gray-700">
-  Bill Type:{" "}
-  <span className="font-semibold uppercase">
-    {bill?.billType}
-  </span>
-</div>
-
+            Bill Type:{" "}
+            <span className="font-semibold uppercase">{bill?.billType}</span>
+          </div>
         </div>
 
         {/* Work Details Card */}
@@ -182,40 +183,39 @@ const BillScreen = () => {
           )}
         </div>
 
-{/* Payment Details */}
-<div className="border border-gray-300 rounded-xl p-4 mb-6 shadow-sm">
-  <h3 className="font-semibold text-lg mb-3">Payment Details</h3>
+        {/* Payment Details */}
+        <div className="border border-gray-300 rounded-xl p-4 mb-6 shadow-sm">
+          <h3 className="font-semibold text-lg mb-3">Payment Details</h3>
 
-  <p className="text-gray-700 mb-2">
-    Payment Date:{" "}
-    {bill?.dateOfPayment
-      ? moment(bill?.dateOfPayment).format("DD-MM-YYYY")
-      : "-"}
-  </p>
+          <p className="text-gray-700 mb-2">
+            Payment Date:{" "}
+            {bill?.dateOfPayment
+              ? moment(bill?.dateOfPayment).format("DD-MM-YYYY")
+              : "-"}
+          </p>
 
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <div>
-      <p className="text-gray-500">Total Amount</p>
-      <p className="font-medium">₹{bill?.toPay || 0}</p>
-    </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-gray-500">Total Amount</p>
+              <p className="font-medium">₹{bill?.toPay || 0}</p>
+            </div>
 
-    <div>
-      <p className="text-gray-500">Paid</p>
-      <p className="font-medium">₹{bill?.paidAmount || 0}</p>
-    </div>
+            <div>
+              <p className="text-gray-500">Paid</p>
+              <p className="font-medium">₹{bill?.paidAmount || 0}</p>
+            </div>
 
-    <div>
-      <p className="text-gray-500">Due</p>
-      <p className="font-medium">₹{bill?.due || 0}</p>
-    </div>
+            <div>
+              <p className="text-gray-500">Due</p>
+              <p className="font-medium">₹{bill?.due || 0}</p>
+            </div>
 
-    <div>
-      <p className="text-gray-500">Status</p>
-      <p className="font-medium">{bill?.paymentStatus}</p>
-    </div>
-  </div>
-</div>
-
+            <div>
+              <p className="text-gray-500">Status</p>
+              <p className="font-medium">{bill?.paymentStatus}</p>
+            </div>
+          </div>
+        </div>
 
         {/* Notes */}
         <div className="pt-2">
@@ -248,20 +248,24 @@ const BillScreen = () => {
           >
             <GrEdit /> Edit
           </button> */}
-          <button
-            type="button"
-            className="bg-emerald-600 text-white px-5 py-2 rounded-lg shadow hover:bg-emerald-700 transition"
-            onClick={handleApprove}
-          >
-            Approve
-          </button>
-          <button
-            type="button"
-            className="bg-red-600 text-white px-5 py-2 rounded-lg shadow hover:bg-red-700 transition"
-            onClick={handleReject}
-          >
-            Reject
-          </button>
+          {approvalId !== undefined && (
+            <>
+              <button
+                type="button"
+                className="bg-emerald-600 text-white px-5 py-2 rounded-lg shadow hover:bg-emerald-700 transition"
+                onClick={handleApprove}
+              >
+                Approve
+              </button>
+              <button
+                type="button"
+                className="bg-red-600 text-white px-5 py-2 rounded-lg shadow hover:bg-red-700 transition"
+                onClick={() => handleReject(approvalId)}
+              >
+                Reject
+              </button>
+            </>
+          )}
         </div>
 
         {/* Edit Modal */}
@@ -275,6 +279,13 @@ const BillScreen = () => {
             isEdit={editId}
             bill={bill}
           />
+        </Modal>
+        <Modal
+          isOpen={rejectModal}
+          onClose={() => setRejectModal(false)}
+          head="Reject Reason"
+        >
+          <Reject onClose={() => setRejectModal(false)} Id={rejectId} />
         </Modal>
 
         <Toaster position="top-right" reverseOrder={false} />

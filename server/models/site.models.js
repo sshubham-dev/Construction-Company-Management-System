@@ -93,13 +93,13 @@ const siteSchema = new mongoose.Schema(
       ref: "Payment_Schedule",
     },
     qualitySchedule: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "Quality_Schedule" },
+      { type: mongoose.Schema.Types.ObjectId, ref: "QualitySchedule" },
     ],
     projectSchedule: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project_Schedule",
     },
-    extraWork: [{ type: mongoose.Schema.Types.ObjectId, ref: "Extra_Work" }],
+    extraWork: [{ type: mongoose.Schema.Types.ObjectId, ref: "ExtraWork" }],
     contractor: [
       {
         name: String,

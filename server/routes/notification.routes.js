@@ -2,7 +2,7 @@ const express = require("express");
 const Notification = express.Router();
 const User = require("../models/user.models");
 const { userAuth } = require("../middlewares/auth.middleware");
-const { saveSubscription, unsubscribe } = require("../controller/notification.controller");
+const { saveSubscription, unsubscribe, checkSubscription } = require("../controller/notification.controller");
 // Get notifications for a specific user
 
 Notification.get("/", userAuth, async (req, res) => {
@@ -34,6 +34,8 @@ Notification.get("/", userAuth, async (req, res) => {
 
 Notification.post("/subscribe", userAuth, saveSubscription);
 Notification.post("/unsubscribe", userAuth, unsubscribe);
+Notification.post("/subscription/check", checkSubscription);
+
 
 Notification.patch("/mark-all-read", userAuth, async (req, res) => {
   try {

@@ -135,10 +135,10 @@ const createAttendance = async (req, res) => {
     await newAttendance.save();
 
     existingUser.attendance.push(newAttendance._id);
-    const employee = await Employee.find();
+    const employee = await User.find();
     if (employee.length > 0) {
       for (let emp of employee) {
-        sendNotification(emp.userId, `${existingUser.userName} is ${status} Today at ${timeIn}`);
+        sendNotification(emp._id, `${existingUser.userName} is ${status} Today at ${timeIn}`);
       }}
     await existingUser.save({ validateBeforeSave: false });
 
@@ -169,7 +169,11 @@ const createLeave = async (req, res) => {
 
     existingUser.leave.push(savedLeave._id);
     await existingUser.save({ validateBeforeSave: false });
-
+    const employee = await User.find();
+    if (employee.length > 0) {
+      for (let emp of employee) {
+        sendNotification(emp._id, `${existingUser.userName} requested for leave from ${from} to ${reportingDate}`);
+      }}
     sendApproveByAdmin(savedLeave, "Leave", user._id);
 
     return res

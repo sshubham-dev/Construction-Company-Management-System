@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams} from "react-router-dom";
 import moment from "moment";
 import axios from "axios";
 import { GrEdit } from "react-icons/gr";
@@ -214,7 +214,7 @@ const ExtraWorkScreen = () => {
           ))}
         </div>
 
-        {approvalId && (
+        {approvalId !== undefined && (
           <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-white border-t p-3 flex justify-center gap-6">
             <button
               onClick={() => handleApprove(extraWork?._id)}

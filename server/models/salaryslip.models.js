@@ -47,3 +47,4 @@ salaryslipSchema.pre("save", function () {
 });
 
 const SalarySlip = mongoose.model('SalarySlip', salaryslipSchema)
+module.exports = SalarySlip

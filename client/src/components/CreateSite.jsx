@@ -113,27 +113,55 @@ const CreateSite = ({ onClose, isEdit }) => {
   // ---------------------------------------------------------
   // SIMPLE DIMENSION-BASED AREA CALCULATION
   // ---------------------------------------------------------
-  const handleFloorChange = (index, field, value) => {
-    const updated = [...site.floors];
+  // const handleFloorChange = (index, field, value) => {
+  //   const updated = [...site.floors];
 
-    // Update nested dimension fields like dim.l, dim.w, dim.h
-    if (field.startsWith("dim.")) {
-      const key = field.split(".")[1];
-      updated[index].dim[key] = Number(value);
-    } else {
-      updated[index][field] = value;
-    }
+  //   // Update nested dimension fields like dim.l, dim.w, dim.h
+  //   if (field.startsWith("dim.")) {
+  //     const key = field.split(".")[1];
+  //     updated[index].dim[key] = Number(value);
+  //   } else {
+  //     updated[index][field] = value;
+  //   }
 
-    // Auto-calc area: multiply only available non-zero dimensions
-    const { l, w, h } = updated[index].dim || {};
-    const dims = [l, w, h].filter((d) => Number(d) > 0);
+  //   // Auto-calc area: multiply only available non-zero dimensions
+  //   const { l, w, h } = updated[index].dim || {};
+  //   const dims = [l, w, h].filter((d) => Number(d) > 0);
 
-    if (dims.length > 0) {
-      updated[index].area = dims.reduce((acc, num) => acc * num, 1);
-    }
+  //   if (dims.length > 0) {
+  //     updated[index].area = dims.reduce((acc, num) => acc * num, 1);
+  //   }
 
-    setSite((prev) => ({ ...prev, floors: updated }));
-  };
+  //   setSite((prev) => ({ ...prev, floors: updated }));
+  // };
+
+const handleFloorChange = (index, field, value) => {
+  const updated = [...site.floors];
+
+  // Ensure the floor has dim object
+  if (!updated[index].dim) {
+    updated[index].dim = { l: 0, w: 0, h: 0 };
+  }
+
+  if (field.startsWith("dim.")) {
+    const key = field.split(".")[1];
+    updated[index].dim[key] = Number(value);
+  } else {
+    updated[index][field] = value;
+  }
+
+  const { l, w, h } = updated[index].dim;
+  const dims = [l, w, h].filter((d) => Number(d) > 0);
+
+  if (dims.length > 0) {
+    updated[index].area = dims.reduce((acc, num) => acc * num, 1);
+  }
+
+  setSite((prev) => ({ ...prev, floors: updated }));
+};
+
+
+
   // ---------------------------------------------------------
 
   const addNewFloor = () => {

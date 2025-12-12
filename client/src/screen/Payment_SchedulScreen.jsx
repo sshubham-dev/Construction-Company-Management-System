@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd, MdDownload } from "react-icons/md";
@@ -19,7 +19,6 @@ const Payment_SchedulScreen = () => {
   const [rejectModal, setRejectModal] = useState(false);
   const [rejectId, setRejectId] = useState("");
   const { id, approvalId } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
   const [addModal, setAddModal] = useState(false);
   const [editModal, setEditModal] = useState(false);

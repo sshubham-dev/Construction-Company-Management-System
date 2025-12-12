@@ -28,28 +28,40 @@ const CreateLabourAttendance = ({ onClose, id }) => {
 
   /* ------------------------ Load Sites ------------------------ */
   useEffect(() => {
-    const loadSites = async () => {
-      try {
-        const res = await axios.get("/api/v1/site");
-
-        if (
-          user?.department === "Site Incharge" ||
-          user?.department === "Site Supervisor"
-        ) {
-          const filtered = res.data.filter((s) =>
-            user.site?.some((us) => us.id === s._id)
-          );
-          setSites(filtered);
-        } else {
-          setSites(res.data);
+    if (user && user?.department === "Site Incharge") {
+      console.log(user._id);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Site Supervisor") {
+      console.log(user);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Client") {
+      console.log(user);
+      getUserSites(user._id);
+    } else {
+      const getSites = async () => {
+        try {
+          const siteData = await axios.get("/api/v1/site");
+          setSites(siteData.data);
+          console.log(siteData.data);
+        } catch (error) {
+          console.error(error);
+          setError(error.message);
         }
-      } catch (err) {
-        toast.error("Failed to load sites");
-      }
-    };
-
-    loadSites();
+      };
+      getSites();
+    }
   }, []);
+
+  const getUserSites = async (id) => {
+    try {
+      const siteData = await axios.get(`/api/v1/site/user/${id}`);
+      console.log(siteData.data);
+      setSites(siteData.data);
+    } catch (error) {
+      console.error(error);
+      setError(error.message);
+    }
+  };
 
   /* ------------------------ Load Contractors When Site Changes ------------------------ */
   useEffect(() => {

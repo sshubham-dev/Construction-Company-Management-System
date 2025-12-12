@@ -144,15 +144,7 @@ const createQualitySchedule = async (req, res) => {
     const savedQualitySchedule = await newQualitySchedule.save();
     if (!savedQualitySchedule)
       return res.status(500).json({ error: "Something went wrong" });
-    const employee = await Employee.find();
-    if (employee.length > 0) {
-      for (let emp of employee) {
-        sendNotification(
-          emp.userId,
-          `${user.userName} has created Quality Schedule for ${existingSite.name}`
-        );
-      }
-    }
+
     // sendApproveByAdmin(savedQualitySchedule, 'Quality Schedule', user._id)
     sendApproveByIncharge(savedQualitySchedule, "Quality Schedule", user._id);
     sendApproveByQuality(savedQualitySchedule, "Quality Schedule", user._id);
@@ -162,6 +154,10 @@ const createQualitySchedule = async (req, res) => {
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
+              sendNotification(
+          employee._id,
+          `${user.userName} has created Quality Schedule for ${existingSite.name}`
+        );
       employee.notification.push({
         title: "Quality Schedule Alert",
         message: `A Quality Schedule created by ${existingUser.userName} for ${existingSite.name}`,

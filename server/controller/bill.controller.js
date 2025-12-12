@@ -109,10 +109,12 @@ const getDraftBills = async (req, res) => {
 const getBill = async (req, res) => {
   try {
     const id = req.params.id;
+    console.log(id);
     const bill = await Bill.findById(id)
       .populate("site.id") // fetch full site details
       .populate("contractor.id") // fetch full contractor details
       .exec();
+    console.log(bill);
     if (!bill) return res.status(404).json({ message: "No Bill Found" });
     return res.status(201).json(bill);
   } catch (error) {
@@ -247,23 +249,16 @@ const siteBill = async (req, res) => {
 
 const createBill = async (req, res) => {
   try {
-    const {
-      billType,
-      site,
-      contractor,
-      contractorId,
-      toPay,
-      reference,
-      meta,
-    } = req.body;
+    const { billType, site, contractor, contractorId, toPay, reference, meta } =
+      req.body;
     console.log(req.body);
-    const user = req.user
+    const user = req.user;
     if (!billType || !site || !toPay)
       return res.status(400).json({ message: "Missing required fields" });
 
     if (!reference)
       return res.status(400).json({ message: "Missing reference object" });
-    const existingUser = await site.findById(user._id)
+    const existingUser = await User.findById(user._id);
     const existingSite = await Site.findById(site);
     const existingContractor = await Contractor.findById(contractorId);
 
@@ -280,7 +275,7 @@ const createBill = async (req, res) => {
         : { name: contractor },
       toPay,
       reference,
-      billOf:meta,
+      billOf: meta,
       createdBy: req.user._id,
     });
 
@@ -301,15 +296,14 @@ const createBill = async (req, res) => {
       const stage = work.stages.filter((s) => s.id === stageId)[0];
       if (!stage) return res.status(404).json({ message: "Stage not found" });
 
-
       // append bill reference
       stage.bill.push({ billId: newBill._id });
 
       // update work paid/due
-    //   work.paid = (work.stages || []).reduce(
-    //     (sum, s) => sum + Number(s.paid || 0),
-    //     0
-    //   );
+      //   work.paid = (work.stages || []).reduce(
+      //     (sum, s) => sum + Number(s.paid || 0),
+      //     0
+      //   );
       work.due = Math.max(0, work.amount - work.paid);
 
       // update work status
@@ -320,10 +314,10 @@ const createBill = async (req, res) => {
       else if (started) work.status = "In Progress";
 
       // recalc totals
-    //   order.totalPaid = (order.works || []).reduce(
-    //     (sum, w) => sum + Number(w.paid || 0),
-    //     0
-    //   );
+      //   order.totalPaid = (order.works || []).reduce(
+      //     (sum, w) => sum + Number(w.paid || 0),
+      //     0
+      //   );
       order.totalDue = (order.totalValue || 0) - order.totalPaid;
 
       await order.save();
@@ -343,16 +337,16 @@ const createBill = async (req, res) => {
         return res.status(404).json({ message: "Extra Work row not found" });
 
       // update payment
-    //   row.paid = Number(row.paid || 0) + Number(amount);
-    //   row.due = Math.max(0, Number(row.amount) - Number(row.paid));
+      //   row.paid = Number(row.paid || 0) + Number(amount);
+      //   row.due = Math.max(0, Number(row.amount) - Number(row.paid));
 
       row.bill.push({ billId: newBill._id });
 
       // header totals
-    //   ex.paid = (ex.WorkDetail || []).reduce(
-    //     (sum, w) => sum + Number(w.paid || 0),
-    //     0
-    //   );
+      //   ex.paid = (ex.WorkDetail || []).reduce(
+      //     (sum, w) => sum + Number(w.paid || 0),
+      //     0
+      //   );
       ex.due = Number(ex.totalAmount || 0) - ex.paid;
 
       await ex.save();
@@ -375,7 +369,7 @@ const createBill = async (req, res) => {
         row.unskilledMale * row.unskilledMaleRate +
         row.unskilledFemale * row.unskilledFemaleRate;
 
-    //   row.paid = Number(row.paid || 0) + Number(amount);
+      //   row.paid = Number(row.paid || 0) + Number(amount);
       row.due = Math.max(0, total - row.paid);
 
       row.bill.push({ billId: newBill._id });
@@ -384,14 +378,30 @@ const createBill = async (req, res) => {
     }
 
     /* ----------------------------------------------------------
-        SAVE BILL
+    SAVE BILL
     ---------------------------------------------------------- */
     await newBill.save();
-      const employee = await User.find({ role: "Employee" });
-    if (employee.length > 0) {
-      for (let emp of employee) {
-        sendNotification(emp.userId, `A bill for ${existingSite.name} has been created by ${existingUser.userName}.`);
-      }}
+
+    sendApproveByAccountHead(newBill, "Bill", user._id);
+    sendApproveByAdmin(newBill, "Bill", user._id);
+    sendApproveByQuality(newBill, "Bill", user._id);
+    sendApproveByIncharge(newBill, "Bill", user._id);
+    const employee = await User.find({ role: "Employee" });
+    for (let emp of employee) {
+      sendNotification(
+        emp._id,
+        `A bill for ${existingSite.name} has been created by ${existingUser.userName}.`
+      );
+      emp.notification.push({
+        title: "Bill Alert",
+        message: `A Bill created by ${existingUser.userName} for ${existingSite.name}`,
+        createdAt: newBill.createdAt
+          ? newBill.createdAt.toLocaleString()
+          : new Date().toLocaleString(),
+        link: `/bill/${newBill.id}`,
+      });
+      await emp.save();
+    }
     return res.status(201).json({
       message: "Bill created successfully",
       bill: newBill,
@@ -426,9 +436,11 @@ const saveBill = async (req, res) => {
         bill.approvalStatus = "Approved";
         await bill.save();
         existingSite.bill.push(bill._id);
-        existingContractor.bill.push(bill._id);
+        if (existingContractor) {
+          existingContractor.bill.push(bill._id);
+          await existingContractor.save();
+        }
         await existingSite.save();
-        await existingContractor.save();
 
         const existingUser = await User.findById(user._id).select(
           "-password -refreshToken"
@@ -449,10 +461,13 @@ const saveBill = async (req, res) => {
         console.log("bill:", bill);
         res.status(201).json({ message: "Bill Saved Successfuly" });
 
-        const contractorLedger = await Ledger.findOne({
-          referenceId: existingContractor._id,
-          referenceType: "Contractor",
-        });
+        const contractorLedger = existingContractor
+          ? await Ledger.findOne({
+              referenceId: existingContractor._id,
+              referenceType: "Contractor",
+            })
+          : bill.contractor.name;
+
         const siteLedger = await Ledger.findOne({
           referenceId: existingSite._id,
           referenceType: "Site",
@@ -465,12 +480,18 @@ const saveBill = async (req, res) => {
           const newJournal = new Journal({
             voucherNo,
             date: new Date(),
-            narration: `Bill for ${existingContractor.name} at site ${existingSite.name}`,
+            narration: `Bill for ${
+              existingContractor
+                ? existingContractor.name
+                : bill.contractor.name
+            } at site ${existingSite.name}`,
             entries: [
               {
                 account: {
-                  name: contractorLedger.name,
-                  id: contractorLedger._id,
+                  name: existingContractor
+                    ? contractorLedger.name
+                    : bill.contractor.name,
+                  id: existingContractor && contractorLedger._id,
                 },
                 type: "Debit",
                 amount: bill.totalAmount, // Contractor is to receive
@@ -491,10 +512,11 @@ const saveBill = async (req, res) => {
           await newJournal.save();
 
           // Optionally update ledger balance or add to transaction log
-          contractorLedger.payable =
-            (contractorLedger.payable || 0) + bill.totalAmount;
+          existingContractor &&
+            (contractorLedger.payable =
+              (contractorLedger.payable || 0) + bill.totalAmount);
           siteLedger.paid = (siteLedger.paid || 0) + bill.totalAmount;
-          await contractorLedger.save();
+          existingContractor && (await contractorLedger.save());
           await siteLedger.save();
         }
       } else {

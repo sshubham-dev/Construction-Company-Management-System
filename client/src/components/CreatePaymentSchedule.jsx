@@ -39,7 +39,7 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
   const [clients, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState({ name: "", id: "" });
   const dispatch = useDispatch();
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   // useEffect(() => {
   //   const fetchClients = async () => {
   //     try {
@@ -63,36 +63,44 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
     setClient(siteData[0]?.client || "");
   }, [formData.site]);
   formData.client = client.name;
+  
+  useEffect(() => {
+    if (user && user?.department === "Site Incharge") {
+      console.log(user._id);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Site Supervisor") {
+      console.log(user);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Client") {
+      console.log(user);
+      getUserSites(user._id);
+    } else {
+      const getSites = async () => {
+        try {
+          const siteData = await axios.get("/api/v1/site");
+          setSite(siteData.data);
+          console.log(siteData.data);
+        } catch (error) {
+          console.error(error);
+          setError(error.message);
+        }
+      };
+      getSites();
+    }
+  }, []);
+
+  const getUserSites = async (id) => {
+    try {
+      const siteData = await axios.get(`/api/v1/site/user/${id}`);
+      console.log(siteData.data);
+      setSite(siteData.data);
+    } catch (error) {
+      console.error(error);
+      setError(error.message);
+    }
+  };
 
   useEffect(() => {
-    const fetchSite = async () => {
-      try {
-        const response = await axios.get("/api/v1/site");
-        if (
-          user.department === "Site Incharge" ||
-          user.department === "Site Supervisor"
-        ) {
-          const existingSites = user?.site;
-          let SitesData = [];
-          for (let site of response.data) {
-            if (
-              existingSites?.some(
-                (existingSite) => existingSite.id === site._id
-              )
-            ) {
-              SitesData.push(site);
-            }
-          }
-          setSite(SitesData);
-          // console.log(SitesData)
-        } else {
-          setSite(response.data);
-        }
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
-
     const fetchWorkDetails = async () => {
       try {
         const title = "Payment Schedule";
@@ -105,7 +113,6 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
       }
     };
 
-    fetchSite();
     fetchWorkDetails();
 
     if (id && index !== undefined) {
@@ -505,9 +512,9 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
                       <button
                         type="submit"
                         className="bg-green-500 text-white p-2 rounded w-full md:w-auto"
-              disabled={loading}
-            >
-              {loading ? "Submitting..." : "Submit"}
+                        disabled={loading}
+                      >
+                        {loading ? "Submitting..." : "Submit"}
                       </button>
                       <button
                         type="button"

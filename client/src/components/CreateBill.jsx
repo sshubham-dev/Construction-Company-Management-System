@@ -29,15 +29,40 @@ const CreateBill = ({ onClose, editId = null }) => {
 
   // for edit mode (optional)
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await axios.get("/api/v1/site");
-        setSites(res.data || []);
-      } catch (err) {
-        console.error("load sites:", err);
-      }
-    })();
+    if (user && user?.department === "Site Incharge") {
+      console.log(user._id);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Site Supervisor") {
+      console.log(user);
+      getUserSites(user._id);
+    } else if (user && user?.department === "Client") {
+      console.log(user);
+      getUserSites(user._id);
+    } else {
+      const getSites = async () => {
+        try {
+          const siteData = await axios.get("/api/v1/site");
+          setSites(siteData.data);
+          console.log(siteData.data);
+        } catch (error) {
+          console.error(error);
+          setError(error.message);
+        }
+      };
+      getSites();
+    }
   }, []);
+
+  const getUserSites = async (id) => {
+    try {
+      const siteData = await axios.get(`/api/v1/site/user/${id}`);
+      console.log(siteData.data);
+      setSites(siteData.data);
+    } catch (error) {
+      console.error(error);
+      setError(error.message);
+    }
+  };
 
   // load contractors (global) - used for drop-down
   useEffect(() => {

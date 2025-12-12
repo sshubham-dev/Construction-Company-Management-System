@@ -1,6 +1,7 @@
 const { LabourAttendance } = require("../models/attendance.models");
 const Contractor = require("../models/contractor.models");
 const Site = require("../models/site.models");
+const User = require("../models/user.models");
 const { sendNotification } = require("./notification.controller.js");
 
 const getLabourAttendances = async (req, res) => {
@@ -46,6 +47,7 @@ const createLabourAttendance = async (req, res) => {
       unskilledFemaleRate = 0,
       work,
     } = req.body;
+    const user = req.user
 
     const existingSite = await Site.findById(site);
     if (!existingSite) {
@@ -95,6 +97,23 @@ const createLabourAttendance = async (req, res) => {
     });
 
     const savedAttendance = await attendance.save();
+          const employees = await User.find({ role: "Employee" });
+
+      for (const employee of employees) {
+        sendNotification(
+          employee?._id,
+          `${user.userName} has created Labour Report for ${existingSite.name}`
+        );
+        employee.notification.push({
+          title: "Labour Report Alert",
+          message: `Labour Report raised by ${user.userName} for ${existingSite.name}`,
+          createdAt: savedAttendance.createdAt
+            ? savedAttendance.createdAt
+            : new Date(),
+          link: `/sites/labour-attendance`,
+        });
+        await employee.save();
+      }
     return res.status(201).json(savedAttendance);
   } catch (error) {
     console.log(error);

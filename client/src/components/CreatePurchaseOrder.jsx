@@ -65,19 +65,7 @@ const CreatePurchaseOrder = ({ onClose, id, index }) => {
     const fetchSite = async () => {
       try {
         const response = await axios.get('/api/v1/site');
-        if (user?.department === 'Site Incharge' || user?.department === 'Site Supervisor') {
-          const existingSites = user?.site;
-          let SitesData = [];
-          for (let site of response.data) {
-            if (existingSites?.some(existingSite => existingSite.id === site._id)) {
-              SitesData.push(site);
-            }
-          }
-          setSite(SitesData)
-          // console.log(SitesData)
-        } else {
           setSite(response.data)
-        }
       } catch (error) {
         console.error(error.message)
       }

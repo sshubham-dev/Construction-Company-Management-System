@@ -95,7 +95,10 @@ import LabourAttendanceScreen from "./screen/LabourAttendanceScreen.jsx";
 import CreateQuotation from "./components/CreateQuotation.jsx";
 import BusinessUnit from "./pages/ERP/BusinessUnit.jsx";
 import Quotations from "./pages/CRM/Quotation.jsx";
-import { enableNotifications } from "./helper/notificationService.js";
+import {
+  enableNotifications,
+  ensureSubscription,
+} from "./helper/notificationService.js";
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -114,6 +117,7 @@ const App = () => {
         }
       }
     });
+    if(user) ensureSubscription(user?._id);
   }, [user]);
 
   useEffect(() => {

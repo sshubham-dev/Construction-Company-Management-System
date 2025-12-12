@@ -30,8 +30,8 @@ Attendances.route("/")
   .get(userAuth, getAttendance)
   .post(userAuth, createAttendance);
 LabourAttendances.route("/")
-  .get(getLabourAttendances)
-  .post(createLabourAttendance);
+  .get(userAuth, getLabourAttendances)
+  .post(userAuth, createLabourAttendance);
 Leaves.route("/").get(userAuth, getLeave).post(userAuth, createLeave);
 
 Attendances.get("/report", getAttendances);
