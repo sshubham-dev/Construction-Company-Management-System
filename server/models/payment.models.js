@@ -1,71 +1,83 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-var paymentSchema = new mongoose.Schema({
-  paymentNo: {
-    type: String,
-    required: true,
-    index: true,
-  },
-  date: {
-    type: Date,
-    required: true,
-    default: Date.now,
-  },
-  from: {
-    name: String,
-    id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Ledger',
+const paymentSchema = new mongoose.Schema(
+  {
+    voucherNo: {
+      type: String,
       required: true,
+      index: true,
     },
-  },
-  to: {
-    name: String,
-    id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Ledger',
+    date: {
+      type: Date,
       required: true,
+      default: Date.now,
     },
-  },
-  referenceNo: {
-    type: String, // Optional bank transaction reference for online payments
-  },
-  amount: {
-    type: Number,
-    required: true,
-    min: [0, 'Amount must be positive'],
-  },
-  description: {
-    type: String,
-    required: true
-  },
-  paymentFor: {
-    type: String,
-    trim: true,
-  },
-  invoiceType: {
-    type: String,
-  },
-  invoice: [
-    {
+    from: {
       name: String,
       id: {
         type: mongoose.Schema.Types.ObjectId,
+        ref: "Ledger",
         required: true,
-        refpath: 'invoiceType', // Dynamically reference the model based on invoiceType
       },
-      type: {
-        type: String,
+    },
+    to: {
+      name: String,
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ledger",
+        required: true,
       },
-      amount: Number, // payment made against that invoice
-    }
-  ],
-  // For audit/logical mapping
-  costCenter: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'CostCenter',
-  }
-}, { timestamps: true });
+    },
+    referenceNo: {
+      type: String, // Optional bank transaction reference for online payments
+    },
+    amount: {
+      type: Number,
+      required: true,
+      min: [0, "Amount must be positive"],
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    counterPartyLabel: {
+      type: String,
+      trim: true,
+    },
+    status: {
+      type: String,
+      enum: ["Draft", "Posted", "Cancelled"],
+      default: "Draft",
+    },
+    voucherType: {
+      type: String,
+      default: "Payment",
+    },
 
-const Payment = mongoose.model('Payment', paymentSchema)
-module.exports = Payment
+    invoice: [
+      {
+        invoiceId: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true,
+        },
+        invoiceType: {
+          type: String,
+        },
+        amount: Number,
+      },
+    ],
+    // For audit/logical mapping
+    costCenter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CostCenter",
+    },
+    postedAt: Date,
+    postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    cancelledAt: Date,
+    cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  },
+  { timestamps: true }
+);
+
+const Payment = mongoose.model("Payment", paymentSchema);
+module.exports = Payment;

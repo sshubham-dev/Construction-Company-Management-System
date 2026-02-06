@@ -281,8 +281,8 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
         );
         toast.success(response.data.message);
          setLoading(false)
+         dispatch(fetchNotifications(user._id));
         onClose();
-        dispatch(fetchNotifications(user._id));
       } else if (projectToEdit.id !== "" && projectToEdit.index !== "") {
         console.log(projectDetail);
         const resposnse = await axios.put(
@@ -292,8 +292,8 @@ const CreateProjectSchedule = ({ onClose, id, index }) => {
         toast.success("Edited successfully");
         console.log("first", resposnse.data?.updatedWork);
          setLoading(false)
+         dispatch(fetchNotifications(user._id));
         onClose();
-        dispatch(fetchNotifications(user._id));
       } else {
         console.log("first", formData);
         const response = await axios.post("/api/v1/project-schedule", formData);

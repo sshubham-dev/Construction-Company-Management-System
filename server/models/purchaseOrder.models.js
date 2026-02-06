@@ -5,89 +5,111 @@ const poItemSchema = new mongoose.Schema(
     itemId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Stock",
+      required: true,
     },
-    item: String,
-    requestedQty: Number, // from PR or store demand
+
+    item: String,           // snapshot name
     unit: String,
-    rate: Number, // purchase rate
-    amount: Number, // qty * rate
-    deliveredQty: { type: Number, default: 0 },
+
+    requestedQty: {
+      type: Number,
+      required: true,
+    },
+
+    receivedQty: {
+      type: Number,
+      default: 0,            // updated ONLY by GRN
+    },
+
+    invoicedQty: {
+      type: Number,
+      default: 0,            // updated ONLY by Purchase Invoice
+    },
+
+    rate: {
+      type: Number,
+      required: true,
+    },
+
+    gstRate: Number,
+
+    amount: Number,          // requestedQty * rate (snapshot)
+
     description: String,
-    gstRate: Number, // from item or supplier
   },
   { timestamps: true }
 );
 
+
 const deliveryRecordSchema = new mongoose.Schema(
   {
-    deliveryDate: { type: Date, default: Date.now },
-
-    deliveredBy: {
+    grnId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Supplier",
+      ref: "GRN",
     },
 
-    receivedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    deliveryDate: {
+      type: Date,
+      default: Date.now,
     },
 
-    items: [
-      {
-        itemId: { type: mongoose.Schema.Types.ObjectId, ref: "Stock" },
-        quantity: Number,
-        unit: String,
-        remarks: String,
-      },
-    ],
-
-    attachments: [
-      {
-        url: String,
-        fileType: String, // pdf / image
-      },
-    ],
+    status: {
+      type: String,
+      enum: ["Partial", "Full"],
+    },
 
     remarks: String,
   },
   { timestamps: true }
 );
 
+
 const purchaseOrderSchema = new mongoose.Schema(
   {
-    // ----------------------------
-    // PO Details
-    // ----------------------------
-    poNumber: { type: String, unique: true, trim: true },
-    poDate: { type: Date, default: Date.now },
+    /* =========================
+       BASIC DETAILS
+    ========================== */
+    poNumber: {
+      type: String,
+      unique: true,
+      trim: true,
+      index: true,
+    },
+
+    poDate: {
+      type: Date,
+      default: Date.now,
+    },
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
 
-    // ----------------------------
-    // Linked Purchase Request (Optional)
-    // ----------------------------
+    /* =========================
+       LINKED REQUEST
+    ========================== */
     purchaseRequestId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Purchase_Request",
     },
 
-    // ----------------------------
-    // Supplier Details
-    // ----------------------------
+    /* =========================
+       SUPPLIER
+    ========================== */
     supplier: {
       id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Supplier",
+        required: true,
       },
       name: String,
       phone: String,
     },
 
-    // ----------------------------
-    // Delivery Location
-    // ----------------------------
+    /* =========================
+       DELIVERY DESTINATION
+    ========================== */
     deliveryTo: {
       type: String,
       enum: ["Store", "Site"],
@@ -95,29 +117,32 @@ const purchaseOrderSchema = new mongoose.Schema(
     },
 
     deliveryFor: {
-      id: { type: mongoose.Schema.Types.ObjectId, refPath: "deliveryTo" },
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: "deliveryTo",
+      },
       name: String,
       contactPerson: String,
       phone: String,
     },
 
-    // ----------------------------
-    // Items
-    // ----------------------------
+    /* =========================
+       ITEMS
+    ========================== */
     items: [poItemSchema],
 
-    // ----------------------------
-    // Approval Workflow
-    // ----------------------------
-    supplierApproval: {
+    /* =========================
+       APPROVAL FLOW (FIXED)
+    ========================== */
+    commercialApprovalStatus: {
       type: String,
-      enum: ["Pending", "Accepted", "Rejected"],
+      enum: ["Pending", "Approved", "Rejected"],
       default: "Pending",
     },
 
-    adminApproval: {
+    supplierApproval: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
+      enum: ["Pending", "Accepted", "Rejected"],
       default: "Pending",
     },
 
@@ -133,19 +158,26 @@ const purchaseOrderSchema = new mongoose.Schema(
       default: "Pending",
     },
 
-    // ----------------------------
-    // Financials
-    // ----------------------------
+    /* =========================
+       FINANCIAL SUMMARY
+    ========================== */
     totalBeforeTax: Number,
     totalTaxAmount: Number,
     totalAfterTax: Number,
 
-    totalPaid: { type: Number, default: 0 },
-    totalDue: { type: Number, default: 0 },
+    totalPaid: {
+      type: Number,
+      default: 0,
+    },
 
-    // ----------------------------
-    // Delivery / GRN
-    // ----------------------------
+    totalDue: {
+      type: Number,
+      default: 0,
+    },
+
+    /* =========================
+       DELIVERY / GRN LINK
+    ========================== */
     deliveryRecords: [deliveryRecordSchema],
 
     deliveryStatus: {
@@ -154,21 +186,21 @@ const purchaseOrderSchema = new mongoose.Schema(
       default: "Pending",
     },
 
-    // ----------------------------
-    // Billing
-    // ----------------------------
-    bills: [
+    /* =========================
+       BILLING
+    ========================== */
+    purchaseInvoices: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "SalesInvoice",
+        ref: "PurchaseInvoice",
       },
     ],
 
-    // ----------------------------
-    // Payment Mode (Ledger)
-    // ----------------------------
     paymentLedger: {
-      id: { type: mongoose.Schema.Types.ObjectId, ref: "Ledger" },
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ledger",
+      },
       name: String,
     },
 
@@ -178,9 +210,9 @@ const purchaseOrderSchema = new mongoose.Schema(
       default: "Pending",
     },
 
-    // ----------------------------
-    // Returns
-    // ----------------------------
+    /* =========================
+       RETURNS
+    ========================== */
     purchaseReturns: [
       {
         purchaseReturnId: {
@@ -190,43 +222,149 @@ const purchaseOrderSchema = new mongoose.Schema(
       },
     ],
 
-    // ----------------------------
-    // Notes
-    // ----------------------------
     remarks: String,
   },
   { timestamps: true }
 );
 
+purchaseOrderSchema.index({ "supplier.id": 1 });
+purchaseOrderSchema.index({ deliveryStatus: 1 });
+
+purchaseOrderSchema.virtual("isFullyReceived").get(function () {
+  return this.items.every(
+    i => i.receivedQty >= i.requestedQty
+  );
+});
+
+purchaseOrderSchema.virtual("isFullyInvoiced").get(function () {
+  return this.items.every(
+    i => i.invoicedQty >= i.receivedQty
+  );
+});
+
+
 purchaseOrderSchema.pre("save", function (next) {
-  const items = this.requirement;
-  function total(amount, value) {
-    return amount + value;
-  }
-  const TotalAmount = items.map((item) => {
-    return item.amount;
-  });
-  const TotalPaid = items.map((item) => {
-    return item.paid;
-  });
-  console.log("TotalOrder:", TotalAmount);
-  this.totalValue = TotalAmount.reduce(total);
-  this.totalPaid = TotalPaid.reduce(total);
-  console.log("totalValue:", this.totalValue);
+  let totalBeforeTax = 0;
+  let totalTaxAmount = 0;
 
-  const amount = parseFloat(this.totalValue) || 0;
-  const paidAmount = parseFloat(this.totalPaid) || 0;
-  console.log("TotalOrder:", amount);
-  console.log("TotalpaidOrder:", paidAmount);
-  const payment = amount - paidAmount;
+  this.items.forEach(item => {
+    const amount = (item.requestedQty || 0) * (item.rate || 0);
+    item.amount = amount;
 
-  if (!isNaN(payment) && isFinite(payment)) {
-    this.totalDue = Math.max(0, payment.toFixed(2));
-  } else {
-    this.totalDue = null;
-  }
+    totalBeforeTax += amount;
+
+    const gst = item.gstRate
+      ? (amount * item.gstRate) / 100
+      : 0;
+
+    totalTaxAmount += gst;
+  });
+
+  this.totalBeforeTax = totalBeforeTax;
+  this.totalTaxAmount = totalTaxAmount;
+  this.totalAfterTax = totalBeforeTax + totalTaxAmount;
+
+  this.totalDue = Math.max(
+    0,
+    (this.totalAfterTax || 0) - (this.totalPaid || 0)
+  );
+
   next();
 });
 
-const PurchaseOrder = mongoose.model("PurchaseOrder", purchaseOrderSchema);
-module.exports = PurchaseOrder;
+
+const purchaseInvoiceItemSchema = new mongoose.Schema({
+  stockId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Stock",
+    required: true,
+  },
+
+  description: String,
+
+  grnQty: Number,            // acceptedQty from GRN
+  invoicedQty: {
+    type: Number,
+    required: true,
+  },
+
+  rate: {
+    type: Number,
+    required: true,
+  },
+
+  gstRate: Number,
+
+  amount: Number,           // invoicedQty * rate
+});
+
+const purchaseInvoiceSchema = new mongoose.Schema(
+  {
+    invoiceNo: {
+      type: String,
+      unique: true,
+      index: true,
+    },
+
+    invoiceDate: {
+      type: Date,
+      required: true,
+    },
+
+    supplierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Supplier",
+      required: true,
+    },
+
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+    },
+
+    purchaseOrderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PurchaseOrder",
+    },
+
+    grnId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "GRN",
+      required: true,
+    },
+
+    items: [purchaseInvoiceItemSchema],
+
+    grossAmount: Number,
+    gstAmount: Number,
+    netAmount: Number,
+
+    status: {
+      type: String,
+      enum: ["Draft", "Posted", "Cancelled"],
+      default: "Draft",
+    },
+
+    ledgerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger", // Supplier ledger
+    },
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  },
+  { timestamps: true }
+);
+
+
+const PurchaseInvoice =
+  mongoose.models.PurchaseInvoice ||
+  mongoose.model("PurchaseInvoice", purchaseInvoiceSchema);
+
+const PurchaseOrder =
+  mongoose.models.PurchaseOrder ||
+  mongoose.model("PurchaseOrder", purchaseOrderSchema);
+module.exports = {PurchaseOrder, PurchaseInvoice};

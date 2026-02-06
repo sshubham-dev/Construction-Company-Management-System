@@ -12,39 +12,121 @@ const createContra = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+    if (from === to) {
+      return res.status(400).json({ message: "From and To ledger cannot be same" });
+    }
+
     const fromLedger = await Ledger.findById(from);
     const toLedger = await Ledger.findById(to);
 
     if (!fromLedger || !toLedger) {
-      return res.status(404).json({ message: "One or both ledgers not found" });
+      return res.status(404).json({ message: "Ledger not found" });
     }
 
-    const contra = new Contra({
+    const contra = await Contra.create({
       voucherNo,
       date,
-      from: { id: from, name: fromLedger.name },
-      to: { id: to, name: toLedger.name },
-      amount:  Number(amount),
+      from: { id: fromLedger._id, name: fromLedger.name },
+      to: { id: toLedger._id, name: toLedger.name },
+      amount: Number(amount),
       description,
+      status: "Draft",
+      createdBy: req.user._id,
     });
-
-    fromLedger.currentBalance = Number(fromLedger.currentBalance || 0) -  Number(amount);
-    fromLedger.paid = Number(fromLedger.paid || 0) +  Number(amount)
-    toLedger.currentBalance = Number(toLedger.currentBalance || 0) +  Number(amount);
-    toLedger.received = Number(toLedger.received || 0) +  Number(amount);
-
-    fromLedger.transaction.push({ id: contra._id, type: "Contra", amount: - Number(amount) });
-    toLedger.transaction.push({ id: contra._id, type: "Contra", amount:  Number(amount) });
-
-    await contra.save();
-    await fromLedger.save();
-    await toLedger.save();
 
     res.status(201).json(contra);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+const applyContraToLedgers = async (contra, mode = "add") => {
+  const multiplier = mode === "add" ? 1 : -1;
+  const amount = Number(contra.amount);
+
+  const fromLedger = await Ledger.findById(contra.from.id);
+  const toLedger = await Ledger.findById(contra.to.id);
+
+  if (!fromLedger || !toLedger) {
+    throw new Error("Ledger not found");
+  }
+
+  // From ledger → Credit
+  fromLedger.currentBalance -= multiplier * amount;
+
+  // To ledger → Debit
+  toLedger.currentBalance += multiplier * amount;
+
+  await fromLedger.save();
+  await toLedger.save();
+};
+
+const postContra = async (req, res) => {
+  try {
+    const contra = await Contra.findById(req.params.id);
+    if (!contra) {
+      return res.status(404).json({ message: "Contra not found" });
+    }
+
+    if (contra.status !== "Draft") {
+      return res.status(400).json({ message: "Only Draft contra can be posted" });
+    }
+
+    await applyContraToLedgers(contra, "add");
+
+    contra.status = "Posted";
+    await contra.save();
+
+    res.json({ message: "Contra posted successfully", contra });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+const cancelContra = async (req, res) => {
+  try {
+    const contra = await Contra.findById(req.params.id);
+    if (!contra) {
+      return res.status(404).json({ message: "Contra not found" });
+    }
+
+    if (contra.status !== "Posted") {
+      return res.status(400).json({ message: "Only Posted contra can be cancelled" });
+    }
+
+    await applyContraToLedgers(contra, "subtract");
+
+    contra.status = "Cancelled";
+    await contra.save();
+
+    res.json({ message: "Contra cancelled successfully", contra });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+const deleteContra = async (req, res) => {
+  try {
+    const contra = await Contra.findById(req.params.id);
+    if (!contra) {
+      return res.status(404).json({ message: "Contra not found" });
+    }
+
+    if (contra.status !== "Draft") {
+      return res.status(400).json({
+        message: "Only Draft contra can be deleted",
+      });
+    }
+
+    await contra.deleteOne();
+    res.json({ message: "Contra deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 // Get all Contra vouchers
 const getAllContra = async (req, res) => {
@@ -71,20 +153,20 @@ const getContra = async (req, res) => {
 const getContraByVoucherNo = async (req, res) => {
   try {
     const contra = await Contra.findOne({ voucherNo: req.params.voucherNo })
-      .populate('fromAccount.id')
-      .populate('toAccount.id')
-      .populate('createdBy');
+      .populate("from.id")
+      .populate("to.id")
+      .populate("createdBy");
 
     if (!contra) {
-      return res.status(404).json({ message: 'Contra voucher not found' });
+      return res.status(404).json({ message: "Contra voucher not found" });
     }
 
-    res.status(200).json({ message: 'Contra voucher retrieved successfully', data: contra });
+    res.json(contra);
   } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Error fetching contra voucher', error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
+
 
 // Update Contra voucher
 const updateContra = async (req, res) => {
@@ -93,29 +175,6 @@ const updateContra = async (req, res) => {
     res.json(contra);
   } catch (error) {
     res.status(400).json({ error: error.message });
-  }
-};
-
-// Delete Contra voucher
-const deleteContra = async (req, res) => {
-  try {
-    const contra = await Contra.findById(req.params.id);
-    if (!contra) return res.status(404).json({ message: "Contra not found" });
-
-    await Ledger.findByIdAndUpdate(contra.from.id, {
-      $pull: { transaction: { id: contra._id } },
-      $inc: { balance: contra.amount },
-    });
-
-    await Ledger.findByIdAndUpdate(contra.to.id, {
-      $pull: { transaction: { id: contra._id } },
-      $inc: { balance: -contra.amount },
-    });
-
-    await contra.deleteOne();
-    res.json({ message: "Contra deleted" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
 };
 
@@ -145,4 +204,4 @@ const getNextContraNo = async (req, res) => {
 };
 
 
-module.exports = { createContra, getAllContra, getContraByVoucherNo, updateContra, deleteContra, getContra, getNextContraNo };
+module.exports = { createContra, getAllContra, getContraByVoucherNo, updateContra, deleteContra, getContra, getNextContraNo, postContra, cancelContra };

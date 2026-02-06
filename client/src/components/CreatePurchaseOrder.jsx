@@ -7,414 +7,279 @@ import Select from 'react-select';
 
 axios.defaults.withCredentials = true;
 
-const CreatePurchaseOrder = ({ onClose, id, index }) => {
-  const [formData, setFormData] = useState({
-    supplier: '',
-    site: '',
-    purchaseOrderNo: '',
-    createdBy: '',
-    requirementFor: '',
-    category: '',
-    requirement: [{
-      material: '',
-      rate: '',
-      quantity: '',
-      unit: '',
-      amount: '',
-    }],
-  });
+const units = ["NOS", "KG", "BAG", "MT", "LITERS", "SQMT", "CUM"];
+
+const CreatePurchaseOrder = ({ onClose, editId }) => {
+  const isEdit = Boolean(editId);
+
   const [loading, setLoading] = useState(false);
-  const [requirement, setRequirement] = useState({
-    material: '',
-    rate: '',
-    quantity: '',
-    unit: '',
-    amount: '',
-    status: '',
-    slip: '',
+  const [suppliers, setSuppliers] = useState([]);
+  const [stores, setStores] = useState([]);
+  const [stocks, setStocks] = useState([]);
+
+  const [form, setForm] = useState({
+    supplier: null,
+    deliveryTo: "Store",
+    deliveryFor: null,
+    items: [],
+    remarks: "",
   });
 
-  const [data, setData] = useState({
-    supplier: '',
-    site: '',
-    createdBy: '',
-  });
-
-  const [materials, setMaterial] = useState([]);
-  const [sites, setSite] = useState([]);
-  const [suppliers, setSupplier] = useState([]);
-
-  const statusOptions = ['Delivered', 'Pending', 'Returned'];
-  const units = ['SQFT', 'RFT', 'LUMSUM', 'NOS', 'FIXED', 'RMT', 'SQMT', 'CUM', 'BAG', 'KG', 'TONES', 'LITERS'];
-  const [requirementToEdit, setRequirementToEdit] = useState({ id: '', index: '' });
-  const [purchaseOrderToEdit, setPurchaseOrderToEdit] = useState(null);
-  const { user } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
-
+  /* =====================
+     LOAD MASTER DATA
+  ===================== */
   useEffect(() => {
-    if (id && index) {
-      setRequirementToEdit({ id, index });
-      fetchPurchaseOrder(id, index);
-    } else if (id && !index) {
-      setPurchaseOrderToEdit(id);
-      fetchPurchaseOrder(id);
-    }
-  }, [id, index]);
+    loadMasters();
+    if (isEdit) loadPO();
+  }, [editId]);
 
-  useEffect(() => {
-    const fetchSite = async () => {
-      try {
-        const response = await axios.get('/api/v1/site');
-          setSite(response.data)
-      } catch (error) {
-        console.error(error.message)
-      }
-    };
+  const loadMasters = async () => {
+    const [sup, store, stock] = await Promise.all([
+      axios.get("/api/v1/supplier"),
+      axios.get("/api/v1/store"),
+      axios.get("/api/v1/stock"),
+    ]);
 
-    const fetchSupplier = async () => {
-      try {
-        const supplierData = await axios.get('/api/v1/Supplier');
-        setSupplier(supplierData.data);
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
-
-    const fetchMaterial = async () => {
-      try {
-        const title = 'Purchase Order';
-        const data = await axios.post('/api/v1/work-details/name', { title });
-        const material = data.data.description.flat();
-        setMaterial(material);
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
-
-    fetchSite();
-    fetchSupplier();
-    fetchMaterial();
-  }, [user]);
-
-  const fetchPurchaseOrder = async (id, index) => {
-    try {
-      const response = await axios.get(`/api/v1/purchase-order/${id}`);
-      if (id && index) {
-        const require = response.data.requirement[index];
-        setRequirement({
-          material: require.material,
-          rate: require.rate,
-          quantity: require.quantity,
-          unit: require.unit,
-          amount: require.amount,
-          status: require.status,
-        });
-      } else if (id && !index) {
-        setData({
-          site: response.data?.site.name,
-          supplier: response.data?.supplier.name,
-        });
-        setFormData({
-          supplier: response.data?.supplier._id,
-          site: response.data?.site._id,
-          // purchaseOrderNo: response.data?.purchaseOrderNo,
-          createdBy: response.data?.createdBy?._id,
-        });
-      }
-    } catch (error) {
-      toast.error(error.message);
-    }
+    setSuppliers(sup.data);
+    setStores(store.data);
+    setStocks(stock.data);
   };
 
-  const handleChange = (field, value) => {
-    setFormData(prevState => ({
-      ...prevState,
-      [field]: value,
-    }));
+  const loadPO = async () => {
+    const { data } = await axios.get(`/api/v1/purchase-order/${editId}`);
+    setForm({
+      supplier: {
+        value: data.supplier.id,
+        label: data.supplier.name,
+      },
+      deliveryTo: data.deliveryTo,
+      deliveryFor: {
+        value: data.deliveryFor.id,
+        label: data.deliveryFor.name,
+      },
+      items: data.items,
+      remarks: data.remarks || "",
+    });
   };
 
-  const handleUpdate = (field, value) => {
-    setRequirement(prevState => ({
-      ...prevState,
-      [field]: value,
-    }));
-  };
-
-  const handleAddRequirement = () => {
-    setFormData(prevState => ({
-      ...prevState,
-      requirement: [
-        ...prevState.requirement,
-        { material: '', rate: '', quantity: '', unit: '', amount: '' },
+  /* =====================
+     ITEM HANDLING
+  ===================== */
+  const addItem = () => {
+    setForm({
+      ...form,
+      items: [
+        ...form.items,
+        {
+          itemId: null,
+          item: "",
+          unit: "",
+          requestedQty: 0,
+          rate: 0,
+          gstRate: 18,
+          amount: 0,
+        },
       ],
-    }));
+    });
   };
 
-  const handleRemoveRequirement = (index) => {
-    const updatedRequirement = [...formData.requirement];
-    updatedRequirement.splice(index, 1);
-    setFormData(prevState => ({
-      ...prevState,
-      requirement: updatedRequirement,
-    }));
+  const updateItem = (i, field, value) => {
+    const items = [...form.items];
+    items[i][field] = value;
+
+    if (["requestedQty", "rate"].includes(field)) {
+      items[i].amount =
+        Number(items[i].requestedQty || 0) *
+        Number(items[i].rate || 0);
+    }
+
+    setForm({ ...form, items });
   };
 
-  const handleRequirementChange = (index, field, value) => {
-    const updatedRequirement = [...formData.requirement];
-    updatedRequirement[index][field] = value;
-    setFormData(prevState => ({
-      ...prevState,
-      requirement: updatedRequirement,
-    }));
+  const removeItem = (i) => {
+    const items = [...form.items];
+    items.splice(i, 1);
+    setForm({ ...form, items });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-setLoading(true);
-    const updatedFormData = {
-      ...formData,
-      requirement: formData.requirement.map(detail => {
-        const amount = parseFloat(detail.quantity) * parseFloat(detail.rate);
-        return {
-          ...detail,
-          amount: isNaN(amount) ? '' : amount.toFixed(2),
-        };
-      }),
+  /* =====================
+     SUBMIT
+  ===================== */
+  const submit = async () => {
+    if (!form.supplier || !form.deliveryFor || !form.items.length) {
+      return toast.error("Missing required fields");
+    }
+
+    const payload = {
+      supplier: {
+        id: form.supplier.value,
+        name: form.supplier.label,
+      },
+      deliveryTo: form.deliveryTo,
+      deliveryFor: {
+        id: form.deliveryFor.value,
+        name: form.deliveryFor.label,
+      },
+      items: form.items.map((i) => ({
+        itemId: i.itemId,
+        item: i.item,
+        unit: i.unit,
+        requestedQty: Number(i.requestedQty),
+        rate: Number(i.rate),
+        gstRate: Number(i.gstRate),
+        amount: Number(i.amount),
+      })),
+      remarks: form.remarks,
     };
 
+    setLoading(true);
     try {
-      if (purchaseOrderToEdit) {
-        const response = await axios.put(`/api/v1/purchase-order/${purchaseOrderToEdit}`, updatedFormData);
-        toast.success(response.data.message);
-        onClose()
-        dispatch(fetchNotifications(user._id));
-      } else if (requirementToEdit.id && requirementToEdit.index) {
-        const updatedDetail = {
-          ...requirement,
-          amount: parseFloat(requirement.quantity) * parseFloat(requirement.rate),
-        };
-        const response = await axios.put(`/api/v1/purchase-order/${requirementToEdit.id}/requirement/${requirementToEdit.index}`, updatedDetail);
-        toast.success(response.data.message);
-        onClose()
-        dispatch(fetchNotifications(user._id));
+      if (isEdit) {
+        await axios.put(`/api/v1/purchase-order/${editId}`, payload);
+        toast.success("Purchase Order updated");
       } else {
-        const response = await axios.post('/api/v1/purchase-order', updatedFormData);
-        toast.success(response.data.message);
-        onClose()
-        dispatch(fetchNotifications(user._id));
+        await axios.post("/api/v1/purchase-order", payload);
+        toast.success("Purchase Order created");
       }
-    } catch (error) {
-      console.error('Error submitting purchase order:', error.message);
-      toast.error(error.message);
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed");
+    } finally {
+      setLoading(false);
     }
   };
 
+  /* =====================
+     UI
+  ===================== */
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-6 mb-2 w-full max-w-md">
-        {requirementToEdit.id && requirementToEdit.index ? (
-          <>
-            <div className='mb-4'>
-              <label htmlFor='material' className="block text-sm font-semibold text-gray-600 mb-1">Material</label>
-              <Select
-                value={{ value: requirement.material, label: requirement.material }}
-                onChange={(selectedOption) => handleUpdate('material', selectedOption.value)}
-                options={materials.map(material => ({ value: material.work, label: material.work }))}
-                placeholder="Material"
-              />
-            </div>
+    <div className="max-w-xl mx-auto space-y-4">
+      <h2 className="text-lg font-semibold">
+        {isEdit ? "Edit Purchase Order" : "Create Purchase Order"}
+      </h2>
 
-            <div className='mb-4'>
-              <label htmlFor='rate' className="block text-sm font-semibold text-gray-600 mb-1">Rate</label>
+      {/* Supplier */}
+      <Select
+        placeholder="Select Supplier"
+        value={form.supplier}
+        onChange={(v) => setForm({ ...form, supplier: v })}
+        options={suppliers.map((s) => ({
+          value: s._id,
+          label: s.name,
+        }))}
+      />
+
+      {/* Delivery For */}
+      <Select
+        placeholder="Deliver To Store"
+        value={form.deliveryFor}
+        onChange={(v) => setForm({ ...form, deliveryFor: v })}
+        options={stores.map((s) => ({
+          value: s._id,
+          label: s.name,
+        }))}
+      />
+
+      {/* ITEMS */}
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-medium">Items</h3>
+          <button
+            onClick={addItem}
+            className="bg-blue-600 text-white px-3 py-1 rounded"
+          >
+            + Add Item
+          </button>
+        </div>
+
+        {form.items.map((item, i) => (
+          <div key={i} className="border p-2 rounded mb-2">
+            <Select
+              placeholder="Select Item"
+              value={
+                item.itemId
+                  ? { value: item.itemId, label: item.item }
+                  : null
+              }
+              onChange={(v) =>
+                updateItem(i, "itemId", v.value) ||
+                updateItem(i, "item", v.label)
+              }
+              options={stocks.map((s) => ({
+                value: s._id,
+                label: s.name,
+              }))}
+            />
+
+            <div className="grid grid-cols-2 gap-2 mt-2">
               <input
                 type="number"
-                value={requirement.rate}
-                onChange={(e) => handleUpdate('rate', e.target.value)}
+                placeholder="Qty"
+                value={item.requestedQty}
+                onChange={(e) =>
+                  updateItem(i, "requestedQty", e.target.value)
+                }
+                className="border p-1"
+              />
+
+              <input
+                type="number"
                 placeholder="Rate"
-                className="border p-2 rounded w-full"
+                value={item.rate}
+                onChange={(e) =>
+                  updateItem(i, "rate", e.target.value)
+                }
+                className="border p-1"
               />
-            </div>
 
-            <div className='mb-4'>
-              <label htmlFor='quantity' className="block text-sm font-semibold text-gray-600 mb-1">Quantity</label>
+              <select
+                value={item.unit}
+                onChange={(e) =>
+                  updateItem(i, "unit", e.target.value)
+                }
+                className="border p-1"
+              >
+                <option value="">Unit</option>
+                {units.map((u) => (
+                  <option key={u}>{u}</option>
+                ))}
+              </select>
+
               <input
-                type="number"
-                value={requirement.quantity}
-                onChange={(e) => handleUpdate('quantity', e.target.value)}
-                placeholder="Quantity"
-                className="border p-2 rounded w-full"
+                disabled
+                value={item.amount || 0}
+                className="border p-1 bg-gray-100"
               />
             </div>
 
-            <div className='mb-4'>
-              <label htmlFor='unit' className="block text-sm font-semibold text-gray-600 mb-1">Unit</label>
-              <select
-                value={requirement.unit}
-                onChange={(e) => handleUpdate('unit', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              >
-                <option>Select a Unit</option>
-                {units.map((unit, index) => (
-                  <option key={index} value={unit}>{unit}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className='mb-4'>
-              <label htmlFor='status' className="block text-sm font-semibold text-gray-600 mb-1">Status</label>
-              <select
-                value={requirement.status}
-                onChange={(e) => handleUpdate('status', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              >
-                <option>{requirement.status || 'Status'}</option>
-                {statusOptions.map((status, index) => (
-                  <option key={index} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
-
-            <button type="submit" className="bg-blue-500 hover:bg-blue-700 mt-4 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"              
-            disabled={loading}
+            <button
+              onClick={() => removeItem(i)}
+              className="text-red-500 text-xs mt-1"
             >
-              {loading ? "Submitting..." : "Update requirement"}</button>
-          </>
-        ) : (
-          <>
-            <div className="mb-4">
-              <label htmlFor="site" className="block text-sm font-semibold text-gray-600">Site</label>
-              <select
-                name="site"
-                value={formData.site}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                onChange={(e) => handleChange('site', e.target.value)}>
-                <option>{purchaseOrderToEdit ? data?.site : 'Site'}</option>
-                {sites.map((site, index) => (
-                  <option key={index} value={site._id}>{site.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="supplier" className="block text-sm font-semibold text-gray-600">Supplier</label>
-              <select
-                name="supplier"
-                value={formData.supplier}
-                onChange={(e) => handleChange('supplier', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option>{purchaseOrderToEdit ? data?.supplier : 'Supplier'}</option>
-                {suppliers.map((supplier) => (
-                  <option key={supplier._id} value={supplier._id}>{supplier.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="category" className="block text-sm font-semibold text-gray-600">Material Category</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={(e) => handleChange('category', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="">Select A Category</option>
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="requirementFor" className="block text-sm font-semibold text-gray-600">Requirement For</label>
-              <select
-                name="requirementFor"
-                value={formData.requirementFor}
-                onChange={(e) => handleChange('requirementFor', e.target.value)}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option>Requirement For</option>
-              </select>
-            </div>
-
-            <div className="mt-4">
-              <h2 className="text-lg font-semibold mb-2">Material Details</h2>
-              {formData.requirement.map((item, index) => (
-                <div key={index} className="mb-4 p-4 border rounded">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                    <div>
-                      <label htmlFor={`work[${index}].material`} className="block text-sm font-semibold text-gray-600">Material</label>
-                      <Select
-                        value={{ value: item.material, label: item.material }}
-                        onChange={(selectedOption) => handleRequirementChange(index, 'material', selectedOption.value)}
-                        options={materials.map(material => ({ value: material.work, label: material.work }))}
-                        placeholder="Material"
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor={`work[${index}].quantity`} className="block text-sm font-semibold text-gray-600">Quantity</label>
-                      <input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => handleRequirementChange(index, 'quantity', e.target.value)}
-                        placeholder="Quantity"
-                        className="border p-2 rounded w-full"
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor={`work[${index}].rate`} className="block text-sm font-semibold text-gray-600">Rate</label>
-                      <input
-                        type="number"
-                        value={item.rate}
-                        onChange={(e) => handleRequirementChange(index, 'rate', e.target.value)}
-                        placeholder="Rate"
-                        className="border p-2 rounded w-full"
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor={`work[${index}].unit`} className="block text-sm font-semibold text-gray-600">Unit</label>
-                      <select
-                        value={item.unit}
-                        onChange={(e) => handleRequirementChange(index, 'unit', e.target.value)}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                        <option>Select a Unit</option>
-                        {units.map((unit, index) => (
-                          <option key={index} value={unit}>{unit}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {formData.requirement.length > 1 && (
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveRequirement(index)}
-                          className="bg-red-500 text-white p-2 mt-4 rounded"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={handleAddRequirement}
-                className="bg-blue-500 text-white p-2 rounded"
-              >
-                More Requirement
-              </button>
-            </div>
-
-            <button type="submit" className="bg-green-500 text-white p-2 rounded mt-2"
-                          disabled={loading}
-            >
-              {loading ? "Submitting..." : `${purchaseOrderToEdit ? 'Update Purchase Order' : 'Create Purchase Order'}`}
-              
+              Remove
             </button>
-          </>
-        )}
-      </form>
-      <Toaster position="top-right" reverseOrder={false} />
+          </div>
+        ))}
+      </div>
+
+      {/* Remarks */}
+      <textarea
+        placeholder="Remarks"
+        value={form.remarks}
+        onChange={(e) =>
+          setForm({ ...form, remarks: e.target.value })
+        }
+        className="border p-2 w-full"
+      />
+
+      <button
+        onClick={submit}
+        disabled={loading}
+        className="bg-green-600 text-white w-full py-2 rounded"
+      >
+        {loading ? "Saving..." : "Save Purchase Order"}
+      </button>
+      <Toaster/>
     </div>
   );
 };

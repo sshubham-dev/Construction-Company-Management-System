@@ -141,7 +141,7 @@ export default function Approvals({ showApprovals, setShowApprovals }) {
         navigate(`/bill/${id}/approval/${approvalId}`);
         break;
       case "Purchase Order":
-        navigate(`/purchase-order/${id}/approval/${approvalId}`);
+        navigate(`/erp/inventory/purchase-order/${id}/approval/${approvalId}`);
         break;
       case "Project Schedule":
         navigate(`/project-schedule/${id}/approval/${approvalId}`);

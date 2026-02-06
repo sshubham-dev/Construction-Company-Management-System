@@ -24,42 +24,25 @@ const generatePaymentNo = async (req, res) => {
   }
 };
 
-const updateLedgersAndModels = async (receipt, mode = "add") => {
+const applyPaymentToLedgers = async (payment, mode = "add") => {
   const multiplier = mode === "add" ? 1 : -1;
-  const amount = parseFloat(receipt.amount);
+  const amount = Number(payment.amount);
 
-  const fromLedger = await Ledger.findById(receipt.from.id);
-  const toLedger = await Ledger.findById(receipt.to.id);
+  const fromLedger = await Ledger.findById(payment.from.id);
+  const toLedger = await Ledger.findById(payment.to.id);
 
-  if (fromLedger) {
-    fromLedger.receivable = (fromLedger.receivable || 0) + multiplier * amount;
-    fromLedger.received = (fromLedger.received || 0) + multiplier * amount;
-    fromLedger.balance = (fromLedger.balance || 0) + multiplier * amount;
-    fromLedger.transaction.push({ id: receipt._id, type: "Receipt", amount });
-    await fromLedger.save();
+  if (!fromLedger || !toLedger) {
+    throw new Error("Ledger not found");
   }
 
-  if (toLedger) {
-    toLedger.paid = (toLedger.paid || 0) + multiplier * amount;
-    toLedger.balance = (toLedger.balance || 0) + multiplier * amount;
-    toLedger.transaction.push({ id: receipt._id, type: "Receipt", amount });
-    await toLedger.save();
-  }
+  // From ledger → Credit
+  fromLedger.currentBalance -= multiplier * amount;
 
-  // Update related models (PaymentSchedule, Client, Site)
-  if (receipt.invoice?.length > 0) {
-    for (const inv of receipt.invoice) {
-      if (inv.type === "Payment_Schedule") {
-        const schedule = await PaymentSchedule.findById(inv.id);
-        if (schedule) {
-          const amountPaid = schedule.amountPaid || 0;
-          schedule.amountPaid = amountPaid + multiplier * amount;
-          schedule.amountdue = Math.max(0, (schedule.totalValue || 0) - schedule.amountPaid);
-          await schedule.save();
-        }
-      }
-    }
-  }
+  // To ledger → Debit
+  toLedger.currentBalance += multiplier * amount;
+
+  await fromLedger.save();
+  await toLedger.save();
 };
 
 // Create a payment
@@ -74,36 +57,113 @@ const createPayment = async (req, res) => {
       amount,
       description,
       paymentFor,
-      invoiceType,
       invoice,
+      costCenter,
     } = req.body;
 
-    // Create payment document
-    const payment = new Payment({
+    if (!from || !to || !amount) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (from === to) {
+      return res.status(400).json({ error: "From and To ledger cannot be same" });
+    }
+
+    const fromLedger = await Ledger.findById(from);
+    const toLedger = await Ledger.findById(to);
+
+    if (!fromLedger || !toLedger) {
+      return res.status(400).json({ error: "Invalid ledger" });
+    }
+
+    const payment = await Payment.create({
       paymentNo,
       date,
-      from: { id: from, name: (await Ledger.findById(from))?.name },
-      to: { id: to, name: (await Ledger.findById(to))?.name },
+      from: { id: fromLedger._id, name: fromLedger.name },
+      to: { id: toLedger._id, name: toLedger.name },
       referenceNo,
       amount: Number(amount),
       description,
       paymentFor,
-      invoiceType,
       invoice,
+      costCenter,
+      status: "Draft",
+      createdBy: req.user._id,
     });
-
-    await payment.save();
-
-    // Update ledger balances
-    await updateLedgersAndModels(payment, "add");
-
-    // Update ledger balances
-    await Ledger.findByIdAndUpdate(from, { $inc: { paid:  Number(amount), balance: - Number(amount) } });
-    await Ledger.findByIdAndUpdate(to, { $inc: { balance:  Number(amount) } });
 
     res.status(201).json(payment);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+};
+
+const postPayment = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+    if (!payment) {
+      return res.status(404).json({ error: "Payment not found" });
+    }
+
+    if (payment.status !== "Draft") {
+      return res.status(400).json({
+        error: "Only Draft payment can be posted",
+      });
+    }
+
+    await applyPaymentToLedgers(payment, "add");
+
+    payment.status = "Posted";
+    await payment.save();
+
+    res.json({ message: "Payment posted successfully", payment });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const cancelPayment = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+    if (!payment) {
+      return res.status(404).json({ error: "Payment not found" });
+    }
+
+    if (payment.status !== "Posted") {
+      return res.status(400).json({
+        error: "Only Posted payment can be cancelled",
+      });
+    }
+
+    await applyPaymentToLedgers(payment, "subtract");
+
+    payment.status = "Cancelled";
+    await payment.save();
+
+    res.json({ message: "Payment cancelled successfully", payment });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const updatePayment = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    if (payment.status !== "Draft") {
+      return res.status(400).json({
+        message: "Posted or cancelled payment cannot be edited",
+      });
+    }
+
+    Object.assign(payment, req.body);
+    await payment.save();
+
+    res.json({ message: "Payment updated successfully", payment });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -142,53 +202,27 @@ const getPaymentById = async (req, res) => {
   }
 };
 
-// Update a payment
-const updatePayment = async (req, res) => {
-  try {
-    const payment = await Payment.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    }).populate('from.id to.id invoice.id');
-    if (!payment) {
-      return res.status(404).json({
-        success: false,
-        message: 'Payment not found',
-      });
-    }
-    res.status(200).json({
-      success: true,
-      message: 'Payment updated successfully',
-      data: payment,
-    });
-  } catch (err) {
-    res.status(400).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
 // Delete a payment
 const deletePayment = async (req, res) => {
   try {
-    const payment = await Payment.findByIdAndDelete(req.params.id);
+    const payment = await Payment.findById(req.params.id);
     if (!payment) {
-      return res.status(404).json({
-        success: false,
-        message: 'Payment not found',
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    if (payment.status !== "Draft") {
+      return res.status(400).json({
+        message: "Only Draft payment can be deleted",
       });
     }
-    res.status(200).json({
-      success: true,
-      message: 'Payment deleted successfully',
-    });
+
+    await payment.deleteOne();
+    res.json({ message: "Payment deleted successfully" });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ error: err.message });
   }
 };
+
 
 module.exports = {
   createPayment,
@@ -197,4 +231,6 @@ module.exports = {
   updatePayment,
   deletePayment,
   generatePaymentNo,
+  postPayment,
+  cancelPayment
 }

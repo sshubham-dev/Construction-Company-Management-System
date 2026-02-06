@@ -6,6 +6,8 @@ import { fetchNotifications } from "../features/notification/notificationSlice";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 
+axios.defaults.withCredentials = true;
+
 const Notification = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("unseen");
@@ -21,10 +23,10 @@ const Notification = () => {
   useEffect(() => {
     if (user?._id) {
       dispatch(fetchNotifications(user._id));
-      const interval = setInterval(() => {
-        dispatch(fetchNotifications(user._id));
-      }, 5000);
-      return () => clearInterval(interval);
+      // const interval = setInterval(() => {
+      //   dispatch(fetchNotifications(user._id));
+      // }, 5000);
+      // return () => clearInterval(interval);
     }
   }, [dispatch, user?._id]);
   // console.log(unseenNotifications)
@@ -56,7 +58,7 @@ const Notification = () => {
 
   const handleNotificationClick = async (id) => {
     try {
-      await axios.patch(`/api/v1/notification/mark-read/${id}`);
+      await axios.put(`/api/v1/notification/mark-read/${id}`);
       dispatch(fetchNotifications(user._id));
     } catch (error) {
       console.error("Failed to mark as read:", error);
@@ -65,7 +67,7 @@ const Notification = () => {
 
   const handleMarkAllAsSeen = async () => {
     try {
-      await axios.patch(`/api/v1/notification/mark-all-read`);
+      await axios.put(`/api/v1/notification/mark-all-read`);
       dispatch(fetchNotifications(user._id));
     } catch (error) {
       console.error("Failed to mark all as read:", error);

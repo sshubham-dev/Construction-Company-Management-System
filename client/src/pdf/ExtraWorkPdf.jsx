@@ -50,29 +50,55 @@ const styles = StyleSheet.create({
     paddingBottom: 3,
   },
 
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
+row: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: 4,
+},
+
   label: { fontWeight: "bold", color: "#333" },
 
-  /* ---------- TABLE ---------- */
-  table: { marginTop: 6 },
-  tableRow: {
-    flexDirection: "row",
-    borderBottom: "1px solid #ddd",
-    paddingVertical: 5,
-  },
-  tableHeader: {
-    flex: 1,
-    fontWeight: "bold",
-    color: accent,
-  },
-  tableCell: {
-    flex: 1,
-    color: "#333",
-  },
+/* ---------- TABLE ---------- */
+table: {
+  marginTop: 6,
+  borderWidth: 1,
+  borderColor: "#ddd",
+},
+
+tableRow: {
+  flexDirection: "row",
+  borderBottomWidth: 1,
+  borderBottomColor: "#ddd",
+  paddingVertical: 4,
+  alignItems: "center",
+},
+
+tableHeaderRow: {
+  backgroundColor: "#eef6ee",
+},
+
+/* column widths must total ~100% */
+colWork: { width: "40%", paddingRight: 4 },
+colUnit: { width: "10%", textAlign: "right" },
+colRate: { width: "12%", textAlign: "right" },
+colQty: { width: "12%", textAlign: "right" },
+colAmount: { width: "12%", textAlign: "right" },
+// colPaid: { width: "12%", textAlign: "right" },
+// colDue: { width: "12%", textAlign: "right" },
+colStatus: { width: "14%", textAlign: "center" },
+
+tableHeaderText: {
+  fontWeight: "bold",
+  color: accent,
+  fontSize: 8.5,
+},
+
+tableCellText: {
+  fontSize: 8.5,
+  color: "#333",
+},
+
 
   /* ---------- SUMMARY ---------- */
   summaryBox: {
@@ -80,16 +106,27 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     borderTop: `1px solid ${accent}`,
   },
+  profitText: {
+  color: accent,
+  fontWeight: "bold",
+},
+
+netAmountText: {
+  fontWeight: "bold",
+  borderTop: "1px solid #ccc",
+  paddingTop: 4,
+},
+
 
   /* ---------- SIGNATURE ---------- */
   signatures: {
-    marginTop: 26,
+    marginTop: 16,
     flexDirection: "row",
     justifyContent: "space-between",
   },
   signatureBox: { width: "22%", textAlign: "center" },
   signatureLine: {
-    marginTop: 28,
+    marginTop: 18,
     borderTop: "1px solid #000",
     paddingTop: 4,
     fontSize: 9,
@@ -97,7 +134,7 @@ const styles = StyleSheet.create({
 
   footer: {
     position: "absolute",
-    bottom: 20,
+    bottom: 14,
     left: 24,
     right: 24,
     textAlign: "center",
@@ -111,6 +148,15 @@ const ExtraWorkPdf = ({ Work }) => {
 
   const partyName =
     Work.extraFor === "Contractor" ? Work.contractor?.name : Work.client?.name;
+
+    const totalAmount = Number(Work.totalAmount || 0);
+const profitPercentage = 10;
+const profitAmount = Math.round((totalAmount * profitPercentage) / 100);
+const netAmount = totalAmount + profitAmount;
+
+const showProfit = Work.extraFor === "Client";
+
+
 
   return (
     <Document>
@@ -165,60 +211,99 @@ const ExtraWorkPdf = ({ Work }) => {
         </View>
 
         {/* ✅ WORK DETAILS TABLE */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Work Details</Text>
+<View style={styles.section}>
+  <Text style={styles.sectionTitle}>Work Details</Text>
 
-          <View style={styles.table}>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableHeader}>Work</Text>
-              <Text style={styles.tableHeader}>Rate</Text>
-              <Text style={styles.tableHeader}>Qty</Text>
-              <Text style={styles.tableHeader}>Amount</Text>
-              <Text style={styles.tableHeader}>Paid</Text>
-              <Text style={styles.tableHeader}>Due</Text>
-              <Text style={styles.tableHeader}>Status</Text>
-            </View>
+  <View style={styles.table}>
+    {/* Header */}
+    <View style={[styles.tableRow, styles.tableHeaderRow]}>
+      <Text style={[styles.colWork, styles.tableHeaderText]}>Work</Text>
+      <Text style={[styles.colRate, styles.tableHeaderText]}>Unit</Text>
+      <Text style={[styles.colRate, styles.tableHeaderText]}>Rate</Text>
+      <Text style={[styles.colQty, styles.tableHeaderText]}>Qty</Text>
+      <Text style={[styles.colAmount, styles.tableHeaderText]}>Amount</Text>
+      {/* <Text style={[styles.colPaid, styles.tableHeaderText]}>Paid</Text> */}
+      {/* <Text style={[styles.colDue, styles.tableHeaderText]}>Due</Text> */}
+      <Text style={[styles.colStatus, styles.tableHeaderText]}>Status</Text>
+    </View>
 
-            {Work.WorkDetail?.map((item, index) => (
-              <View key={index} style={styles.tableRow}>
-                <Text style={styles.tableCell}>{item.work}</Text>
-                <Text style={styles.tableCell}>
-                  ₹{item.rate}/{item.unit}
-                </Text>
-                <Text style={styles.tableCell}>{item.area}</Text>
-                <Text style={styles.tableCell}>₹{item.amount}</Text>
-                <Text style={styles.tableCell}>₹{item.paid || 0}</Text>
-                <Text style={styles.tableCell}>₹{item.due || 0}</Text>
-                <Text style={styles.tableCell}>{item.status}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+    {/* Rows */}
+    {Work.WorkDetail?.map((item, index) => (
+      <View key={index} style={styles.tableRow}>
+        <Text style={[styles.colWork, styles.tableCellText]}>
+          {item.work}
+        </Text>
+
+        <Text style={[styles.colUnit, styles.tableCellText]}>
+          {item.unit}
+        </Text>
+        <Text style={[styles.colRate, styles.tableCellText]}>
+          {item.rate}
+        </Text>
+
+        <Text style={[styles.colQty, styles.tableCellText]}>
+          {item.area}
+        </Text>
+
+        <Text style={[styles.colAmount, styles.tableCellText]}>
+          {item.amount}
+        </Text>
+
+        {/* <Text style={[styles.colPaid, styles.tableCellText]}>
+          {item.paid || 0}
+        </Text>
+
+        <Text style={[styles.colDue, styles.tableCellText]}>
+          {item.due || 0}
+        </Text> */}
+
+        <Text style={[styles.colStatus, styles.tableCellText]}>
+          {item.status}
+        </Text>
+      </View>
+    ))}
+  </View>
+</View>
+
 
         {/* ✅ FINANCIAL SUMMARY */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Financial Summary</Text>
+        <View style={styles.section} wrap={false}>
+  <Text style={styles.sectionTitle}>Financial Summary</Text>
 
-          <View style={styles.summaryBox}>
-            <View style={styles.row}>
-              <Text style={styles.label}>Total Amount:</Text>
-              <Text>₹{Work.totalAmount}</Text>
-            </View>
+  <View style={styles.summaryBox}>
+    <View style={styles.row}>
+      <Text style={styles.label}>Total Amount:</Text>
+      <Text>₹{totalAmount}</Text>
+    </View>
 
-            <View style={styles.row}>
-              <Text style={styles.label}>Total Paid:</Text>
-              <Text>₹{Work.paid}</Text>
-            </View>
+{showProfit && (
+  <View style={styles.row}>
+    <Text style={styles.label}>Profit (10%):</Text>
+    <Text style={styles.profitText}>{profitAmount}</Text>
+  </View>
+)}
 
-            <View style={styles.row}>
-              <Text style={styles.label}>Total Due:</Text>
-              <Text>₹{Work.due}</Text>
-            </View>
-          </View>
-        </View>
+
+    <View style={styles.row}>
+      <Text style={styles.label}>Net Amount:</Text>
+     <Text style={styles.netAmountText}>{netAmount}</Text>
+    </View>
+
+    <View style={styles.row}>
+      <Text style={styles.label}>Total Paid:</Text>
+      <Text>{Work.paid}</Text>
+    </View>
+
+    <View style={styles.row}>
+      <Text style={styles.label}>Total Due:</Text>
+      <Text>{netAmount-Work.paid}</Text>
+    </View>
+  </View>
+</View>
+
 
         {/* ✅ APPROVAL TRACKING */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Approval Status</Text>
 
           <View style={styles.row}>
@@ -240,7 +325,7 @@ const ExtraWorkPdf = ({ Work }) => {
             <Text>Account Head:</Text>
             <Text>{Work.accountheadApprove}</Text>
           </View>
-        </View>
+        </View> */}
 
         {/* ✅ SIGNATURES */}
         <View style={styles.signatures}>

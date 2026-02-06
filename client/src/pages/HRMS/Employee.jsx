@@ -59,7 +59,7 @@ const Employee = () => {
         <Header category="Page" title="Employee's" />
         <div className="w-full mx-auto mb-6 text-gray-700 p-1 flex flex-row justify-between items-center">
           <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
-            Total Employee: {employees.length}
+            Total Employee: {employees?.length}
           </h2>
           <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white px-2 py-2 sm:mt-0">
             <MdAdd className='text-xl' />
@@ -83,22 +83,22 @@ const Employee = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {employees.map((employee) => (
-                <tr key={employee._id} className="bg-white border-b hover:bg-gray-50">
+              {employees?.map((employee, index) => (
+                <tr key={index} className="bg-white border-b hover:bg-gray-50">
                   <td className="px-6 py-4">
-                    {employee.name}
+                    {employee?.name}
                   </td>
                   <td className="px-6 py-4">
-                    {employee.email}
+                    {employee?.email}
                   </td>
                   <td className="px-6 py-4">
-                    {employee.whatsapp}
+                    {employee?.whatsapp}
                   </td>
                   <td className="px-6 py-4">
-                    {employee.employeeNo}
+                    {employee?.employeeID ? employee?.employeeID : employee?.employeeNo}
                   </td>
                   <td className="px-6 py-4">
-                    {employee.department}
+                    {employee?.department}
                   </td>
                   <td className="px-6 py-4">
                     {/* <button onClick={() => handleRedirect(employee._id)} className="mr-2">
@@ -106,11 +106,11 @@ const Employee = () => {
                     </button> */}
                     <button
                       className=" mr-2"
-                      onClick={() => handleEdit(employee._id)}>
+                      onClick={() => handleEdit(employee?._id)}>
                       <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                     </button>
                     <button
-                      onClick={() => handleDelete(employee._id)}
+                      onClick={() => handleDelete(employee?._id)}
                       className="mr-2">
                       <MdDelete className='text-red-500 hover:text-red-600 text-xl' />
                     </button>

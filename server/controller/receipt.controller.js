@@ -1,12 +1,3 @@
-// const receipt = await Receipt.findById(receiptId);
-// if (receipt.invoice.type === 'Invoice') {
-//   const invoice = await Invoice.findById(receipt.invoice.id);
-//   // Do something with the Invoice
-// } else if (receipt.invoice.type === 'Bill') {
-//   const bill = await Bill.findById(receipt.invoice.id);
-//   // Do something with the Bill
-// }
-
 const { Ledger } = require("../models/ledger.models");
 const Receipt = require('../models/receipt.models');  // Adjust path as needed
 const Bill = require('../models/bill.models');
@@ -16,78 +7,64 @@ const { sendNotification } = require("./notification.controller.js");
 
 const getReceiptWithInvoices = async (req, res) => {
   try {
-    const receipt = await Receipt.findById(req.params.id);
-    if (!receipt) return res.status(404).json({ error: 'Receipt not found' });
+    const receipt = await Receipt.findById(req.params.id).lean();
+    if (!receipt) {
+      return res.status(404).json({ error: "Receipt not found" });
+    }
 
-    // Resolve invoice references manually
-    const populatedInvoices = await Promise.all(receipt.invoice.map(async (inv) => {
-      let data = null;
-      switch (inv.type) {
-        case 'Bill':
-          data = await Bill.findById(inv.id);
-          break;
-        case 'Extra_Work':
-          data = await ExtraWork.findById(inv.id);
-          break;
-        case 'Payment_Schedule':
-          data = await PaymentSchedule.findById(inv.id);
-          break;
-        // Add Invoice, Return_Order, etc.
-        default:
-          break;
-      }
+    const invoiceDetails = await Promise.all(
+      (receipt.invoice || []).map(async (inv) => {
+        let details = null;
 
-      return {
-        ...inv.toObject?.() || inv,
-        details: data || null
-      };
-    }));
+        switch (inv.invoiceType) {
+          case "Bill":
+            details = await Bill.findById(inv.invoiceId).lean();
+            break;
+          case "ExtraWork":
+            details = await ExtraWork.findById(inv.invoiceId).lean();
+            break;
+          case "PaymentSchedule":
+            details = await PaymentSchedule.findById(inv.invoiceId).lean();
+            break;
+          default:
+            break;
+        }
 
-    res.json({ ...receipt.toObject(), invoiceDetails: populatedInvoices });
+        return { ...inv, details };
+      })
+    );
 
+    res.json({ ...receipt, invoiceDetails });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
 
-const updateLedgersAndModels = async (receipt, mode = "add") => {
+
+
+const applyReceiptToLedgers = async (receipt, mode = "add") => {
   const multiplier = mode === "add" ? 1 : -1;
-  const amount = parseFloat(receipt.amount);
+  const amount = Number(receipt.amount);
 
-  const fromLedger = await Ledger.findById(receipt.from.id);
-  const toLedger = await Ledger.findById(receipt.to.id);
+  const partyLedger = await Ledger.findById(receipt.from.id);
+  const cashLedger = await Ledger.findById(receipt.to.id);
 
-  if (fromLedger) {
-    fromLedger.receivable = (fromLedger.receivable || 0) + multiplier * amount;
-    fromLedger.received = (fromLedger.received || 0) + multiplier * amount;
-    fromLedger.currentBalance = (fromLedger.currentBalance || 0) + multiplier * amount;
-    fromLedger.transaction.push({ id: receipt._id, type: "Receipt", amount });
-    await fromLedger.save();
+  if (!partyLedger || !cashLedger) {
+    throw new Error("Ledger not found");
   }
 
-  if (toLedger) {
-    toLedger.received = (toLedger.received || 0) + multiplier * amount;
-    toLedger.currentBalance = (toLedger.currentBalance || 0) + multiplier * amount;
-    toLedger.transaction.push({ id: receipt._id, type: "Receipt", amount });
-    await toLedger.save();
-  }
+  // Party ledger (Credit)
+  partyLedger.currentBalance -= multiplier * amount;
+  partyLedger.receivable = (partyLedger.receivable || 0) - multiplier * amount;
 
-  // Update related models (PaymentSchedule, Client, Site)
-  if (receipt.invoice?.length > 0) {
-    for (const inv of receipt.invoice) {
-      if (inv.type === "Payment_Schedule") {
-        const schedule = await PaymentSchedule.findById(inv.id);
-        if (schedule) {
-          const amountPaid = schedule.amountPaid || 0;
-          schedule.amountPaid = amountPaid + multiplier * amount;
-          schedule.amountdue = Math.max(0, (schedule.totalValue || 0) - schedule.amountPaid);
-          await schedule.save();
-        }
-      }
-    }
-  }
+  // Cash / Bank ledger (Debit)
+  cashLedger.currentBalance += multiplier * amount;
+  cashLedger.received = (cashLedger.received || 0) + multiplier * amount;
+
+  await partyLedger.save();
+  await cashLedger.save();
 };
+
 
 // Create a new receipt
 const createReceipt = async (req, res) => {
@@ -100,27 +77,29 @@ const createReceipt = async (req, res) => {
       referenceNo,
       amount,
       description,
-      invoiceType,
       invoice,
+      costCenter,
     } = req.body;
 
-    // Create receipt document
-    const receipt = new Receipt({
+    const fromLedger = await Ledger.findById(from);
+    const toLedger = await Ledger.findById(to);
+
+    if (!fromLedger || !toLedger) {
+      return res.status(400).json({ error: "Invalid ledger selected" });
+    }
+
+    const receipt = await Receipt.create({
       receiptNo,
       date,
-      from: { id: from, name: (await Ledger.findById(from))?.name },
-      to: { id: to, name: (await Ledger.findById(to))?.name },
+      from: { id: fromLedger._id, name: fromLedger.name },
+      to: { id: toLedger._id, name: toLedger.name },
       referenceNo,
-      amount,
+      amount: Number(amount),
       description,
-      invoiceType,
-      invoice,
+      invoice: invoice || [],
+      costCenter,
+      status: "Draft",
     });
-
-    await receipt.save();
-
-    // Update ledger balances
-    await updateLedgersAndModels(receipt, "add");
 
     res.status(201).json(receipt);
   } catch (error) {
@@ -128,10 +107,58 @@ const createReceipt = async (req, res) => {
   }
 };
 
+
+const postReceipt = async (req, res) => {
+  try {
+    const receipt = await Receipt.findById(req.params.id);
+    if (!receipt) {
+      return res.status(404).json({ error: "Receipt not found" });
+    }
+
+    if (receipt.status !== "Draft") {
+      return res.status(400).json({ error: "Only Draft receipt can be posted" });
+    }
+
+    await applyReceiptToLedgers(receipt, "add");
+
+    receipt.status = "Posted";
+    await receipt.save();
+
+    res.json({ message: "Receipt posted successfully", receipt });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+const cancelReceipt = async (req, res) => {
+  try {
+    const receipt = await Receipt.findById(req.params.id);
+    if (!receipt) {
+      return res.status(404).json({ error: "Receipt not found" });
+    }
+
+    if (receipt.status !== "Posted") {
+      return res.status(400).json({ error: "Only Posted receipt can be cancelled" });
+    }
+
+    await applyReceiptToLedgers(receipt, "subtract");
+
+    receipt.status = "Cancelled";
+    await receipt.save();
+
+    res.json({ message: "Receipt cancelled successfully", receipt });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
 // Get all receipts
 const getAllReceipts = async (req, res) => {
   try {
-    const receipts = await Receipt.find();
+    const receipts = await Receipt.find().sort({createdAt: -1});
     console.log(receipts)
     res.status(200).json(receipts);
   } catch (error) {
@@ -157,47 +184,74 @@ const getReceiptById = async (req, res) => {
 // Update a receipt
 const updateReceipt = async (req, res) => {
   try {
-    const { receiptNo, date, from, to, receiptDetails, amount, description, invoice } = req.body;
-
-    const updatedReceipt = await Receipt.findByIdAndUpdate(
-      req.params.id,
-      {
-        receiptNo,
-        date,
-        from,
-        to,
-        receiptDetails,
-        amount,
-        description,
-        invoice
-      },
-      { new: true } // Return updated document
-    );
-
-    if (!updatedReceipt) {
-      return res.status(404).json({ message: 'Receipt not found' });
+    const receipt = await Receipt.findById(req.params.id);
+    if (!receipt) {
+      return res.status(404).json({ message: "Receipt not found" });
     }
 
-    res.status(200).json({ message: 'Receipt updated successfully', receipt: updatedReceipt });
+    if (receipt.status !== "Draft") {
+      return res.status(400).json({
+        message: "Only Draft receipts can be edited",
+      });
+    }
+
+    const {
+      receiptNo,
+      date,
+      from,
+      to,
+      amount,
+      description,
+      invoice,
+      costCenter,
+    } = req.body;
+
+    const fromLedger = await Ledger.findById(from);
+    const toLedger = await Ledger.findById(to);
+
+    if (!fromLedger || !toLedger) {
+      return res.status(400).json({ error: "Invalid ledger" });
+    }
+
+    receipt.receiptNo = receiptNo;
+    receipt.date = date;
+    receipt.from = { id: fromLedger._id, name: fromLedger.name };
+    receipt.to = { id: toLedger._id, name: toLedger.name };
+    receipt.amount = Number(amount);
+    receipt.description = description;
+    receipt.invoice = invoice || [];
+    receipt.costCenter = costCenter;
+
+    await receipt.save();
+
+    res.json({ message: "Receipt updated successfully", receipt });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error updating receipt', error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
+
 
 // Delete a receipt
 const deleteReceipt = async (req, res) => {
   try {
-    const receipt = await Receipt.findByIdAndDelete(req.params.id);
+    const receipt = await Receipt.findById(req.params.id);
     if (!receipt) {
-      return res.status(404).json({ message: 'Receipt not found' });
+      return res.status(404).json({ message: "Receipt not found" });
     }
-    res.status(200).json({ message: 'Receipt deleted successfully' });
+
+    if (receipt.status !== "Draft") {
+      return res.status(400).json({
+        message: "Only Draft receipts can be deleted",
+      });
+    }
+
+    await receipt.deleteOne();
+    res.json({ message: "Receipt deleted successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error deleting receipt', error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
+
 
 const generateReceiptNo = async (req, res) => {
   try {
@@ -221,4 +275,4 @@ const generateReceiptNo = async (req, res) => {
   }
 };
 
-module.exports = { createReceipt, getAllReceipts, getReceiptById, updateReceipt, deleteReceipt, generateReceiptNo }
+module.exports = { createReceipt, getAllReceipts, getReceiptById, updateReceipt, deleteReceipt, generateReceiptNo, getReceiptWithInvoices, postReceipt, cancelReceipt };

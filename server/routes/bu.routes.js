@@ -3,9 +3,10 @@ const BusinessUnit = express.Router();
 const {
   createBusinessUnit,
   getBusinessUnits,
-  getBU,
-  updateBU,
-  deleteBU,
+  getBusinessUnitById,
+  updateBusinessUnit,
+  deleteBusinessUnit,
+  deactivateBusinessUnit,
 } = require("../controller/businessunit.controller");
 
 // create BU
@@ -13,8 +14,9 @@ BusinessUnit.post("/", createBusinessUnit);
 
 // list all BU
 BusinessUnit.get("/", getBusinessUnits);
-BusinessUnit.get("/:id", getBU);
-BusinessUnit.put("/:id", updateBU);
-BusinessUnit.delete("/:id", deleteBU);
+BusinessUnit.get("/:id", getBusinessUnitById);
+BusinessUnit.put("/:id", updateBusinessUnit);
+BusinessUnit.patch("/deactivate/:id", deactivateBusinessUnit);
+BusinessUnit.delete("/:id", deleteBusinessUnit);
 
 module.exports = BusinessUnit;

@@ -1,184 +1,146 @@
-import React from 'react';
-import toast, { Toaster } from 'react-hot-toast';
-import Header from '../../components/Header';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  Title,
-  PointElement,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Bar, Line } from 'react-chartjs-2';
-
-ChartJS.register(
-  BarElement,
-  LineElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend
-);
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import Modal from "../../components/Modal.jsx";
+import CreateStore from "../../components/CreateStore.jsx";
 
 const Store = () => {
-  // Chart options
-  const barOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top' },
-      title: { display: true, text: 'Sales & Purchase (Monthly)' },
-    },
+  const [stores, setStores] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);  
+  const [editStoreId, setEditStoreId] = useState(null);
+
+  useEffect(() => {
+    fetchStores();
+  }, []);
+
+  const fetchStores = async () => {
+    try {
+      const res = await axios.get("/api/v1/store");
+      setStores(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const lineOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'bottom' },
-      title: { display: true, text: 'Order Summary (Monthly)' },
-    },
-  };
+  const handleEdit = (id) => {
+    setIsEditMode(true);
+    setEditStoreId(id);
+  }
 
-  // Data for charts
-  const salesPurchaseData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
-    datasets: [
-      { label: 'Purchase', data: [40000, 30000, 50000, 20000, 40000, 30000, 50000, 20000, 40000], backgroundColor: '#4CAF50' },
-      { label: 'Sales', data: [30000, 20000, 40000, 30000, 50000, 40000, 30000, 40000, 50000], backgroundColor: '#2196F3' },
-    ],
-  };
-
-  const orderSummaryData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-    datasets: [
-      { label: 'Ordered', data: [3000, 4000, 3500, 4500, 3000], borderColor: '#FF9800', backgroundColor: 'rgba(255, 152, 0, 0.5)', fill: true },
-      { label: 'Delivered', data: [2500, 3700, 3000, 4200, 2800], borderColor: '#03A9F4', backgroundColor: 'rgba(3, 169, 244, 0.5)', fill: true },
-    ],
-  };
-
-  // Overview Cards Data
-  const overviewCards = [
-    { title: 'Sales', value: '₹ 832', icon: '📈' },
-    { title: 'Revenue', value: '₹ 18,300', icon: '💰' },
-    { title: 'Profit', value: '₹ 868', icon: '📊' },
-    { title: 'Cost', value: '₹ 17,432', icon: '💸' },
-  ];
-
-  // Inventory Data
-  const inventoryCards = [
-    { title: 'Quantity in Hand', value: '868', icon: '📦' },
-    { title: 'To be Received', value: '200', icon: '📥' },
-    { title: 'Number of Suppliers', value: '31', icon: '👥' },
-    { title: 'Number of Categories', value: '21', icon: '📋' },
-  ];
-
-  // Stock Data
-  const topSellingStock = [
-    { name: 'Surf Excel', sold: 30, remaining: 12, price: '₹ 100' },
-    { name: 'Rin', sold: 21, remaining: 15, price: '₹ 207' },
-    { name: 'Parle G', sold: 19, remaining: 17, price: '₹ 105' },
-  ];
-
-  const lowQuantityStock = [
-    { name: 'Tata Salt', remaining: 10 },
-    { name: 'Lays', remaining: 15 },
-  ];
+  if (loading) return <div className="p-4">Loading...</div>;
 
   return (
-    <div>
-      <Header category="Page" title="Store Management" />
-      <section className="container mx-auto mt-4 mb-16">
-        {/* Overview Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {overviewCards.map((card, index) => (
-            <div key={index} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+ <div className="p-4 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold">Stores</h2>
+        <button
+          onClick={()=>setIsModalOpen(true)}
+          className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm"
+        >
+          + New Store
+        </button>
+      </div>
+
+      {/* Empty State */}
+      {stores.length === 0 && (
+        <div className="text-sm text-gray-500 border rounded p-4 bg-white">
+          No stores created yet.
+        </div>
+      )}
+
+      {/* Store Cards */}
+      <div className="space-y-3">
+        {stores.map((store) => (
+          <div
+            key={store._id}
+            className="border rounded p-3 bg-white shadow-sm"
+          >
+            {/* Top Row */}
+            <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-gray-500">{card.title}</h3>
-                <p className="text-lg font-bold text-gray-800">{card.value}</p>
+                <p className="font-medium">{store.name}</p>
+                <p className="text-xs text-gray-500">
+                  {store.businessUnitId?.name || "No Business Unit"}
+                </p>
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  Code: {store.code || "-"}
+                </p>
               </div>
-              <span className="text-2xl">{card.icon}</span>
+
+              <span
+                className={`text-xs px-2 py-0.5 rounded ${
+                  store.isActive
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {store.isActive ? "Active" : "Inactive"}
+              </span>
             </div>
-          ))}
-        </div>
 
-        {/* Inventory Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {inventoryCards.map((card, index) => (
-            <div key={index} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-500">{card.title}</h3>
-                <p className="text-lg font-bold text-gray-800">{card.value}</p>
-              </div>
-              <span className="text-2xl">{card.icon}</span>
+            {/* Capabilities */}
+            <div className="flex flex-wrap gap-2 mt-2 text-[11px]">
+              {store.managesConsumables && (
+                <span className="bg-gray-100 px-2 py-0.5 rounded">
+                  Consumables
+                </span>
+              )}
+              {store.managesAssets && (
+                <span className="bg-gray-100 px-2 py-0.5 rounded">
+                  Assets
+                </span>
+              )}
+              {store.allowInternalSalesToSites && (
+                <span className="bg-gray-100 px-2 py-0.5 rounded">
+                  Site Issue
+                </span>
+              )}
             </div>
-          ))}
-        </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-4">
-            <Bar data={salesPurchaseData} options={barOptions} />
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <Line data={orderSummaryData} options={lineOptions} />
-          </div>
-        </div>
+            {/* Actions */}
+            <div className="flex gap-3 mt-3">
+              <button
+                onClick={() =>
+                  navigate(`/erp/inventory/store/${store._id}`)
+                }
+                className="text-blue-600 text-sm"
+              >
+                View
+              </button>
 
-        {/* Stock Tables */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Top Selling Stock */}
-          <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="text-sm font-semibold text-gray-500 mb-4">Top Selling Stock</h3>
-            <table className="w-full text-sm text-left text-gray-500">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="py-2 px-3">Name</th>
-                  <th className="py-2 px-3">Sold Quantity</th>
-                  <th className="py-2 px-3">Remaining Quantity</th>
-                  <th className="py-2 px-3">Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topSellingStock.map((item, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-2 px-3">{item.name}</td>
-                    <td className="py-2 px-3">{item.sold}</td>
-                    <td className="py-2 px-3">{item.remaining}</td>
-                    <td className="py-2 px-3">{item.price}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              <button
+                onClick={() => handleEdit(store._id)}
+                className="text-green-600 text-sm"
+              >
+                Edit
+              </button>
+            </div>
           </div>
-
-          {/* Low Quantity Stock */}
-          <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="text-sm font-semibold text-gray-500 mb-4">Low Quantity Stock</h3>
-            <table className="w-full text-sm text-left text-gray-500">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="py-2 px-3">Name</th>
-                  <th className="py-2 px-3">Remaining Quantity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lowQuantityStock.map((item, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-2 px-3">{item.name}</td>
-                    <td className="py-2 px-3">{item.remaining}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* Toast Notification */}
-      <Toaster position="top-right" />
+        ))}
+      </div>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <CreateStore
+          onClose={() => {
+            setIsModalOpen(false);
+            fetchStores();
+          }}
+        />
+      </Modal>
+      <Modal isOpen={isEditMode} onClose={() => setIsEditMode(false)}>
+        <CreateStore
+          onClose={() => {
+            setIsEditMode(false);
+            fetchStores();
+          }}
+          editId={editStoreId}
+        />
+      </Modal>
     </div>
   );
 };

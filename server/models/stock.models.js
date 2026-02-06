@@ -71,7 +71,7 @@ const stockSchema = new mongoose.Schema(
     // ---------------------------------------------------------
     salesHistory: [
       {
-        salesOrderId: { type: mongoose.Schema.Types.ObjectId, ref: "Sales_Order" },
+        salesOrderId: { type: mongoose.Schema.Types.ObjectId, ref: "SalesInvoice" },
         soldTo: { type: mongoose.Schema.Types.ObjectId, refPath: "soldToType" },
         soldToType: { type: String, enum: ["Site", "Client", "BusinessUnit", "Store"] },
         quantity: Number,
@@ -93,7 +93,7 @@ const stockSchema = new mongoose.Schema(
         },
         returnTypeRef: {
           type: String,
-          enum: ["Purchase_Order", "Sales_Order"],
+          enum: ["Purchase_Order", "SalesInvoice"],
         },
         quantity: Number,
         reason: String,

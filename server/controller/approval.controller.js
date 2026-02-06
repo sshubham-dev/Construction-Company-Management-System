@@ -118,7 +118,10 @@ const reject = async (req, res) => {
       const employees = await User.find({ role: "Employee" });
       console.log(doc);
       for (let emp of employees) {
-        sendNotification(emp._id, `${approval.approvalOf} of ${approval.data?.site?.name} has been rejected By ${user.userName}.`);
+        sendNotification(
+          emp._id,
+          `${approval.approvalOf} of ${approval.data?.site?.name} has been rejected By ${user.userName}.`
+        );
         // emp.notification.push({
         //   title: "Approval Alert",
         //   message: `A Bill created by ${existingUser.userName} for ${existingSite.name}`,
@@ -215,6 +218,28 @@ const reject = async (req, res) => {
             saveReject(approval, user?._id, "Leave", message);
             await Approval.findByIdAndDelete(approval?._id);
             return res.status(201).json({ message: "Leave has been Rejected" });
+
+          case "Expense":
+            const expenses = await Expenses.findById(approval?.data._id)
+              .populate("user.id")
+              .exec();
+            console.log(expenses);
+            (approval.isApproved = false),
+              (approval.data.approval = "Rejected"),
+              (expenses.isApproved = "Rejected"),
+              console.log("before approval", approval.data);
+            await approval.save();
+            await expenses.save();
+            console.log("after Rejected", approval.data);
+            saveReject(approval, user?._id, "Expenses");
+            await Approval.findByIdAndDelete(approval?._id);
+            expenses.user?.id.message.push(
+              "Expenses has been Rejected By Parveen Sir"
+            );
+            res
+              .status(201)
+              .json({ message: "Expenses has been Rejected By Parveen Sir" });
+            break;
 
           default:
             return res.status(400).json({ message: "Invalid approval type" });
@@ -740,15 +765,14 @@ const approve = async (req, res) => {
               .json({ message: "Leave has been Approved By Parveen Sir" });
             break;
 
-          case "Expenses":
+          case "Expense":
             const expenses = await Expenses.findById(approval?.data._id)
-              .populate("user.id")
               .exec();
             console.log(expenses);
-            (approval.isApproved = true),
-              (approval.data.approval = "Approved"),
-              (expenses.approval = "Approved"),
-              console.log("before approval", approval.data);
+            approval.isApproved = true;
+            approval.data.isApproved = "Approved";
+            expenses.isApproved = "Approved";
+            console.log("before approval", approval.data);
             await approval.save();
             await expenses.save();
             console.log("after approval", approval.data);
@@ -1051,7 +1075,7 @@ const approve = async (req, res) => {
             console.log(workOrder);
             saveApproved(approval, user?._id, "Work Order");
             await Approval.findByIdAndDelete(approval?._id);
-                        for (let emp of employees) {
+            for (let emp of employees) {
               sendNotification(
                 emp._id,
                 `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
@@ -1102,7 +1126,7 @@ const approve = async (req, res) => {
             console.log(purchaseRequest);
             saveApproved(approval, user._id, "Purchase Request");
             await Approval.findByIdAndDelete(approval?._id);
-                        for (let emp of employees) {
+            for (let emp of employees) {
               sendNotification(
                 emp._id,
                 `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
@@ -1131,7 +1155,7 @@ const approve = async (req, res) => {
             // console.log(qualitySchedule)
             saveApproved(approval, user?._id, "Quality Schedule");
             await Approval.findByIdAndDelete(approval?._id);
-                        for (let emp of employees) {
+            for (let emp of employees) {
               sendNotification(
                 emp._id,
                 `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
@@ -1160,7 +1184,7 @@ const approve = async (req, res) => {
             await bill.save();
             saveApproved(approval, user._id, "Bill"),
               await Approval.findByIdAndDelete(approval?._id);
-                          for (let emp of employees) {
+            for (let emp of employees) {
               sendNotification(
                 emp._id,
                 `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
@@ -1188,7 +1212,7 @@ const approve = async (req, res) => {
             // console.log(qualitySchedule)
             saveApproved(approval, user?._id, "Quality Schedule");
             await Approval.findByIdAndDelete(approval?._id);
-                        for (let emp of employees) {
+            for (let emp of employees) {
               sendNotification(
                 emp._id,
                 `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
@@ -1215,7 +1239,7 @@ const approve = async (req, res) => {
             await bill.save();
             saveApproved(approval, user._id, "Bill"),
               await Approval.findByIdAndDelete(approval?._id);
-                          for (let emp of employees) {
+            for (let emp of employees) {
               sendNotification(
                 emp._id,
                 `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`
@@ -1247,7 +1271,7 @@ const approve = async (req, res) => {
             console.log(purchaseOrder);
             saveApproved(approval, user._id, "Purchase Order");
             await Approval.findByIdAndDelete(approval?._id);
-                        for (let emp of employees) {
+            for (let emp of employees) {
               sendNotification(
                 emp._id,
                 `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`

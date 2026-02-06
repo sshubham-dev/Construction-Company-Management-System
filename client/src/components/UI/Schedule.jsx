@@ -102,7 +102,7 @@ export default function Schedule() {
       )}
 
       {/* 🔹 For CEO/Admin/Account Head → Show Both */}
-      {["Ceo", "Admin", "Account Head", "Marketing"].includes(
+      {["Ceo", "Admin", "Account Head"].includes(
         user?.department
       ) && (
         <div className="space-y-3">

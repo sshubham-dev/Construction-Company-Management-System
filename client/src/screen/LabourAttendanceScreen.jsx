@@ -32,6 +32,7 @@ const LabourAttendanceScreen = () => {
       ]);
       setAttendances(attRes.data || []);
       setFiltered(attRes.data || []);
+      console.log(attRes.data)
       setContractors(contRes.data || []);
     } catch (err) {
       console.error(err);
@@ -152,7 +153,7 @@ const LabourAttendanceScreen = () => {
                     {moment(att.date).format("DD MMM YYYY")}
                   </td>
                   <td className="p-3">{att.site?.name}</td>
-                  <td className="p-3">{att.contractor}</td>
+                  <td className="p-3">{att?.contractor}</td>
                   <td className="text-center p-3">
                     {att.skilledMale}/{att.skilledFemale}
                   </td>
@@ -207,7 +208,7 @@ const LabourAttendanceScreen = () => {
 
               <div className="text-sm text-gray-700">
                 <span className="font-medium">Contractor:</span>{" "}
-                {att.contractor?.name}
+                {att.contractor}
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-sm">

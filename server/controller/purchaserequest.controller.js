@@ -1,13 +1,13 @@
 const PurchaseRequest = require("../models/purchaserequest.models");
 const {
-  sendApproveByAdmin,
   sendApproveByIncharge,
   sendApproveByAccountHead,
-  sendApproveByStoreIncharge,
 } = require("./approval.controller.js");
 const Site = require("../models/site.models");
 const User = require("../models/user.models");
+const { Store } = require("../models/store.models");
 const { sendNotification } = require("./notification.controller.js");
+const Employee = require("../models/employee.models");
 
 async function generatePrNumber() {
   const count = await PurchaseRequest.countDocuments();
@@ -19,56 +19,90 @@ async function generatePrNumber() {
 // Create a new purchase request
 const createPurchaseRequest = async (req, res) => {
   try {
-    const user = req.user; // logged-in user
-    const { site, reqDate, requirementFor, category, remarks, items } =
-      req.body;
+    const user = req.user;
+    const {
+      site,
+      store, // 👈 store ID (optional)
+      reqDate,
+      requirementFor,
+      category,
+      remarks,
+      items,
+    } = req.body;
+
+    if (!site) {
+      return res.status(400).json({ error: "Site is required" });
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "At least one item is required" });
+    }
 
     const existingSite = await Site.findById(site);
-    if (!existingSite) return res.status(404).json({ error: "Site not found" });
+    if (!existingSite) {
+      return res.status(404).json({ error: "Site not found" });
+    }
+
+    let storeSnapshot = undefined;
+
+    if (store) {
+      const existingStore = await Store.findById(store);
+      if (!existingStore) {
+        return res.status(404).json({ error: "Store not found" });
+      }
+
+      storeSnapshot = {
+        id: existingStore._id,
+        name: existingStore.name,
+      };
+    }
 
     const prNumber = await generatePrNumber();
 
     const newPR = await PurchaseRequest.create({
       prNumber,
       createdBy: user._id,
-      site: { id: existingSite._id, name: existingSite.name },
+
+      site: {
+        id: existingSite._id,
+        name: existingSite.name,
+      },
+
+      store: storeSnapshot, // ✅ STORED HERE
+
       reqDate,
       requirementFor,
       category,
       remarks,
       items,
+
+      approvalStatus: "Pending",
     });
 
-    sendApproveByAdmin(newPR, "Purchase Request", user._id);
-    sendApproveByStoreIncharge(newPR, "Purchase Request", user._id);
-    sendApproveByAccountHead(newPR, "Purchase Request", user._id);
-    sendApproveByIncharge(newPR, "Purchase Request", user._id);
-
-    // Notify employees
     const employees = await User.find({ role: "Employee" });
-    const creator = await User.findById(user._id).select("userName");
 
     for (const employee of employees) {
+      sendNotification(
+        employee._id,
+        `Purchase request of ${newPR.category} for ${existingSite.name} has been created by ${user.userName}.`
+      );
       employee.notification.push({
-        title: "Purchase Request Alert",
-        message: `New PR created by ${creator.userName} for ${requirementFor} at ${existingSite.name}`,
+        title: "Purchase request Alert",
+        message: `A Purchase request created by ${user.userName} for ${existingSite.name}`,
+        createdAt: newPR.createdAt ? newPR.createdAt : new Date(),
         link: `/purchase-request/${newPR._id}`,
-        createdAt: new Date(),
       });
       await employee.save();
-      sendNotification(
-        employee.userId,
-        `${user.userName} has raised Purchase request for ${existingSite.name}`
-      );
     }
+    sendApproveByIncharge(newPR, "Purchase Request", user._id);
 
     res.status(201).json({
       message: "Purchase Request created",
       pr: newPR,
     });
   } catch (err) {
-    console.error(err);
-    res.status(400).json({ error: "Error creating purchase request" });
+    console.error("Create PR Error:", err);
+    res.status(500).json({ error: "Error creating purchase request" });
   }
 };
 
@@ -86,8 +120,6 @@ const savePurchaserequest = async (req, res) => {
     const existingSite = await Site.findById(purchaseRequest?.site?.id);
     if (purchaseRequest.createdBy.toString() === user?._id.toString()) {
       if (
-        purchaseRequest.adminApprove === "Approved" &&
-        purchaseRequest.storeApprove === "Approved" &&
         purchaseRequest.accountsApprove === "Approved" &&
         purchaseRequest.inchargeApprove === "Approved"
       ) {
@@ -172,38 +204,104 @@ const getPurchaseRequestBySite = async (req, res) => {
   }
 };
 
+// controller
+const getOpenPRForDN = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const storeIncharge = await Employee.findOne({
+      userId: user._id,
+    });
+    if (!storeIncharge)
+      return res.status(404).json({ error: "Store Incharge not found" });
+
+    const existingStore = await Store.findOne({
+      storeIncharge: storeIncharge._id,
+    });
+    if (!existingStore)
+      return res.status(404).json({ error: "Store not found for user" });
+
+    const prs = await PurchaseRequest.find({
+      "store.id": existingStore._id,
+      // status: "Approved",
+    });
+
+    res.json(prs);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 // Update a purchase request
 const updatePurchaseRequest = async (req, res) => {
   try {
-    const { site, reqDate, requirementFor, category, remarks, items } =
-      req.body;
-    console.log("req", req.body);
+    const {
+      site,
+      store, // 👈 store ID
+      reqDate,
+      requirementFor,
+      category,
+      remarks,
+      items,
+    } = req.body;
 
     const pr = await PurchaseRequest.findById(req.params.id);
-    if (!pr) return res.status(404).json({ error: "PR not found" });
+    if (!pr) {
+      return res.status(404).json({ error: "PR not found" });
+    }
 
-    if (pr.approvalStatus !== "Pending")
-      return res.status(400).json({ error: "PR already processed" });
+    if (pr.approvalStatus !== "Pending") {
+      return res.status(400).json({
+        error: "PR already processed and cannot be updated",
+      });
+    }
 
     if (site) {
       const existingSite = await Site.findById(site);
-      pr.site = { id: existingSite._id, name: existingSite.name };
+      if (!existingSite) {
+        return res.status(404).json({ error: "Site not found" });
+      }
+
+      pr.site = {
+        id: existingSite._id,
+        name: existingSite.name,
+      };
     }
 
-    pr.reqDate = reqDate || pr.reqDate;
-    pr.requirementFor = requirementFor || pr.requirementFor;
-    pr.category = category || pr.category;
-    pr.remarks = remarks || pr.remarks;
+    if (store) {
+      const existingStore = await Store.findById(store);
+      if (!existingStore) {
+        return res.status(404).json({ error: "Store not found" });
+      }
 
-    // FIXED: correctly add items
+      pr.store = {
+        id: existingStore._id,
+        name: existingStore.name,
+      };
+    }
+
+    if (reqDate) pr.reqDate = reqDate;
+    if (requirementFor) pr.requirementFor = requirementFor;
+    if (category) pr.category = category;
+    if (remarks) pr.remarks = remarks;
+
     if (items && Array.isArray(items)) {
-      pr.items = [...pr.items, ...items];
+      if (items.length === 0) {
+        return res
+          .status(400)
+          .json({ error: "PR must contain at least one item" });
+      }
+      pr.items = items;
     }
 
     await pr.save();
-    res.json({ message: "PR updated", pr });
+
+    res.json({
+      message: "Purchase Request updated successfully",
+      pr,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Update PR Error:", err);
     res.status(500).json({ error: "Error updating PR" });
   }
 };
@@ -262,4 +360,5 @@ module.exports = {
   deletePurchaseRequest,
   savePurchaserequest,
   updatePurchaseRequirement,
+  getOpenPRForDN,
 };

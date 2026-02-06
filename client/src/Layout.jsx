@@ -6,10 +6,11 @@ import { BrowserRouter } from "react-router-dom";
 import { useStateContext } from "./contexts/ContextProvider.jsx";
 import { useSelector } from "react-redux";
 import BottomNavigation from "./components/BottomNavigation.jsx";
+import NewYearExperience from "./pages/NewYearExperience.jsx";
 
 const Layout = ({ children }) => {
   const { activeMenu } = useStateContext();
-  const { isLoggedIn } = useSelector((state) => {
+  const { isLoggedIn, user } = useSelector((state) => {
     return state.auth;
   });
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -35,10 +36,10 @@ const Layout = ({ children }) => {
           {/* Sidebar */}
           {isLoggedIn && (
             <Sidebar
-              isOpen={sidebarOpen}
-              expanded={sidebarExpanded}
-              onClose={() => setSidebarOpen(false)}
-              onToggleExpand={handleSidebarToggle}
+            isOpen={sidebarOpen}
+            expanded={sidebarExpanded}
+            onClose={() => setSidebarOpen(false)}
+            onToggleExpand={handleSidebarToggle}
             />
           )}
 
@@ -51,6 +52,7 @@ const Layout = ({ children }) => {
             <main
               className={`flex-1 w-full mt-14 ${isLoggedIn ? "mb-14" : "mb-0"} lg:mb-0 p-4 overflow-y-auto min-w-0 bg-gradient-to-br from-[#eeffda] to-white`}
             >
+          {isLoggedIn && <NewYearExperience user={user} />}
               {children}
             </main>
 

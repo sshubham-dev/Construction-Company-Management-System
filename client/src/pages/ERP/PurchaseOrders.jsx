@@ -69,7 +69,7 @@ const PurchaseOrders = () => {
     setEditId(id)
   };
   const handleRedirect = (id) => {
-    navigate(`/purchase-order/${id}`);
+    navigate(`/erp/inventory/purchase-order/${id}`);
   };
   const handleDelete = async (id) => {
     try {

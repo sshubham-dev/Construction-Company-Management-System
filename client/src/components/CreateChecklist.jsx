@@ -195,9 +195,9 @@ const CreateChecklist = ({ onClose, isEdit }) => {
           formData
         );
         console.log(response);
-        onClose();
         setLoading(false);
         dispatch(fetchNotifications(user._id));
+        onClose();
       } else {
         const response = await axios.post("/api/v1/checklist", formData);
         console.log(response);

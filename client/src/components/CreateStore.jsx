@@ -1,248 +1,304 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import Select from "react-select";
-import toast from "react-hot-toast";
-import CreateStock from "./CreateStock";
+import { toast, Toaster } from "react-hot-toast";
 
 const CreateStore = ({ onClose, editId }) => {
+  const isEdit = Boolean(editId);
+
   const [businessUnits, setBusinessUnits] = useState([]);
   const [employees, setEmployees] = useState([]);
 
-  const isEdit = Boolean(editId);
-
   const [form, setForm] = useState({
-    name: "",
     businessUnitId: "",
+    address: {
+      line1: "",
+      line2: "",
+      city: "",
+      district: "",
+      state: "",
+      pincode: "",
+    },
+
     managesConsumables: true,
     managesAssets: true,
     allowDirectSalesToClients: true,
     allowInternalSalesToSites: true,
+    allowOfficeItemIssue: true,
+
     stockValuationMethod: "FIFO",
+    defaultConsumableRateSource: "StoreRate",
     gstRate: 18,
-    staff: [],
+
+    minimumStockAlert: {
+      enabled: true,
+      level: 10,
+    },
+
+    assetTrackingEnabled: true,
+
+    // ---- Store Roles ----
+    storeHead: "",
+    storeIncharge: "",
+    helper: "",
+
     expenseCategories: [],
   });
 
   const [expenseName, setExpenseName] = useState("");
 
-  // Load business units and employees
+  /* =========================
+     LOAD MASTER DATA
+  ========================== */
   useEffect(() => {
-    fetchBU();
+    fetchBusinessUnits();
     fetchEmployees();
   }, []);
 
-  const fetchBU = async () => {
-    const res = await axios.get("/api/businessunit");
-    setBusinessUnits(
-      res.data.map((bu) => ({ value: bu._id, label: bu.name }))
-    );
+  const fetchBusinessUnits = async () => {
+    const res = await axios.get("/api/v1/business-unit");
+    console.log(res.data);
+    setBusinessUnits(res.data.map((bu) => ({ value: bu._id, label: bu.name })));
   };
 
   const fetchEmployees = async () => {
-    const res = await axios.get("/api/employees");
-    setEmployees(
-      res.data.map((emp) => ({ value: emp._id, label: emp.name }))
-    );
+    const res = await axios.get("/api/v1/employee");
+    setEmployees(res.data.map((e) => ({ value: e._id, label: e.name })));
   };
 
-  // Load edit initial data
+  /* =========================
+     LOAD EDIT DATA
+  ========================== */
   useEffect(() => {
-    if (isEdit) {
-      setForm({
-        ...form,
-        ...editId,
-        businessUnitId: editId.businessUnitId?._id || editId.businessUnitId,
-        staff: editId.staff || [],
-      });
-    }
+    if (!isEdit) return;
+
+    const loadStore = async () => {
+      try {
+        const res = await axios.get(`/api/v1/store/${editId}`);
+        console.log(res.data);
+        setForm({
+          ...res.data,
+          businessUnitId: res.data.businessUnitId?._id || "",
+          storeHead: res.data.storeHead?._id || "",
+          storeIncharge: res.data.storeIncharge?._id || "",
+          helper: res.data.helper?._id || "",
+        });
+      } catch (err) {
+        console.error("Load store error:", err);
+      }
+    };
+
+    loadStore();
   }, [editId]);
 
+  /* =========================
+     HANDLERS
+  ========================== */
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+    const { name, value, type, checked } = e.target;
 
-  const handleToggle = (field) => {
-    setForm({ ...form, [field]: !form[field] });
+    if (name.startsWith("address.")) {
+      const key = name.split(".")[1];
+      setForm((p) => ({ ...p, address: { ...p.address, [key]: value } }));
+    } else if (name.startsWith("minimumStockAlert.")) {
+      const key = name.split(".")[1];
+      setForm((p) => ({
+        ...p,
+        minimumStockAlert: {
+          ...p.minimumStockAlert,
+          [key]: type === "checkbox" ? checked : value,
+        },
+      }));
+    } else if (type === "checkbox") {
+      setForm((p) => ({ ...p, [name]: checked }));
+    } else {
+      setForm((p) => ({ ...p, [name]: value }));
+    }
   };
 
   const addExpenseCategory = () => {
     if (!expenseName.trim()) return;
-    setForm({
-      ...form,
-      expenseCategories: [
-        ...form.expenseCategories,
-        { name: expenseName.trim() },
-      ],
-    });
+
+    setForm((p) => ({
+      ...p,
+      expenseCategories: [...p.expenseCategories, { name: expenseName.trim() }],
+    }));
+
     setExpenseName("");
   };
 
   const removeExpenseCategory = (index) => {
     const updated = [...form.expenseCategories];
     updated.splice(index, 1);
-    setForm({ ...form, expenseCategories: updated });
+    setForm((p) => ({ ...p, expenseCategories: updated }));
   };
 
+  /* =========================
+     SUBMIT
+  ========================== */
   const handleSubmit = async () => {
     try {
-      if (!form.name) return toast.error("Store name is required");
-      if (!form.businessUnitId)
-        return toast.error("Business unit is required");
-
-      const payload = {
-        ...form,
-        staff: form.staff.map((s) => s.value || s),
-      };
-
-      let res;
-
-      if (isEdit) {
-        res = await axios.put(`/api/store/${editId._id}`, payload);
-        toast.success("Store updated");
-      } else {
-        res = await axios.post("/api/store", payload);
-        toast.success("Store created");
+      if (!form.businessUnitId) {
+        return toast.error("Business Unit is required");
       }
 
-      onClose(res.data);
+      if (!form.storeHead) {
+        return toast.error("Store Head is required");
+      }
+
+      if (!form.storeIncharge) {
+        return toast.error("Store Incharge is required");
+      }
+
+      const payload = { ...form };
+
+      if (isEdit) {
+        await axios.put(`/api/v1/store/${editId}`, payload);
+        toast.success("Store updated successfully");
+      } else {
+        await axios.post("/api/v1/store", payload);
+        toast.success("Store created successfully");
+      }
+
+      onClose();
     } catch (err) {
       toast.error(err.response?.data?.error || "Failed to save store");
     }
   };
 
+  /* =========================
+     UI
+  ========================== */
   return (
-    <div className="p-5 w-[500px]">
-      <h2 className="text-xl font-semibold mb-4">
+    <div className="max-w-xl mx-auto space-y-4">
+      <h2 className="text-lg font-semibold">
         {isEdit ? "Edit Store" : "Create Store"}
       </h2>
 
-      {/* Name */}
-      <div className="mb-3">
-        <label className="block mb-1">Store Name</label>
-        <input
-          type="text"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          className="border p-2 w-full rounded"
-        />
-      </div>
-
       {/* Business Unit */}
-      <div className="mb-3">
-        <label className="block mb-1">Business Unit</label>
+      <Select
+        options={businessUnits}
+        value={businessUnits.find((b) => b.value === form.businessUnitId)}
+        onChange={(v) => setForm((p) => ({ ...p, businessUnitId: v.value }))}
+        isDisabled={isEdit}
+        placeholder="Select Business Unit"
+      />
+
+      {/* Store Roles */}
+      <div className="space-y-2">
         <Select
-          options={businessUnits}
-          value={businessUnits.find(
-            (b) => b.value === form.businessUnitId
-          )}
-          onChange={(v) =>
-            setForm({ ...form, businessUnitId: v.value })
-          }
+          options={employees}
+          value={employees.find((e) => e.value === form.storeHead)}
+          onChange={(v) => setForm((p) => ({ ...p, storeHead: v.value }))}
+          placeholder="Select Store Head (Accounts / Owner)"
+        />
+
+        <Select
+          options={employees}
+          value={employees.find((e) => e.value === form.storeIncharge)}
+          onChange={(v) => setForm((p) => ({ ...p, storeIncharge: v.value }))}
+          placeholder="Select Store Incharge"
+        />
+
+        <Select
+          options={employees}
+          value={employees.find((e) => e.value === form.helper)}
+          onChange={(v) => setForm((p) => ({ ...p, helper: v?.value || "" }))}
+          placeholder="Select Helper (Optional)"
+          isClearable
         />
       </div>
 
-      {/* Staff */}
-      <div className="mb-3">
-        <label className="block mb-1">Assign Staff</label>
-        <Select
-          isMulti
-          options={employees}
-          value={employees.filter((e) =>
-            form.staff.includes(e.value)
-          )}
-          onChange={(v) => setForm({ ...form, staff: v })}
-        />
-      </div>
+      {/* Address */}
+      <input
+        name="address.line1"
+        placeholder="Address Line 1"
+        className="border p-2 w-full"
+        value={form.address.line1}
+        onChange={handleChange}
+      />
+      <input
+        name="address.city"
+        placeholder="City"
+        className="border p-2 w-full"
+        value={form.address.city}
+        onChange={handleChange}
+      />
+      <input
+        name="address.state"
+        placeholder="State"
+        className="border p-2 w-full"
+        value={form.address.state}
+        onChange={handleChange}
+      />
+      <input
+        name="address.pincode"
+        placeholder="Pincode"
+        className="border p-2 w-full"
+        value={form.address.pincode}
+        onChange={handleChange}
+      />
 
       {/* Toggles */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <label
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => handleToggle("managesConsumables")}
-        >
+      {[
+        "managesConsumables",
+        "managesAssets",
+        "allowDirectSalesToClients",
+        "allowInternalSalesToSites",
+        "allowOfficeItemIssue",
+        "assetTrackingEnabled",
+      ].map((f) => (
+        <label key={f} className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
-            checked={form.managesConsumables}
-            readOnly
+            name={f}
+            checked={form[f]}
+            onChange={handleChange}
           />
-          Manages Consumables
+          {f.replace(/([A-Z])/g, " $1")}
         </label>
+      ))}
 
-        <label
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => handleToggle("managesAssets")}
-        >
-          <input
-            type="checkbox"
-            checked={form.managesAssets}
-            readOnly
-          />
-          Manages Assets
-        </label>
+      {/* Inventory Rules */}
+      <select
+        name="stockValuationMethod"
+        value={form.stockValuationMethod}
+        onChange={handleChange}
+        className="border p-2 w-full"
+      >
+        <option value="FIFO">FIFO</option>
+        <option value="LIFO">LIFO</option>
+        <option value="WeightedAverage">Weighted Average</option>
+      </select>
 
-        <label
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => handleToggle("allowDirectSalesToClients")}
-        >
-          <input
-            type="checkbox"
-            checked={form.allowDirectSalesToClients}
-            readOnly
-          />
-          Direct Sales to Clients
-        </label>
+      <select
+        name="defaultConsumableRateSource"
+        value={form.defaultConsumableRateSource}
+        onChange={handleChange}
+        className="border p-2 w-full"
+      >
+        <option value="StoreRate">Store Rate</option>
+        <option value="MRP">MRP</option>
+        <option value="PurchaseRate">Purchase Rate</option>
+      </select>
 
-        <label
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => handleToggle("allowInternalSalesToSites")}
-        >
-          <input
-            type="checkbox"
-            checked={form.allowInternalSalesToSites}
-            readOnly
-          />
-          Internal Sales to Sites
-        </label>
-      </div>
-
-      {/* Valuation Method */}
-      <div className="mb-3">
-        <label className="block mb-1">Stock Valuation</label>
-        <select
-          name="stockValuationMethod"
-          value={form.stockValuationMethod}
-          onChange={handleChange}
-          className="border p-2 w-full rounded"
-        >
-          <option value="FIFO">FIFO</option>
-          <option value="LIFO">LIFO</option>
-          <option value="WeightedAverage">Weighted Average</option>
-        </select>
-      </div>
-
-      {/* GST */}
-      <div className="mb-3">
-        <label className="block mb-1">GST Rate (%)</label>
-        <input
-          type="number"
-          name="gstRate"
-          value={form.gstRate}
-          onChange={handleChange}
-          className="border p-2 w-full rounded"
-        />
-      </div>
+      <input
+        type="number"
+        name="gstRate"
+        value={form.gstRate}
+        onChange={handleChange}
+        className="border p-2 w-full"
+        placeholder="GST Rate %"
+      />
 
       {/* Expense Categories */}
-      <div className="mb-3">
-        <label className="block mb-1">Expense Categories</label>
-
-        <div className="flex gap-2 mb-2">
+      <div>
+        <div className="flex gap-2">
           <input
             value={expenseName}
             onChange={(e) => setExpenseName(e.target.value)}
-            className="border p-2 rounded flex-1"
-            placeholder="Add expense name"
+            className="border p-2 flex-1"
+            placeholder="Expense category"
           />
           <button
             onClick={addExpenseCategory}
@@ -253,10 +309,7 @@ const CreateStore = ({ onClose, editId }) => {
         </div>
 
         {form.expenseCategories.map((c, i) => (
-          <div
-            key={i}
-            className="flex justify-between items-center text-sm border p-2 rounded mb-1"
-          >
+          <div key={i} className="flex justify-between text-sm border p-2 mt-1">
             {c.name}
             <button
               onClick={() => removeExpenseCategory(i)}
@@ -268,15 +321,13 @@ const CreateStore = ({ onClose, editId }) => {
         ))}
       </div>
 
-      {/* Submit */}
-      <div className="text-right mt-6">
-        <button
-          onClick={handleSubmit}
-          className="bg-green-600 text-white px-5 py-2 rounded"
-        >
-          {isEdit ? "Update" : "Create"}
-        </button>
-      </div>
+      <button
+        onClick={handleSubmit}
+        className="bg-green-600 text-white w-full py-2 rounded"
+      >
+        {isEdit ? "Update Store" : "Create Store"}
+      </button>
+      <Toaster position="top-right" />
     </div>
   );
 };

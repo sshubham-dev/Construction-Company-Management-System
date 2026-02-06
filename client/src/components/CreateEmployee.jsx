@@ -7,31 +7,47 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   createEmployee,
   fetchEmployeeById,
+  fetchEmployees,
   updateEmployee,
 } from "../features/hr/employeeSlice";
+import { fetchNotifications } from "../features/notification/notificationSlice";
+import Select from "react-select";
 axios.defaults.withCredentials = true;
 
 const CreateEmployee = ({ onClose, isEdit }) => {
+  const dispatch = useDispatch();
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [employee, setEmployee] = useState({
     name: "",
     email: "",
-    phone: 0,
-    whatsapp: 0,
-    employeeNo: "",
-    joinDate: "",
+    phone: "",
+    whatsapp: "",
     birthdate: "",
     address: "",
+    department: "",
+    reportingManagerId: "",
+    businessUnitId: "",
+    baseSalary: "",
+    status: "Active",
+    isUser: false,
     addhar: "",
-    pan: "",
+    panNo: "",
+    uan: "",
     cv: "",
     offerletter: "",
+    certificates: [],
     bank: "",
-    isUser: false,
-    department: "",
-    status:"Active",
+    incentiveConfig: {
+      trafficLight: {
+        greenBonus: 2000,
+        redPenalty: 1000,
+      },
+      targets: [],
+    },
   });
   const departments = [
-    "Company",
     "Accountant",
     "Marketing",
     "Ceo",
@@ -44,336 +60,548 @@ const CreateEmployee = ({ onClose, isEdit }) => {
     "Account Head",
     "Store Helper",
   ];
-  const [error, setError] = useState(null);
-  const dispatch = useDispatch();
-  const [loading, setLoading] = useState(false);
-  // const exitEmployee = useSelector((state) => state.employee.selected);
+  const [reportingManager, setReportingManager] = useState([]);
+  const [businessUnit, setBusinessUnit] = useState([]);
+  // const employees = useSelector((state) => state.employee.all);
   useEffect(() => {
-    const fetchEmployee = async () => {
-      try {
-        const resultAction = await dispatch(fetchEmployeeById({ id: isEdit }));
-        if (fetchEmployeeById.fulfilled.match(resultAction)) {
-          const existEmployee = resultAction.payload;
-          setEmployee({
-            name: existEmployee.name || "",
-            email:existEmployee.email || "",
-            phone: existEmployee.phone || "",
-            whatsapp: existEmployee.whatsapp || "",
-            employeeNo: existEmployee.employeeNo || "",
-            joinDate: existEmployee.joinDate || "",
-            birthdate: existEmployee.birthdate || "",
-            address: existEmployee.address || "",
-            isUser: existEmployee.isUser || false,
-            department: existEmployee.department || "",
-            status: existEmployee.status || "",
-          });
-        } else {
-          toast.error("Failed to fetch employee data");
-        }
-      } catch (err) {
-        toast.error("Error fetching employee data");
-      }
+    const fetchManager = async () => {
+      const res = await dispatch(fetchEmployees());
+      setReportingManager(res.payload || []);
     };
+    fetchManager();
+  }, [dispatch]);
 
+  useEffect(() => {
     if (isEdit) {
-      fetchEmployee();
+      fetchEmployee(isEdit);
     }
-  }, [dispatch, isEdit]);
+  }, [isEdit]);
+  useEffect(() => {
+    fetchUnits();
+  }, []);
 
-
-  const handleReset = () => {
+  const fetchUnits = async () => {
+    const res = await axios.get("/api/v1/business-unit");
+    console.log(res.data);
+    setBusinessUnit(res.data);
+  };
+  const fetchEmployee = async (id) => {
+    console.log(isEdit);
+    const res = await dispatch(fetchEmployeeById({ id }));
+    const emp = res.payload;
+    console.log(emp);
     setEmployee({
-      name: "",
-      email: "",
-      phone: "",
-      whatsapp: "",
-      employeeNo: "",
-      joinDate: "",
-      birthdate: "",
-      address: "",
-      addhar: "",
-      pan: "",
+      name: emp?.name,
+      email: emp?.email,
+      phone: emp?.phone,
+      whatsapp: emp?.whatsapp,
+      birthdate: emp?.birthdate,
+      address: emp?.address,
+      department: emp?.department,
+      reportingManagerId: emp?.reportingManagerId,
+      businessUnitId: emp?.businessUnitId,
+      baseSalary: emp?.baseSalary,
+      status: emp?.status,
+      isUser: emp?.isUser,
+      addhar: emp?.addhar,
+      panNo: emp?.panNo,
+      uan: emp?.uan,
       cv: "",
       offerletter: "",
+      certificates: [],
       bank: "",
-      isUser: "",
-      department: "",
-      status:'',
+      incentiveConfig: {
+        trafficLight: {
+          greenBonus: emp?.incentiveConfig.trafficLight.greenBonus,
+          redPenalty: emp?.incentiveConfig.trafficLight.redPenalty,
+        },
+        targets: emp?.incentiveConfig.targets,
+      },
     });
   };
+  /* ================= HANDLERS ================= */
+  const inputData = (e) => {
+    const { name, value, type, checked } = e.target;
 
-  const inputData = (data, field) => {
-    const { name, value, type } = data.target;
-    if (type === "file") {
-      setEmployee((prevEmployee) => ({
-        ...prevEmployee,
-        [field]: data.target.files[0],
-      }));
+    let finalValue = value;
+    if (value === "") finalValue = null;
+
+    setEmployee((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : finalValue,
+    }));
+  };
+
+  const handleTrafficChange = (e) => {
+    const { name, value } = e.target;
+    setEmployee((prev) => ({
+      ...prev,
+      incentiveConfig: {
+        ...prev.incentiveConfig,
+        trafficLight: {
+          ...prev.incentiveConfig.trafficLight,
+          [name]: Number(value),
+        },
+      },
+    }));
+  };
+
+  const addTargetRule = () => {
+    setEmployee((prev) => ({
+      ...prev,
+      incentiveConfig: {
+        ...prev.incentiveConfig,
+        targets: [
+          ...prev.incentiveConfig.targets,
+          {
+            targetType: "",
+            baseTargetValue: 0,
+            bonusType: "FIXED",
+            bonusValue: 0,
+          },
+        ],
+      },
+    }));
+  };
+
+  const updateTargetRule = (index, field, value) => {
+    const updated = [...employee.incentiveConfig.targets];
+    updated[index][field] = value;
+    setEmployee((prev) => ({
+      ...prev,
+      incentiveConfig: {
+        ...prev.incentiveConfig,
+        targets: updated,
+      },
+    }));
+  };
+
+  const removeTargetRule = (index) => {
+    setEmployee((prev) => ({
+      ...prev,
+      incentiveConfig: {
+        ...prev.incentiveConfig,
+        targets: prev.incentiveConfig.targets.filter((_, i) => i !== index),
+      },
+    }));
+  };
+
+  /* ================= DRAFT ================= */
+  const saveDraft = () => {
+    const key = `employee@${employee?.name} - ${Date.now()}`;
+    localStorage.setItem(key, JSON.stringify(employee));
+    toast.success("Draft saved");
+  };
+
+  const getDrafts = () =>
+    Object.keys(localStorage).filter((k) => k.startsWith("employee@"));
+
+  const removeDraft = (key) => {
+    if (key) {
+      const keyValue = Object.keys(localStorage).filter((k) =>
+        k.includes(`employee@${key}`),
+      );
+      localStorage.removeItem(keyValue);
+      toast.success("Removed Draft");
     } else {
-      setEmployee((prevEmployee) => ({ ...prevEmployee, [name]: value }));
+      const res = confirm("Want to remove all!");
+      console.log(res);
+      if (res === true) {
+        const keyValue = Object.keys(localStorage).filter((k) =>
+          k.includes(`employee@`),
+        );
+        console.log(keyValue);
+        for (let i = 1; i <= keyValue.length; i++) {
+          localStorage.removeItem(keyValue);
+          toast.success("Drafts Removed");
+          console.log(`${i} Drafts Removed`);
+        }
+      }
     }
   };
 
-  const formSubmit = async (e) => {
-    e.preventDefault();
+  const loadDraft = (key) => {
+    if (!key) return;
+    setEmployee(JSON.parse(localStorage.getItem(key)));
+    toast.success("Draft loaded");
+  };
+
+  /* ================= SUBMIT ================= */
+  const submitForm = async () => {
     setLoading(true);
     try {
-      console.log(employee);
-      if (isEdit) {
-        const response = await dispatch(
-          updateEmployee({ id: isEdit, data: employee })
-        );
-        if (response) {
-          console.log(response);
-          toast.success("Employee Updated successfully!");
-        }
-        onClose();
-      } else {
-        const response = await dispatch(createEmployee({ data: employee }));
+      const cleanEmployee = {
+        ...employee,
+        reportingManagerId: employee.reportingManagerId || undefined,
+        businessUnitId: employee.businessUnitId || undefined,
+        incentiveConfig: {
+          ...employee.incentiveConfig,
+          targets: employee.incentiveConfig.targets,
+        },
+      };
+      const action = isEdit
+        ? updateEmployee({ id: isEdit, data: cleanEmployee })
+        : createEmployee({ data: cleanEmployee });
 
-        if (response) {
-          console.log(response);
-          toast.success("Employee Created successfully!");
-        }
-        onClose();
-      }
-    } catch (error) {
-      toast.error(error.message);
-      setError(error.message);
+      await dispatch(action);
+      dispatch(fetchNotifications(user._id));
+      toast.success("Employee saved successfully");
+      onClose();
+    } catch {
+      toast.error("Failed to save employee");
+    } finally {
+      setLoading(false);
     }
   };
 
+  /* ================= COMMON CLASSES ================= */
+  const inputClass =
+    "w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400";
+  const labelClass = "text-sm font-medium text-gray-700";
+  const sectionTitle = "text-lg font-semibold text-gray-800 mb-4";
+
+  /* ================= STEP NAV ================= */
+  const StepNavigation = () => (
+    <div className="flex items-center justify-between mb-6">
+      <button
+        disabled={step === 1}
+        onClick={() => setStep(step - 1)}
+        className="px-3 py-1 text-sm rounded bg-gray-200 disabled:opacity-50"
+      >
+        Back
+      </button>
+      <span className="text-sm font-medium">Step {step} of 4</span>
+      <button
+        disabled={step === 4}
+        onClick={() => setStep(step + 1)}
+        className="px-3 py-1 text-sm rounded bg-blue-500 text-white disabled:opacity-50"
+      >
+        Next
+      </button>
+    </div>
+  );
+
   return (
-    <div>
-      <form className="space-y-4" onSubmit={formSubmit}>
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-1"
-            htmlFor="name"
-          >
-            Full Name
-          </label>
-          <input
-            className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            type="text"
-            name="name"
-            placeholder="Enter Full Name here"
-            autoComplete="off"
-            value={employee.name}
-            onChange={inputData}
-          />
-        </div>
+    <div className="max-w-3xl mx-auto">
+      <StepNavigation />
 
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-1"
-            htmlFor="email"
-          >
-            Email
-          </label>
-          <input
-            className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            type="email"
-            name="email"
-            placeholder="Enter Your Email here"
-            autoComplete="off"
-            value={employee.email}
-            onChange={inputData}
-          />
-        </div>
+      {/* STEP 1 — BASIC DETAILS */}
+      {step === 1 && (
+        <>
+          <h2 className={sectionTitle}>Basic Details</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className={labelClass}>Full Name</label>
+              <input
+                className={inputClass}
+                name="name"
+                value={employee.name}
+                onChange={inputData}
+              />
+            </div>
+            <div className="col-span-2">
+              <label className={labelClass}>Email</label>
+              <input
+                className={inputClass}
+                name="email"
+                value={employee.email}
+                onChange={inputData}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Phone</label>
+              <input
+                className={inputClass}
+                name="phone"
+                value={employee.phone}
+                onChange={inputData}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>WhatsApp</label>
+              <input
+                className={inputClass}
+                name="whatsapp"
+                value={employee.whatsapp}
+                onChange={inputData}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Date of Birth</label>
+              <input
+                type="date"
+                className={inputClass}
+                name="birthdate"
+                value={employee.birthdate}
+                onChange={inputData}
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <label className={labelClass}>Address</label>
+            <input
+              className={inputClass}
+              name="address"
+              value={employee.address}
+              onChange={inputData}
+            />
+          </div>
+        </>
+      )}
 
-        <div className="mb-4">
-          <label
-            htmlFor="phone"
-            className="block text-gray-700 text-sm font-bold mb-1"
-          >
-            Contact Number:
-          </label>
-          <input
-            className="py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500"
-            type="number"
-            name="phone"
-            id="phone"
-            placeholder="Enter Your Contact Number"
-            autoComplete="off"
-            value={employee.phone}
-            onChange={inputData}
-          />
-        </div>
+      {/* STEP 2 — COMPANY */}
+      {step === 2 && (
+        <>
+          <h2 className={sectionTitle}>Company & Payroll</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <select
+              className={inputClass}
+              name="department"
+              value={employee.department || ""}
+              onChange={inputData}
+            >
+              <option value="">Select Department</option>
+              {departments.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
 
-        <div className="mb-4">
-          <label
-            htmlFor="whatsapp"
-            className="block text-gray-700 text-sm font-bold mb-1"
-          >
-            Whatsapp Number:
-          </label>
-          <input
-            className="py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500"
-            type="number"
-            name="whatsapp"
-            id="whatsapp"
-            placeholder="Enter Your Whatsapp Number"
-            autoComplete="off"
-            value={employee.whatsapp}
-            onChange={inputData}
-          />
-        </div>
+            {/* <Select
+            options={businessUnit.map((b) => ({ value: b._id, label: b.name }))}
+            value={businessUnit.find(b => b._id === employee.businessUnitId) || null}
+            onChange={(selected) =>
+              setEmployee((prev) => ({
+                ...prev, businessUnitId: selected ? selected.value : "",
+              }))
+            }
+            // onChange={inputData}
+            /> */}
+            <select
+              className={inputClass}
+              name="businessUnitId"
+              value={employee.businessUnitId || ""}
+              onChange={inputData}
+            >
+              <option value="">Select Business Unit</option>
+              {businessUnit.map((b) => (
+                <option key={b._id} value={b._id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
 
-        <div className="mb-4">
-          <label
-            htmlFor="employeeNo"
-            className="block text-gray-700 text-sm font-bold mb-1"
-          >
-            Employee ID
-          </label>
-          <input
-            type="text"
-            className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            name="employeeNo"
-            placeholder="Enter Your Employee ID here"
-            autoComplete="off"
-            value={employee.employeeNo}
-            onChange={inputData}
-          />
-        </div>
+            <select
+              className={inputClass}
+              name="reportingManagerId"
+              value={employee.reportingManagerId || ""}
+              onChange={inputData}
+            >
+              <option value="">Select Reporting Manager</option>
+              {reportingManager.map((m) => (
+                <option key={m._id} value={m._id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+            <input
+              className={inputClass}
+              name="baseSalary"
+              placeholder="Base Salary"
+              value={employee.baseSalary}
+              onChange={inputData}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <select
+              className={inputClass}
+              name="status"
+              value={employee.status}
+              onChange={inputData}
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Resigned">Resigned</option>
+            </select>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="isUser"
+                checked={employee.isUser}
+                onChange={inputData}
+              />
+              Is User
+            </label>
+          </div>
+        </>
+      )}
 
-        <div className="mb-4">
-          <label
-            htmlFor="address"
-            className="block text-gray-700 text-sm font-bold mb-1"
-          >
-            Address
-          </label>
-          <input
-            type="text"
-            id="address"
-            name="address"
-            placeholder="Address"
-            value={employee.address}
-            onChange={inputData}
-            className="py-2 px-3 w-full border rounded-md focus:outline-none focus:border-blue-500"
-          />
-        </div>
+      {/* STEP 3 — DOCUMENTS */}
+      {step === 3 && (
+        <>
+          <h2 className={sectionTitle}>Documents</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              className={inputClass}
+              placeholder="Addhar No"
+              value={employee.addhar}
+              onChange={(e) =>
+                setEmployee((p) => ({ ...p, addhar: e.target.value }))
+              }
+            />
+            <input
+              className={inputClass}
+              placeholder="Pan No"
+              value={employee.panNo}
+              onChange={(e) =>
+                setEmployee((p) => ({ ...p, panNo: e.target.value }))
+              }
+            />
+            <input
+              className={inputClass}
+              placeholder="UAN No"
+              value={employee.uan}
+              onChange={(e) =>
+                setEmployee((p) => ({ ...p, uan: e.target.value }))
+              }
+            />
+            {/* <input className={inputClass} placeholder="CV URL" value={employee.cv} onChange={(e) => setEmployee(p => ({ ...p, cv: e.target.value }))} />
+            <input className={inputClass} placeholder="Offer Letter URL" value={employee.offerletter} onChange={(e) => setEmployee(p => ({ ...p, offerletter: e.target.value }))} /> */}
+          </div>
+        </>
+      )}
 
-        <div className="mb-4">
-          <label
-            htmlFor="joining"
-            className="block text-gray-700 text-sm font-bold mb-1"
-          >
-            Joining Date: {employee.joinDate}
-          </label>
-          <input
-            className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            type="date"
-            name="joinDate"
-            value={employee.joinDate}
-            onChange={inputData}
-          />
-        </div>
+      {/* STEP 4 — INCENTIVES */}
+      {step === 4 && (
+        <>
+          <h2 className={sectionTitle}>Traffic Light & Incentives</h2>
 
-        <div className="mb-6">
-          <label
-            htmlFor="birthdate"
-            className="block text-gray-700 text-sm font-bold mb-1"
-          >
-            DOB: {employee.birthdate}
-          </label>
-          <input
-            className="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            type="date"
-            name="birthdate"
-            value={employee.birthdate}
-            onChange={inputData}
-          />
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              className={inputClass}
+              type="number"
+              name="greenBonus"
+              value={employee.incentiveConfig.trafficLight.greenBonus}
+              onChange={handleTrafficChange}
+              placeholder="Green Bonus"
+            />
+            <input
+              className={inputClass}
+              type="number"
+              name="redPenalty"
+              value={employee.incentiveConfig.trafficLight.redPenalty}
+              onChange={handleTrafficChange}
+              placeholder="Red Penalty"
+            />
+          </div>
 
-        <div className="mb-6">
-          <label
-            htmlFor="access"
-            className="block text-gray-700 text-sm font-bold mb-2"
-          >
-            Department
-          </label>
+          <div className="mt-4">
+            {employee.incentiveConfig.targets?.map((t, i) => (
+              <div key={i} className="border px-3 py-4 rounded mb-2">
+                <div className="grid grid-cols-2 gap-3 mb-2">
+                  <select
+                    className={inputClass}
+                    value={t.targetType}
+                    onChange={(e) =>
+                      updateTargetRule(i, "targetType", e.target.value)
+                    }
+                  >
+                    <option value="">Target Type</option>
+                    <option value="SITE_WORK">Site Work</option>
+                    <option value="REVENUE">Revenue</option>
+                  </select>
+
+                  <input
+                    className={inputClass}
+                    type="number"
+                    placeholder="Base Target"
+                    value={t.baseTargetValue}
+                    onChange={(e) =>
+                      updateTargetRule(i, "baseTargetValue", e.target.value)
+                    }
+                  />
+
+                  <select
+                    className={inputClass}
+                    value={t.bonusType}
+                    onChange={(e) =>
+                      updateTargetRule(i, "bonusType", e.target.value)
+                    }
+                  >
+                    <option value="FIXED">Fixed</option>
+                    <option value="PERCENTAGE">Percentage</option>
+                  </select>
+                  <input
+                    className={inputClass}
+                    placeholder="Bonus"
+                    type="number"
+                    value={t.bonusValue}
+                    onChange={(e) =>
+                      updateTargetRule(i, "bonusValue", e.target.value)
+                    }
+                  />
+                </div>
+                <button
+                  onClick={() => removeTargetRule(i)}
+                  className="text-red-500 text-sm mt-2"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              className="mt-2 px-3 py-1 text-sm bg-gray-200 rounded"
+              onClick={addTargetRule}
+            >
+              + Add Target Rule
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* ACTIONS */}
+      <div className="grid grid-cols-1 gap-3 mt-6">
+        <div className="grid grid-cols-1 gap-2">
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              className="px-3 py-2 bg-green-600 rounded text-sm text-white"
+              onClick={saveDraft}
+            >
+              Save Draft
+            </button>
+            <button
+              className="px-3 py-2 bg-red-600 rounded text-sm text-white"
+              onClick={(e) => removeDraft(employee?.name)}
+            >
+              Remove Draft
+            </button>
+          </div>
           <select
-            name="department"
-            onChange={inputData}
-            required
-            value={employee.department}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            className="px-2 py-2 border rounded text-sm"
+            onChange={(e) => loadDraft(e.target.value)}
           >
-            <option>Department</option>
-            {departments.map((department, index) => (
-              <option key={index} value={department}>
-                {department}
+            <option value="">Load Draft</option>
+            {getDrafts().map((d) => (
+              <option key={d} value={d}>
+                {d}
               </option>
             ))}
           </select>
         </div>
 
-        <div className="mb-6">
-          <label
-            htmlFor="access"
-            className="block text-gray-700 text-sm font-bold mb-2"
-          >
-            Status
-          </label>
-          <select
-            name="status"
-            onChange={inputData}
-            required
-            value={employee.status}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          >
-            <option value='Active'>Active</option>
-            <option value='Inactive'>Inactive</option>
-            <option value='Resigned'>Resigned</option>
-          </select>
-        </div>
-
-        <div className="flex items-center mb-4">
-          <input
-            type="checkbox"
-            name="isUser"
-            className="border-none rounded-lg focus:outline-none mr-2"
-            onChange={inputData}
-            value="true"
-          />
-          <label
-            htmlFor="isUser"
-            className="block text-md font-medium text-gray-600"
-          >
-            Is a User
-          </label>
-        </div>
-
-        <div className="flex justify-end gap-2 mt-6">
+        {step === 4 && (
           <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-red-400 text-white rounded-md"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+            onClick={submitForm}
             disabled={loading}
           >
-            {loading ? "Submitting..." : "Submit"}
+            {loading ? "Saving..." : "Submit"}
           </button>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400"
-          >
-            Reset
-          </button>
-        </div>
+        )}
+      </div>
 
-        {error && <p className="text-red-500 mt-4">{error}</p>}
-      </form>
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster />
     </div>
   );
 };

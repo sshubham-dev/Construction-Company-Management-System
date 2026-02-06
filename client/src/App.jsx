@@ -99,6 +99,20 @@ import {
   enableNotifications,
   ensureSubscription,
 } from "./helper/notificationService.js";
+import TrafficLight from "./pages/HRMS/TrafficLight.jsx";
+import TrafficLightSystem from "./pages/HRMS/TrafficLightSystem.jsx";
+import MonthlyPerformanceScreen from "./screen/MonthlyPerformanceScreen.jsx";
+import MonthlyPerformance from "./pages/HRMS/MonthlyPerformance.jsx";
+import BusinessUnitScreen from "./screen/BusinessUnitScreen.jsx";
+import StoreScreen from "./screen/StoreScreen.jsx";
+import GRNScreen from "./screen/GRNScreen.jsx";
+import GRN from "./pages/ERP/GRN.jsx";
+import DeliveryNotes from "./pages/ERP/DeliveryNotes.jsx";
+import DeliveryNoteScreen from "./screen/DeliveryNoteScreen.jsx";
+import SalesInvoice from "./pages/ERP/SalesInvoice.jsx";
+import SalesInvoiceScreen from "./screen/SalesInvoiceScreen.jsx";
+import Blogs from "./pages/CMS/Blogs.jsx";
+import BlogEdit from "./pages/CMS/BlogEdit.jsx";
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -117,7 +131,7 @@ const App = () => {
         }
       }
     });
-    if(user) ensureSubscription(user?._id);
+    if (user) ensureSubscription(user?._id);
   }, [user]);
 
   useEffect(() => {
@@ -165,7 +179,17 @@ const App = () => {
           path="/hrms/employee/attendance"
           element={<AttendanceReport />}
         />
-        <Route path="/hrms" element={<Employee />} />
+        <Route path="/hrms" element={<TrafficLight />} />
+        <Route path="/hrms/traffic-light" element={<TrafficLight />} />
+        <Route path="/hrms/traffic" element={<TrafficLightSystem />} />
+        <Route
+          path="/hrms/monthly-performance"
+          element={<MonthlyPerformance />}
+        />
+        <Route
+          path="/hrms/monthly-performance/:id"
+          element={<MonthlyPerformanceScreen />}
+        />
 
         <Route path="/user" element={<UserManagement />} />
         <Route path="/user/:id" element={<UserScreen />} />
@@ -254,22 +278,26 @@ const App = () => {
 
         <Route path="/site/purchase-request" element={<PurchaseRequest />} />
         <Route
-          path="/erp/inventory/purchase-request"
-          element={<PurchaseRequest />}
-        />
-        <Route path="/erp/purchase-order" element={<PurchaseOrders />} />
-        <Route path="/purchase-order/:id" element={<PurchaseOrderScreen />} />
-        <Route
-          path="/purchase-order/:id/approval/:approvalId"
-          element={<PurchaseOrderScreen />}
-        />
-        <Route
           path="/purchase-request/:id"
           element={<PurchaseRequestScreen />}
         />
         <Route
           path="/purchase-request/:id/approval/:approvalId"
           element={<PurchaseRequestScreen />}
+        />
+
+        {/* Purchase Orders */}
+        <Route
+          path="/erp/inventory/purchase-order"
+          element={<PurchaseOrders />}
+        />
+        <Route
+          path="/erp/inventory/purchase-order/:id"
+          element={<PurchaseOrderScreen />}
+        />
+        <Route
+          path="/erp/inventory/purchase-order/:id/approval/:approvalId"
+          element={<PurchaseOrderScreen />}
         />
 
         <Route path="/return-order/:from" element={<ReturnOrders />} />
@@ -281,13 +309,33 @@ const App = () => {
         <Route path="/erp/expenses" element={<Expenses />} />
         <Route path="/erp/balance-sheet" element={<BalanceSheet />} />
         <Route path="/erp/inventory" element={<Store />} />
+        <Route path="/erp/inventory/grn" element={<GRN />} />
+        <Route path="/erp/inventory/grn/:id" element={<GRNScreen />} />
+        <Route path="/erp/inventory/dn" element={<DeliveryNotes />} />
+        <Route path="/erp/inventory/dn/:id" element={<DeliveryNoteScreen />} />
+        <Route path="/erp/inventory/store" element={<Store />} />
+        <Route path="/erp/inventory/store/:id" element={<StoreScreen />} />
+        <Route
+          path="/erp/inventory/store/:storeId/stock"
+          element={<StoreScreen />}
+        />
         <Route path="/erp/report/:of" element={<ERPReport />} />
         <Route path="/erp/inventory/stock" element={<Stock />} />
         <Route path="/erp/inventory/sales" element={<Sales />} />
+        <Route path="/erp/inventory/sales-invoice" element={<SalesInvoice />} />
+        <Route
+          path="/erp/inventory/sales-invoice/:id"
+          element={<SalesInvoiceScreen />}
+        />
+        <Route
+          path="/erp/inventory/sales-request"
+          element={<PurchaseRequest />}
+        />
         <Route path="/erp/inventory/create-sales" element={<Sales />} />
         <Route path="/erp/inventory/purchase" element={<Purchase />} />
         <Route path="/erp/inventory/order" element={<Order />} />
         <Route path="/erp/business_unit" element={<BusinessUnit />} />
+        <Route path="/erp/business_unit/:id" element={<BusinessUnitScreen />} />
         {/* <Route path='/erp/journal' element={<Journal />} /> */}
         <Route path="/erp/ledger" element={<LedgerList />} />
         <Route path="/erp/receipt_payment" element={<Receipt_Payment />} />
@@ -323,7 +371,10 @@ const App = () => {
 
         <Route path="/site-kharchi" element={<Expenses />} />
 
-        <Route path="/cms/blog-editor" element={<CreateBlog />} />
+        <Route path="/cms/blog/editor" element={<CreateBlog />} />
+        <Route path="/cms/blogs" element={<Blogs />} />
+        <Route path="/cms/blog/preview" element={<Blogs />} />
+        <Route path="/cms/blog/edit/:id" element={<BlogEdit />} />
 
         <Route path="/work-details" element={<WorkDetails />} />
 

@@ -45,11 +45,12 @@ const getWorkorders = async (req, res) => {
 const getDraftWorkorders = async (req, res) => {
   try {
     const user = req.user;
-    const workOrders = await WorkOrder.find()
+    console.log("user in draft workorders:", user._id);
+    const workOrders = await WorkOrder.find({ createdBy: user?._id })
       .where("approvalStatus")
       .equals("Pending")
-      .where("createdBy")
-      .equals(user?._id)
+      // .where("createdBy")
+      // .equals(user?._id)
       .sort({ createdAt: -1 })
       .exec();
     if (workOrders.length === 0) {
@@ -319,7 +320,7 @@ const updateWorkOrder = async (req, res) => {
       ? await WorkOrderTemplate.findById(templateRef).lean()
       : null;
 
-          const autoName = `${
+    const autoName = `${
       (template && template.title) || workOrderName || "Work Order"
     } - ${existingSite.name} - ${String(wo.workOrderNo).padStart(3, "0")}`;
 
@@ -392,33 +393,45 @@ const replaceContractor = async (req, res) => {
     await wo.save();
 
     // create new WO with remaining amounts (unpaid stages)
-    const remainingWorks = wo.works.map((w) => {
-      const remainingStages = (w.stages || []).map((s) => {
-        const due = Number(s.due) || Number(s.amount) - Number(s.paid) || 0;
+    const remainingWorks = wo.works
+      .map((w) => {
+        const remainingStages = (w.stages || [])
+          .map((s) => {
+            const amount = Number(s.amount) || 0;
+            const paid = Number(s.paid) || 0;
+            const due = Number((amount - paid).toFixed(2));
+            if (due <= 0) return null;
+            return {
+              ...(s.toObject ? s.toObject() : s),
+              paid: 0,
+              due,
+              status: "Pending",
+            };
+          })
+          .filter(Boolean);
+
+        if (remainingStages.length === 0) return null;
+
+        const amount = remainingStages.reduce(
+          (sum, st) => sum + Number(st.amount || 0),
+          0
+        );
+
         return {
-          ...(s.toObject ? s.toObject() : s),
+          id: new mongoose.Types.ObjectId().toString(),
+          name: w.name,
+          unit: w.unit,
+          qty: w.qty,
+          rate: w.rate,
+          amount,
           paid: 0,
-          due: Number(due.toFixed(2)),
+          due: amount,
+          subWorks: w.subWorks || [],
+          stages: remainingStages,
+          notes: `Carried from WO ${wo.workOrderNo}`,
         };
-      });
-      const amount = remainingStages.reduce(
-        (s, st) => s + (Number(st.amount) || 0),
-        0
-      );
-      return {
-        id: mongoose.Types.ObjectId().toString(),
-        name: w.name,
-        unit: w.unit,
-        qty: w.qty,
-        rate: w.rate,
-        amount,
-        paid: 0,
-        due: amount,
-        subWorks: w.subWorks || [],
-        stages: remainingStages,
-        notes: `Carried from WO ${wo._id}`,
-      };
-    });
+      })
+      .filter(Boolean);
 
     const newWO = new WorkOrder({
       workOrderName: `${wo.workOrderName} - REASSIGN`,

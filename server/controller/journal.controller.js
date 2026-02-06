@@ -3,60 +3,88 @@ const Ledger = require("../models/ledger.models");
 const { sendNotification } = require("./notification.controller.js");
 
 // Utility to update ledger transactions
-const updateLedgerBalances = async (entries, mode = "add") => {
-  for (const entry of entries) {
+const applyJournalToLedgers = async (journal, mode = "add") => {
+  const multiplier = mode === "add" ? 1 : -1;
+
+  for (const entry of journal.entries) {
     const ledger = await Ledger.findById(entry.account.id);
     if (!ledger) continue;
 
-    const amount = parseFloat(entry.debit || entry.credit || 0);
-
-    if (entry.debit) {
-      ledger.receivable = (ledger.receivable || 0) + (mode === "add" ? amount : -amount);
-    } else if (entry.credit) {
-      ledger.payable = (ledger.payable || 0) + (mode === "add" ? amount : -amount);
+    if (entry.type === "Debit") {
+      ledger.currentBalance += multiplier * entry.amount;
+    } else {
+      ledger.currentBalance -= multiplier * entry.amount;
     }
-
-    ledger.transaction.push({
-      id: entry._id,
-      type: "Journal",
-      amount: amount,
-    });
 
     await ledger.save();
   }
 };
 
+
 // 👉 Create Journal Entry
 const createJournal = async (req, res) => {
   try {
-    const { voucherNo, date, narration, entries, createdBy } = req.body;
+    const { voucherNo, date, narration, entries, costCenter } = req.body;
 
-    // Auto sum debit/credit
-    const totalDebit = entries.reduce((sum, e) => sum + (parseFloat(e.debit) || 0), 0);
-    const totalCredit = entries.reduce((sum, e) => sum + (parseFloat(e.credit) || 0), 0);
-
-    if (totalDebit !== totalCredit) {
-      return res.status(400).json({ error: "Debit and Credit amounts must be equal." });
+    if (!entries || entries.length < 2) {
+      return res.status(400).json({ error: "Minimum two entries required" });
     }
 
-    const journal = new Journal({
+    let debit = 0;
+    let credit = 0;
+
+    for (const e of entries) {
+      if (e.type === "Debit") debit += e.amount;
+      if (e.type === "Credit") credit += e.amount;
+    }
+
+    if (debit !== credit) {
+      return res.status(400).json({ error: "Debit and Credit must match" });
+    }
+
+    const journal = await Journal.create({
       voucherNo,
       date,
       narration,
       entries,
-      totalDebit,
-      totalCredit,
-      createdBy,
+      totalDebit: debit,
+      totalCredit: credit,
+      costCenter,
+      createdBy: req.user._id,
+      status: "Draft",
     });
 
-    await journal.save();
-    await updateLedgerBalances(entries, "add");
-
     res.status(201).json(journal);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+
+const postJournal = async (req, res) => {
+  try {
+    const journal = await Journal.findById(req.params.id);
+    if (!journal) {
+      return res.status(404).json({ error: "Journal not found" });
+    }
+
+    if (journal.status !== "Draft") {
+      return res.status(400).json({
+        error: "Only Draft journal can be posted",
+      });
+    }
+
+    await applyJournalToLedgers(journal, "add");
+
+    journal.status = "Posted";
+    await journal.save();
+
+    res.json({ message: "Journal posted successfully", journal });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // 👉 Get All Journal Entries
 const getJournals = async (req, res) => {
@@ -82,52 +110,69 @@ const getJournalById = async (req, res) => {
 // 👉 Update Journal Entry
 const updateJournal = async (req, res) => {
   try {
-    const existing = await Journal.findById(req.params.id);
-    if (!existing) return res.status(404).json({ error: "Journal not found." });
+    const journal = await Journal.findById(req.params.id);
+    if (!journal) return res.status(404).json({ error: "Not found" });
 
-    // Revert previous balances
-    await updateLedgerBalances(existing.entries, "subtract");
-
-    const { voucherNo, date, narration, entries, createdBy } = req.body;
-
-    const totalDebit = entries.reduce((sum, e) => sum + (parseFloat(e.debit) || 0), 0);
-    const totalCredit = entries.reduce((sum, e) => sum + (parseFloat(e.credit) || 0), 0);
-
-    if (totalDebit !== totalCredit) {
-      return res.status(400).json({ error: "Debit and Credit must match." });
+    if (journal.status !== "Draft") {
+      return res.status(400).json({
+        error: "Posted or cancelled journal cannot be edited",
+      });
     }
 
-    existing.voucherNo = voucherNo;
-    existing.date = date;
-    existing.narration = narration;
-    existing.entries = entries;
-    existing.totalDebit = totalDebit;
-    existing.totalCredit = totalCredit;
-    existing.createdBy = createdBy;
+    Object.assign(journal, req.body);
+    await journal.save();
 
-    await existing.save();
-    await updateLedgerBalances(entries, "add");
+    res.json({ message: "Journal updated", journal });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
 
-    res.json(existing);
+
+const cancelJournal = async (req, res) => {
+  try {
+    const journal = await Journal.findById(req.params.id);
+    if (!journal) {
+      return res.status(404).json({ error: "Journal not found" });
+    }
+
+    if (journal.status !== "Posted") {
+      return res.status(400).json({
+        error: "Only Posted journal can be cancelled",
+      });
+    }
+
+    await applyJournalToLedgers(journal, "subtract");
+
+    journal.status = "Cancelled";
+    await journal.save();
+
+    res.json({ message: "Journal cancelled successfully", journal });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // 👉 Delete Journal
 const deleteJournal = async (req, res) => {
   try {
     const journal = await Journal.findById(req.params.id);
-    if (!journal) return res.status(404).json({ error: "Journal not found." });
+    if (!journal) return res.status(404).json({ error: "Not found" });
 
-    await updateLedgerBalances(journal.entries, "subtract");
+    if (journal.status !== "Draft") {
+      return res.status(400).json({
+        error: "Only Draft journal can be deleted",
+      });
+    }
+
     await journal.deleteOne();
-
-    res.json({ message: "Journal deleted." });
+    res.json({ message: "Journal deleted" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 const getNextJournalNo = async (req, res) => {
   try {
@@ -155,6 +200,8 @@ module.exports = {
   createJournal,
   getJournals,
   getJournalById,
+  cancelJournal,
+  postJournal,
   updateJournal,
   deleteJournal,
   getNextJournalNo

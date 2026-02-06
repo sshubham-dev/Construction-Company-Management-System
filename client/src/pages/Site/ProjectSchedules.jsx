@@ -29,13 +29,13 @@ const ProjectSchedules = () => {
     const getprojectSchedules = async () => {
       try {
         const projectScheduleData = await axios.get('/api/v1/project-schedule');
-        console.log(projectScheduleData.data)
+        console.log("projectScheduleData.data", projectScheduleData.data)
         if ((user.department === 'Site Supervisor' || user.department === 'Site Incharge') && isLoggedIn) {
           const sites = user.site;
           // console.log(user)
           let ProjectSchedules = [];
           for (let site of sites) {
-            const filteredProjectSchedules = projectScheduleData.data.filter((projectSchedule) => projectSchedule.site?.id._id === site.id)
+            const filteredProjectSchedules = projectScheduleData.data.filter((projectSchedule) => projectSchedule.site?.id?._id === site.id)
             ProjectSchedules = [...ProjectSchedules, ...filteredProjectSchedules]
           }
           setProjectSchedule(ProjectSchedules)
@@ -60,7 +60,7 @@ const ProjectSchedules = () => {
 
           for (let site of sites) {
             // Filter projectSchedulesData based on site id
-            const filteredprojectSchedules = projectSchedulesData.data.filter((projectSchedule) => projectSchedule.site?.id._id === site.id);
+            const filteredprojectSchedules = projectSchedulesData.data.filter((projectSchedule) => projectSchedule.site?.id?._id === site.id);
             // Concatenate filteredprojectSchedules to draftprojectSchedules
             draftprojectSchedules = [...draftprojectSchedules, ...filteredprojectSchedules];
             console.log("Draft projectschedule for site", site, ":", filteredprojectSchedules);
@@ -154,13 +154,13 @@ const ProjectSchedules = () => {
                   <tr key={index} className='border-b border-blue-gray-200'>
                     <td className="px-6 py-4">
                       <Link to={`/project-schedule/${projectSchedule._id}`} className=""> {projectSchedule.site.name} </Link>
-                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {projectSchedule.site?.id.client.name} </p>
+                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {projectSchedule.site?.id?.client?.name} </p>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <p className=""> {projectSchedule.site?.id.incharge?.name} </p>
-                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {projectSchedule.site?.id.supervisor?.name} </p>
+                      <p className=""> {projectSchedule.site?.id?.incharge?.name} </p>
+                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {projectSchedule.site?.id?.supervisor?.name} </p>
                     </td>
-                    <td className="px-6 py-4 text-center">{projectSchedule.site?.id.projectType}</td>
+                    <td className="px-6 py-4 text-center">{projectSchedule.site?.id?.projectType}</td>
                     <td className="px-6 py-4 text-center">
                       <button onClick={() => handleRedirect(projectSchedule._id)} className="mr-2">
                         <FaExternalLinkAlt className='text-blue-500 hover:text-blue-800 text-lg' />
@@ -196,13 +196,13 @@ const ProjectSchedules = () => {
                   <tr key={projectSchedule._id} className='border-b border-blue-gray-200'>
                     <td className="px-6 py-4">
                        <Link to={`/project-schedule/${projectSchedule._id}`} className=""> {projectSchedule.site.name} </Link>
-                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {projectSchedule.site?.id.client.name} </p>
+                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {projectSchedule.site?.id?.client?.name} </p>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <p className=""> {projectSchedule.site?.id.incharge?.name} </p>
-                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {projectSchedule.site?.id.supervisor?.name} </p>
+                      <p className=""> {projectSchedule.site?.id?.incharge?.name} </p>
+                      <p className="text-gray-500 text-sm font-semibold tracking-wide"> {projectSchedule.site?.id?.supervisor?.name} </p>
                     </td>
-                    <td className="px-6 py-4 text-center">{projectSchedule.site?.id.projectType}</td>
+                    <td className="px-6 py-4 text-center">{projectSchedule.site?.id?.projectType}</td>
                     <td className="px-6 py-4 text-center">
                       <button onClick={() => handleSave(projectSchedule._id)} className=" mr-2">
                         <FcApproval className="text-green-500 hover:text-green-700 text-xl" />

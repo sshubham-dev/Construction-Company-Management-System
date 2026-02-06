@@ -17,6 +17,8 @@ import CreateClient from "../CreateClient";
 import CreateLead from "../CreateLead";
 import CreatePurchaseOrder from "../CreatePurchaseOrder";
 import CreateLabourAttendance from "../CreateLabourAttendance";
+import CreateGRN from "../CreateGRN";
+import CreateDeliveryNote from "../CreateDeliveryNote";
 
 export default function Actions({ role }) {
   const [activeAction, setActiveAction] = useState(null);
@@ -205,9 +207,10 @@ export default function Actions({ role }) {
       actions: [
         { icon: "📝", label: "Cleaning" },
         { icon: "📷", label: "Stock Summary" },
-        { icon: "📞", label: "Create Purchase Order" },
-        { icon: "🚶", label: "Material Incoming/Outgoing Entry" },
-        { icon: "🤝", label: "Material Purchase/Sales" },
+        { icon: "📞", label: "Create Purchase Order", modal: "PurchaseOrder" },
+        { icon: "🚶", label: "Generate GRN (Goods Receipt Note)", modal: "GRN" },
+        { icon: "🚶", label: "Generate DN (Delivery Note)", modal: "DN" },
+        // { icon: "🤝", label: "Generate Bill" },
         { icon: "🤝", label: "Scrap Sell" },
         {
           icon: "⭐",
@@ -216,7 +219,7 @@ export default function Actions({ role }) {
         },
                 {
           icon: "🏠",
-          label: "Site Housekeeping",
+          label: "Store Housekeeping",
           badge: "Before Sat",
           modal: "HouseKeeping",
         },
@@ -226,7 +229,7 @@ export default function Actions({ role }) {
       role: "Store Incharge",
       actions: [
         { icon: "📷", label: "Stock Summary" },
-        { icon: "📞", label: "Create Purchase Order" },
+        { icon: "📞", label: "Create Purchase Order", modal: "PurchaseOrder" },
         { icon: "🚶", label: "Material Incoming/Outgoing Entry" },
         { icon: "🤝", label: "Material Purchase/Sales" },
       ],
@@ -328,6 +331,14 @@ export default function Actions({ role }) {
     PurchaseOrder: {
       title: "Create Purchase Order",
       component: <CreatePurchaseOrder onClose={() => setActiveAction(null)} />,
+    },
+    GRN: {
+      title: "Generate GRN (Goods Receipt Note)",
+      component: <CreateGRN onClose={() => setActiveAction(null)} />,
+    },
+    DN: {
+      title: "Generate DN (Delivery Note)",
+      component: <CreateDeliveryNote onClose={() => setActiveAction(null)} />,
     },
   };
 

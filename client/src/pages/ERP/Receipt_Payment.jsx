@@ -1,49 +1,70 @@
 import React, { useEffect, useState } from "react";
-import toast, { Toaster } from 'react-hot-toast';
-import Header from '../../components/Header';
+import toast, { Toaster } from "react-hot-toast";
+import Header from "../../components/Header";
 import { IoIosAddCircle } from "react-icons/io";
 import CreateReceipt_Payment from "../../components/CreateReceipt_Payment";
 import Modal from "../../components/Modal";
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch } from "react-redux";
 import { fetchReceipt } from "../../features/erp/receiptSlice";
-import moment from 'moment';
+import moment from "moment";
 import { fetchPayment } from "../../features/erp/paymentSlice";
 
 const Receipt_Payment = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("receipts");
+  const [type, setType] = useState("Receipt");
   const dispatch = useDispatch();
 
   const receipts = useSelector((state) => state.receipt?.all);
   const payments = useSelector((state) => state.payment?.all);
-  console.log(receipts)
+  console.log(receipts);
 
   useEffect(() => {
-    dispatch(fetchReceipt())
-    dispatch(fetchPayment())
-  }, [dispatch])
-
+    dispatch(fetchReceipt());
+    dispatch(fetchPayment());
+  }, [dispatch]);
 
   return (
     <div>
       <section className="overflow-x-auto scrollbar-hide">
         <Header category="Page" title="Receipt & Payment Manager" />
-        <div className="w-full mx-auto text-gray-700 p-1 flex flex-row justify-end items-center">
+        <div className="w-full mx-auto text-gray-700 p-1 flex flex-row justify-end items-center gap-4">
           <button
-            className="bg-blue-500 text-white py-2 px-2 rounded-4xl shadow-lg md:mt-0"
-            onClick={() => setIsModalOpen(true)}>
-            <IoIosAddCircle size={24} />
+            className="bg-blue-500 text-white py-2 px-4 rounded-xl shadow-lg md:mt-0 flex gap-2"
+            onClick={() => {
+              setIsModalOpen(true);
+              setType("Receipt");
+            }}
+          >
+            <IoIosAddCircle size={24} /> Receipt
+          </button>
+          <button
+            className="bg-blue-500 text-white py-2 px-4 rounded-xl shadow-lg md:mt-0 flex gap-2"
+            onClick={() => {
+              setIsModalOpen(true);
+              setType("Payment");
+            }}
+          >
+            <IoIosAddCircle size={24} /> Payment
           </button>
         </div>
         <div className="flex space-x-4 border-b-2 mb-4 w-full md:w-auto">
           <button
-            className={`px-4 py-2 ${activeTab === "receipts" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
+            className={`px-4 py-2 ${
+              activeTab === "receipts"
+                ? "border-b-4 border-blue-500 font-bold"
+                : "text-gray-500"
+            }`}
             onClick={() => setActiveTab("receipts")}
           >
             Receipts
           </button>
           <button
-            className={`px-4 py-2 ${activeTab === "payments" ? "border-b-4 border-blue-500 font-bold" : "text-gray-500"}`}
+            className={`px-4 py-2 ${
+              activeTab === "payments"
+                ? "border-b-4 border-blue-500 font-bold"
+                : "text-gray-500"
+            }`}
             onClick={() => setActiveTab("payments")}
           >
             Payments
@@ -69,7 +90,9 @@ const Receipt_Payment = () => {
                 {receipts?.map((r, index) => (
                   <tr key={index} className="text-left ">
                     <td className="px-4 py-2">{r.receiptNo}</td>
-                    <td className="px-4 py-2">{moment(r.date).format('DD-MMM-YYYY')}</td>
+                    <td className="px-4 py-2">
+                      {moment(r.date).format("DD-MMM-YYYY")}
+                    </td>
                     <td className="px-4 py-2">{r.from.name}</td>
                     <td className="px-4 py-2">{r.to.name}</td>
                     <td className="px-4 py-2">{r.amount}</td>
@@ -99,7 +122,9 @@ const Receipt_Payment = () => {
                 {payments?.map((p, index) => (
                   <tr key={index} className="text-left ">
                     <td className="px-4 py-2">{p.paymentNo}</td>
-                    <td className="px-4 py-2">{moment(p.date).format("DD-MM-YYYY")}</td>
+                    <td className="px-4 py-2">
+                      {moment(p.date).format("DD-MM-YYYY")}
+                    </td>
                     <td className="px-4 py-2">{p.from.name}</td>
                     <td className="px-4 py-2">{p.to.name}</td>
                     <td className="px-4 py-2">{p.amount}</td>
@@ -112,8 +137,16 @@ const Receipt_Payment = () => {
         )}
 
         {/* Add/Edit Modal */}
-        <Modal onClose={() => setIsModalOpen(false)} isOpen={isModalOpen} head='Record Receipt / Payment'>
-          <CreateReceipt_Payment onClose={() => setIsModalOpen(false)} isOpen={isModalOpen} />
+        <Modal
+          onClose={() => setIsModalOpen(false)}
+          isOpen={isModalOpen}
+          head={`Record New ${type}`}
+        >
+          <CreateReceipt_Payment
+            onClose={() => setIsModalOpen(false)}
+            isOpen={isModalOpen}
+            type={type}
+          />
         </Modal>
 
         <Toaster position="top-right" reverseOrder={false} />

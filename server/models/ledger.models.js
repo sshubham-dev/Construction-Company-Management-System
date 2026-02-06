@@ -1,29 +1,5 @@
 const mongoose = require("mongoose");
 
-const ledgerEntrySchema = new mongoose.Schema(
-  {
-    date: { type: Date, default: Date.now },
-    narration: String,
-    debitAccount: { type: mongoose.Schema.Types.ObjectId, ref: "Ledger" },
-    creditAccount: { type: mongoose.Schema.Types.ObjectId, ref: "Ledger" },
-    amount: { type: Number, required: true },
-    voucherType: {
-      type: String,
-      enum: ["Contra", "Payment", "Receipt", "Journal", "Expenses"],
-    },
-    voucherRef: { type: mongoose.Schema.Types.ObjectId }, // link to voucher document
-    paymentMode: { type: String }, // Cash, Bank, UPI, Cheque
-    drCr: { type: String, enum: ["Dr", "Cr"] }, // Debit or Credit
-
-    counterpartLedger: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Ledger",
-    }, // opposite entry
-    balanceAfter: Number, // balance after this entry
-  },
-  { timestamps: true }
-);
-
 const ledgerSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -34,6 +10,10 @@ const ledgerSchema = new mongoose.Schema(
       refPath: "referenceType",
     },
     under: String, // grouping name
+    businessUnitId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BusinessUnit",
+    },
     statutoryDetails: {
       isTDSDeductible: { type: Boolean, default: false },
       isGSTApplicable: { type: Boolean, default: false },
@@ -63,7 +43,7 @@ const ledgerSchema = new mongoose.Schema(
       received: { type: Number, default: 0 },
       due: { type: Number, default: 0 },
     },
-    transactions: [ledgerEntrySchema], // optional quick history
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
@@ -94,6 +74,12 @@ const groupSchema = new mongoose.Schema(
       required: true,
     },
 
+    normalBalance: {
+      type: String,
+      enum: ["Dr", "Cr"],
+      required: true,
+    },
+
     // Helpful for reporting and automated ledger behavior
     affectsGrossProfit: { type: Boolean, default: false },
 
@@ -114,6 +100,8 @@ const costCenterSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+ledgerSchema.index({ referenceType: 1, referenceId: 1 }, { unique: true });
 
 const Group = mongoose.model("Group", groupSchema);
 const Ledger = mongoose.model("Ledger", ledgerSchema);

@@ -14,7 +14,9 @@ import {
 import toast, { Toaster } from "react-hot-toast";
 import moment from "moment";
 import Modal from "../components/Modal";
-import CreateWorkOrder from "../components/CreateWorkOrder";
+import CreateWorkOrder, {
+  ReplaceContractorModal,
+} from "../components/CreateWorkOrder";
 import logo from "../asset/bhuvihomes.png";
 import Reject from "../components/UI/Reject";
 import { PDFDownloadLink } from "@react-pdf/renderer";
@@ -28,10 +30,15 @@ const WorkOrderScreen = () => {
   const [editModal, setEditModal] = useState(false);
   const [editDetailModal, setEditDetailModal] = useState(false);
   const [editId, setEditId] = useState("");
+  const [contractors, setContractors] = useState([]);
   const [editIndex, setEditIndex] = useState("");
   const [rejectModal, setRejectModal] = useState(false);
   const [rejectId, setRejectId] = useState("");
-
+  const [replaceModalOpen, setReplaceModalOpen] = useState(false);
+  const [replaceData, setReplaceData] = useState({
+    contractorId: "",
+    reason: "",
+  });
   const { id, approvalId } = useParams();
   const navigate = useNavigate();
 
@@ -48,6 +55,17 @@ const WorkOrderScreen = () => {
     };
     fetchWorkOrder();
   }, [id]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const contRes = await axios.get("/api/v1/contractor");
+        setContractors(contRes.data || []);
+      } catch (err) {
+        console.error("initial fetch error", err);
+      }
+    })();
+  }, []);
 
   const handleEdit = (id) => {
     setEditId(id);
@@ -86,6 +104,31 @@ const WorkOrderScreen = () => {
   };
 
   if (!workOrder) return <p className="text-center py-6">Loading...</p>;
+
+  const handleReplaceContractor = async (id) => {
+    if (!replaceData.contractorId) {
+      toast.error("Please select a contractor");
+      return;
+    }
+
+    try {
+      await axios.post(`/api/v1/work-order/${id}/replace-contractor`, {
+        newContractorId: replaceData.contractorId,
+        reason: replaceData.reason,
+      });
+
+      toast.success("Contractor replaced successfully");
+      setReplaceModalOpen(false);
+
+      // redirect to new work order
+      navigate("/work-orders");
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.response?.data?.message || "Failed to replace contractor"
+      );
+    }
+  };
 
   return (
     <div className="p-4 space-y-6">
@@ -148,6 +191,27 @@ const WorkOrderScreen = () => {
             <strong>GST:</strong> {workOrder.contractor?.id?.gst || "N/A"}
           </p>
         </div>
+
+        {id !== undefined && (
+          <div className="border border-red-300 bg-red-50 rounded p-4 mt-6">
+            <h4 className="font-semibold text-red-700 mb-2">
+              Replace Contractor
+            </h4>
+
+            <p className="text-sm text-red-600 mb-3">
+              This will terminate the current contractor and create a new work
+              order with remaining unpaid work.
+            </p>
+
+            <button
+              type="button"
+              className="px-4 py-2 bg-red-600 text-white rounded"
+              onClick={() => setReplaceModalOpen(true)}
+            >
+              Replace Contractor
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Summary */}
@@ -321,6 +385,15 @@ const WorkOrderScreen = () => {
           index={editIndex}
         />
       </Modal>
+
+      <ReplaceContractorModal
+        open={replaceModalOpen}
+        contractors={contractors}
+        value={replaceData}
+        onChange={setReplaceData}
+        onClose={() => setReplaceModalOpen(false)}
+        onConfirm={() => handleReplaceContractor(workOrder._id)}
+      />
 
       <Toaster position="top-right" />
     </div>

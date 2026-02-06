@@ -3,6 +3,7 @@ import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchNotifications } from "../features/notification/notificationSlice";
 import moment from "moment";
+import Select from "react-select";
 
 axios.defaults.withCredentials = true;
 
@@ -78,6 +79,7 @@ const ReturnFormModal = ({
       console.log(error);
     }
   };
+
   useEffect(() => {
     if (user && user?.department === "Site Incharge") {
       console.log(user._id);
@@ -103,6 +105,27 @@ const ReturnFormModal = ({
     }
   }, []);
 
+  useEffect(() => {
+    if (!formData.salesInvoiceId) return;
+
+    const loadInvoiceItems = async () => {
+      const { data } = await axios.get(
+        `/api/v1/sales-invoice/${formData.salesInvoiceId}`
+      );
+
+      setFormData((prev) => ({
+        ...prev,
+        returnable: data.items.map((item) => ({
+          item: item.item, // locked
+          unit: item.unit, // locked
+          quantity: 0, // user editable
+        })),
+      }));
+    };
+
+    loadInvoiceItems();
+  }, [formData.salesInvoiceId]);
+
   const getUserSites = async (id) => {
     try {
       const siteData = await axios.get(`/api/v1/site/user/${id}`);
@@ -124,7 +147,7 @@ const ReturnFormModal = ({
           ? new Date(returnData.date).toISOString().split("T")[0]
           : "",
         returnable: returnData.returnable || [
-          { item: "", quantity: 0, receivedQuantity: 0, unit: "", remarks: "" },
+          { item: "", quantity: 0, unit: "" },
         ],
       });
     }
@@ -158,10 +181,7 @@ const ReturnFormModal = ({
   const handleAddItem = () => {
     setFormData({
       ...formData,
-      returnable: [
-        ...formData.returnable,
-        { item: "", quantity: 0, receivedQuantity: 0, unit: "", remarks: "" },
-      ],
+      returnable: [...formData.returnable, { item: "", quantity: 0, unit: "" }],
     });
   };
 
@@ -217,9 +237,6 @@ const ReturnFormModal = ({
         item: "",
         quantity: 0,
         unit: "",
-        receivedQuantity: 0,
-        remarks: "",
-        rate: 0,
       },
     ]);
     setItemToEdit({ id: "", index: "" });
@@ -242,6 +259,7 @@ const ReturnFormModal = ({
                 name="item"
                 id="item"
                 placeholder="Item Name"
+                disabled={true}
                 className="w-full border p-2 mb-2 rounded"
                 value={returnable.item}
                 onChange={(e) => handleReturnableChange("item", e.target.value)}
@@ -285,69 +303,6 @@ const ReturnFormModal = ({
                 />
               </div>
             </div>
-            {user && user.department === "Accountant" && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-                  <div className="mb-2">
-                    <label
-                      htmlFor="receivedQuantity"
-                      className="block text-sm font-semibold text-gray-600"
-                    >
-                      Received Quantity:
-                    </label>
-                    <input
-                      type="number"
-                      name="receivedQuantity"
-                      placeholder="Received Qty"
-                      className="border p-2 rounded"
-                      value={returnable.receivedQuantity}
-                      onChange={(e) =>
-                        handleReturnableChange(
-                          "receivedQuantity",
-                          e.target.value
-                        )
-                      }
-                    />
-                  </div>
-                  <div className="mb-2">
-                    <label
-                      htmlFor="rate"
-                      className="block text-sm font-semibold text-gray-600"
-                    >
-                      Rate:
-                    </label>
-                    <input
-                      type="number"
-                      name="rate"
-                      placeholder="rate"
-                      className="border p-2 rounded"
-                      value={returnable.rate}
-                      onChange={(e) =>
-                        handleReturnableChange("rate", e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="mb-2">
-                  <label
-                    htmlFor="remarks"
-                    className="block text-sm font-semibold text-gray-600"
-                  >
-                    Remarks:
-                  </label>
-                  <input
-                    type="text"
-                    name="remarks"
-                    placeholder="Remarks"
-                    className="w-full border p-2 rounded"
-                    value={returnable.remarks}
-                    onChange={(e) =>
-                      handleReturnableChange("remarks", e.target.value)
-                    }
-                  />
-                </div>
-              </>
-            )}
             <div>
               <button
                 type="button"
@@ -389,6 +344,30 @@ const ReturnFormModal = ({
                   ))}
                 </select>
               </div>
+
+              {/* <div className="mb-4">
+                <label
+                  htmlFor="materialType"
+                  className="block text-sm font-semibold text-gray-600"
+                >
+                  Material Type
+                </label>
+<select
+  name="salesInvoiceId"
+  value={formData.salesInvoiceId}
+  onChange={handleChange}
+  className="input"
+  required
+>
+  <option value="">Select Sales Invoice</option>
+  {salesInvoices.map(inv => (
+    <option key={inv._id} value={inv._id}>
+      {inv.invoiceNo}
+    </option>
+  ))}
+</select>
+
+              </div> */}
               <div className="mb-4">
                 <label
                   htmlFor="materialType"
@@ -453,17 +432,11 @@ const ReturnFormModal = ({
                     placeholder="Item Name"
                     className="w-full border p-2 mb-2 rounded"
                     value={item.item}
+                    disabled={true}
                     onChange={(e) => handleChange(e, index, "item")}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {/* <input
-                    type="number"
-                    placeholder="Received"
-                    className="border p-2 rounded"
-                    value={item.receivedQuantity}
-                    onChange={(e) => handleChange(e, index, "receivedQuantity")}
-                  /> */}
                   <label
                     htmlFor="quantity"
                     className="block text-sm font-semibold text-gray-600"
@@ -491,13 +464,6 @@ const ReturnFormModal = ({
                     onChange={(e) => handleChange(e, index, "unit")}
                   />
                 </div>
-                {/* <input
-                  type="text"
-                  placeholder="Remarks"
-                  className="w-full border p-2 mt-2 rounded"
-                  value={item.remarks}
-                  onChange={(e) => handleChange(e, index, "remarks")}
-                /> */}
               </div>
             ))}
 
@@ -520,9 +486,9 @@ const ReturnFormModal = ({
               <button
                 type="submit"
                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              disabled={loading}
-            >
-              {loading ? "Submitting..." : "Submit"}
+                disabled={loading}
+              >
+                {loading ? "Submitting..." : "Submit"}
               </button>
             </div>
           </>

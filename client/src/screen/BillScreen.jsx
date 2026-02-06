@@ -22,7 +22,12 @@ const BillScreen = () => {
   const [rejectId, setRejectId] = useState("");
   const [editId, setEditId] = useState("");
   useEffect(() => {
-  const getbills = async () => {
+
+      getbill(id);
+
+  }, [id]);
+
+  const getbill = async (id) => {
     try {
       if (id) {
         const billData = await axios.get(`/api/v1/bill/${id}`);
@@ -35,11 +40,6 @@ const BillScreen = () => {
       toast.error(error.message);
     }
   };
-      getbills();
-
-  }, [id]);
-
-
   const handleEdit = (id) => {
     setEditModal(true);
     setEditId(id);
@@ -49,7 +49,7 @@ const BillScreen = () => {
     try {
       await axios.put(`/api/v1/approval/${approvalId}`);
       toast.success("Bill Approved");
-      getbills(id);
+      getbill(id);
     } catch (error) {
       console.log(error);
       toast.error(error.message);

@@ -1,75 +1,115 @@
-const Store = require("../models/store.models");
+const {Store} = require("../models/store.models");
 const BusinessUnit = require("../models/businessunit.models");
 
 const createStore = async (req, res) => {
   try {
-    const data = req.body;
+    const {
+      businessUnitId,
+      address,
 
-    if (!data.businessUnitId)
-      return res.status(400).json({ error: "Business Unit is required" });
+      // ---- new model ----
+      storeHead,
+      storeIncharge,
+      helper,
 
-    // Validate BU exists
-    const bu = await BusinessUnit.findById(data.businessUnitId);
-    if (!bu) return res.status(404).json({ error: "Business Unit not found" });
+      managesConsumables,
+      managesAssets,
+      allowOfficeItemIssue,
+      allowInternalSalesToSites,
+      allowDirectSalesToClients,
 
-    // Check if BU already has a store
-    const existingStore = await Store.findOne({
-      businessUnitId: data.businessUnitId,
+      stockValuationMethod,
+      defaultConsumableRateSource,
+      gstRate,
+
+      minimumStockAlert,
+      assetTrackingEnabled,
+
+      expenseCategories,
+    } = req.body;
+
+    // --------------------
+    // Validate Business Unit
+    // --------------------
+    const bu = await BusinessUnit.findById(businessUnitId);
+    if (!bu) {
+      return res.status(400).json({ error: "Invalid Business Unit" });
+    }
+
+    // --------------------
+    // Validate mandatory roles
+    // --------------------
+    if (!storeHead) {
+      return res.status(400).json({ error: "Store Head is required" });
+    }
+
+    if (!storeIncharge) {
+      return res.status(400).json({ error: "Store Incharge is required" });
+    }
+
+    // --------------------
+    // Generate name & code
+    // --------------------
+    const city = address?.city || "NA";
+
+    const name = `${bu.name} Store - ${city}`;
+    const code = `STR-${bu.code}-${city.substring(0, 3).toUpperCase()}`;
+
+    // --------------------
+    // Create Store
+    // --------------------
+    const store = new Store({
+      name,
+      code,
+      businessUnitId,
+      address,
+
+      storeHead,
+      storeIncharge,
+      helper: helper || null,
+
+      managesConsumables,
+      managesAssets,
+      allowOfficeItemIssue,
+      allowInternalSalesToSites,
+      allowDirectSalesToClients,
+
+      stockValuationMethod,
+      defaultConsumableRateSource,
+      gstRate,
+
+      minimumStockAlert,
+      assetTrackingEnabled,
+
+      expenseCategories,
     });
 
-    if (existingStore)
-      return res
-        .status(400)
-        .json({ error: "Store already exists for this Business Unit" });
+    const newStore = await store.save();
 
-    // Auto create Ledger for Store
-    const ledger = new Ledger({
-      name: `${bu.name} Store Ledger`,
-      under: "Store Accounts",
-      referenceType: "Store",
-    });
-    const ledgerSaved = await ledger.save();
-
-    const newStore = new Store({
-      ...data,
-      ledgerId: ledgerSaved._id,
-    });
-
-    const saved = await newStore.save();
-
-    res.status(201).json(saved);
+    res.status(201).json(newStore);
   } catch (err) {
-    console.log("Create Store Error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("Create Store Error:", err);
+    res.status(500).json({ error: "Store creation failed" });
   }
 };
 
 const getStores = async (req, res) => {
-  try {
-    const stores = await Store.find()
-      .populate("businessUnitId", "name code")
-      .populate("staff", "name phone")
-      .populate("ledgerId", "name");
+  const stores = await Store.find({ isActive: true })
+    .populate("businessUnitId", "name code")
+    .sort({ createdAt: -1 });
 
-    res.json(stores);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json(stores);
 };
 
 const getStoreById = async (req, res) => {
-  try {
-    const store = await Store.findById(req.params.id)
-      .populate("businessUnitId", "name code address")
-      .populate("staff", "name phone email")
-      .populate("ledgerId");
+  const store = await Store.findById(req.params.id)
+    .populate("businessUnitId")
+    .exec();
+    // .populate("ledgerId");
 
-    if (!store) return res.status(404).json({ error: "Store not found" });
+  if (!store) return res.status(404).json({ message: "Store not found" });
 
-    res.json(store);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json(store);
 };
 
 const updateStore = async (req, res) => {
@@ -77,69 +117,96 @@ const updateStore = async (req, res) => {
     const data = req.body;
 
     const store = await Store.findById(req.params.id);
-    if (!store) return res.status(404).json({ error: "Store not found" });
-
-    // Prevent changing BU
-    if (data.businessUnitId && data.businessUnitId !== store.businessUnitId.toString()) {
-      return res
-        .status(400)
-        .json({ error: "Business Unit cannot be changed once assigned" });
+    if (!store) {
+      return res.status(404).json({ error: "Store not found" });
     }
 
-    // Merge expense categories
-    if (data.expenseCategories) {
-      store.expenseCategories = data.expenseCategories;
+    // --------------------
+    // Prevent BU change
+    // --------------------
+    if (
+      data.businessUnitId &&
+      data.businessUnitId !== store.businessUnitId.toString()
+    ) {
+      return res.status(400).json({
+        error: "Business Unit cannot be changed once assigned",
+      });
     }
 
-    // Merge staff
-    if (data.staff) {
-      store.staff = data.staff;
+    // --------------------
+    // Controlled field updates
+    // --------------------
+    const updatableFields = [
+      "address",
+
+      "storeHead",
+      "storeIncharge",
+      "helper",
+
+      "managesConsumables",
+      "managesAssets",
+      "allowOfficeItemIssue",
+      "allowInternalSalesToSites",
+      "allowDirectSalesToClients",
+
+      "stockValuationMethod",
+      "defaultConsumableRateSource",
+      "gstRate",
+
+      "minimumStockAlert",
+      "assetTrackingEnabled",
+
+      "expenseCategories",
+    ];
+
+    updatableFields.forEach(field => {
+      if (data[field] !== undefined) {
+        store[field] = data[field];
+      }
+    });
+
+    // --------------------
+    // Mandatory role validation (post-update)
+    // --------------------
+    if (!store.storeHead) {
+      return res.status(400).json({ error: "Store Head is required" });
     }
 
-    // Merge price list
-    if (data.priceList) {
-      store.priceList = data.priceList;
+    if (!store.storeIncharge) {
+      return res.status(400).json({ error: "Store Incharge is required" });
     }
-
-    // Merge all other fields
-    Object.assign(store, data);
 
     const updated = await store.save();
 
     res.json(updated);
   } catch (err) {
-    console.log("Store Update Error:", err);
+    console.error("Store Update Error:", err);
     res.status(500).json({ error: err.message });
   }
 };
 
-const deleteStore = async (req, res) => {
+const deactivateStore = async (req, res) => {
   try {
-    const store = await Store.findById(req.params.id);
-    if (!store) return res.status(404).json({ error: "Store not found" });
+    const store = await Store.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true }
+    );
 
-    // Optional: prevent deleting active store with stock
-    if (store.currentStockValue > 0) {
-      return res.status(400).json({
-        error: "Cannot delete store with active stock value",
-      });
+    if (!store) {
+      return res.status(404).json({ error: "Store not found" });
     }
 
-    await Ledger.findByIdAndDelete(store.ledgerId);
-    await Store.findByIdAndDelete(req.params.id);
-
-    res.json({ message: "Store deleted successfully" });
+    res.json({ message: "Store deactivated", store });
   } catch (err) {
-    console.log("Delete Store Error:", err);
     res.status(500).json({ error: err.message });
   }
 };
-
 
 module.exports = {
   createStore,
   getStores,
   getStoreById,
   updateStore,
-  deleteStore,
+  deactivateStore,
 };

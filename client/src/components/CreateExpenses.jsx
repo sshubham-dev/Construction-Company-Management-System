@@ -1,127 +1,188 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 
 const ExpenseForm = ({ onClose, editId }) => {
-  const [form, setForm] = useState({
-    date: "",
-    amount: 0,
-    to: "",
-    purpose: "",
-    photo: null,
-  });
-  const [photoPreview, setPhotoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [ledgers, setLedgers] = useState([]);
+  const [expenseLedgers, setExpenseLedgers] = useState([]);
 
+  const [form, setForm] = useState({
+    date: "",
+    amount: "",
+    narration: "",
+    expenseLedgerId: "",
+    expenseForLedgerId: "",
+    attachments: [],
+  });
+
+  const [preview, setPreview] = useState([]); // array of { url, type }
+
+  /* ---------------------------------- LOAD LEDGERS ---------------------------------- */
   useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        const ledgerRes = await axios.get("/api/v1/ledger");
-        setLedgers(ledgerRes.data);
-      } catch (error) {
-        console.error("Error loading ledgers:", error);
-      }
+    const loadLedgers = async () => {
+      const { data } = await axios.get("/api/v1/ledger");
+
+      // Expense ledgers (Expenses group)
+      setExpenseLedgers(data.filter((l) => l.under.includes("Expenses")));
+
+      // Site / Store / Office ledgers
+      setLedgers(
+        data
+        // data.filter((l) =>
+        //   ["Project Accounts", "Store Accounts", "Office Accounts"].includes(
+        //     l.under
+        //   )
+        // )
+      );
     };
-    loadInitialData();
+
+    loadLedgers();
   }, []);
 
-  // Load expense data if editing
+  /* ---------------------------------- EDIT MODE ---------------------------------- */
   useEffect(() => {
     if (!editId) return;
-    // console.log(editId)
 
-    const fetchExpense = async () => {
-      try {
-        const { data } = await axios.get(`/api/v1/expenses/${editId}`);
-        setForm({
-          date: data.date?.slice(0, 10) || "",
-          amount: data.amount || 0,
-          to: data.to?._id || "",
-          purpose: data.purpose || "",
-          photo: null, // reset until changed
-        });
-setPhotoPreview(data.photo || null);
-      } catch (err) {
-        console.error("Error loading expense:", err);
+    const loadExpense = async () => {
+      const { data } = await axios.get(`/api/v1/expenses/${editId}`);
+
+      setForm({
+        date: data.date?.slice(0, 10),
+        amount: data.amount,
+        narration: data.narration,
+        expenseLedgerId: data.expenseLedger?.id,
+        expenseForLedgerId: data.expenseForLedger?.id,
+        attachments: [null],
+      });
+
+      if (data.attachments?.[0]?.url) {
+        setPreview(data.attachments[0].url);
       }
     };
 
-    fetchExpense();
+    loadExpense();
   }, [editId]);
 
+  /* ---------------------------------- HANDLERS ---------------------------------- */
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleFileChange = (e) => {
-    setForm((prev) => ({ ...prev, photo: e.target.files[0]}));
-    setPhotoPreview(URL.createObjectURL(e.target.files[0]));
+  const handleFile = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    // store files for FormData
+    setForm((prev) => ({
+      ...prev,
+      attachments: files,
+    }));
+
+    // generate local previews
+    const previews = files.map((file) => ({
+      url: URL.createObjectURL(file),
+      type: file.type.includes("pdf") ? "pdf" : "image",
+    }));
+
+    // append previews (important for edit mode)
+    setPreview((prev) => [...prev, ...previews]);
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+  /* ---------------------------------- SUBMIT ---------------------------------- */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-  const formData = new FormData();
+    const fd = new FormData();
 
-  // Always append normal fields
-  formData.append("date", form.date);
-  formData.append("amount", form.amount);
-  formData.append("to", form.to);
-  formData.append("purpose", form.purpose);
+    // append normal fields
+    fd.append("date", form.date);
+    fd.append("amount", form.amount);
+    fd.append("narration", form.narration || "");
+    fd.append("expenseLedgerId", form.expenseLedgerId);
+    fd.append("expenseForLedgerId", form.expenseForLedgerId);
 
-  // Append photo only if new file is selected
-  if (form.photo instanceof File) {
-    formData.append("photo", form.photo);
-  }
-
-  try {
-    let response;
-
-    if (editId) {
-      response = await axios.put(`/api/v1/expenses/${editId}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-    } else {
-      response = await axios.post("/api/v1/expenses", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+    // append files correctly
+    if (form.attachments?.length) {
+      form.attachments.forEach((file) => {
+        fd.append("attachments", file); // MUST match multer field
       });
     }
 
-    onClose();
-  } catch (err) {
-    console.error("Error saving expense:", err);
-  }
+    try {
+      if (editId) {
+        await axios.put(`/api/v1/expenses/${editId}`, fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        await axios.post("/api/v1/expenses", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
 
-  setLoading(false);
-};
+      onClose();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-
+  /* ---------------------------------- UI ---------------------------------- */
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-xl mx-auto">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Date */}
       <div>
-        <label className="block mb-1 font-medium">Date</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Date
+        </label>
         <input
           type="date"
           name="date"
           value={form.date}
           onChange={handleChange}
-          className="w-full border px-3 py-2"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
+                   focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
           required
         />
       </div>
 
+      {/* Expense Ledger */}
       <div>
-        <label className="block mb-1 font-medium">To Ledger</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Expense Type
+        </label>
         <select
-          name="to"
-          value={form.to}
+          name="expenseLedgerId"
+          value={form.expenseLedgerId}
           onChange={handleChange}
-          className="w-full border px-3 py-2"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
+                   bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
           required
         >
-          <option value="">Select</option>
+          <option value="">Select Expense Type</option>
+          {expenseLedgers.map((l) => (
+            <option key={l._id} value={l._id}>
+              {l.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Expense For */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Expense For
+        </label>
+        <select
+          name="expenseForLedgerId"
+          value={form.expenseForLedgerId}
+          onChange={handleChange}
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
+                   bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        >
+          <option value="">Select Site / Store / Office</option>
           {ledgers.map((l) => (
             <option key={l._id} value={l._id}>
               {l.name}
@@ -130,58 +191,115 @@ const handleSubmit = async (e) => {
         </select>
       </div>
 
+      {/* Amount */}
       <div>
-        <label className="block mb-1 font-medium">Amount</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Amount
+        </label>
         <input
           type="number"
           name="amount"
           value={form.amount}
           onChange={handleChange}
-          className="w-full border px-3 py-2"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
+                   focus:outline-none focus:ring-2 focus:ring-green-500"
           required
         />
       </div>
 
+      {/* Narration */}
       <div>
-        <label className="block mb-1 font-medium">Description</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Narration
+        </label>
         <textarea
-          name="purpose"
-          value={form.purpose}
+          name="narration"
+          value={form.narration}
           onChange={handleChange}
-          className="w-full border px-3 py-2"
+          rows={3}
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
+                   focus:outline-none focus:ring-2 focus:ring-green-500"
+          placeholder="Optional description of the expense"
         />
       </div>
 
+      {/* Attachments */}
       <div>
-        <label className="block mb-1 font-medium">Bill Photo</label>
-        {photoPreview && (
-          <img
-            src={photoPreview}
-            alt="Preview"
-            className="w-32 h-32 object-cover rounded mb-2"
-          />
-        )}
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Attachments
+        </label>
+
         <input
           type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="w-full border px-3 py-2"
+          name="attachments"
+          accept="image/*,application/pdf"
+          multiple
+          onChange={handleFile}
+          className="block w-full text-sm text-gray-600
+               file:mr-4 file:rounded-md file:border-0
+               file:bg-green-50 file:px-4 file:py-2
+               file:text-sm file:font-medium file:text-green-700
+               hover:file:bg-green-100"
         />
+
+        <p className="mt-1 text-xs text-gray-500">Upload bill (image or PDF)</p>
+
+        {/* Preview List */}
+        {Array.isArray(preview) && preview.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {preview?.map((item, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between rounded-md border bg-gray-50 px-3 py-2"
+              >
+                <div className="flex items-center gap-3">
+                  {item.type === "image" ? (
+                    <img
+                      src={item.url}
+                      alt="Attachments"
+                      className="h-12 w-12 rounded object-cover border"
+                    />
+                  ) : (
+                    <div className="h-12 w-12 flex items-center justify-center rounded border bg-white text-sm font-medium text-red-600">
+                      PDF
+                    </div>
+                  )}
+
+                  <span className="text-sm text-gray-700">
+                    Attachment {idx + 1}
+                  </span>
+                </div>
+
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-indigo-600 hover:underline"
+                >
+                  View
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="flex justify-end gap-4">
+      {/* Actions */}
+      <div className="flex justify-end gap-3 pt-3 border-t border-gray-100">
         <button
           type="button"
           onClick={onClose}
-          className="bg-gray-400 px-4 py-2 text-white rounded"
+          className="rounded-md bg-gray-400 px-4 py-2 text-sm text-white
+                   hover:bg-gray-500"
         >
           Cancel
         </button>
 
         <button
           type="submit"
-          className="bg-green-600 px-4 py-2 text-white rounded"
           disabled={loading}
+          className="rounded-md bg-green-600 px-4 py-2 text-sm text-white
+                   hover:bg-green-700 disabled:opacity-60"
         >
           {loading ? "Saving..." : editId ? "Update Expense" : "Save Expense"}
         </button>

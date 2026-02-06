@@ -90,6 +90,128 @@ const LeaveView = ({ isOpen, data, onClose }) => {
   );
 };
 
+const ExpenseView = ({ isOpen, data, onClose }) => {
+  if (!isOpen) return null;
+
+  // approval wrapper data
+  const approval = data || {};
+  const expense = approval?.data || {};
+
+  const requestedBy = approval?.by?.name || "—";
+  const approvalOf = approval?.approvalOf || "Expense";
+
+  return (
+    <div className="fixed inset-0 z-[80] flex justify-center items-center p-8 bg-black bg-opacity-40">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-between items-center bg-green-600 text-white px-4 py-3">
+          <h2 className="text-lg font-semibold">Expense Details</h2>
+          <button onClick={onClose}>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-5 space-y-4 text-gray-700">
+          {/* Approval Info */}
+          <div className="border-b pb-4">
+            <p className="text-sm text-gray-500 mb-1">Approval Details</p>
+            <div className="text-sm space-y-1">
+              <p>
+                <span className="font-semibold">Purpose:</span> {approvalOf}
+              </p>
+              <p>
+                <span className="font-semibold">Requested By:</span>{" "}
+                {requestedBy}
+              </p>
+              <p>
+                <span className="font-semibold">Requested On:</span>{" "}
+                {approval?.createdAt
+                  ? new Date(approval.createdAt).toLocaleDateString()
+                  : "—"}
+              </p>
+              <p>
+                <span className="font-semibold">Approval Status:</span>{" "}
+                {approval?.status || "—"}
+              </p>
+            </div>
+          </div>
+
+          {/* Expense Summary */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Date</p>
+              <p className="text-base font-medium">
+                {expense.date
+                  ? new Date(expense.date).toLocaleDateString()
+                  : "—"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500">Amount</p>
+              <p className="text-base font-medium">₹ {expense.amount || "—"}</p>
+            </div>
+          </div>
+
+          {/* Ledgers */}
+          <div>
+            <p className="text-sm text-gray-500">Expense Type</p>
+            <p className="text-base font-medium">
+              {expense?.expenseLedger?.name || "—"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-gray-500">Expense For</p>
+            <p className="text-base font-medium">
+              {expense?.expenseForLedger?.name || "—"}
+            </p>
+          </div>
+
+          {/* Narration */}
+          <div>
+            <p className="text-sm text-gray-500">Narration</p>
+            <p className="text-base font-medium">{expense.narration || "—"}</p>
+          </div>
+
+          {/* Attachments */}
+          {expense.attachments?.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">Attachments</p>
+
+              {expense.attachments.map((att, idx) => (
+                <a
+                  key={idx}
+                  href={att.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded-md border bg-gray-50 px-3 py-2 text-sm hover:bg-gray-100"
+                >
+                  <span>
+                    Attachment {idx + 1} ({att.fileType?.toUpperCase()})
+                  </span>
+                  <span className="text-blue-600 underline">View</span>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end bg-gray-50 border-t px-4 py-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400 text-gray-800 text-sm font-medium"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Approval = () => {
   const [allApprovals, setAllApprovals] = useState([]);
   const [pendingApprovals, setPendingApproval] = useState([]);
@@ -100,6 +222,8 @@ const Approval = () => {
   const [activeTab, setActiveTab] = useState("pending");
   const [openLeaveModal, setOpenLeaveModal] = useState(false);
   const [leaveData, setLeaveData] = useState(null);
+  const [openExpenseModal, setOpenExpenseModal] = useState(false);
+  const [expenseData, setExpenseData] = useState(null);
   const { user } = useSelector((state) => {
     return state.auth;
   });
@@ -223,42 +347,63 @@ const Approval = () => {
     }
   };
 
-  const navigateTo = (approvalOf, id, data, approvalId ) => {
+  const handleExpenseView = (data) => {
+    try {
+      console.log(data);
+      setOpenExpenseModal(true);
+      setExpenseData(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const navigateTo = (approvalOf, id, data, approvalId) => {
     switch (approvalOf) {
       case "Bill":
-        approvalId !== undefined ?  navigate(`/bill/${id}/approval/${approvalId}`) : navigate(`/bill/${id}`)
+        approvalId !== undefined
+          ? navigate(`/bill/${id}/approval/${approvalId}`)
+          : navigate(`/bill/${id}`);
         break;
       case "Purchase Order":
-        approvalId !== undefined ?
-        navigate(`/purchase-order/${id}/approval/${approvalId}`): navigate(`/purchase-order/${id}`);
+        approvalId !== undefined
+          ? navigate(`/purchase-order/${id}/approval/${approvalId}`)
+          : navigate(`/purchase-order/${id}`);
         break;
       case "Project Schedule":
-        approvalId !== undefined ?
-        navigate(`/project-schedule/${id}/approval/${approvalId}`): navigate(`/project-schedule/${id}`);
+        approvalId !== undefined
+          ? navigate(`/project-schedule/${id}/approval/${approvalId}`)
+          : navigate(`/project-schedule/${id}`);
         break;
       case "Payment Schedule":
-        approvalId !== undefined ?
-        navigate(`/payment-schedule/${id}/approval/${approvalId}`): navigate(`/payment-schedule/${id}`);
+        approvalId !== undefined
+          ? navigate(`/payment-schedule/${id}/approval/${approvalId}`)
+          : navigate(`/payment-schedule/${id}`);
         break;
       case "Quality Schedule":
-        approvalId !== undefined ?
-        navigate(`/quality-schedule/${id}/approval/${approvalId}`):  navigate(`/quality-schedule/${id}`);
+        approvalId !== undefined
+          ? navigate(`/quality-schedule/${id}/approval/${approvalId}`)
+          : navigate(`/quality-schedule/${id}`);
         break;
       case "Purchase Request":
-        approvalId !== undefined ?
-        navigate(`/purchase-request/${id}/approval/${approvalId}`):  navigate(`/purchase-request/${id}`);
+        approvalId !== undefined
+          ? navigate(`/purchase-request/${id}/approval/${approvalId}`)
+          : navigate(`/purchase-request/${id}`);
         break;
       case "Extra Work":
-        approvalId !== undefined ?
-        navigate(`/extra-work/${id}/approval/${approvalId}`) :
-        navigate(`/extra-work/${id}`);
+        approvalId !== undefined
+          ? navigate(`/extra-work/${id}/approval/${approvalId}`)
+          : navigate(`/extra-work/${id}`);
         break;
       case "Work Order":
-        approvalId !== undefined ?
-        navigate(`/work-order/${id}/approval/${approvalId}`) : navigate(`/work-order/${id}`);
+        approvalId !== undefined
+          ? navigate(`/work-order/${id}/approval/${approvalId}`)
+          : navigate(`/work-order/${id}`);
         break;
       case "Leave":
         handleLeaveView(data);
+        break;
+      case "Expense":
+        handleExpenseView(data);
         break;
 
       default:
@@ -274,7 +419,7 @@ const Approval = () => {
     view,
     approve,
     reject,
-    remove
+    remove,
   }) => {
     return (
       <div className=" px-4 py-6 ">
@@ -470,7 +615,7 @@ const Approval = () => {
                   }
                   approve={() => handleApprove(approval?._id)}
                   reject={() => handleReject(approval?._id)}
-                  remove={()=> handleApprovalDelete(approval?._id)}
+                  remove={() => handleApprovalDelete(approval?._id)}
                 />
               </div>
             ))}
@@ -543,6 +688,11 @@ const Approval = () => {
           isOpen={openLeaveModal}
           onClose={() => setOpenLeaveModal(false)}
           data={leaveData}
+        />
+        <ExpenseView
+          isOpen={openExpenseModal}
+          onClose={() => setOpenExpenseModal(false)}
+          data={expenseData}
         />
         {/* </Modal> */}
 

@@ -110,7 +110,7 @@ const WorkOrders = () => {
       }
     };
     fetchTemplates();
-  }, [user?.department?.toLowerCase() === "ceo" || user.department?.toLowerCase() === "account head"]);
+  }, [user?.department?.toLowerCase() === "ceo" || user?.department?.toLowerCase() === "account head"]);
 
   const handleEdit = (id) => {
     setEditModal(true);

@@ -2,7 +2,9 @@ import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { MdOutlineRemoveCircle, MdOutlineAddCircle } from "react-icons/md";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from 'react-router-dom';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 
 axios.defaults.withCredentials = true;
 
@@ -23,6 +25,8 @@ const CreateClient = ({ onClose, isEdit }) => {
   });
   const [clientId, setClientId] = useState('');
   const [loading, setLoading] = useState(false);
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
   useEffect(() => {
     if (isEdit) {
       setClientId(isEdit)
@@ -94,6 +98,7 @@ const CreateClient = ({ onClose, isEdit }) => {
           toast.success(response.data.message)
           console.log(response.data)
           setLoading(false)
+          dispatch(fetchNotifications(user._id));
           onClose()
         }
       } else {
@@ -102,6 +107,7 @@ const CreateClient = ({ onClose, isEdit }) => {
           toast.success(response.data.message)
           console.log(response.data)
           setLoading(false)
+          dispatch(fetchNotifications(user._id));
           onClose()
         }
       }

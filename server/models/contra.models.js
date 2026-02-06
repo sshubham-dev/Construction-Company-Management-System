@@ -1,41 +1,56 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const contraSchema = new mongoose.Schema({
+const contraSchema = new mongoose.Schema(
+  {
     voucherNo: {
-        type: String,
-        required: true,
-        unique: true
+      type: String,
+      required: true,
+      unique: true,
     }, // Unique identifier for the Contra voucher
     date: {
-        type: Date,
-        required: true
+      type: Date,
+      required: true,
     }, // Transaction date
     from: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Account',
-        }
-    }, // Source account (e.g., cash, bank)
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ledger",
+        required: true,
+      },
+      name: String,
+    },
     to: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Account',
-        }
-    }, // Destination account (e.g., cash, bank)
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ledger",
+        required: true,
+      },
+      name: String,
+    },
+    status: {
+      type: String,
+      enum: ["Draft", "Posted", "Cancelled"],
+      default: "Draft",
+    },
+    voucherType: {
+      type: String,
+      default: "Contra",
+    },
+
     amount: {
-        type: Number,
-        required: true
+      type: Number,
+      required: true,
     }, // Transfer amount
     description: {
-        type: String
+      type: String,
     }, // Optional narration/remarks
     createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     }, // User who created the voucher
-}, { timestamps: true });
+  },
+  { timestamps: true }
+);
 
-const Contra = mongoose.model('Contra', contraSchema);
+const Contra = mongoose.model("Contra", contraSchema);
 module.exports = Contra;

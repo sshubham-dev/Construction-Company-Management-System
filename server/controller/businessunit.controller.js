@@ -1,94 +1,152 @@
-const BusinessUnit = require("../models/businessunit.models.js");
+const BusinessUnit = require("../models/businessunit.models");
+const { Ledger } = require("../models/ledger.models");
 
-// CREATE a business unit
 const createBusinessUnit = async (req, res) => {
   try {
-    const {
-      name,
-      type,
-      address,
-      phone,
-      email,
-      gstNo,
-      panNo,
-    } = req.body;
+    const data = req.body;
 
-    const existing = await BusinessUnit.findOne({ name });
-    if (existing) {
-      return res.status(400).json({ message: "Business Unit already exists" });
+    // Basic validation
+    if (!data.name || !data.type) {
+      return res.status(400).json({ error: "Name and Type are required" });
     }
 
-    const bu = new BusinessUnit({
-      name,
-      type,
-      address,
-      phone,
-      email,
-      gstNo,
-      panNo,
+    // Check duplicate code
+    const exists = await BusinessUnit.findOne({ code: data.code });
+    if (exists) {
+      return res
+        .status(400)
+        .json({ error: "Business Unit code already exists" });
+    }
+
+    if (!data.manager) {
+      delete data.manager; // or payload.manager = null
+    }
+
+    // 1️⃣ Create Business Unit first (without ledger)
+    const businessUnit = new BusinessUnit({
+      ...data,
+      manager: data.manager || null,
     });
 
-    await bu.save();
+    await businessUnit.save();
 
-    res.status(201).json({
-      message: "Business Unit created successfully",
-      businessUnit: bu,
+    // 2️⃣ Auto-create primary ledger for Business Unit
+    const ledger = new Ledger({
+      name: `${businessUnit.name} Capital`,
+      under: "Capital Account",
+      referenceType: "BusinessUnit",
+      referenceId: businessUnit._id,
+      openingBalance: 0,
     });
-  } catch (err) {
-    console.error("Error creating BU:", err);
-    res.status(500).json({ message: "Server error" });
+
+    const savedLedger = await ledger.save();
+
+    // 3️⃣ Attach ledger to Business Unit
+    businessUnit.ledgerId = savedLedger._id;
+    await businessUnit.save();
+
+    res.status(201).json(businessUnit);
+  } catch (error) {
+    console.error("Create BusinessUnit Error:", error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 // GET all business units
 const getBusinessUnits = async (req, res) => {
   try {
-    const list = await BusinessUnit.find().sort({ createdAt: -1 });
-    res.status(200).json(list);
-  } catch (err) {
-    console.error("Error fetching BU:", err);
-    res.status(500).json({ message: "Server error" });
+    const units = await BusinessUnit.find()
+      .populate("manager", "userName")
+      .populate("ledgerId", "name");
+
+    res.json(units);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
 // GET ONE
-const getBU = async (req, res) => {
+const getBusinessUnitById = async (req, res) => {
   try {
-    const bu = await BusinessUnit.findById(req.params.id).populate("manager");
-    res.json(bu);
-  } catch (err) {
-    res.status(500).json({ message: "Fetch failed" });
+    // console.log(req)
+    const unit = await BusinessUnit.findById(req.params.id)
+      .populate("manager")
+      .populate("ledgerId")
+      .exec();
+
+    if (!unit) {
+      return res.status(404).json({ error: "Business Unit not found" });
+    }
+
+    res.json(unit);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 // UPDATE
-const updateBU = async (req, res) => {
+const updateBusinessUnit = async (req, res) => {
   try {
-    const bu = await BusinessUnit.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.json({ message: "Updated", data: bu });
-  } catch (err) {
-    res.status(500).json({ message: "Update failed" });
+    const unit = await BusinessUnit.findById(req.params.id);
+    if (!unit) {
+      return res.status(404).json({ error: "Business Unit not found" });
+    }
+
+    // ❌ Do not allow ledger change
+    if (req.body.ledgerId && req.body.ledgerId !== unit.ledgerId?.toString()) {
+      return res.status(400).json({
+        error: "Primary ledger cannot be changed",
+      });
+    }
+
+    Object.assign(unit, req.body);
+    await unit.save();
+
+    res.json(unit);
+  } catch (error) {
+    console.error("Update BusinessUnit Error:", error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 // DELETE
-const deleteBU = async (req, res) => {
+const deactivateBusinessUnit = async (req, res) => {
+  const bu = await BusinessUnit.findByIdAndUpdate(
+    req.params.id,
+    { isActive: false },
+    { new: true }
+  );
+  res.json(bu);
+};
+
+const deleteBusinessUnit = async (req, res) => {
   try {
+    const unit = await BusinessUnit.findById(req.params.id);
+    if (!unit) {
+      return res.status(404).json({ error: "Business Unit not found" });
+    }
+
+    // 🔒 Optional safety check (recommended)
+    const hasLedger = await Ledger.findOne({ referenceId: unit._id });
+    if (hasLedger) {
+      return res.status(400).json({
+        error: "Cannot delete Business Unit with ledger activity",
+      });
+    }
+
     await BusinessUnit.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted" });
-  } catch (err) {
-    res.status(500).json({ message: "Delete failed" });
+    res.json({ message: "Business Unit deleted" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
 module.exports = {
   createBusinessUnit,
   getBusinessUnits,
-  getBU,
-  updateBU,
-  deleteBU,
+  getBusinessUnitById,
+  updateBusinessUnit,
+  deleteBusinessUnit,
+  deactivateBusinessUnit,
 };

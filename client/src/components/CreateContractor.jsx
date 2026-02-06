@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchNotifications } from '../features/notification/notificationSlice';
 
 axios.defaults.withCredentials = true;
 const CreateContractor = ({ onClose, isEdit }) => {
@@ -19,6 +21,8 @@ const CreateContractor = ({ onClose, isEdit }) => {
     gstNo:'',
   });
   const [contractorToEdit, setContractorToEdit] = useState(null);
+    const { user, isLoggedIn } = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
   useEffect(() => {
     if (isEdit) {
       console.log(isEdit)
@@ -95,6 +99,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
         });
         toast.success(response.data.message);
         console.log('Form data submitted:', contractor);
+          dispatch(fetchNotifications(user._id));
         onClose()
       } else {
         const response = await axios.post('/api/v1/contractor', {
@@ -112,6 +117,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
         });
         toast.success(response.data.message);
         console.log('Form data submitted:', contractor);
+          dispatch(fetchNotifications(user._id));
         onClose()
       }
     } catch (error) {

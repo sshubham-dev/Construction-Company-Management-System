@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import Select from 'react-select';
+import Select from "react-select";
 
-const CreateLedger = ({ onClose }) => {
+const CreateLedger = ({ onClose, editData = null }) => {
+  const isEdit = Boolean(editData?._id);
+
+  /* =========================
+     STATE
+  ========================== */
   const [ledger, setLedger] = useState({
     name: "",
     alias: "",
@@ -18,243 +23,332 @@ const CreateLedger = ({ onClose }) => {
     },
     taxRegistrationDetails: {
       panNo: "",
-      gstin: "",
+      gstNo: "",
     },
     bankingDetails: {
-      name: '',
-      acNo: '',
-      ifscCode: '',
-      bankname: '',
-      branch: '',
+      accountHolder: "",
+      accountNumber: "",
+      ifscCode: "",
+      bankName: "",
+      branch: "",
     },
     openingBalance: 0,
   });
+
   const [referenceType, setReferenceType] = useState("");
   const [referenceId, setReferenceId] = useState("");
-  const [createCostCenter, setCreateCostCenter] = useState(false);
-  const [users, setUser] = useState([]);
-  const [ledgerGroups, setLedgerGroup] = useState([]);
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await axios.get('/api/v1/user/lists')
-        setUser(response.data)
-      } catch (error) {
-        console.log(error)
-      }
-    };
-    const fetchGroup = async () => {
-      const response = await axios.get('/api/v1/ledger-group')
-      setLedgerGroup(response.data)
-    };
-    fetchGroup();
-    fetchUser()
-  }, [])
 
+  const [ledgerGroups, setLedgerGroups] = useState([]);
+  const [references, setReferences] = useState([]);
+
+  const [loading, setLoading] = useState(false);
+
+  /* =========================
+     LOAD MASTER DATA
+  ========================== */
+  useEffect(() => {
+    axios.get("/api/v1/ledger-group").then((res) => {
+      setLedgerGroups(res.data);
+    });
+  }, []);
+
+  /* =========================
+     LOAD EDIT DATA
+  ========================== */
+  useEffect(() => {
+    if (!isEdit) return;
+
+    setLedger({
+      name: editData.name,
+      alias: editData.alias,
+      under: editData.under,
+      statutoryDetails: editData.statutoryDetails || {},
+      mailingDetails: editData.mailingDetails || {},
+      taxRegistrationDetails: editData.taxRegistrationDetails || {},
+      bankingDetails: editData.bankingDetails || {},
+      openingBalance: editData.openingBalance || 0,
+    });
+
+    setReferenceType(editData.referenceType || "");
+    setReferenceId(editData.referenceId || "");
+  }, [isEdit, editData]);
+
+  /* =========================
+     LOAD REFERENCES BASED ON TYPE
+  ========================== */
+  useEffect(() => {
+    if (!referenceType) {
+      setReferences([]);
+      return;
+    }
+
+    axios
+      .get(`/api/v1/${referenceType.toLowerCase()}/`)
+      .then((res) => setReferences(res.data))
+      .catch(() => setReferences([]));
+  }, [referenceType]);
+
+  /* =========================
+     HANDLE INPUT
+  ========================== */
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    if (name.startsWith('mailingDetails.')) {
-      const mailingField = name.split('.')[1];
+
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
       setLedger((prev) => ({
         ...prev,
-        mailingDetails: {
-          ...prev.mailingDetails,
-          [mailingField]: value,
+        [parent]: {
+          ...prev[parent],
+          [child]: type === "checkbox" ? checked : value,
         },
       }));
-    } else if (name.startsWith('taxRegistrationDetails.')) {
-      const taxField = name.split('.')[1];
-      setLedger((prev) => ({
-        ...prev,
-        taxRegistrationDetails: {
-          ...prev.taxRegistrationDetails,
-          [taxField]: value,
-        },
-      }));
-    } else if (name.startsWith('bankingDetails.')) {
-      const bankingField = name.split('.')[1];
-      setLedger((prev) => ({
-        ...prev,
-        bankingDetails: {
-          ...prev.bankingDetails,
-          [bankingField]: value,
-        },
-      }));
-    } else if (name.startsWith('statutoryDetails.')) {
-      const field = name.split('.')[1];
-      setLedger((prev) => ({
-        ...prev,
-        statutoryDetails: {
-          ...prev.statutoryDetails,
-          [field]: checked,
-        },
-      }));
-    } else if (type === "checkbox") {
-      setLedger((prev) => ({ ...prev, [name]: checked }));
     } else {
-      setLedger((prev) => ({ ...prev, [name]: value }));
+      setLedger((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
     }
   };
 
+  /* =========================
+     SUBMIT
+  ========================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      const response = await axios.post('/api/v1/ledger', {
+      const payload = {
         ...ledger,
-        refrenceType: referenceType,
-        refrenceId: referenceId,
-        createCostCenter,
-      });
-      console.log("Ledger Data:", ledger);
+      };
+
+      // only send reference on create
+      if (!isEdit && referenceType && referenceId) {
+        payload.referenceType = referenceType;
+        payload.referenceId = referenceId;
+      }
+
+      if (isEdit) {
+        await axios.put(`/api/v1/ledger/${editData._id}`, payload);
+      } else {
+        await axios.post("/api/v1/ledger", payload);
+      }
+
       onClose();
     } catch (error) {
-      console.log(error)
+      console.error("Ledger save error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  /* =========================
+     UI
+  ========================== */
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium">Name</label>
-            <input
-              type="text"
-              name="name"
-              value={ledger.name}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Alias</label>
-            <input
-              type="text"
-              name="alias"
-              value={ledger.alias}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-              required
-            />
-          </div>
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* BASIC */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input
+          name="name"
+          value={ledger.name}
+          onChange={handleChange}
+          placeholder="Ledger Name"
+          className="border p-2 rounded"
+          required
+        />
+        <input
+          name="alias"
+          value={ledger.alias}
+          onChange={handleChange}
+          placeholder="Alias"
+          className="border p-2 rounded"
+        />
+      </div>
 
-        <div>
-          <label className="block text-sm font-medium">Under</label>
-          <Select
-            value={{ value: ledger.under, label: ledger.under }}
-            onChange={(selectedOption) => setLedger((prev) => ({ ...prev, under: selectedOption.value }))}
-            options={ledgerGroups.map(ledgerGroup => ({ value: ledgerGroup.name, label: ledgerGroup.name }))}
-            placeholder="Ledger Group"
-          />
-        </div>
+      {/* GROUP */}
+      <Select
+        value={
+          ledger.under ? { label: ledger.under, value: ledger.under } : null
+        }
+        onChange={(e) => setLedger((prev) => ({ ...prev, under: e.value }))}
+        options={ledgerGroups.map((g) => ({
+          label: g.name,
+          value: g.name,
+        }))}
+        placeholder="Ledger Group"
+      />
 
-        <div className="flex items-center">
+      {/* STATUTORY */}
+      <div className="flex gap-6">
+        <label className="flex gap-2 items-center">
           <input
             type="checkbox"
             name="statutoryDetails.isGSTApplicable"
             checked={ledger.statutoryDetails.isGSTApplicable}
             onChange={handleChange}
-            className="mr-2"
           />
-          <label className="text-md font-medium">Is GST Applicable</label>
-        </div>
+          GST Applicable
+        </label>
 
-        <div className="flex items-center">
+        <label className="flex gap-2 items-center">
           <input
             type="checkbox"
             name="statutoryDetails.isTDSDeductible"
             checked={ledger.statutoryDetails.isTDSDeductible}
             onChange={handleChange}
-            className="mr-2"
           />
-          <label className="text-md font-medium">Is TDS Deductible</label>
-        </div>
+          TDS Deductible
+        </label>
+      </div>
 
-        <p className="mt-3 font-bold">Mailing Details</p>
+      {/* MAILING DETAILS */}
+      <div>
+        <h4 className="font-medium mb-2">Mailing Details</h4>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input type="text" name="mailingDetails.name" value={ledger.mailingDetails.name} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Name" />
-          <input type="text" name="mailingDetails.address" value={ledger.mailingDetails.address} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Address" />
-          <input type="text" name="mailingDetails.state" value={ledger.mailingDetails.state} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="State" />
+          <input
+            name="mailingDetails.name"
+            value={ledger.mailingDetails.name}
+            onChange={handleChange}
+            placeholder="Mailing Name"
+            className="border p-2 rounded"
+          />
+
+          <input
+            name="mailingDetails.state"
+            value={ledger.mailingDetails.state}
+            onChange={handleChange}
+            placeholder="State"
+            className="border p-2 rounded"
+          />
         </div>
 
-        <h3 className="mt-3 font-bold">Banking Details</h3>
+        <textarea
+          name="mailingDetails.address"
+          value={ledger.mailingDetails.address}
+          onChange={handleChange}
+          placeholder="Full Address"
+          rows={3}
+          className="border p-2 rounded w-full mt-2"
+        />
+      </div>
+
+      {/* BANK */}
+      <div>
+        <h4 className="font-medium mb-2">Banking Details</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input type="text" name="bankingDetails.name" value={ledger.bankingDetails.name} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Name" />
-          <input type="text" name="bankingDetails.acNo" value={ledger.bankingDetails.acNo} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Account Number" />
-          <input type="text" name="bankingDetails.ifscCode" value={ledger.bankingDetails.ifscCode} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="IFSC Code" />
-          <input type="text" name="bankingDetails.bankname" value={ledger.bankingDetails.bankname} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Bank Name" />
-          <input type="text" name="bankingDetails.branch" value={ledger.bankingDetails.branch} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" placeholder="Branch" />
+          <input
+            name="bankingDetails.accountHolder"
+            value={ledger.bankingDetails.accountHolder}
+            onChange={handleChange}
+            placeholder="Account Holder"
+            className="border p-2 rounded"
+          />
+          <input
+            name="bankingDetails.accountNumber"
+            value={ledger.bankingDetails.accountNumber}
+            onChange={handleChange}
+            placeholder="Account Number"
+            className="border p-2 rounded"
+          />
+          <input
+            name="bankingDetails.ifscCode"
+            value={ledger.bankingDetails.ifscCode}
+            onChange={handleChange}
+            placeholder="IFSC Code"
+            className="border p-2 rounded"
+          />
+          <input
+            name="bankingDetails.bankName"
+            value={ledger.bankingDetails.bankName}
+            onChange={handleChange}
+            placeholder="Bank Name"
+            className="border p-2 rounded"
+          />
+          <input
+            name="bankingDetails.branch"
+            value={ledger.bankingDetails.branch}
+            onChange={handleChange}
+            placeholder="Branch"
+            className="border p-2 rounded"
+          />
         </div>
+      </div>
 
-        <div>
-          <label className="block text-sm font-medium">PAN No</label>
-          <input type="text" name="taxRegistrationDetails.panNo" value={ledger.taxRegistrationDetails.panNo} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" />
-        </div>
+      {/* OPENING BALANCE */}
+      {!isEdit && (
+        <input
+          type="number"
+          name="openingBalance"
+          value={ledger.openingBalance}
+          onChange={handleChange}
+          placeholder="Opening Balance"
+          className="border p-2 rounded"
+        />
+      )}
 
-        <div>
-          <label className="block text-sm font-medium">GSTIN/UIN</label>
-          <input type="text" name="taxRegistrationDetails.gstin" value={ledger.taxRegistrationDetails.gstin} onChange={handleChange} className="w-full border px-3 py-2 rounded-md" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Opening Balance</label>
-          <input type="number" name="openingBalance" value={ledger.openingBalance} onChange={handleChange} min='0' className="w-full border px-3 py-2 rounded-md" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Reference Type</label>
+      {/* REFERENCE (CREATE ONLY) */}
+      {!isEdit && (
+        <>
           <Select
-            value={{ label: referenceType, value: referenceType }}
-            onChange={(e) => setReferenceType(e.value)}
+            placeholder="Reference Type"
+            value={
+              referenceType
+                ? { label: referenceType, value: referenceType }
+                : null
+            }
+            onChange={(e) => {
+              setReferenceType(e.value);
+              setReferenceId("");
+            }}
             options={[
               { label: "Client", value: "Client" },
               { label: "Site", value: "Site" },
-              { label: "Contractor", value: "Contractor" },
               { label: "Supplier", value: "Supplier" },
+              { label: "Contractor", value: "Contractor" },
               { label: "Employee", value: "Employee" },
             ]}
           />
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium">Reference</label>
           <Select
-            value={referenceId}
-            onChange={(e) => setReferenceId(e.value)}
-            options={users
-              .filter(u => u.role?.toLowerCase() === referenceType?.toLowerCase())
-              .map(u => ({ value: u._id, label: u.userName }))}
             placeholder={`Select ${referenceType}`}
+            isDisabled={!referenceType}
+            value={
+              references.find((r) => r._id === referenceId)
+                ? {
+                    label: references.find((r) => r._id === referenceId)?.name,
+                    value: referenceId,
+                  }
+                : null
+            }
+            onChange={(e) => setReferenceId(e.value)}
+            options={references.map((r) => ({
+              label: r.name,
+              value: r._id,
+            }))}
           />
-        </div>
+        </>
+      )}
 
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            name="createCostCenter"
-            checked={createCostCenter}
-            onChange={(e) => setCreateCostCenter(e.target.checked)}
-            className="mr-2"
-          />
-          <label className="text-md font-medium">Also create Cost Center</label>
-        </div>
-
-        <div className="flex justify-end space-x-3 mt-4">
-          <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-400 text-white rounded-md">
-            Cancel
-          </button>
-          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md"
-                        disabled={loading}
-            >
-              {loading ? "Submitting..." : "Save ledger"}
-          </button>
-        </div>
-      </form>
-    </div>
+      {/* ACTIONS */}
+      <div className="flex justify-end gap-3 pt-4">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 bg-gray-400 text-white rounded"
+        >
+          Cancel
+        </button>
+        <button
+          disabled={loading}
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
+          {loading ? "Saving..." : isEdit ? "Update Ledger" : "Create Ledger"}
+        </button>
+      </div>
+    </form>
   );
 };
 

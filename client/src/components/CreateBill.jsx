@@ -344,9 +344,7 @@ const CreateBill = ({ onClose, editId = null }) => {
       const res = await axios.post("/api/v1/bill", base);
       toast.success(res.data?.message || "Bill created");
       // optionally dispatch notifications reload
-      try {
-        dispatch?.(fetchNotifications?.(user?._id));
-      } catch {}
+        dispatch(fetchNotifications(user._id));
       onClose && onClose();
     } catch (err) {
       console.error("create bill:", err);

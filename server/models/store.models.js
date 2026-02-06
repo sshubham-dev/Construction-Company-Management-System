@@ -3,11 +3,23 @@ const { syncLedger } = require("../utils/ledgerSync");
 
 const storeSchema = new mongoose.Schema(
   {
+    name: { type: String, required: true, trim: true },
+    code: { type: String, unique: true, index: true },
+
     businessUnitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessUnit",
       required: true,
-      unique: true,
+      index: true,
+    },
+
+    address: {
+      line1: String,
+      line2: String,
+      city: String,
+      district: String,
+      state: String,
+      pincode: String,
     },
 
     managesConsumables: { type: Boolean, default: true },
@@ -38,39 +50,58 @@ const storeSchema = new mongoose.Schema(
       level: { type: Number, default: 10 },
     },
 
-    priceList: [
-      {
-        itemId: { type: mongoose.Schema.Types.ObjectId, ref: "Stock" },
-        rate: Number,
-      },
-    ],
-
-    assetRentPolicy: {
-      machines: { type: Number, default: 0 },
-      shuttering: { type: Number, default: 0 },
-      scaffolding: { type: Number, default: 0 },
-      malGadiTripRate: { type: Number, default: 0 },
-      vehicleRentPerDay: { type: Number, default: 0 },
-    },
-
     assetTrackingEnabled: { type: Boolean, default: true },
 
-    staff: [{ type: mongoose.Schema.Types.ObjectId, ref: "Employee" }],
+    // ---------------------------
+    // Authority roles (SINGLE)
+    // ---------------------------
+    storeHead: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee", // accounts / owner
+      required: true,
+    },
+
+    storeIncharge: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+      required: true,
+    },
+
+    // ---------------------------
+    // Operational staff (MULTIPLE)
+    // ---------------------------
+    helpers: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+    },
+
+    // drivers: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "Employee",
+    //   },
+    // ],
+
+    // welders: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "Employee",
+    //   },
+    // ],
 
     expenseCategories: [
       {
         name: String,
-        ledgerId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Ledger",
-        },
+        ledgerId: { type: mongoose.Schema.Types.ObjectId, ref: "Ledger" },
       },
     ],
 
     ledgerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ledger",
+      // required: true,
     },
+
     surcharge: {
       staffSalary: Number,
       marketing: Number,
@@ -85,55 +116,245 @@ const storeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-storeSchema.pre("save", async function (next) {
+storeSchema.post("save", async function (doc) {
   try {
     const ledgerId = await syncLedger({
-      doc: this,
+      doc,
       type: "Store",
       under: "Inventory Accounts",
       getAddress: () => ({
-        name: this.name,
+        name: doc.name,
       }),
       getTaxDetails: () => ({}),
     });
 
-    if (ledgerId) this.ledger = ledgerId;
-    next();
+    if (!doc.ledgerId && ledgerId) {
+      await doc.constructor.updateOne(
+        { _id: doc._id },
+        { $set: { ledgerId: ledgerId } }
+      );
+    }
   } catch (err) {
-    console.error("Store Ledger Sync Error:", err);
-    next(err);
+    console.error("[Store] Ledger Sync Error", err);
   }
 });
 
-storeSchema.pre("findOneAndUpdate", async function (next) {
+storeSchema.post("findOneAndUpdate", async function (doc) {
+  if (!doc) return;
+
   try {
-    const store = await this.model.findOne(this.getQuery());
-    if (!store) return next();
-
-    const update = this.getUpdate() || {};
-    if (update.$set) Object.assign(store, update.$set);
-    Object.assign(store, update);
-
     const ledgerId = await syncLedger({
-      doc: store,
+      doc,
       type: "Store",
       under: "Inventory Accounts",
       getAddress: () => ({
-        name: store.name,
+        name: doc.name,
       }),
       getTaxDetails: () => ({}),
     });
 
-    update.$set = update.$set || {};
-    update.$set.ledger = ledgerId;
-    this.setUpdate(update);
-
-    next();
+    if (!doc.ledgerId && ledgerId) {
+      await doc.constructor.updateOne(
+        { _id: doc._id },
+        { $set: { ledgerId: ledgerId } }
+      );
+    }
   } catch (err) {
-    console.error("Store Ledger Sync Update Error:", err);
-    next(err);
+    console.error("[Store] Ledger Sync Update Error", err);
   }
 });
 
-const Store = mongoose.models.Store || mongoose.model("Store", storeSchema);
-module.exports = Store;
+const storeInventorySchema = new mongoose.Schema(
+  {
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+      index: true,
+    },
+
+    stockId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Stock",
+      required: true,
+      index: true,
+    },
+
+    quantity: {
+      type: Number,
+      default: 0,
+    },
+
+    reservedQuantity: {
+      type: Number,
+      default: 0,
+    },
+
+    averageRate: {
+      type: Number,
+      default: 0,
+    },
+
+    lastPurchaseRate: {
+      type: Number,
+      default: 0,
+    },
+
+    reorderLevel: {
+      type: Number,
+      default: 0,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    lastUpdatedAt: Date,
+    lastUpdatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  },
+  { timestamps: true }
+);
+
+/* One stock per store */
+storeInventorySchema.index({ storeId: 1, stockId: 1 }, { unique: true });
+
+/* Keep derived fields in sync */
+storeInventorySchema.pre("save", function (next) {
+  this.availableQuantity = this.quantity - this.reservedQuantity;
+  this.stockValue = this.quantity * this.averageRate;
+  this.lastUpdatedAt = new Date();
+  next();
+});
+
+const storeAssetInventorySchema = new mongoose.Schema(
+  {
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+      index: true,
+    },
+
+    assetId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Asset",
+      required: true,
+      index: true,
+    },
+
+    totalQuantity: {
+      type: Number,
+      default: 0,
+    },
+
+    issuedQuantity: {
+      type: Number,
+      default: 0,
+    },
+
+    damagedQuantity: {
+      type: Number,
+      default: 0,
+    },
+
+    availableQuantity: {
+      type: Number,
+      default: 0,
+    },
+
+    isRentable: {
+      type: Boolean,
+      default: false,
+    },
+
+    rentPerDay: {
+      type: Number,
+      default: 0,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { timestamps: true }
+);
+
+/* One asset belongs to one store at a time */
+storeAssetInventorySchema.index({ storeId: 1, assetId: 1 }, { unique: true });
+
+const storeStockMovementSchema = new mongoose.Schema(
+  {
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+    },
+
+    stockId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Stock",
+      required: true,
+    },
+
+    type: {
+      type: String,
+      enum: [
+        "Opening",
+        "Purchase",
+        "Issue",
+        "Return",
+        "TransferIn",
+        "TransferOut",
+        "Adjustment",
+        "Damage",
+        "Scrap",
+      ],
+      required: true,
+    },
+
+    quantity: {
+      type: Number,
+      required: true,
+    },
+
+    rate: Number,
+
+    referenceType: String, // PR, PO, DN, Return, Adjustment
+    referenceId: mongoose.Schema.Types.ObjectId,
+
+    narration: String,
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { timestamps: true }
+);
+
+const StoreInventory = mongoose.model("StoreInventory", storeInventorySchema);
+const StoreAssetInventory = mongoose.model(
+  "StoreAssetInventory",
+  storeAssetInventorySchema
+);
+const StoreStockMovement = mongoose.model(
+  "StoreStockMovement",
+  storeStockMovementSchema
+);
+const Store = mongoose.model("Store", storeSchema);
+module.exports = {
+  Store,
+  StoreInventory,
+  StoreAssetInventory,
+  StoreStockMovement,
+};

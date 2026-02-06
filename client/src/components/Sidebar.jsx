@@ -183,12 +183,22 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: <MdAccountBalance />,
       role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
     },
+
+    // ERP Setups
+    {
+      to: "/erp/business_unit",
+      name: "Business Unit",
+      icon: <IoIosJournal />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
     {
       to: "/erp/ledger",
       name: "Report",
       icon: <TbReportAnalytics />,
       role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
     },
+
+    // Vouchers
     {
       to: "/erp/receipt_payment",
       name: "Receipt & Payment",
@@ -207,12 +217,8 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: <IoIosJournal />,
       role: ["Admin", "Company", "Ceo", "Account Head"],
     },
-    {
-      to: "/erp/business_unit",
-      name: "Business Unit",
-      icon: <IoIosJournal />,
-      role: ["Admin", "Company", "Ceo", "Account Head"],
-    },
+
+    // Financial Reports
     // {
     //   to: '/erp/credit-note',
     //   name: 'Credit / Debit Note',
@@ -232,6 +238,13 @@ const Sidebar = ({ isOpen, onClose }) => {
     //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
     // },
 
+    {
+      to: "/erp-setting",
+      name: "Setting",
+      icon: <TbReportAnalytics />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
+
     /* Inventory Management*/
     {
       to: "/erp/inventory",
@@ -246,12 +259,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         "Store Incharge",
       ],
     },
-    {
-      to: "/erp-setting",
-      name: "Setting",
-      icon: <TbReportAnalytics />,
-      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
-    },
+
+    // Stock / Assets Management
     {
       to: "/erp/inventory/stock",
       name: "Stock",
@@ -266,21 +275,25 @@ const Sidebar = ({ isOpen, onClose }) => {
         "Store Incharge",
       ],
     },
-    // {
-    //   to: '/erp/inventory/sales',
-    //   name: 'Sales',
-    //   icon: <FaTruckArrowRight style={{ transform: 'rotate(360deg) scaleX(-1)' }} />,
-    //   role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
-    // },
-    // {
-    //   to: '/erp/inventory/purchase',
-    //   name: 'Purchase',
-    //   icon: <FaTruckMedical />,
-    //   role: ['Admin', 'Company', 'Ceo', 'Accountant', 'Account Head'],
-    // },
     {
-      to: "/erp/inventory/purchase-request",
-      name: "Purchase-Request",
+      to: "/erp/inventory/assets",
+      name: "Assets",
+      icon: <MdInventory />,
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Accountant",
+        "Account Head",
+        "Store Helper",
+        "Store Incharge",
+      ],
+    },
+
+    // Sales / Purchase Request
+    {
+      to: "/erp/inventory/sales-request",
+      name: "Sales Order",
       icon: <BiSolidPurchaseTag />,
       role: [
         "Admin",
@@ -295,8 +308,90 @@ const Sidebar = ({ isOpen, onClose }) => {
       ],
     },
     {
-      to: "/erp/inventory/return-request",
-      name: "Return-Request",
+      to: "/erp/inventory/purchase-order",
+      name: "Purchase Order",
+      icon: <BiSolidPurchaseTag />,
+      role: [
+        "Admin",
+        "Company",
+        "Supplier",
+        "Accountant",
+        "Ceo",
+        "Site Incharge",
+        "Account Head",
+        "Store Helper",
+        "Store Incharge",
+      ],
+    },
+
+    // GRN / Delivery Note
+    {
+      to: "/erp/inventory/grn",
+      name: "GRN",
+      icon: (
+        <FaTruckArrowRight style={{ transform: "rotate(360deg) scaleX(1)" }} />
+      ),
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Accountant",
+        "Account Head",
+        "Store Incharge",
+      ],
+    },
+    {
+      to: "/erp/inventory/dn",
+      name: "Delivery Note",
+      icon: (
+        <FaTruckArrowRight style={{ transform: "rotate(360deg) scaleX(-1)" }} />
+      ),
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Accountant",
+        "Account Head",
+        "Store Incharge",
+        "Site Incharge",
+        "Site Supervisor",
+      ],
+    },
+
+    // Sales / Purchase Invoice
+    {
+      to: "/erp/inventory/sales-invoice",
+      name: "Sales Invoice",
+      icon: (
+        <FaTruckArrowRight style={{ transform: "rotate(360deg) scaleX(-1)" }} />
+      ),
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Accountant",
+        "Account Head",
+        "Store Incharge",
+      ],
+    },
+    {
+      to: "/erp/inventory/purchase-invoice",
+      name: "Purchase Invoice",
+      icon: <FaTruckMedical />,
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Accountant",
+        "Account Head",
+        "Store Incharge",
+      ],
+    },
+
+    // Sales / Purchase Return
+    {
+      to: "/erp/inventory/sales-return",
+      name: "Sales Return",
       icon: <FaTruckArrowRight />,
       role: [
         "Admin",
@@ -308,6 +403,22 @@ const Sidebar = ({ isOpen, onClose }) => {
         "Store Incharge",
       ],
     },
+    {
+      to: "/erp/inventory/purchase-return",
+      name: "Purchase Return",
+      icon: <FaTruckArrowRight />,
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Accountant",
+        "Account Head",
+        "Store Helper",
+        "Store Incharge",
+      ],
+    },
+
+    // Suppliers Management
     {
       to: "/erp/inventory/suppliers",
       name: "Suppliers",
@@ -391,9 +502,16 @@ const Sidebar = ({ isOpen, onClose }) => {
         "Store Incharge",
       ],
     },
+
     {
-      to: "/cms/blog-editor",
+      to: "/cms/blog/editor",
       name: "CreateBlog",
+      icon: <ImBlog />,
+      role: ["Admin", "Company", "Ceo", "Marketing", "Account Head"],
+    },
+    {
+      to: "/cms/blogs",
+      name: "Blogs",
       icon: <ImBlog />,
       role: ["Admin", "Company", "Ceo", "Marketing", "Account Head"],
     },
@@ -482,7 +600,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
     {
       to: "/site/purchase-request",
-      name: "Purchase-Request",
+      name: "Material Request",
       icon: <BiSolidPurchaseTag />,
       role: [
         "Admin",
@@ -498,8 +616,16 @@ const Sidebar = ({ isOpen, onClose }) => {
       ],
     },
     {
+      to: "/site/dn",
+      name: "Delivery Note",
+      icon: (
+        <FaTruckArrowRight style={{ transform: "rotate(360deg) scaleX(1)" }} />
+      ),
+      role: ["Admin", "Company", "Ceo", "Accountant", "Account Head"],
+    },
+    {
       to: "/sites/return",
-      name: "Return-Request",
+      name: "Material Return",
       icon: <TbTruckReturn />,
       role: [
         "Admin",
@@ -587,6 +713,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: "Attendance Management",
       icon: <FaUserCheck />,
       role: ["Admin", "Company", "Ceo", "Account Head", "H.R", "Marketing"],
+    },
+    {
+      to: "/hrms/monthly-performance",
+      name: "Monthly Performance",
+      icon: "",
+      role: ["Admin", "Company", "Ceo", "Account Head", "H.R"],
     },
     // {
     //   to: '/employee/salary',

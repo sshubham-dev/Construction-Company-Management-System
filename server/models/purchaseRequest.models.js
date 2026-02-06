@@ -37,9 +37,13 @@ const purchaseRequestSchema = new mongoose.Schema(
     },
 
     // store assigned later during approval / issue
-    storeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Store",
+    store:  {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+             ref: "Store",
+        required: true,
+      },
+      name: String,
     },
     items: [prItemSchema],
     // Approval flow

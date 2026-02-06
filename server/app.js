@@ -37,7 +37,11 @@ const Blogs = require('./routes/blog.routes');
 const BusinessUnit = require('./routes/bu.routes');
 const Store = require('./routes/store.routes');
 const { Rates, Quotation, Packages } = require('./routes/quote.routes');
-const timing = require('./middlewares/timing')
+const timing = require('./middlewares/timing.middleware');
+const MonthlyPerformance = require('./routes/monthlyperformance.routes');
+const GRN = require("./routes/grn.routes");
+const DN = require("./routes/dn.routes");
+const SalesInvoice = require('./routes/salesinvoice.routes');
 // midellware
 
 const allowedOrigins = process.env.CORS_ORIGIN.split(',');
@@ -117,7 +121,7 @@ app.use('/api/v1/ledger', Ledger);
 app.use('/api/v1/ledger-group', Group);
 app.use('/api/v1/expenses', Expenses);
 app.use('/api/v1/notification', Notification)
-app.use('/api/v1/blog', Blogs);
+app.use('/api/v1/blogs', Blogs);
 app.use('/api/v1/labour-attendance', LabourAttendances);
 app.use('/api/v1/work-template', WorkTemplate);
 app.use('/api/v1/business-unit', BusinessUnit);
@@ -125,6 +129,10 @@ app.use('/api/v1/store', Store);
 app.use("/api/v1/calculator/quote", Quotation);
 app.use("/api/v1/calculator/rate", Rates);
 app.use("/api/v1/calculator/packages", Packages);
+app.use("/api/v1/monthly-performance", MonthlyPerformance);
+app.use('/api/v1/grn', GRN);
+app.use('/api/v1/delivery-note', DN);
+app.use('/api/v1/sales-invoice', SalesInvoice)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   console.log(err)

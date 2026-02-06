@@ -1,203 +1,325 @@
-const User = require("../models/user.models"); // Assuming you have a User model
 const { Ledger } = require("../models/ledger.models"); // ✅ Fix import
 const Expenses = require("../models/expenses.models"); // ✅ your expense schema
 const uploadOnCloudinary = require("../utils/cloudinary"); // ✅ adjust as needed
 const Employee = require("../models/employee.models");
-const { sendApproveByAdmin } = require("./approval.controller.js");
+const {
+  sendApproveByAdmin,
+  sendApproveByAccountHead,
+} = require("./approval.controller.js");
+const User = require("../models/user.models");
 const { sendNotification } = require("./notification.controller.js");
 
-// Create a new expense
+const resolvePaidByLedger = async (userId) => {
+  const employee = await Employee.findOne({ userId });
+  if (!employee) throw new Error("Employee not found");
 
+  const ledger = await Ledger.findById(employee.ledger);
+  if (!ledger) throw new Error("Employee ledger not found");
+
+  return ledger;
+};
+
+const applyExpenseToLedgers = async (expense, mode = "add") => {
+  const multiplier = mode === "add" ? 1 : -1;
+  const amount = Number(expense.amount);
+
+  const expenseLedger = await Ledger.findById(expense.expenseLedger.id);
+  const expenseForLedger = await Ledger.findById(expense.expenseForLedger.id);
+  const paidByLedger = await Ledger.findById(expense.paidByLedger.id);
+
+  if (!expenseLedger || !paidByLedger || !expenseForLedger) {
+    throw new Error("Ledger missing for posting expense");
+  }
+
+  // Debit Expense Ledger
+  expenseLedger.currentBalance =
+    (expenseLedger.currentBalance || 0) + multiplier * amount;
+
+  expenseForLedger.currentBalance =
+    (expenseForLedger.currentBalance || 0) + multiplier * amount;
+  expenseForLedger.received =
+    (expenseForLedger.received || 0) + multiplier * amount;
+
+  // Credit Paid By Ledger (company owes employee)
+  paidByLedger.currentBalance =
+    (paidByLedger.currentBalance || 0) - multiplier * amount;
+  paidByLedger.paid = (paidByLedger.paid || 0) + multiplier * amount;
+
+  await expenseLedger.save();
+  await paidByLedger.save();
+  await expenseForLedger.save();
+};
+
+/* ======================================================
+   CREATE EXPENSE (DRAFT)
+====================================================== */
 const createExpense = async (req, res) => {
   try {
-    const { date, amount, to, type, purpose, paymentMode } = req.body;
+    const { date, amount, narration, expenseLedgerId, expenseForLedgerId } =
+      req.body;
     const user = req.user;
-    const billPath = req.file?.path;
 
-    // Upload bill if provided
-    let upload;
-    if (billPath) {
-      upload = await uploadOnCloudinary(billPath);
+    if (!expenseLedgerId || !expenseForLedgerId) {
+      return res.status(400).json({ message: "Required ledger missing" });
     }
 
-    // Find employee and their ledger
-    const employee = await Employee.findOne({ userId: user._id });
-    if (!employee)
-      return res.status(404).json({ message: "Employee not found" });
+    const paidByLedger = await resolvePaidByLedger(req.user._id);
 
-    const fromLedger = await Ledger.findById(employee.ledger);
-    if (!fromLedger)
-      return res.status(404).json({ message: "Ledger not found" });
+    const expenseLedger = await Ledger.findById(expenseLedgerId);
+    const expenseForLedger = await Ledger.findById(expenseForLedgerId);
 
-    const toLedger = await Ledger.findById(to);
-    if (!toLedger) return res.status(404).json({ message: "Ledger not found" });
+    if (!expenseLedger || !expenseForLedger) {
+      return res.status(400).json({ message: "Invalid ledger selected" });
+    }
 
-    // Create expense document
-    const newExpense = new Expenses({
+    let attachments = [];
+
+    const files = req.files || (req.file ? [req.file] : []);
+
+    for (const file of files) {
+      const upload = await uploadOnCloudinary(file.path);
+      if (!upload?.url) continue;
+
+      attachments.push({
+        url: upload.url,
+        fileType: file.mimetype.includes("pdf") ? "pdf" : "image",
+      });
+    }
+
+    const expense = await Expenses.create({
       date,
       amount: Number(amount),
-      from: fromLedger._id,
-      to: toLedger._id,
-      type,
-      purpose,
-      createdBy: user._id,
-      photo: upload?.url || "",
-    });
-    await newExpense.save();
+      narration,
 
-    // Ledger updates helper
-    const createLedgerEntry = async ({
-      ledger,
-      counterpartLedgerId,
-      amount,
-      drCr,
-      balanceAfter,
-    }) => {
-      ledger.transactions.push({
-        date,
-        narration: purpose,
-        debitAccount: drCr === "Dr" ? ledger._id : counterpartLedgerId,
-        creditAccount: drCr === "Cr" ? ledger._id : counterpartLedgerId,
-        amount: Number(amount),
-        voucherType: "Expenses",
-        voucherRef: newExpense._id,
-        paymentMode: paymentMode || "",
-        drCr,
-        counterpartLedger: counterpartLedgerId,
-        balanceAfter,
-      });
-      await ledger.save();
-    };
+      expenseLedger: {
+        id: expenseLedger._id,
+        name: expenseLedger.name,
+      },
 
-    // Update From Ledger (credit)
-    fromLedger.currentBalance -= Number(amount);
-    fromLedger.summary.paid = (fromLedger.summary.paid || 0) + Number(amount);
-    fromLedger.summary.receivable =
-      (fromLedger.summary.receivable || 0) + Number(amount);
-    await createLedgerEntry({
-      ledger: fromLedger,
-      counterpartLedgerId: toLedger._id,
-      amount,
-      drCr: "Cr",
-      balanceAfter: fromLedger.currentBalance,
+      paidByLedger: {
+        id: paidByLedger._id,
+        name: paidByLedger.name,
+      },
+
+      expenseForLedger: {
+        id: expenseForLedger._id,
+        name: expenseForLedger.name,
+      },
+
+      attachments,
+      status: "Draft",
+      createdBy: req.user._id,
     });
 
-    // Update To Ledger (debit)
-
-    if (toLedger) {
-      toLedger.currentBalance += Number(amount);
-      toLedger.summary.received =
-        (toLedger.summary.received || 0) + Number(amount);
-      await createLedgerEntry({
-        ledger: toLedger,
-        counterpartLedgerId: fromLedger._id,
-        amount,
-        drCr: "Dr",
-        balanceAfter: toLedger.currentBalance,
-      });
+    const employee = await User.find({ role: "Employee" });
+    if (employee.length > 0) {
+      for (let emp of employee) {
+        sendNotification(
+          emp._id,
+          `${amount} paid by ${user.userName} for ${expenseLedger.name} expense of ${expenseForLedger.name}.`
+        );
+      }
     }
+    sendApproveByAdmin(expense, "Expense", user._id);
 
-    // Optional: Notify for approval
-    sendApproveByAdmin(newExpense, "Expenses", user._id);
-
-    return res
-      .status(201)
-      .json({ message: "Expense recorded successfully", data: newExpense });
-  } catch (error) {
-    console.error("Error recording expense:", error);
-    return res.status(500).json({ message: "Internal Server Error", error });
+    res.status(201).json(expense);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
-// Get all expenses
+/* ======================================================
+   POST EXPENSE (ACCOUNTING ENTRY)
+====================================================== */
+const postExpense = async (req, res) => {
+  try {
+    const expense = await Expenses.findById(req.params.id);
+    if (!expense) return res.status(404).json({ message: "Expense not found" });
+
+    if (expense.status === "Posted" && expense.isApproved !== "Approved") {
+      return res
+        .status(400)
+        .json({ message: "Only Draft expense can be posted" });
+    }
+
+    await applyExpenseToLedgers(expense, "add");
+
+    expense.status = "Posted";
+    await expense.save();
+
+    res.json({ message: "Expense posted successfully", expense });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ======================================================
+   CANCEL EXPENSE (REVERSAL)
+====================================================== */
+const cancelExpense = async (req, res) => {
+  try {
+    const expense = await Expenses.findById(req.params.id);
+    if (!expense) return res.status(404).json({ message: "Expense not found" });
+
+    if (expense.status !== "Posted" && expense.isApproved !== "Approved") {
+      return res
+        .status(400)
+        .json({ message: "Only Posted expense can be cancelled" });
+    }
+
+    await applyExpenseToLedgers(expense, "subtract");
+
+    expense.status = "Cancelled";
+    await expense.save();
+
+    res.json({ message: "Expense cancelled successfully", expense });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ======================================================
+   GET EXPENSES
+====================================================== */
 const getAllExpenses = async (req, res) => {
-  try {
-    const expenses = await Expenses.find()
-      .where("createdBy")
-      .equals(req.user._id)
-      .populate("to")
-      .sort({ date: -1 })
-      .exec();
-    if (!expenses || expenses.length === 0) {
-      return res.status(404).json({ message: "No expenses found" });
-    }
-
-    res.status(201).json(expenses);
-  } catch (error) {
-    clg.error("Error fetching expenses:", error);
-    res.status(500).json({ message: "Failed to fetch expenses", error });
-  }
+  const expenses = await Expenses.find().sort({ createdAt: -1 });
+  res.json(expenses);
 };
 
-// Get a single expense by ID
 const getExpenseById = async (req, res) => {
-  try {
-    console.log("Fetching expense with ID:", req.params.id);
-    const expense = await Expenses.findById(req.params.id)
-      .populate("from")
-      .populate("to")
-      .exec();
-    if (!expense) {
-      return res.status(404).json({ message: "Expense not found" });
-    }
-    res.status(200).json(expense);
-  } catch (error) {
-    console.error("Error fetching expense:", error);
-    res.status(500).json({ message: "Error fetching expense", error });
-  }
+  const expense = await Expenses.findById(req.params.id);
+  if (!expense) return res.status(404).json({ message: "Expense not found" });
+  res.json(expense);
 };
 
-// Update an expense by ID
+/* ======================================================
+   UPDATE EXPENSE (DRAFT ONLY)
+====================================================== */
 const updateExpense = async (req, res) => {
   try {
-    // console.log('Updating expense with ID:', req.params.id);
-    console.log("Updating expense:", req.body);
-    const billPath = req.file?.path;
-    if (!billPath)
-      return res.status(400).json({ message: "Photo is required" });
-    const upload = await uploadOnCloudinary(billPath);
-    const { date, amount, to, type, purpose } = req.body;
-    const expense = await Expenses.findByIdAndUpdate(
-      req.params.id,
-      {
-        date,
-        amount,
-        to,
-        type,
-        purpose,
-        photo: upload?.url,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const user = req.user;
+    const expense = await Expenses.findById(req.params.id);
     if (!expense) {
       return res.status(404).json({ message: "Expense not found" });
     }
-    console.log("Updated expense:", expense);
-    res.status(200).json({ message: "Expense updated successfully", expense });
-  } catch (error) {
-    console.error("Error updating expense:", error);
-    res.status(400).json({ message: "Error updating expense", error });
+
+    /* ----------------------------------
+       EDIT PERMISSION CHECK
+    ---------------------------------- */
+    if (expense.status === "Posted" && expense.isApproved === "Approved") {
+      console.log(expense.status, expense.isApproved);
+      return res.status(400).json({
+        message: "Only Draft & unapproved expenses can be edited",
+      });
+    }
+
+    const {
+      date,
+      amount,
+      narration,
+      expenseLedgerId,
+      expenseForLedgerId,
+      remarks,
+    } = req.body;
+
+    /* ----------------------------------
+       LEDGER VALIDATION (IF CHANGED)
+    ---------------------------------- */
+    if (expenseLedgerId) {
+      const expenseLedger = await Ledger.findById(expenseLedgerId);
+      if (!expenseLedger) {
+        return res.status(400).json({ message: "Invalid expense ledger" });
+      }
+
+      expense.expenseLedger = {
+        id: expenseLedger._id,
+        name: expenseLedger.name,
+      };
+    }
+
+    if (expenseForLedgerId) {
+      const expenseForLedger = await Ledger.findById(expenseForLedgerId);
+      if (!expenseForLedger) {
+        return res.status(400).json({ message: "Invalid expense-for ledger" });
+      }
+
+      expense.expenseForLedger = {
+        id: expenseForLedger._id,
+        name: expenseForLedger.name,
+      };
+    }
+
+    /* ----------------------------------
+       BASIC FIELD UPDATES
+    ---------------------------------- */
+    if (date) expense.date = date;
+    if (amount !== undefined) expense.amount = Number(amount);
+    if (narration !== undefined) expense.narration = narration;
+    if (remarks !== undefined) expense.remarks = remarks;
+
+    /* ----------------------------------
+       ATTACHMENTS (APPEND ONLY)
+    ---------------------------------- */
+
+    const files = req.files || (req.file ? [req.file] : []);
+    // console.log("first", req.files)
+
+    for (const file of files) {
+      const upload = await uploadOnCloudinary(file.path);
+      if (!upload?.url) continue;
+
+      expense.attachments.push({
+        url: upload.url,
+        fileType: file.mimetype.includes("pdf") ? "pdf" : "image",
+      });
+    }
+
+    await expense.save();
+
+    const employee = await User.find({ role: "Employee" });
+    if (employee.length > 0) {
+      for (let emp of employee) {
+        sendNotification(
+          emp._id,
+          `${amount} paid by ${user.userName} for ${expense?.expenseLedger.name} expense of ${expense?.expenseForLedger.name}.`
+        );
+      }
+    }
+    sendApproveByAdmin(expense, "Expense", user._id);
+    res.json({
+      message: "Expense updated successfully",
+      expense,
+    });
+  } catch (err) {
+    console.error("Update Expense Error:", err);
+    res.status(500).json({ message: err.message });
   }
 };
 
-// Delete an expense by ID
+/* ======================================================
+   DELETE EXPENSE (DRAFT ONLY)
+====================================================== */
 const deleteExpense = async (req, res) => {
-  try {
-    const expense = await Expenses.findByIdAndDelete(req.params.id);
-    if (!expense) {
-      return res.status(404).json({ message: "Expense not found" });
-    }
-    res.status(200).json({ message: "Expense deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting expense", error });
+  const expense = await Expenses.findById(req.params.id);
+  if (!expense) return res.status(404).json({ message: "Expense not found" });
+
+  if (
+    expense.status !== "Draft" &&
+    (expense.isApproved !== "Approved" || expense.isApproved !== "Rejected")
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Only Draft expense can be deleted" });
   }
+
+  await expense.deleteOne();
+  res.json({ message: "Expense deleted" });
 };
 
 module.exports = {
   createExpense,
+  postExpense,
+  cancelExpense,
   getAllExpenses,
   getExpenseById,
   updateExpense,

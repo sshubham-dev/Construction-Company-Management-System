@@ -3,116 +3,92 @@ const { syncLedger } = require("../utils/ledgerSync");
 
 const employeeSchema = new mongoose.Schema(
   {
-    // ---------- your existing custom fields (keep identical) ----------
-    name: { type: String },
+    /* ================= BASIC IDENTITY ================= */
+    name: { type: String, required: true },
     email: { type: String, unique: true, lowercase: true, trim: true },
     phone: { type: Number, required: true },
     whatsapp: { type: Number },
-    employeeNo: { type: String, unique: true, index: true },
+    employeeID: { type: String, unique: true, index: true },
+
     gender: String,
-    address: { type: String },
-    addhar: { type: String },
-    panNo: { type: String },
-    cv: { type: String },
-    offerletter: { type: String },
-    bank: { type: String },
-    isUser: { type: Boolean },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    certificates: [{ type: String }],
-    joinDate: { type: Date, default: Date.now },
-    department: { type: String },
-    birthdate: { type: Date },
-    pf: { type: String },
-    esi: { type: String },
-    uan: { type: String },
-    taxRegime: String,
+    birthdate: Date,
+    address: String,
+
+    /* ================= EMPLOYMENT ================= */
+    department: String,
+    reportingManagerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     businessUnitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessUnit",
     },
-
-    // ledger reference (Salaries Payable)
-    ledger: { type: mongoose.Schema.Types.ObjectId, ref: "Ledger" },
-    compensationRules: {
-      traffic: {
-        greenBonus: Number, // +2000, +1500, +3000 depending on role
-        redPenalty: Number, // -1000
-      },
-      site: {
-        perTargetBonus: Number, // +1000 per achieved target
-      },
-      design: {
-        fixedTargetBonus: Number, // 3000 on exact 30000
-        percentageBonusRate: Number, // 0.10 on above 30000
-      },
+    joinDate: { type: Date, default: Date.now },
+    status: {
+      type: String,
+      enum: ["Active", "Inactive", "Resigned"],
+      default: "Active",
     },
-    // references to new models
+
+    /* ================= PAYROLL ================= */
+    baseSalary: Number,
+    ledger: { type: mongoose.Schema.Types.ObjectId, ref: "Ledger" },
+    isUser: Boolean,
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    /* ================= COMPLIANCE ================= */
+    addhar: String,
+    panNo: String,
+    pf: String,
+    esi: String,
+    uan: String,
+    taxRegime: String,
+
+    /* ================= DOCUMENTS ================= */
+    cv: String,
+    offerletter: String,
+    certificates: [{ type: String }],
+    bank: String,
+
+    /* ================= TRAFFIC LIGHT & INCENTIVE RULES ================= */
+    incentiveConfig: {
+      trafficLight: {
+        greenBonus: { type: Number, default: 2000 },
+        redPenalty: { type: Number, default: 1000 },
+      },
+
+      targets:[{
+        targetType: {
+          type: String,
+          enum: ["site-work", "revenue"],
+        },
+        baseTargetValue: Number, // e.g. 30000
+        bonusType: {
+          type: String,
+          enum: ["fixed", "percentage"],
+        },
+        bonusValue: Number, // 3000 OR 10 (means 10%)
+      }],
+    },
+    monthlyPerformance: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "TrafficLight",
+      },
+    ],
+
+    /* ================= REFERENCES ================= */
     salarySlip: [{ type: mongoose.Schema.Types.ObjectId, ref: "SalarySlip" }],
     expenseBills: [{ type: mongoose.Schema.Types.ObjectId, ref: "Expenses" }],
 
-    // detailed transaction arrays (optional duplicates for quick UI) - keep minimal
-    salaryHistory: [
-      {
-        paymentId: { type: mongoose.Schema.Types.ObjectId, ref: "Payment" },
-        amount: Number,
-        date: Date,
-        month: String,
-        remarks: String,
-      },
-    ],
-
-    advances: [
-      {
-        amount: Number,
-        date: Date,
-        reason: String,
-      },
-    ],
-
-    bonus: [
-      {
-        amount: Number,
-        date: Date,
-        reason: String,
-      },
-    ],
-
-    deductions: [
-      {
-        amount: Number,
-        date: Date,
-        reason: String,
-      },
-    ],
-
-    // FINANCIAL SUMMARY (auto recalculated)
+    /* ================= FINANCIAL CACHE (OPTIONAL) ================= */
     financials: {
-      // SALARY
-      totalSalaryBilled: { type: Number, default: 0 },
       totalSalaryPaid: { type: Number, default: 0 },
       totalSalaryDue: { type: Number, default: 0 },
-
-      // EXPENSES
-      totalExpenseClaimed: { type: Number, default: 0 },
       totalExpensePaid: { type: Number, default: 0 },
-      totalExpenseDue: { type: Number, default: 0 },
-
-      // ADVANCES
-      totalAdvanceTaken: { type: Number, default: 0 },
-      totalAdvanceSettled: { type: Number, default: 0 },
       totalAdvanceBalance: { type: Number, default: 0 },
-
-      // NET
-      netPayableToEmployee: { type: Number, default: 0 }, // positive => company owes employee
-    },
-
-    totalPaid: { type: Number, default: 0 },
-    totalDue: { type: Number, default: 0 },
-
-    status: {
-      type: String,
-      default: "Active",
-      enum: ["Active", "Inactive", "Resigned"],
+      netPayableToEmployee: { type: Number, default: 0 },
     },
   },
   { timestamps: true }
@@ -124,12 +100,10 @@ const employeeSchema = new mongoose.Schema(
    This function queries related collections so it must be async.
    ----------------------------- */
 
-
 // async function recalcEmployeeFinance(employeeDoc) {
 //   // get models dynamically (avoid circular require)
 //   const SalaryBill = mongoose.model("SalarySlip");
 //   const ExpenseBill = mongoose.model("ExpenseBill");
-
 
 //   // salary sums
 //   const salaryBills = await SalaryBill.find({

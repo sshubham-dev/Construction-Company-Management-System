@@ -1,40 +1,57 @@
 const Return = require("../models/return.models"); // Assuming the model is in the models folder
 const {
   sendApproveByAdmin,
-  sendApproveByAccountant,
-  sendApproveByIncharge,
-  sendApproveByQuality,
-  sendApproveByContractor,
-  sendApproveByAccountHead,
   sendApproveByStoreIncharge,
 } = require("./approval.controller.js");
 const Site = require("../models/site.models");
 const User = require("../models/user.models");
 const { sendNotification } = require("./notification.controller.js");
+const SalesInvoice = require("../models/salesinvoice.models.js");
 
 // Create a return
 const createReturn = async (req, res) => {
   try {
     const user = req.user;
-    const { site, materialType, date, returnable } = req.body;
+    const { site, materialType, date, returnable, salesInvoiceId } = req.body;
 
     const existingSite = await Site.findById(site);
     if (!existingSite) {
       return res.status(400).json({ message: "Site not found" });
     }
 
+    const salesInvoice = await SalesInvoice.findById(salesInvoiceId);
+    if (!salesInvoice || salesInvoice.status !== "Posted") {
+      return res.status(400).json({
+        message: "Invalid or unposted Sales Invoice",
+      });
+    }
+
+    // Build returnable items from Sales Invoice
+    const generatedReturnable = salesInvoice.items.map((invItem, index) => {
+      const userItem = returnable?.[index];
+
+      return {
+        item: invItem.item, // 🔒 non-editable
+        unit: invItem.unit, // 🔒 from invoice
+        quantity: Number(userItem?.quantity || 0), // ✅ user input
+        rate: invItem.rate, // hidden
+        amount: userItem?.quantity * invItem.rate, // hidden
+      };
+    });
+
     const newReturn = new Return({
       site: { id: existingSite._id, name: existingSite.name },
       materialType,
       date,
-      returnable,
+      returnable: generatedReturnable,
       createdBy: user._id,
+      salesInvoice: { id: salesInvoice._id, invoiceNo: salesInvoice.invoiceNo },
     });
     const savedReturn = await newReturn.save();
-    sendApproveByStoreIncharge(savedReturn, "Return", user._id)
+    sendApproveByStoreIncharge(savedReturn, "Return", user._id);
     const existingUser = await User.findById(user._id).select(
       "-password -refreshToken"
-    ); 
+    );
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
@@ -144,45 +161,142 @@ const getReturnItem = async (req, res) => {
 // Update a return
 const updateReturn = async (req, res) => {
   try {
-    const id = req.params.id;
-    const { site, materialType, date, returnable } = req.body;
-    const existingSite = await Site.findById(site);
-    const existingReturn = await Return.findById(id);
-    if (!existingReturn) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Return not found" });
-    }
-    if (existingSite) {
-      existingReturn.site = {
-        name: existingSite.name,
-        id: existingSite._id,
-      };
-    }
-    existingReturn.materialType =
-      materialType || existingPurchaseRequest.materialType;
-    existingReturn.date = date || existingPurchaseRequest.date;
+    const returnId = req.params.id;
+    const { materialType, date, returnable, salesInvoiceId } = req.body;
 
-    if (Array.isArray(returnable) && returnable.length > 0) {
-      for (const retrn of returnable) {
-        if (retrn.item !== "") {
-          const newReturnable = {
-            item: retrn.item,
-            quantity: retrn.quantity,
-            unit: retrn.unit,
-          };
-          console.log("Pushing:", newReturnable);
-          existingReturn.returnable.push(newReturnable);
-        }
-      }
+    const existingReturn = await Return.findById(returnId);
+    if (!existingReturn) {
+      return res.status(404).json({
+        success: false,
+        message: "Return not found",
+      });
     }
+
+    /* ===============================
+       STATUS SAFETY
+    =============================== */
+    if (existingReturn.currentStatus !== "Draft") {
+      return res.status(400).json({
+        success: false,
+        message: "Only Draft returns can be edited",
+      });
+    }
+
+    /* ===============================
+       BASIC UPDATES
+    =============================== */
+    if (materialType) existingReturn.materialType = materialType;
+    if (date) existingReturn.date = date;
+
+    /* ===============================
+       RETURNABLE ITEMS UPDATE
+       (Qty only, no name/unit change)
+    =============================== */
+    if (Array.isArray(returnable)) {
+      const updatedItems = [];
+
+      for (const item of returnable) {
+        const existingItem = existingReturn.returnable.find(
+          (r) => r.item === item.item
+        );
+
+        if (!existingItem) continue;
+
+        updatedItems.push({
+          ...existingItem.toObject(),
+          quantity: Number(item.quantity || existingItem.quantity),
+        });
+      }
+
+      existingReturn.returnable = updatedItems;
+    }
+
     await existingReturn.save();
-    res.status(200).json({ success: true, data: existingReturn });
+
+    res.status(200).json({
+      success: true,
+      message: "Return updated successfully",
+      data: existingReturn,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ success: false, message: error.message });
+    console.error("Update Return Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
+
+const updateReceived = async (req, res) => {
+  try {
+    const returnId = req.params.id;
+    const { materialType, date, returnable, remarks } = req.body;
+
+    const existingReturn = await Return.findById(returnId);
+    if (!existingReturn) {
+      return res.status(404).json({
+        success: false,
+        message: "Return not found",
+      });
+    }
+
+    /* ===============================
+       STATUS SAFETY
+    =============================== */
+    if (existingReturn.currentStatus !== "Draft") {
+      return res.status(400).json({
+        success: false,
+        message: "Only Draft returns can be edited",
+      });
+    }
+
+    /* ===============================
+       BASIC UPDATES
+    =============================== */
+    if (materialType) existingReturn.materialType = materialType;
+    if (date) existingReturn.date = date;
+    if (remarks) existingReturn.remarks = remarks;
+
+    /* ===============================
+       RETURNABLE ITEMS UPDATE
+       (Qty only, no name/unit change)
+    =============================== */
+    if (Array.isArray(returnable)) {
+      const updatedItems = [];
+
+      for (const item of returnable) {
+        const existingItem = existingReturn.returnable.find(
+          (r) => r.item === item.item
+        );
+
+        if (!existingItem) continue;
+
+        updatedItems.push({
+          ...existingItem.toObject(),
+          quantity: Number(item.quantity || existingItem.quantity),
+          remarks: item.remarks || existingItem.remarks,
+        });
+      }
+
+      existingReturn.returnable = updatedItems;
+    }
+
+    await existingReturn.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Return updated successfully",
+      data: existingReturn,
+    });
+  } catch (error) {
+    console.error("Update Return Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 
 const updateReturnItem = async (req, res) => {
   try {
@@ -197,14 +311,12 @@ const updateReturnItem = async (req, res) => {
     if (index < 0 || index >= existingReturnRequest.returnable.length) {
       return res.status(400).json({ success: false, message: "Invalid index" });
     }
-    const { item, quantity, unit, rate, receivedQuantity, remarks } = req.body;
+    const { item, quantity, unit } = req.body;
     if (!item || !quantity || !unit) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Item, quantity, and unit are required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Item, quantity, and unit are required",
+      });
     }
     existingReturnRequest.returnable[index] = {
       item: item || existingReturnRequest.returnable[index].item,

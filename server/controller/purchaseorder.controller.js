@@ -1,4 +1,4 @@
-const PurchaseOrder = require('../models/purchaseOrder.models.js'); // Update the path as needed
+const {PurchaseOrder} = require('../models/purchaseorder.models.js'); // Update the path as needed
 const Site = require('../models/site.models.js');
 const Supplier = require('../models/supplier.models.js');
 const mongoose = require('mongoose');

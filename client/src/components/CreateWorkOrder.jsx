@@ -148,8 +148,8 @@ const EditWorkModal = ({ open, work, onClose, onSave, units }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-lg w-full max-w-2xl p-4 shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 ">
+      <div className="bg-white rounded-lg w-full max-w-2xl p-4 shadow-lg h-[80vh] overflow-auto">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-semibold">Edit Work</h3>
           <button className="text-sm text-gray-600" onClick={onClose}>
@@ -267,7 +267,7 @@ const CreateWorkOrder = ({
     work: null,
     index: -1,
   });
-
+  const isEditMode = Boolean(id);
   const [form, setForm] = useState({
     workOrderName: "",
     templateId: "",
@@ -278,6 +278,27 @@ const CreateWorkOrder = ({
     works: [],
     serial: null,
   });
+  const [draftModalOpen, setDraftModalOpen] = useState(false);
+  const [drafts, setDrafts] = useState([]);
+  const [replaceModalOpen, setReplaceModalOpen] = useState(false);
+  const [replaceData, setReplaceData] = useState({
+    contractorId: "",
+    reason: "",
+  });
+
+  useEffect(() => {
+    if (draftModalOpen) {
+      setDrafts(getDrafts());
+    }
+  }, [draftModalOpen]);
+
+  const getDrafts = () => {
+    try {
+      return JSON.parse(localStorage.getItem(DRAFT_KEY)) || [];
+    } catch {
+      return [];
+    }
+  };
 
   /* ------------------- initial fetch dropdowns & units ------------------- */
   useEffect(() => {
@@ -309,7 +330,7 @@ const CreateWorkOrder = ({
     })();
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     if (user && user?.department === "Site Incharge") {
       console.log(user._id);
       getUserSites(user._id);
@@ -347,262 +368,208 @@ const CreateWorkOrder = ({
 
   /* ------------------- load existing WO to edit ------------------- */
   useEffect(() => {
-    if(id && index !== undefined){
-      fetchWorkDetail(id,index)
-    }else{
-      fetchWorkOrder(id)
+    if (id && index !== undefined) {
+      fetchWorkDetail(id, index);
+    } else if (id && index === undefined) {
+      fetchWorkOrder(id);
     }
   }, [id]);
 
-    const fetchWorkOrder = async (id) => {
-      try {
-        const res = await axios.get(`/api/v1/work-order/${id}`);
-        const existingWorkOrder = res.data
-        console.log(existingWorkOrder)
-            const mapped = {
-      workOrderName: existingWorkOrder.workOrderName || "",
-      templateId:
-        existingWorkOrder.templateRef || existingWorkOrder.templateId || "",
-      siteId: existingWorkOrder.site?.id._id || existingWorkOrder.site?.id || "",
-      contractorId:
-        existingWorkOrder.contractor?.id || existingWorkOrder.contractor?.id._id || "",
-      startDate: existingWorkOrder.startDate
-        ? existingWorkOrder.startDate.slice(0, 10)
-        : "",
-      durationMonths: existingWorkOrder.durationMonths || "",
-      works: existingWorkOrder.works,
-      serial: existingWorkOrder.serial || null,
-    };
-    setForm(mapped);
-      } catch (error) {
-        console.log(error)
-      }
-    };
+  const fetchWorkOrder = async (id) => {
+    try {
+      const res = await axios.get(`/api/v1/work-order/${id}`);
+      const existingWorkOrder = res.data;
+      console.log(existingWorkOrder);
+      const mapped = {
+        workOrderName: existingWorkOrder.workOrderName || "",
+        templateId:
+          existingWorkOrder.templateRef || existingWorkOrder.templateId || "",
+        siteId:
+          existingWorkOrder.site?.id._id || existingWorkOrder.site?.id || "",
+        contractorId:
+          existingWorkOrder.contractor?.id ||
+          existingWorkOrder.contractor?.id._id ||
+          "",
+        startDate: existingWorkOrder.startDate
+          ? existingWorkOrder.startDate.slice(0, 10)
+          : "",
+        durationMonths: existingWorkOrder.durationMonths || "",
+        works: (existingWorkOrder.works || []).map((w) =>
+          recalcStagesForWork({
+            ...w,
+            stages: (w.stages || []).map((s) => ({
+              ...s,
+              // preserve paid, status, floor, etc.
+            })),
+          })
+        ),
+        serial: existingWorkOrder.serial || null,
+      };
+      setForm(mapped);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   /* ------------------- generate works from template + site ------------------- */
   useEffect(() => {
-    const buildFromTemplateAndSite = async () => {
-      if (!form.templateId || !form.siteId) return;
-      setLoading(true);
-      try {
-        const [tplRes, siteRes] = await Promise.all([
-          axios.get(`/api/v1/work-template/${form.templateId}`),
-          axios.get(`/api/v1/site/${form.siteId}`),
-        ]);
-        const tpl = tplRes.data;
-        const site = siteRes.data;
+    if (isEditMode) return; // 🔒 never overwrite saved works
+    buildFromTemplateAndSite();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.templateId, form.siteId]);
 
-        // convenience
-        const floors = Array.isArray(site.floors) ? site.floors : [];
-        const totalArea =
-          site.area || floors.reduce((a, f) => a + (Number(f.area) || 0), 0);
+  const buildFromTemplateAndSite = async () => {
+    if (!form.templateId || !form.siteId) return;
+    setLoading(true);
+    try {
+      const [tplRes, siteRes] = await Promise.all([
+        axios.get(`/api/v1/work-template/${form.templateId}`),
+        axios.get(`/api/v1/site/${form.siteId}`),
+      ]);
+      const tpl = tplRes.data;
+      const site = siteRes.data;
 
-        // classify floors
-        const floorMap = floors.map((f) => ({
-          ...f,
-          nameN: normalize(f.name || ""),
-        }));
-        const basementFloor = floorMap.find((f) =>
-          f.nameN.includes("basement")
-        );
-        const parkingFloor = floorMap.find((f) => f.nameN.includes("parking"));
-        const parapetFloor = floorMap.find((f) => f.nameN.includes("parapet"));
-        const otherSpecial = floorMap.filter((f) =>
-          /(septic|tank|ug|water|boundary)/.test(f.nameN)
-        );
-        const norm = (v = "") => v.toLowerCase().trim();
+      // convenience
+      const floors = Array.isArray(site.floors) ? site.floors : [];
+      const totalArea =
+        site.area || floors.reduce((a, f) => a + (Number(f.area) || 0), 0);
 
-        // real floors (perFloor usage) include headroom and named floors that are not special
-        // real structural floors (used for perFloor logic)
-        // RULE: Everything is a real floor EXCEPT special items:
-        // basement, parking, parapet, septic tank, boundary wall, water tank, UG tank, etc.
-        const realFloors = floorMap.filter((f) => {
-          const n = f.nameN;
+      // classify floors
+      const floorMap = floors.map((f) => ({
+        ...f,
+        nameN: normalize(f.name || ""),
+      }));
+      const basementFloor = floorMap.find((f) => f.nameN.includes("basement"));
+      const parkingFloor = floorMap.find((f) => f.nameN.includes("parking"));
+      const parapetFloor = floorMap.find((f) => f.nameN.includes("parapet"));
+      const otherSpecial = floorMap.filter((f) =>
+        /(septic|tank|ug|water|boundary)/.test(f.nameN)
+      );
+      const norm = (v = "") => v.toLowerCase().trim();
 
-          const isSpecial =
-            n.includes("basement") ||
-            n.includes("parking") ||
-            n.includes("parapet") ||
-            /(septic|tank|boundary|ug|underground|water)/.test(n);
+      // real floors (perFloor usage) include headroom and named floors that are not special
+      // real structural floors (used for perFloor logic)
+      // RULE: Everything is a real floor EXCEPT special items:
+      // basement, parking, parapet, septic tank, boundary wall, water tank, UG tank, etc.
+      const realFloors = floorMap.filter((f) => {
+        const n = f.nameN;
 
-          return !isSpecial; // keep only structural floors: ground + first + second + headroom + etc.
-        });
+        const isSpecial =
+          n.includes("basement") ||
+          n.includes("parking") ||
+          n.includes("parapet") ||
+          /(septic|tank|boundary|ug|underground|water)/.test(n);
 
-        // helper to push unique by normalized name
-        const generated = [];
-        const pushUnique = (item) => {
-          const nn = normalize(item?.name || "");
-          if (!generated.some((g) => normalize(g.name) === nn))
-            generated.push(item);
-        };
+        return !isSpecial; // keep only structural floors: ground + first + second + headroom + etc.
+      });
 
-        // iterate descriptions
-        const descriptions = tpl.description || tpl.workItems || [];
-        descriptions.forEach((desc) => {
-          const descN = normalize(desc.name || "");
-          // Do not treat parking as a floor for any work except footing
-          if (descN.includes("parking")) {
-            const isFootingLike =
-              descN.includes("footing") || descN.includes("tie beam");
-            if (!isFootingLike) return;
-          }
+      // helper to push unique by normalized name
+      const generated = [];
+      const pushUnique = (item) => {
+        const nn = normalize(item?.name || "");
+        if (!generated.some((g) => normalize(g.name) === nn))
+          generated.push(item);
+      };
 
-          const scope = desc.scope || "selectable";
-          const unit = desc.unit || "SQFT";
-          const rate = Number(desc.rate || 0);
-          const pSched = Array.isArray(desc.paymentSchedule)
-            ? desc.paymentSchedule
-            : [];
+      // iterate descriptions
+      const descriptions = tpl.description || tpl.workItems || [];
+      descriptions.forEach((desc) => {
+        const descN = normalize(desc.name || "");
+        // Do not treat parking as a floor for any work except footing
+        if (descN.includes("parking")) {
+          const isFootingLike =
+            descN.includes("footing") || descN.includes("tie beam");
+          if (!isFootingLike) return;
+        }
 
-          // Basement items: only if basement exists
-          if (descN.includes("basement")) {
-            if (!basementFloor) return;
-            pushUnique(
-              recalcStagesForWork({
+        const scope = desc.scope || "selectable";
+        const unit = desc.unit || "SQFT";
+        const rate = Number(desc.rate || 0);
+        const pSched = Array.isArray(desc.paymentSchedule)
+          ? desc.paymentSchedule
+          : [];
+
+        // Basement items: only if basement exists
+        if (descN.includes("basement")) {
+          if (!basementFloor) return;
+          pushUnique(
+            recalcStagesForWork({
+              id: genId(),
+              name: desc.name,
+              unit,
+              qty: Number(basementFloor.area || 0),
+              rate,
+              subWorks: desc.subWorks || [],
+              stages: pSched.map((s) => ({
                 id: genId(),
-                name: desc.name,
-                unit,
-                qty: Number(basementFloor.area || 0),
-                rate,
-                subWorks: desc.subWorks || [],
-                stages: pSched.map((s) => ({
-                  id: genId(),
-                  name: s.stage,
-                  percentage: s.percentage,
-                })),
-              })
-            );
-            return;
-          }
-
-          // Parapet / Septic / Tank items: only if matching floor exists; do not duplicate
-          if (descN.includes("parapet")) {
-            if (!parapetFloor) return;
-            pushUnique(
-              recalcStagesForWork({
-                id: genId(),
-                name: desc.name,
-                unit: desc.unit || parapetFloor.unit || "RFT",
-                qty: Number(parapetFloor.area || parapetFloor.qty || 0),
-                rate,
-                subWorks: desc.subWorks || [],
-                stages: pSched.map((s) => ({
-                  id: genId(),
-                  name: s.stage,
-                  percentage: s.percentage,
-                })),
-              })
-            );
-            return;
-          }
-
-          const isSpecial = /(septic|tank|boundary|ug|underground)/.test(descN);
-          if (isSpecial) {
-            // find any special floor that matches keywords
-            const matched =
-              otherSpecial.find((f) =>
-                descN.includes("septic") ? f.nameN.includes("septic") : true
-              ) || otherSpecial[0];
-            if (!matched) return;
-            pushUnique(
-              recalcStagesForWork({
-                id: genId(),
-                name: desc.name,
-                unit: desc.unit || matched.unit || "SQFT",
-                qty: Number(matched.area || 0),
-                rate,
-                subWorks: desc.subWorks || [],
-                stages: pSched.map((s) => ({
-                  id: genId(),
-                  name: s.stage,
-                  percentage: s.percentage,
-                })),
-              })
-            );
-            return;
-          }
-
-          const matchesAnyRealFloor = realFloors.some((f) =>
-            descN.includes(norm(f.name))
+                name: `Basement ${s.stage}`,
+                percentage: s.percentage,
+              })),
+            })
           );
+          return;
+        }
 
-          const allowAutoFloorQty = scope === "perFloor" || matchesAnyRealFloor;
-
-          // If not allowed → default manual entry
-          if (!allowAutoFloorQty) {
-            pushUnique(
-              recalcStagesForWork({
+        // Parapet / Septic / Tank items: only if matching floor exists; do not duplicate
+        if (descN.includes("parapet")) {
+          if (!parapetFloor) return;
+          pushUnique(
+            recalcStagesForWork({
+              id: genId(),
+              name: desc.name,
+              unit: desc.unit || parapetFloor.unit || "RFT",
+              qty: Number(parapetFloor.area || parapetFloor.qty || 0),
+              rate,
+              subWorks: desc.subWorks || [],
+              stages: pSched.map((s) => ({
                 id: genId(),
-                name: desc.name,
-                unit: desc.unit || "NOS",
-                qty: Number(desc.defaultQty || 0),
-                rate,
-                subWorks: desc.subWorks || [],
-                stages: pSched.map((s) => ({
-                  id: genId(),
-                  name: s.stage,
-                  percentage: s.percentage,
-                })),
-              })
-            );
-            return;
-          }
+                name: `Parapet wall ${s.stage}`,
+                percentage: s.percentage,
+              })),
+            })
+          );
+          return;
+        }
 
-          // perFloor: apply to every real floor (including headroom)
-          if (scope === "perFloor") {
-            realFloors.forEach((f) =>
-              pushUnique(
-                recalcStagesForWork({
-                  id: genId(),
-                  name: `${desc.name} - ${f.name}`,
-                  unit,
-                  qty: f.nameN.includes("ground")
-                    ? Number(f.area || 0) + Number(parkingFloor?.area || 0)
-                    : Number(f.area || 0),
-                  rate,
-                  subWorks: desc.subWorks || [],
-                  stages: pSched.map((s) => ({
-                    id: genId(),
-                    name: s.stage,
-                    percentage: s.percentage,
-                  })),
-                })
-              )
-            );
-            return;
-          }
-
-          // perSite: use defaultQty or site.area or total floor area
-          if (scope === "perSite") {
-            // The site-level qty: if desc.useFloorSum true, sum of real floor areas else site.area or defaultQty
-            const qty = desc.useFloorSum
-              ? realFloors.reduce((a, f) => a + (Number(f.area) || 0), 0)
-              : Number(desc.defaultQty || site.area || totalArea || 0);
-
-            pushUnique(
-              recalcStagesForWork({
+        const isSpecial = /(septic|tank|boundary|ug|underground)/.test(descN);
+        if (isSpecial) {
+          // find any special floor that matches keywords
+          const matched =
+            otherSpecial.find((f) =>
+              descN.includes("septic") ? f.nameN.includes("septic") : true
+            ) || otherSpecial[0];
+          if (!matched) return;
+          pushUnique(
+            recalcStagesForWork({
+              id: genId(),
+              name: desc.name,
+              unit: desc.unit || matched.unit || "SQFT",
+              qty: Number(matched.area || 0),
+              rate,
+              subWorks: desc.subWorks || [],
+              stages: pSched.map((s) => ({
                 id: genId(),
-                name: desc.name,
-                unit,
-                qty,
-                rate,
-                subWorks: desc.subWorks || [],
-                stages: pSched.map((s) => ({
-                  id: genId(),
-                  name: s.stage,
-                  percentage: s.percentage,
-                })),
-              })
-            );
-            return;
-          }
+                name: `Septic tank ${s.stage}`,
+                percentage: s.percentage,
+              })),
+            })
+          );
+          return;
+        }
 
-          // selectable / other: default single item (user can edit)
+        const matchesAnyRealFloor = realFloors.some((f) =>
+          descN.includes(norm(f.name))
+        );
+
+        const allowAutoFloorQty = scope === "perFloor" || matchesAnyRealFloor;
+
+        // If not allowed → default manual entry
+        if (!allowAutoFloorQty) {
           pushUnique(
             recalcStagesForWork({
               id: genId(),
               name: desc.name,
               unit: desc.unit || "NOS",
-              qty: Number(desc.defaultQty || 1),
+              qty: Number(desc.defaultQty || 0),
               rate,
               subWorks: desc.subWorks || [],
               stages: pSched.map((s) => ({
@@ -612,80 +579,132 @@ const CreateWorkOrder = ({
               })),
             })
           );
-        });
+          return;
+        }
 
-        // FOOTING special rule: if template has "footing" description, set qty = ground + parking (if parking exists)
-        const groundFloor =
-          floorMap.find((f) => f.nameN.includes("ground")) || realFloors[0];
-        if (groundFloor) {
-          const parkingArea = Number(parkingFloor?.area || 0);
-          const groundArea = Number(groundFloor?.area || 0);
-          const footingQty =
-            parkingArea > 0 ? parkingArea + groundArea : groundArea;
-
-          const footingDesc = descriptions.find(
-            (d) =>
-              normalize(d.name || "").includes("footing") ||
-              normalize(d.name || "").includes("tie beam")
+        // perFloor: apply to every real floor (including headroom)
+        if (scope === "perFloor") {
+          realFloors.forEach((f) =>
+            pushUnique(
+              recalcStagesForWork({
+                id: genId(),
+                name: `${desc.name} - ${f.name}`,
+                unit,
+                qty: f.nameN.includes("ground")
+                  ? Number(f.area || 0) + Number(parkingFloor?.area || 0)
+                  : Number(f.area || 0),
+                rate,
+                subWorks: desc.subWorks || [],
+                stages: pSched.map((s) => ({
+                  id: genId(),
+                  name: `${f.name} ${s.stage}`,
+                  percentage: s.percentage,
+                })),
+              })
+            )
           );
-          if (footingDesc) {
-            const footingWork = recalcStagesForWork({
+          return;
+        }
+
+        // perSite: use defaultQty or site.area or total floor area
+        if (scope === "perSite") {
+          // The site-level qty: if desc.useFloorSum true, sum of real floor areas else site.area or defaultQty
+          const qty = desc.useFloorSum
+            ? realFloors.reduce((a, f) => a + (Number(f.area) || 0), 0)
+            : Number(desc.defaultQty || site.area || totalArea || 0);
+
+          pushUnique(
+            recalcStagesForWork({
               id: genId(),
-              name: footingDesc.name,
-              unit: footingDesc.unit || "SQFT",
-              qty: footingQty,
-              rate: Number(footingDesc.rate || 0),
-              subWorks: footingDesc.subWorks || [],
-              stages: (footingDesc.paymentSchedule || []).map((s) => ({
+              name: desc.name,
+              unit,
+              qty,
+              rate,
+              subWorks: desc.subWorks || [],
+              stages: pSched.map((s) => ({
                 id: genId(),
                 name: s.stage,
                 percentage: s.percentage,
               })),
-            });
-
-            // replace any existing footing-like item
-            const existingIdx = generated.findIndex(
-              (g) =>
-                normalize(g.name).includes("footing") ||
-                normalize(g.name).includes("tie beam")
-            );
-            if (existingIdx >= 0) generated[existingIdx] = footingWork;
-            else generated.push(footingWork);
-          }
+            })
+          );
+          return;
         }
 
-        // At this point generated[] contains unique items.
-        // Set form: don't overwrite user edits if form.works already present and user likely editing; but when generating new, replace
-        setForm((p) => ({
-          ...p,
-          workOrderName: tpl.title
-            ? `${tpl.title} - ${site.name}`
-            : p.workOrderName,
-          works: generated.map((w) => recalcStagesForWork(w)),
-        }));
+        // selectable / other: default single item (user can edit)
+        pushUnique(
+          recalcStagesForWork({
+            id: genId(),
+            name: desc.name,
+            unit: desc.unit || "NOS",
+            qty: Number(desc.defaultQty || 1),
+            rate,
+            subWorks: desc.subWorks || [],
+            stages: pSched.map((s) => ({
+              id: genId(),
+              name: s.stage,
+              percentage: s.percentage,
+            })),
+          })
+        );
+      });
 
-        // Try to fetch next serial (best-effort)
-        try {
-          // const serialRes = await axios.get(
-          //   `/api/v1/work-order/next-serial?site=${site._id}&template=${tpl._id}`
-          // );
-          // if (serialRes?.data?.serial) {
-          //   setForm((p) => ({ ...p, serial: serialRes.data.serial }));
-          // }
-        } catch {
-          // ignore if endpoint missing
+      // FOOTING special rule: if template has "footing" description, set qty = ground + parking (if parking exists)
+      const groundFloor =
+        floorMap.find((f) => f.nameN.includes("ground")) || realFloors[0];
+      if (groundFloor) {
+        const parkingArea = Number(parkingFloor?.area || 0);
+        const groundArea = Number(groundFloor?.area || 0);
+        const footingQty =
+          parkingArea > 0 ? parkingArea + groundArea : groundArea;
+
+        const footingDesc = descriptions.find(
+          (d) =>
+            normalize(d.name || "").includes("footing") ||
+            normalize(d.name || "").includes("tie beam")
+        );
+        if (footingDesc) {
+          const footingWork = recalcStagesForWork({
+            id: genId(),
+            name: footingDesc.name,
+            unit: footingDesc.unit || "SQFT",
+            qty: footingQty,
+            rate: Number(footingDesc.rate || 0),
+            subWorks: footingDesc.subWorks || [],
+            stages: (footingDesc.paymentSchedule || []).map((s) => ({
+              id: genId(),
+              name: s.stage,
+              percentage: s.percentage,
+            })),
+          });
+
+          // replace any existing footing-like item
+          const existingIdx = generated.findIndex(
+            (g) =>
+              normalize(g.name).includes("footing") ||
+              normalize(g.name).includes("tie beam")
+          );
+          if (existingIdx >= 0) generated[existingIdx] = footingWork;
+          else generated.push(footingWork);
         }
-      } catch (err) {
-        console.error("Generate works failed", err);
-        toast.error("Failed to generate works from template/site");
-      } finally {
-        setLoading(false);
       }
-    };
 
-    buildFromTemplateAndSite();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.templateId, form.siteId]);
+      // At this point generated[] contains unique items.
+      // Set form: don't overwrite user edits if form.works already present and user likely editing; but when generating new, replace
+      setForm((p) => ({
+        ...p,
+        workOrderName: tpl.title
+          ? `${tpl.title} - ${site.name}`
+          : p.workOrderName,
+        works: generated.map((w) => recalcStagesForWork(w)),
+      }));
+    } catch (err) {
+      console.error("Generate works failed", err);
+      toast.error("Failed to generate works from template/site");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /* ------------------- form update handlers ------------------- */
   const setField = (key, value) => setForm((p) => ({ ...p, [key]: value }));
@@ -753,36 +772,165 @@ const CreateWorkOrder = ({
   };
 
   /* ------------------- Draft save / load ------------------- */
-  const saveDraftLocal = () => {
-    try {
-      const payload = { ...form, savedAt: new Date().toISOString() };
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
-      toast.success("Draft saved locally");
-    } catch (err) {
-      console.error(err);
-      toast.error("Unable to save draft");
-    }
+
+  const saveDraft = (draft) => {
+    const drafts = getDrafts();
+    drafts.unshift(draft);
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(drafts));
   };
 
-  const loadDraftLocal = () => {
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY);
-      if (!raw) return toast("No draft found");
-      const doc = JSON.parse(raw);
-      // ensure stages recalculated
-      doc.works = (doc.works || []).map((w) => recalcStagesForWork(w));
-      setForm(doc);
-      toast.success("Draft loaded");
-    } catch (err) {
-      console.error(err);
-      toast.error("Unable to load draft");
-    }
+  const deleteDraft = (draftId) => {
+    const drafts = getDrafts().filter((d) => d.id !== draftId);
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(drafts));
   };
 
-  const clearDraftLocal = () => {
+  const clearAllDrafts = () => {
     localStorage.removeItem(DRAFT_KEY);
-    toast.success("Draft cleared");
   };
+
+  const saveDraftLocal = () => {
+    const name = form.workOrderName || `Draft - ${new Date().toLocaleString()}`;
+
+    const payload = {
+      id: genId(),
+      name,
+      data: {
+        ...form,
+        works: form.works.map((w) => recalcStagesForWork(w)),
+      },
+      savedAt: new Date().toISOString(),
+    };
+
+    saveDraft(payload);
+    toast.success("Draft saved");
+  };
+
+  const loadDraft = (draft) => {
+    const data = draft.data;
+
+    // data.works = (data.works || []).map((w) => recalcStagesForWork(w));
+
+    setForm(data);
+    setDraftModalOpen(false);
+    toast.success("Draft loaded");
+  };
+
+  const deleteDraftById = (id) => {
+    deleteDraft(id);
+    setDrafts(getDrafts());
+  };
+
+  const clearAllDraftsHandler = () => {
+    if (!window.confirm("Delete all drafts?")) return;
+    clearAllDrafts();
+    setDrafts([]);
+  };
+
+  // function syncWorkOrderStructure(workOrder, template, floors) {
+  //   const updatedWorks = [];
+
+  //   for (const woWork of workOrder.works) {
+  //     const templateWork = findMatchingTemplateWork(woWork, template);
+
+  //     if (!templateWork) {
+  //       // work removed from template → keep as-is
+  //       updatedWorks.push(woWork);
+  //       continue;
+  //     }
+
+  //     const updatedStages = [];
+
+  //     for (const woStage of woWork.stages) {
+  //       const templateStage = templateWork.paymentSchedule.find(
+  //         (s) => s.stage === woStage.name
+  //       );
+
+  //       if (!templateStage) {
+  //         // stage removed from template → keep but mark legacy
+  //         updatedStages.push({ ...woStage, legacy: true });
+  //         continue;
+  //       }
+
+  //       updatedStages.push({
+  //         ...woStage,
+
+  //         // ✅ sync structural fields
+  //         name: templateStage.stage,
+  //         percentage: templateStage.percentage,
+
+  //         // ✅ apply new logic (floor name)
+  //         floor: woStage.floor || woWork.floor,
+  //         floorLevel: woStage.floorLevel ?? woWork.floorLevel,
+
+  //         // ❌ do NOT touch
+  //         paid: woStage.paid,
+  //         due: woStage.due,
+  //         bills: woStage.bills,
+  //         status: woStage.status,
+  //       });
+  //     }
+
+  //     // Add newly introduced stages (percentage > 0)
+  //     templateWork.paymentSchedule.forEach((ts) => {
+  //       const exists = updatedStages.some((s) => s.name === ts.stage);
+  //       if (!exists) {
+  //         updatedStages.push({
+  //           name: ts.stage,
+  //           percentage: ts.percentage,
+  //           floor: woWork.floor,
+  //           floorLevel: woWork.floorLevel,
+  //           amount: calculateStageAmount(ts, woWork),
+  //           paid: 0,
+  //           due: calculateStageAmount(ts, woWork),
+  //           status: "Pending",
+  //           newlyAdded: true,
+  //         });
+  //       }
+  //     });
+
+  //     updatedWorks.push({
+  //       ...woWork,
+  //       stages: updatedStages,
+  //     });
+  //   }
+
+  //   return {
+  //     ...workOrder,
+  //     works: updatedWorks,
+  //     templateVersion: template.version,
+  //   };
+  // }
+
+  // const handleSyncFromTemplate = async () => {
+  //   if (
+  //     !window.confirm(
+  //       "Template has changed. Do you want to apply the latest structure? Paid data will not be affected."
+  //     )
+  //   )
+  //     return;
+
+  //   try {
+  //     // 🔴 ALWAYS fetch fresh data
+  //     const [tplRes, siteRes] = await Promise.all([
+  //       axios.get(`/api/v1/work-template/${form.templateId}`),
+  //       axios.get(`/api/v1/site/${form.siteId}`),
+  //     ]);
+
+  //     const freshTemplate = tplRes.data;
+  //     const freshSite = siteRes.data;
+
+  //     // 🔴 Rebuild floors fresh
+  //     const freshFloors = buildFloorsFromSite(freshSite);
+
+  //     // 🔴 Now sync using FRESH inputs
+  //     const synced = syncWorkOrderStructure(form, freshTemplate, freshFloors);
+
+  //     setForm(synced);
+  //   } catch (err) {
+  //     console.error("Sync failed", err);
+  //     toast.error("Failed to sync template changes");
+  //   }
+  // };
 
   /* ------------------- Submit create/update ------------------- */
   const handleSubmit = async (e) => {
@@ -845,29 +993,57 @@ const CreateWorkOrder = ({
 
   const totals = recalcTotals(form.works);
 
+  const handleReplaceContractor = async () => {
+    if (!replaceData.contractorId) {
+      toast.error("Please select a contractor");
+      return;
+    }
+
+    try {
+      await axios.post(`/api/v1/work-order/${id}/replace-contractor`, {
+        newContractorId: replaceData.contractorId,
+        reason: replaceData.reason,
+      });
+
+      toast.success("Contractor replaced successfully");
+      setReplaceModalOpen(false);
+
+      // redirect to new work order
+      navigate("/work-orders");
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.response?.data?.message || "Failed to replace contractor"
+      );
+    }
+  };
+
   /* ------------------- UI ------------------- */
   return (
     <div className="max-w-4xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex gap-2 items-center text-sm">
           <div
-            className={`px-3 py-1 rounded ${
-              step === 1 ? "bg-blue-600 text-white" : "bg-gray-200"
+            className={`px-3  rounded ${
+              step === 1 ? "bg-blue-600 text-white py-1.5" : "bg-gray-200 py-1"
             }`}
+            onClick={() => setStep(1)}
           >
             1. Basic
           </div>
           <div
-            className={`px-3 py-1 rounded ${
-              step === 2 ? "bg-blue-600 text-white" : "bg-gray-200"
+            className={`px-3  rounded ${
+              step === 2 ? "bg-blue-600 text-white py-1.5" : "bg-gray-200 py-1"
             }`}
+            onClick={() => setStep(2)}
           >
             2. Works
           </div>
           <div
-            className={`px-3 py-1 rounded ${
-              step === 3 ? "bg-blue-600 text-white" : "bg-gray-200"
+            className={`px-3 rounded ${
+              step === 3 ? "bg-blue-600 text-white py-1.5" : "bg-gray-200 py-1"
             }`}
+            onClick={() => setStep(3)}
           >
             3. Review
           </div>
@@ -968,6 +1144,27 @@ const CreateWorkOrder = ({
               </div>
             </div>
 
+            {isEditMode && (
+              <div className="border border-red-300 bg-red-50 rounded p-4 mt-6">
+                <h4 className="font-semibold text-red-700 mb-2">
+                  Replace Contractor
+                </h4>
+
+                <p className="text-sm text-red-600 mb-3">
+                  This will terminate the current contractor and create a new
+                  work order with remaining unpaid work.
+                </p>
+
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-red-600 text-white rounded"
+                  onClick={() => setReplaceModalOpen(true)}
+                >
+                  Replace Contractor
+                </button>
+              </div>
+            )}
+
             <div className="flex justify-between items-center gap-3">
               <div className="flex gap-2">
                 <button
@@ -977,21 +1174,32 @@ const CreateWorkOrder = ({
                 >
                   Save Draft
                 </button>
+
                 <button
                   type="button"
-                  onClick={loadDraftLocal}
+                  onClick={() => setDraftModalOpen(true)}
                   className="px-3 py-1 bg-gray-200 rounded"
                 >
                   Load Draft
                 </button>
-                <button
+
+                {/* <button
                   type="button"
                   onClick={clearDraftLocal}
                   className="px-3 py-1 bg-red-100 rounded"
                 >
                   Clear Draft
-                </button>
+                </button> */}
+                <DraftModal
+                  open={draftModalOpen}
+                  drafts={drafts}
+                  onLoad={loadDraft}
+                  onDelete={deleteDraftById}
+                  onClear={clearAllDraftsHandler}
+                  onClose={() => setDraftModalOpen(false)}
+                />
               </div>
+
               <div>
                 <button
                   type="button"
@@ -1012,15 +1220,34 @@ const CreateWorkOrder = ({
         {step === 2 && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Work Items</h3>
+              {/* <h3 className="text-lg font-semibold">Work Items</h3> */}
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={addCustomWork}
                   className="bg-gray-800 text-white px-3 py-1 rounded"
                 >
-                  + Add Work
+                  Add Work
                 </button>
+
+                {isEditMode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "This will overwrite current works using the template. Continue?"
+                        )
+                      ) {
+                        buildFromTemplateAndSite();
+                      }
+                    }}
+                    className="bg-orange-600 text-white px-3 py-1 rounded"
+                  >
+                    Regenerate from Template
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setForm((p) => ({ ...p, works: [] }))}
@@ -1204,11 +1431,11 @@ const CreateWorkOrder = ({
               ))}
             </div>
 
-            <div className="flex justify-between mt-4">
+            <div className="flex justify-between gap-2 mt-4">
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="px-4 py-2 bg-gray-300 rounded"
+                className="px-3 py-1 bg-gray-300 rounded"
               >
                 Back
               </button>
@@ -1216,17 +1443,33 @@ const CreateWorkOrder = ({
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded"
+                  className="px-3 py-1 bg-blue-600 text-white rounded"
                 >
                   Review
                 </button>
                 <button
                   type="button"
                   onClick={saveDraftLocal}
-                  className="px-4 py-2 bg-gray-700 text-white rounded"
+                  className="px-3 py-1 bg-gray-200 rounded"
                 >
                   Save Draft
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDraftModalOpen(true)}
+                  className="px-3 py-1 bg-gray-200 rounded"
+                >
+                  Load Draft
+                </button>
+                <DraftModal
+                  open={draftModalOpen}
+                  drafts={drafts}
+                  onLoad={loadDraft}
+                  onDelete={deleteDraftById}
+                  onClear={clearAllDraftsHandler}
+                  onClose={() => setDraftModalOpen(false)}
+                />
               </div>
             </div>
           </div>
@@ -1237,7 +1480,7 @@ const CreateWorkOrder = ({
             <h3 className="text-lg font-semibold">Review</h3>
 
             <div className="border rounded p-3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div>
                   <strong>Work Order</strong>
                   <div>{form.workOrderName}</div>
@@ -1258,8 +1501,8 @@ const CreateWorkOrder = ({
               </div>
             </div>
 
-            <div className="overflow-auto">
-              <table className="w-full text-sm">
+            <div className="max-w-screen">
+              <table className="text-sm">
                 <thead>
                   <tr className="text-left">
                     <th className="p-2">Work</th>
@@ -1318,6 +1561,14 @@ const CreateWorkOrder = ({
           </div>
         )}
       </form>
+      <ReplaceContractorModal
+        open={replaceModalOpen}
+        contractors={contractors}
+        value={replaceData}
+        onChange={setReplaceData}
+        onClose={() => setReplaceModalOpen(false)}
+        onConfirm={handleReplaceContractor}
+      />
 
       <EditWorkModal
         open={editModal.open}
@@ -1326,6 +1577,117 @@ const CreateWorkOrder = ({
         onSave={saveEditedWork}
         units={units}
       />
+    </div>
+  );
+};
+
+export const ReplaceContractorModal = ({
+  open,
+  contractors,
+  value,
+  onChange,
+  onClose,
+  onConfirm,
+}) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 h-full flex items-center justify-center ">
+      <div className="bg-white rounded mx-auto p-5">
+        <h3 className="font-semibold mb-3 text-red-600">Replace Contractor</h3>
+
+        <label className="block text-sm mb-1">New Contractor</label>
+        <select
+          className="border rounded p-2 w-full mb-3"
+          value={value.contractorId}
+          onChange={(e) =>
+            onChange((p) => ({ ...p, contractorId: e.target.value }))
+          }
+        >
+          <option value="">Select Contractor</option>
+          {contractors.map((c) => (
+            <option key={c._id} value={c._id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+
+        <label className="block text-sm mb-1">Reason</label>
+        <textarea
+          className="border rounded p-2 w-full mb-4"
+          placeholder="Reason for replacement"
+          value={value.reason}
+          onChange={(e) => onChange((p) => ({ ...p, reason: e.target.value }))}
+        />
+
+        <div className="flex justify-end gap-2">
+          <button className="px-3 py-1 bg-gray-300 rounded" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className="px-4 py-1 bg-red-600 text-white rounded"
+            onClick={onConfirm}
+          >
+            Confirm Replace
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DraftModal = ({ open, drafts, onLoad, onDelete, onClear, onClose }) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white w-full max-w-lg rounded p-4">
+        <h3 className="font-semibold mb-3">Saved Drafts</h3>
+
+        {drafts.length === 0 && (
+          <div className="text-sm text-gray-500">No drafts found</div>
+        )}
+
+        <div className="space-y-2 max-h-80 overflow-auto">
+          {drafts.map((d) => (
+            <div
+              key={d.id}
+              className="border p-2 rounded flex justify-between items-center"
+            >
+              <div>
+                <div className="font-medium text-sm">{d.name}</div>
+                <div className="text-xs text-gray-500">
+                  {new Date(d.savedAt).toLocaleString()}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  className="text-blue-600 text-sm"
+                  onClick={() => onLoad(d)}
+                >
+                  Load
+                </button>
+                <button
+                  className="text-red-500 text-sm"
+                  onClick={() => onDelete(d.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-between mt-4">
+          <button className="text-red-600 text-sm" onClick={onClear}>
+            Delete All
+          </button>
+          <button className="px-4 py-1 bg-gray-300 rounded" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

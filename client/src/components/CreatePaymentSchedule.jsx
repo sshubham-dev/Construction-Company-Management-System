@@ -256,21 +256,21 @@ const CreatePaymentSchedule = ({ onClose, id, index }) => {
           formData
         );
         toast.success(response.data.message);
-        onClose();
         dispatch(fetchNotifications(user._id));
+        onClose();
       } else if (paymentToEdit.id && paymentToEdit.index !== undefined) {
         const response = await axios.put(
           `/api/v1/payment-schedule/${paymentToEdit.id}/paymentDetails/${paymentToEdit.index}`,
           paymentDetail
         );
         toast.success(response.data.message);
-        onClose();
         dispatch(fetchNotifications(user._id));
+        onClose();
       } else {
         const response = await axios.post("/api/v1/payment-schedule", formData);
         toast.success(response.data.message);
-        onClose();
         dispatch(fetchNotifications(user._id));
+        onClose();
       }
     } catch (error) {
       console.log("Error submitting payment schedule:", error.message);

@@ -37,7 +37,7 @@ Notification.post("/unsubscribe", userAuth, unsubscribe);
 Notification.post("/subscription/check", checkSubscription);
 
 
-Notification.patch("/mark-all-read", userAuth, async (req, res) => {
+Notification.put("/mark-all-read", userAuth, async (req, res) => {
   try {
     const userId = req.user._id;
 
@@ -59,7 +59,7 @@ Notification.patch("/mark-all-read", userAuth, async (req, res) => {
 });
 
 // Mark a specific notification as read
-Notification.patch("/mark-read/:id", userAuth, async (req, res) => {
+Notification.put("/mark-read/:id", userAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;

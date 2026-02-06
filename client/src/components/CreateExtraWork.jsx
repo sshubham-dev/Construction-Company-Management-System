@@ -27,7 +27,7 @@ const CreateExtraWork = ({ onClose, id, index }) => {
   const [sites, setSite] = useState([]);
   const [client, setClient] = useState({});
   const [contractors, setContractor] = useState([]);
-  const units = ["SQFT", "RFT", "LUMSUM", "NOS", "FIXED", "RMT", "SQMT", "CUM"];
+  const units = ["SQFT", "RFT", "LUMSUM", "NOS", "FIXED", "RMT", "SQMT", "CUM", "KG", "LOAD", "MT"];
   const [workToEdit, setWorkToEdit] = useState(null);
   const [workData, setWorkData] = useState({
     work: "",

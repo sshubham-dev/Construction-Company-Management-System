@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+
 const businessUnitSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -42,15 +43,26 @@ const businessUnitSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-businessUnitSchema.pre("save", function (next) {
-  if (!this.code) {
-    this.code =
-      this.name.substring(0, 3).toUpperCase() +
-      "-" +
-      Date.now().toString().slice(-3);
+
+businessUnitSchema.pre("save", async function (next) {
+  try {
+    if (!this.isNew || this.code) return next();
+
+    const count = await mongoose.model("BusinessUnit").countDocuments();
+
+    const cityCode =
+      this.address?.city?.substring(0, 3).toUpperCase() || "GEN";
+
+    const sequence = String(count + 1).padStart(3, "0");
+
+    this.code = `BU-${cityCode}-${sequence}`;
+
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 });
+
 
 const BusinessUnit =
   mongoose.models.BusinessUnit ||
