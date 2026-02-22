@@ -1,5 +1,5 @@
 import axios from "axios";
-import  { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
@@ -15,6 +15,7 @@ const Clients = () => {
   const [clients, setClients] = useState([]);
   const [error, setError] = useState(null);
   const { user } = useSelector((state) => state.auth);
+    const [search, setSearch] = useState("");
 
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
@@ -38,6 +39,16 @@ const Clients = () => {
     setEditId(id);
   };
 
+  const filtered = useMemo(() => {
+    if (!search) return clients;
+
+    return clients.filter((client) => {
+      const text =
+        `${client?.name} ${client?.service} ${client?.contactNo}`.toLowerCase();
+      return text.includes(search.toLowerCase());
+    });
+  }, [clients, search]);
+
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/api/v1/client/${id}`);
@@ -57,6 +68,15 @@ const Clients = () => {
         </h2>
       </div>
 
+      <div className="bg-white border rounded-xl p-3 m-2 shadow-sm">
+        <input
+          placeholder="Search client, purpose or amount..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full outline-none text-sm"
+        />
+      </div>
+
       {/* Mobile: Card view */}
       <div className="p-2 space-y-3 md:hidden">
         {clients.map((client) => (
@@ -66,7 +86,7 @@ const Clients = () => {
           >
             <div>
               <p className="font-semibold text-gray-800">{client.name}</p>
-              <p className="text-xs text-gray-500">{client?.site?.name}</p>
+              <p className="text-xs text-gray-500">{client?.site?.name || client?.service}</p>
               <p className="text-sm text-gray-600">{client.email}</p>
               <p className="text-xs text-gray-500">
                 {client.whatsapp} {client.contactNo && `| ${client.contactNo}`}
@@ -102,14 +122,14 @@ const Clients = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {clients.map((client) => (
+              {filtered.map((client) => (
                 <tr
                   key={client._id}
                   className="border-b last:border-none hover:bg-gray-50"
                 >
                   <td className="px-6 py-4">
                     <p>{client.name}</p>
-                    <p className="text-gray-500 text-xs">{client.site?.name}</p>
+                    <p className="text-gray-500 text-xs">{client.site?.name || client?.service}</p>
                   </td>
                   <td className="px-6 py-4 text-center">{client.email}</td>
                   <td className="px-6 py-4 text-center">

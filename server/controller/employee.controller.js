@@ -21,6 +21,7 @@ const employees = async (req, res) => {
   try {
     const employees = await Employee.find()
     .where('status').equals('Active')
+    .sort({ name: 1 })
     .exec();
 
     if (employees.length === 0)

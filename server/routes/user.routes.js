@@ -2,7 +2,6 @@ const express = require('express');
 const { createUser, users, user, login, updateUser, deleteUser, register, logout, resetPasswd } = require('../controller/user.controller');
 const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 const UserRouter = express.Router();
-const uploadOnCloudinary = require('../utils/cloudinary.js');
 
 const upload = require('../middlewares/Upload');
 

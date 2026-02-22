@@ -46,8 +46,14 @@ const employeeSchema = new mongoose.Schema(
     taxRegime: String,
 
     /* ================= DOCUMENTS ================= */
-    cv: String,
-    offerletter: String,
+    cv: {
+            secure_url: String,
+      public_id: String,
+    },
+    offerletter: {
+            secure_url: String,
+      public_id: String,
+    },
     certificates: [{ type: String }],
     bank: String,
 

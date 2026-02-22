@@ -175,6 +175,13 @@ const Sidebar = ({ isOpen, onClose }) => {
       ],
     },
 
+    {
+      to: '/design/collections',
+      name: 'Record Client Payment',
+      icon: <FaWallet />,
+      role: ['Company', 'Ceo', 'Account Head', 'Design Head', 'Design Engineer', 'Site Incharge', 'Quality Head', 'Quality Engineer'],
+    },
+
     /* ERP */
     /* Accounts Management*/
     {
@@ -503,12 +510,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       ],
     },
 
-    {
-      to: "/cms/blog/editor",
-      name: "CreateBlog",
-      icon: <ImBlog />,
-      role: ["Admin", "Company", "Ceo", "Marketing", "Account Head"],
-    },
     {
       to: "/cms/blogs",
       name: "Blogs",

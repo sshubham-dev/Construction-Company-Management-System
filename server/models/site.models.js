@@ -74,9 +74,13 @@ const siteSchema = new mongoose.Schema(
 
     // Project contractual data
     agreement: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Agreement",
+      secure_url: String,
+      public_id: String,
     },
+    // agreement: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Agreement",
+    // },
 
     // ERP Linked Modules
     checklist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Checklist" }],
@@ -187,7 +191,7 @@ const siteSchema = new mongoose.Schema(
     totalExpenses: { type: Number, default: 0 },
     balance: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // ===============================

@@ -19,6 +19,7 @@ import CreatePurchaseOrder from "../CreatePurchaseOrder";
 import CreateLabourAttendance from "../CreateLabourAttendance";
 import CreateGRN from "../CreateGRN";
 import CreateDeliveryNote from "../CreateDeliveryNote";
+import CollectionEntry from "../../pages/Design/CollectionEntry";
 
 export default function Actions({ role }) {
   const [activeAction, setActiveAction] = useState(null);
@@ -52,6 +53,7 @@ export default function Actions({ role }) {
           badge: "before 30th",
           modal: "",
         },
+        { icon: "₹", label: "Record Payment", modal: "CollectionEntry" },
       ],
     },
     {
@@ -85,6 +87,7 @@ export default function Actions({ role }) {
         { icon: "📞", label: "3 Posts Per Week", badge: "before Fri" },
         { icon: "📞", label: "1 Blog Post Weekly", badge: "before Fri" },
         { icon: "📞", label: "2 Ads Content Per Month", badge: "before 25th" },
+        { icon: "₹", label: "Record Payment", modal: "CollectionEntry" },
       ],
     },
     {
@@ -112,26 +115,29 @@ export default function Actions({ role }) {
           icon: "📞",
           label: "Quality Review With Incharge",
         },
+        { icon: "₹", label: "Record Payment", modal: "CollectionEntry" },
       ],
     },
     {
       role: "Design Engineer",
       actions: [
-        { icon: "📝", label: "Enter New Client" },
+        { icon: "📝", label: "Enter New Client", modal: "Client" },
         { icon: "📷", label: "Social Media Posts", badge: "before 20th" },
         { icon: "📞", label: "Reminder Call to Client", badge: "before Sat" },
         { icon: "🚶", label: "Monthly Site Visit", badge: "before 30th" },
         { icon: "🤝", label: "Weekly Meeting with Incharge" },
         { icon: "⭐", label: "2 Monthly Google Reviews", badge: "before 25th" },
+        { icon: "₹", label: "Record Payment", modal: "CollectionEntry" },
       ],
     },
     {
       role: "Design Head",
       actions: [
-        { icon: "📝", label: "Enter New Client" },
+        { icon: "📝", label: "Enter New Client", modal: "Client" },
         { icon: "📷", label: "Social Media Posts", badge: "before 20th" },
         { icon: "📞", label: "Reminder Call to Client", badge: "before Sat" },
         { icon: "🚶", label: "Site Visit", badge: "before 30th" },
+        { icon: "₹", label: "Record Payment", modal: "CollectionEntry" },
       ],
     },
     {
@@ -151,6 +157,7 @@ export default function Actions({ role }) {
         { icon: "📋", label: "HouseKeeping" },
         { icon: "📋", label: "Site Review with Incharge" },
         { icon: "📋", label: "Extra Work Submit" },
+        { icon: "₹", label: "Record Payment", modal: "CollectionEntry" },
       ],
     },
     {
@@ -208,7 +215,11 @@ export default function Actions({ role }) {
         { icon: "📝", label: "Cleaning" },
         { icon: "📷", label: "Stock Summary" },
         { icon: "📞", label: "Create Purchase Order", modal: "PurchaseOrder" },
-        { icon: "🚶", label: "Generate GRN (Goods Receipt Note)", modal: "GRN" },
+        {
+          icon: "🚶",
+          label: "Generate GRN (Goods Receipt Note)",
+          modal: "GRN",
+        },
         { icon: "🚶", label: "Generate DN (Delivery Note)", modal: "DN" },
         // { icon: "🤝", label: "Generate Bill" },
         { icon: "🤝", label: "Scrap Sell" },
@@ -217,12 +228,13 @@ export default function Actions({ role }) {
           label: "Material Request From Site",
           badge: "2",
         },
-                {
+        {
           icon: "🏠",
           label: "Store Housekeeping",
           badge: "Before Sat",
           modal: "HouseKeeping",
         },
+        { icon: "₹", label: "Record Payment", modal: "CollectionEntry" },
       ],
     },
     {
@@ -246,7 +258,8 @@ export default function Actions({ role }) {
         { icon: "📷", label: "Monthly Report to Client" },
         { icon: "📷", label: "GST Filling" },
         { icon: "📷", label: "Review with Incharge" },
-        { icon: "📷", label: "Account's Audit" }
+        { icon: "📷", label: "Account's Audit" },
+        { icon: "₹", label: "Record Payment", modal: "CollectionEntry" },
       ],
     },
   ];
@@ -300,7 +313,9 @@ export default function Actions({ role }) {
     },
     Attendance: {
       title: "Add Labour Attendance",
-      component: <CreateLabourAttendance onClose={() => setActiveAction(null)} />,
+      component: (
+        <CreateLabourAttendance onClose={() => setActiveAction(null)} />
+      ),
     },
     AddEmployee: {
       title: "Add New Employee",
@@ -339,6 +354,10 @@ export default function Actions({ role }) {
     DN: {
       title: "Generate DN (Delivery Note)",
       component: <CreateDeliveryNote onClose={() => setActiveAction(null)} />,
+    },
+    CollectionEntry: {
+      title: "Record Payment",
+      component: <CollectionEntry onClose={() => setActiveAction(null)} />,
     },
   };
 

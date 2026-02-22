@@ -14,6 +14,7 @@ const getContractors = async (req, res) => {
             .populate('bill')
             .populate('workOrder')
             .populate('extraWork')
+            .sort({ name: 1 })
             .exec();
         if (contractors.length === 0) return res.status(404).json({ error: 'Contractors not found' });
         return res.status(200).json(contractors);

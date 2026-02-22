@@ -58,7 +58,8 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
     avatar: {
-      type: String,
+      secure_url: String,
+      public_id: String,
     },
     status: {
       type: String,
@@ -143,7 +144,7 @@ const userSchema = new mongoose.Schema(
     },
   },
 
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.pre("save", async function (next) {

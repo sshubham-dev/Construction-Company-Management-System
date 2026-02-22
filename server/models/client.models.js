@@ -5,7 +5,7 @@ const clientSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
 
-    email: { type: String, unique: true, lowercase: true, trim: true },
+    email: { type: String, lowercase: true, trim: true },
 
     phone: { type: Number, required: true },
 
@@ -17,6 +17,7 @@ const clientSchema = new mongoose.Schema(
       district: String,
       state: String,
     },
+    service: String, // design, approval, interior, construction, all-service
 
     site: {
       name: String,
@@ -96,7 +97,7 @@ clientSchema.pre("save", async function (next) {
 
     const ledgerId = await syncLedger({
       doc: this,
-      type: "Client",
+      type: `${this.service} Client`,
       under: "Sundry Debtors",
 
       getAddress: (doc) => ({

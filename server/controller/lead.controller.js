@@ -1,5 +1,6 @@
 const Lead = require("../models/lead.models"); // Adjust the path as necessary
 const User = require("../models/user.models");
+const { convertToClient } = require("./client.controller");
 const { sendNotification } = require("./notification.controller");
 // Create a new lead
 const createLead = async (req, res) => {
@@ -23,28 +24,31 @@ const createLead = async (req, res) => {
       requirement,
       source,
       contactAgent,
-      isClient,
+      isClient: isClient || false,
     });
-    await lead.save();
+    const newLead = await lead.save();
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
+      sendNotification(
+        employee._id,
+        `We got a new Lead from ${
+          newLead?.contactAgent ? newLead?.contactAgent : newLead?.source
+        }`,
+      );
       employee.notification.push({
         title: "Lead Alert",
         message: `We got a new Lead from ${
-          lead?.contactAgent ? lead?.contactAgent : lead?.source
+          newLead?.contactAgent ? newLead?.contactAgent : newLead?.source
         }`,
-        createdAt: lead.createdAt ? lead.createdAt : new Date(),
+        createdAt: newLead.createdAt ? newLead.createdAt : new Date(),
         link: `/crm/lead`,
       });
       await employee.save();
-      sendNotification(employee._id, {
-        title: "Lead Alert",
-        message: `We got a new Lead from ${
-          lead?.contactAgent ? lead?.contactAgent : lead?.source
-        }`,
-      });
     }
+    // if(isClient){
+    //   await convertToClient()
+    // }
     res.status(201).json({
       message: `We got a new Lead from ${
         lead?.contactAgent ? lead?.contactAgent : lead?.source
@@ -62,7 +66,7 @@ const createLead = async (req, res) => {
 // Get all leads
 const getAllLeads = async (req, res) => {
   try {
-    const leads = await Lead.find();
+    const leads = await Lead.find().sort({ createdAt: -1 }).exec();
     res.status(200).json(leads);
   } catch (error) {
     res

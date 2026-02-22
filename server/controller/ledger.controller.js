@@ -135,10 +135,11 @@ const addLedger = async (data, under, gst, tds, referenceType) => {
   }
 };
 
-
 const getLedgers = async (req, res) => {
   try {
-    const ledgers = await Ledger.find();
+    const ledgers = await Ledger.find()
+    .sort({ name: 1 })
+    .exec();
     res.json(ledgers);
   } catch (error) {
     res.status(500).json({ error: error.message });

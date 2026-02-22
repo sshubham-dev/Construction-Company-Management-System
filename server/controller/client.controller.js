@@ -8,7 +8,10 @@ const { sendNotification } = require("./notification.controller.js");
 
 const getClients = async (req, res) => {
   try {
-    const clients = await Client.find().populate("site.id").exec();
+    const clients = await Client.find()
+    .populate("site.id")
+    .sort({ name: 1 })
+    .exec();
     if (!clients || clients.length === 0)
       return res.status(404).json({ message: "Clients Not Found" });
     res.status(200).json(clients);
@@ -32,7 +35,7 @@ const getClient = async (req, res) => {
 
 const createClient = async (req, res) => {
   try {
-    const { name, email, gstNo, phone, whatsapp, address, isUser } = req.body;
+    const { name, email, gstNo, phone, whatsapp, address, isUser, service } = req.body;
 
     const existingClient = await Client.findOne({ $or: [{ name }] });
     if (existingClient)
@@ -48,6 +51,7 @@ const createClient = async (req, res) => {
       whatsapp,
       address,
       isUser,
+      service
     });
 
     const savedClient = await newClient.save();

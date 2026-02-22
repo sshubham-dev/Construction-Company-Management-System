@@ -89,7 +89,7 @@ import StoreIncharge from "./pages/Dashboard/StoreIncharge.jsx";
 import HR from "./pages/Dashboard/HR.jsx";
 import ProjectReport from "./pages/Design/ProjectReport.jsx";
 import ERPSettings from "./pages/ERP/ERPSettings.jsx";
-import CreateBlog from "./components/CreateBlog.jsx";
+import CreateBlog from "./pages/CMS/Blog/CreateBlog.jsx";
 import WOTemplateScreen from "./screen/WOTemplateScreen.jsx";
 import LabourAttendanceScreen from "./screen/LabourAttendanceScreen.jsx";
 import CreateQuotation from "./components/CreateQuotation.jsx";
@@ -112,7 +112,12 @@ import DeliveryNoteScreen from "./screen/DeliveryNoteScreen.jsx";
 import SalesInvoice from "./pages/ERP/SalesInvoice.jsx";
 import SalesInvoiceScreen from "./screen/SalesInvoiceScreen.jsx";
 import Blogs from "./pages/CMS/Blogs.jsx";
-import BlogEdit from "./pages/CMS/BlogEdit.jsx";
+import BlogEdit from "./pages/CMS/Blog/BlogEdit.jsx";
+import BlogPreviewer from "./pages/CMS/Blog/BlogPreviewer.jsx";
+import CollectionEntry from "./pages/Design/CollectionEntry.jsx";
+import Collections from "./pages/Design/Collections.jsx";
+import "jodit/es2021/jodit.min.css";
+
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -368,12 +373,14 @@ const App = () => {
         <Route path="/crm/Quotation" element={<Quotations />} />
 
         <Route path="/design/project" element={<ProjectReport />} />
+        <Route path="/design/collection-entry" element={<CollectionEntry />} />
+        <Route path="/design/collections" element={<Collections />} />
 
         <Route path="/site-kharchi" element={<Expenses />} />
 
         <Route path="/cms/blog/editor" element={<CreateBlog />} />
         <Route path="/cms/blogs" element={<Blogs />} />
-        <Route path="/cms/blog/preview" element={<Blogs />} />
+        <Route path="/cms/blog/preview/:id" element={<BlogPreviewer />} />
         <Route path="/cms/blog/edit/:id" element={<BlogEdit />} />
 
         <Route path="/work-details" element={<WorkDetails />} />

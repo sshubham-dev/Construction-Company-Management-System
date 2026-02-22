@@ -42,6 +42,7 @@ const MonthlyPerformance = require('./routes/monthlyperformance.routes');
 const GRN = require("./routes/grn.routes");
 const DN = require("./routes/dn.routes");
 const SalesInvoice = require('./routes/salesinvoice.routes');
+const CollectionRoute = require('./routes/collection.routes');
 // midellware
 
 const allowedOrigins = process.env.CORS_ORIGIN.split(',');
@@ -133,6 +134,7 @@ app.use("/api/v1/monthly-performance", MonthlyPerformance);
 app.use('/api/v1/grn', GRN);
 app.use('/api/v1/delivery-note', DN);
 app.use('/api/v1/sales-invoice', SalesInvoice)
+app.use('/api/v1/collection', CollectionRoute)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   console.log(err)

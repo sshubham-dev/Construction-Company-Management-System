@@ -139,7 +139,7 @@ const LabourAttendanceScreen = () => {
             <tr>
               <th className="text-left p-3">Date</th>
               <th className="text-left p-3">Site</th>
-              <th className="text-left p-3">Contractor</th>
+              <th className="text-left p-3">Work</th>
               <th className="text-center p-3">Skilled (M/F)</th>
               <th className="text-center p-3">Unskilled (M/F)</th>
               <th className="text-center p-3">Actions</th>
@@ -152,8 +152,11 @@ const LabourAttendanceScreen = () => {
                   <td className="p-3">
                     {moment(att.date).format("DD MMM YYYY")}
                   </td>
-                  <td className="p-3">{att.site?.name}</td>
-                  <td className="p-3">{att?.contractor}</td>
+                  <td className="p-3">
+                    <p>{att.site?.name}</p>
+                    <p>{att?.contractor}</p>
+                    </td>
+                  <td className="p-3" >{att?.work}</td>
                   <td className="text-center p-3">
                     {att.skilledMale}/{att.skilledFemale}
                   </td>
@@ -209,6 +212,10 @@ const LabourAttendanceScreen = () => {
               <div className="text-sm text-gray-700">
                 <span className="font-medium">Contractor:</span>{" "}
                 {att.contractor}
+              </div>
+              <div className="text-sm text-gray-700">
+                <span className="font-medium">Work:</span>{" "}
+                {att.work}
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-sm">

@@ -75,11 +75,13 @@ const CreateLead = ({ onClose, onSubmit, isEdit }) => {
                 const response = await axios.post(`/api/v1/lead/${isEdit}`, lead)
                 console.log(response)
                 onSubmit(lead);
+                setLoading(false);
                 onClose();  
             }else{
                 const response = await axios.post('/api/v1/lead', lead)
                 console.log(response)
                 onSubmit(lead);
+                setLoading(false);
                 onClose();
             }
         } catch (error) {
@@ -181,7 +183,10 @@ const CreateLead = ({ onClose, onSubmit, isEdit }) => {
                 >
                     <option value="">Service</option>
                     <option value="design">Design</option>
+                    <option value="approval">Approval</option>
+                    <option value="interior">Interior</option>
                     <option value="construction">Construction</option>
+                    <option value="all-service">All Service</option>
                 </select>
 
                 <textarea

@@ -1,43 +1,44 @@
-import axios from 'axios';
-import React, { useState, useEffect } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import axios from "axios";
+import React, { useState, useEffect } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import { MdOutlineRemoveCircle, MdOutlineAddCircle } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from 'react-router-dom';
-import { fetchNotifications } from '../features/notification/notificationSlice';
+import { useNavigate, useParams } from "react-router-dom";
+import { fetchNotifications } from "../features/notification/notificationSlice";
 
 axios.defaults.withCredentials = true;
 
 const CreateClient = ({ onClose, isEdit }) => {
   const [client, setClient] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    whatsapp: '',
+    name: "",
+    email: "",
+    phone: "",
+    whatsapp: "",
     address: {
       street: "",
       city: "",
       district: "",
       state: "",
     },
+    service: "",
     isUser: false,
-    gstNo:''
+    gstNo: "",
   });
-  const [clientId, setClientId] = useState('');
+  const [clientId, setClientId] = useState("");
   const [loading, setLoading] = useState(false);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
   useEffect(() => {
     if (isEdit) {
-      setClientId(isEdit)
-      fetchClient(isEdit)
+      setClientId(isEdit);
+      fetchClient(isEdit);
     }
-  }, [])
+  }, []);
 
   const fetchClient = async (id) => {
     try {
       const clientData = await axios.get(`/api/v1/client/${id}`);
-      console.log(clientData.data)
+      console.log(clientData.data);
       setClient({
         name: clientData.data?.name,
         email: clientData.data?.email,
@@ -49,7 +50,10 @@ const CreateClient = ({ onClose, isEdit }) => {
           district: clientData.data?.address.district,
           state: clientData.data?.address.state,
         },
-      })
+        service: clientData.data?.service,
+        isUser: clientData.data?.isUser,
+        gstNo: clientData.data?.gstNo,
+      });
     } catch (error) {
       toast.error(error.message);
     }
@@ -57,24 +61,26 @@ const CreateClient = ({ onClose, isEdit }) => {
 
   const handleReset = () => {
     setClient({
-      name: '',
-      email: '',
-      phone: '',
-      whatsapp: '',
+      name: "",
+      email: "",
+      phone: "",
+      whatsapp: "",
       address: {
         street: "",
         city: "",
         district: "",
         state: "",
       },
-      isUser: '',
-    })
+      service: "",
+      isUser: "",
+      gstNo: "",
+    });
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name.startsWith('address.')) {
-      const addressField = name.split('.')[1];
+    if (name.startsWith("address.")) {
+      const addressField = name.split(".")[1];
       setClient((prevclient) => ({
         ...prevclient,
         address: {
@@ -90,39 +96,37 @@ const CreateClient = ({ onClose, isEdit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    console.log('Before data submitted:', client);
+    console.log("Before data submitted:", client);
     try {
       if (isEdit !== undefined) {
         const response = await axios.put(`/api/v1/client/${clientId}`, client);
         if (response.data) {
-          toast.success(response.data.message)
-          console.log(response.data)
-          setLoading(false)
+          toast.success(response.data.message);
+          console.log(response.data);
+          setLoading(false);
           dispatch(fetchNotifications(user._id));
-          onClose()
+          onClose();
         }
       } else {
-        const response = await axios.post('/api/v1/client', client);
+        const response = await axios.post("/api/v1/client", client);
         if (response.data) {
-          toast.success(response.data.message)
-          console.log(response.data)
-          setLoading(false)
+          toast.success(response.data.message);
+          console.log(response.data);
+          setLoading(false);
           dispatch(fetchNotifications(user._id));
-          onClose()
+          onClose();
         }
       }
     } catch (error) {
-      console.log(error)
-      setLoading(false)
-      toast.error(error.message)
+      console.log(error);
+      setLoading(false);
+      toast.error(error.message);
     }
   };
 
   return (
     <div>
-      <form onSubmit={handleSubmit}
-        className='space-y-4'>
-
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-600">
             Name:
@@ -151,38 +155,42 @@ const CreateClient = ({ onClose, isEdit }) => {
             value={client.email}
             onChange={handleChange}
             placeholder="Email"
-            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500" />
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+          />
         </div>
 
-        <div className='mb-4'>
-          <label htmlFor='phone'
-            className='block text-sm font-medium text-gray-600'>
+        <div className="mb-4">
+          <label
+            htmlFor="phone"
+            className="block text-sm font-medium text-gray-600"
+          >
             Contact Number:
           </label>
           <input
-            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-            type='tel'
-            name='phone'
-            id='phone'
-            placeholder='Enter Your Contact Number'
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+            type="tel"
+            name="phone"
+            id="phone"
+            placeholder="Enter Your Contact Number"
             value={client.phone}
             onChange={handleChange}
           />
         </div>
 
-
-        <div className='mb-4'>
-          <label htmlFor='whatsapp'
-            className='block text-sm font-medium text-gray-600'>
+        <div className="mb-4">
+          <label
+            htmlFor="whatsapp"
+            className="block text-sm font-medium text-gray-600"
+          >
             Whatsapp Number:
           </label>
           <input
-            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-            type='tel'
-            name='whatsapp'
-            id='whatsapp'
-            placeholder='Enter Your Whatsapp Number'
-            autoComplete='off'
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+            type="tel"
+            name="whatsapp"
+            id="whatsapp"
+            placeholder="Enter Your Whatsapp Number"
+            autoComplete="off"
             value={client.whatsapp}
             onChange={handleChange}
           />
@@ -192,9 +200,11 @@ const CreateClient = ({ onClose, isEdit }) => {
         <div className="mb-4">
           <h4 className="text-lg font-semibold mb-2">Address</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
             <div>
-              <label htmlFor="street" className="block text-sm font-medium text-gray-600">
+              <label
+                htmlFor="street"
+                className="block text-sm font-medium text-gray-600"
+              >
                 Street
               </label>
               <input
@@ -209,7 +219,10 @@ const CreateClient = ({ onClose, isEdit }) => {
             </div>
 
             <div>
-              <label htmlFor="city" className="block text-sm font-medium text-gray-600">
+              <label
+                htmlFor="city"
+                className="block text-sm font-medium text-gray-600"
+              >
                 City
               </label>
               <input
@@ -224,7 +237,10 @@ const CreateClient = ({ onClose, isEdit }) => {
             </div>
 
             <div>
-              <label htmlFor="district" className="block text-sm font-medium text-gray-600">
+              <label
+                htmlFor="district"
+                className="block text-sm font-medium text-gray-600"
+              >
                 District
               </label>
               <input
@@ -239,7 +255,10 @@ const CreateClient = ({ onClose, isEdit }) => {
             </div>
 
             <div>
-              <label htmlFor="state" className="block text-sm font-medium text-gray-600">
+              <label
+                htmlFor="state"
+                className="block text-sm font-medium text-gray-600"
+              >
                 State
               </label>
               <input
@@ -252,12 +271,36 @@ const CreateClient = ({ onClose, isEdit }) => {
                 className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
               />
             </div>
-
           </div>
         </div>
-        
-        <div className='mb-4'>
-          <label htmlFor="gstNo" className="block text-sm font-medium text-gray-600">
+
+        <div className="mb-4">
+          <label
+            htmlFor="service"
+            className="block text-sm font-medium text-gray-600"
+          >
+            Service Required
+          </label>
+          <select
+            name="service"
+            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={handleChange}
+            value={client.service}
+          >
+            <option value="">Service</option>
+            <option value="design">Design</option>
+            <option value="approval">Approval</option>
+            <option value="interior">Interior</option>
+            <option value="construction">Construction</option>
+            <option value="all-service">All Service</option>
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="gstNo"
+            className="block text-sm font-medium text-gray-600"
+          >
             GST No
           </label>
           <input
@@ -275,32 +318,43 @@ const CreateClient = ({ onClose, isEdit }) => {
             name="isUser"
             className="border-none rounded-lg focus:outline-none mr-2"
             onChange={handleChange}
-            value='true' />
-          <label htmlFor="isUser" className="block text-md font-medium text-gray-600">Is a User</label>
+            value="true"
+          />
+          <label
+            htmlFor="isUser"
+            className="block text-md font-medium text-gray-600"
+          >
+            Is a User
+          </label>
         </div>
 
         <div className="flex justify-end gap-2 mt-6">
-          <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-red-400 text-white rounded-md"
+          >
             Cancel
           </button>
           <button
-            type='submit'
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" 
-                          disabled={loading}
-            >
-              {loading ? "Submitting..." : `${clientId ? 'Update' : 'Create'} Client`}
-           
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            disabled={loading}
+          >
+            {loading
+              ? "Submitting..."
+              : `${clientId ? "Update" : "Create"} Client`}
           </button>
-          <button type="button" onClick={handleReset}
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400"
+          >
             Reset
           </button>
         </div>
       </form>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-      />
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };

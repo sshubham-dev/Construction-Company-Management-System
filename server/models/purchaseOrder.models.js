@@ -8,7 +8,7 @@ const poItemSchema = new mongoose.Schema(
       required: true,
     },
 
-    item: String,           // snapshot name
+    item: String, // snapshot name
     unit: String,
 
     requestedQty: {
@@ -18,12 +18,12 @@ const poItemSchema = new mongoose.Schema(
 
     receivedQty: {
       type: Number,
-      default: 0,            // updated ONLY by GRN
+      default: 0, // updated ONLY by GRN
     },
 
     invoicedQty: {
       type: Number,
-      default: 0,            // updated ONLY by Purchase Invoice
+      default: 0, // updated ONLY by Purchase Invoice
     },
 
     rate: {
@@ -33,13 +33,12 @@ const poItemSchema = new mongoose.Schema(
 
     gstRate: Number,
 
-    amount: Number,          // requestedQty * rate (snapshot)
+    amount: Number, // requestedQty * rate (snapshot)
 
     description: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
-
 
 const deliveryRecordSchema = new mongoose.Schema(
   {
@@ -60,9 +59,8 @@ const deliveryRecordSchema = new mongoose.Schema(
 
     remarks: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
-
 
 const purchaseOrderSchema = new mongoose.Schema(
   {
@@ -224,38 +222,31 @@ const purchaseOrderSchema = new mongoose.Schema(
 
     remarks: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 purchaseOrderSchema.index({ "supplier.id": 1 });
 purchaseOrderSchema.index({ deliveryStatus: 1 });
 
 purchaseOrderSchema.virtual("isFullyReceived").get(function () {
-  return this.items.every(
-    i => i.receivedQty >= i.requestedQty
-  );
+  return this.items.every((i) => i.receivedQty >= i.requestedQty);
 });
 
 purchaseOrderSchema.virtual("isFullyInvoiced").get(function () {
-  return this.items.every(
-    i => i.invoicedQty >= i.receivedQty
-  );
+  return this.items.every((i) => i.invoicedQty >= i.receivedQty);
 });
-
 
 purchaseOrderSchema.pre("save", function (next) {
   let totalBeforeTax = 0;
   let totalTaxAmount = 0;
 
-  this.items.forEach(item => {
+  this.items.forEach((item) => {
     const amount = (item.requestedQty || 0) * (item.rate || 0);
     item.amount = amount;
 
     totalBeforeTax += amount;
 
-    const gst = item.gstRate
-      ? (amount * item.gstRate) / 100
-      : 0;
+    const gst = item.gstRate ? (amount * item.gstRate) / 100 : 0;
 
     totalTaxAmount += gst;
   });
@@ -266,105 +257,100 @@ purchaseOrderSchema.pre("save", function (next) {
 
   this.totalDue = Math.max(
     0,
-    (this.totalAfterTax || 0) - (this.totalPaid || 0)
+    (this.totalAfterTax || 0) - (this.totalPaid || 0),
   );
 
   next();
 });
 
+// const purchaseInvoiceItemSchema = new mongoose.Schema({
+//   stockId: {
+//     type: mongoose.Schema.Types.ObjectId,
+//     ref: "Stock",
+//     required: true,
+//   },
 
-const purchaseInvoiceItemSchema = new mongoose.Schema({
-  stockId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Stock",
-    required: true,
-  },
+//   description: String,
 
-  description: String,
+//   grnQty: Number,            // acceptedQty from GRN
+//   invoicedQty: {
+//     type: Number,
+//     required: true,
+//   },
 
-  grnQty: Number,            // acceptedQty from GRN
-  invoicedQty: {
-    type: Number,
-    required: true,
-  },
+//   rate: {
+//     type: Number,
+//     required: true,
+//   },
 
-  rate: {
-    type: Number,
-    required: true,
-  },
+//   gstRate: Number,
 
-  gstRate: Number,
+//   amount: Number,           // invoicedQty * rate
+// });
 
-  amount: Number,           // invoicedQty * rate
-});
+// const purchaseInvoiceSchema = new mongoose.Schema(
+//   {
+//     invoiceNo: {
+//       type: String,
+//       unique: true,
+//       index: true,
+//     },
 
-const purchaseInvoiceSchema = new mongoose.Schema(
-  {
-    invoiceNo: {
-      type: String,
-      unique: true,
-      index: true,
-    },
+//     invoiceDate: {
+//       type: Date,
+//       required: true,
+//     },
 
-    invoiceDate: {
-      type: Date,
-      required: true,
-    },
+//     supplierId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "Supplier",
+//       required: true,
+//     },
 
-    supplierId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Supplier",
-      required: true,
-    },
+//     storeId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "Store",
+//       required: true,
+//     },
 
-    storeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Store",
-      required: true,
-    },
+//     purchaseOrderId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "PurchaseOrder",
+//     },
 
-    purchaseOrderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "PurchaseOrder",
-    },
+//     grnId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "GRN",
+//       required: true,
+//     },
 
-    grnId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "GRN",
-      required: true,
-    },
+//     items: [purchaseInvoiceItemSchema],
 
-    items: [purchaseInvoiceItemSchema],
+//     grossAmount: Number,
+//     gstAmount: Number,
+//     netAmount: Number,
 
-    grossAmount: Number,
-    gstAmount: Number,
-    netAmount: Number,
+//     status: {
+//       type: String,
+//       enum: ["Draft", "Posted", "Cancelled"],
+//       default: "Draft",
+//     },
 
-    status: {
-      type: String,
-      enum: ["Draft", "Posted", "Cancelled"],
-      default: "Draft",
-    },
+//     ledgerId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "Ledger", // Supplier ledger
+//     },
 
-    ledgerId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Ledger", // Supplier ledger
-    },
-
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-  },
-  { timestamps: true }
-);
-
-
-const PurchaseInvoice =
-  mongoose.models.PurchaseInvoice ||
-  mongoose.model("PurchaseInvoice", purchaseInvoiceSchema);
+//     createdBy: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "User",
+//     },
+//   },
+//   { timestamps: true }
+// );
 
 const PurchaseOrder =
   mongoose.models.PurchaseOrder ||
   mongoose.model("PurchaseOrder", purchaseOrderSchema);
-module.exports = {PurchaseOrder, PurchaseInvoice};
+
+module.exports = { PurchaseOrder };

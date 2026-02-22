@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Select from "react-select";
+import AsyncSelect from "react-select/async";
+import { useMemo } from "react";
 
 const ExpenseForm = ({ onClose, editId }) => {
   const [loading, setLoading] = useState(false);
@@ -27,7 +30,7 @@ const ExpenseForm = ({ onClose, editId }) => {
 
       // Site / Store / Office ledgers
       setLedgers(
-        data
+        data,
         // data.filter((l) =>
         //   ["Project Accounts", "Store Accounts", "Office Accounts"].includes(
         //     l.under
@@ -67,9 +70,29 @@ const ExpenseForm = ({ onClose, editId }) => {
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
+  
+
+  const expenseLedgerOptions = useMemo(() => {
+    return expenseLedgers.map((l) => ({
+      value: l._id,
+      label: l.name,
+    }));
+  }, [expenseLedgers]);
+
+  const ledgerOptions = useMemo(() => {
+    return ledgers.map((l) => ({
+      value: l._id,
+      label: l.name,
+    }));
+  }, [ledgers]);
 
   const handleFile = (e) => {
-    const files = Array.from(e.target.files);
+    const MAX_MB = 5;
+
+    const files = Array.from(e.target.files).filter(
+      (f) => f.size / 1024 / 1024 <= MAX_MB,
+    );
+
     if (!files.length) return;
 
     // store files for FormData
@@ -152,7 +175,21 @@ const ExpenseForm = ({ onClose, editId }) => {
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Expense Type
         </label>
-        <select
+        <Select
+          options={expenseLedgerOptions}
+          value={expenseLedgerOptions.find(
+            (o) => o.value === form.expenseLedgerId,
+          )}
+          onChange={(opt) =>
+            setForm((prev) => ({
+              ...prev,
+              expenseLedgerId: opt?.value || "",
+            }))
+          }
+          placeholder="Search Expense Type..."
+          isClearable
+        />
+        {/* <select
           name="expenseLedgerId"
           value={form.expenseLedgerId}
           onChange={handleChange}
@@ -166,7 +203,7 @@ const ExpenseForm = ({ onClose, editId }) => {
               {l.name}
             </option>
           ))}
-        </select>
+        </select> */}
       </div>
 
       {/* Expense For */}
@@ -174,7 +211,19 @@ const ExpenseForm = ({ onClose, editId }) => {
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Expense For
         </label>
-        <select
+        <Select
+          options={ledgerOptions}
+          value={ledgerOptions.find((o) => o.value === form.expenseForLedgerId)}
+          onChange={(opt) =>
+            setForm((prev) => ({
+              ...prev,
+              expenseForLedgerId: opt?.value || "",
+            }))
+          }
+          placeholder="Search Site / Store / Office..."
+          isClearable
+        />
+        {/* <select
           name="expenseForLedgerId"
           value={form.expenseForLedgerId}
           onChange={handleChange}
@@ -188,7 +237,7 @@ const ExpenseForm = ({ onClose, editId }) => {
               {l.name}
             </option>
           ))}
-        </select>
+        </select> */}
       </div>
 
       {/* Amount */}

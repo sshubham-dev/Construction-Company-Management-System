@@ -141,3 +141,24 @@ body {
   border-radius: 0 0 0.5rem 0.5rem;
 }
 
+/* Writing area styling like Medium/Ghost */
+
+.jodit-wysiwyg {
+  max-width: 800px;
+  margin: auto;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+/* cleaner toolbar */
+.jodit-toolbar-button {
+  border-radius: 6px !important;
+}
+
+/* softer editor background */
+.jodit-container {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+

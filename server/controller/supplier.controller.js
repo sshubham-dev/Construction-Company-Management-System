@@ -6,7 +6,9 @@ const { sendNotification } = require("./notification.controller.js");
 
 const getSuppliers = async (req, res) => {
     try {
-        const suppliers = await Supplier.find();
+        const suppliers = await Supplier.find()
+        .sort({ name: 1 })
+        .exec();
         if (suppliers.length === '0') return res.status(404).json({ error: 'No Suppliers found' });
         res.status(200).json(suppliers);
     } catch (error) {

@@ -8,7 +8,7 @@ const PaymentSchedule = require("../models/paymentschedule.models");
 const ProjectSchedule = require("../models/projectschedule.models");
 const PurchaseOrder = require("../models/purchaseOrder.models.js");
 const ExtraWork = require("../models/extrawork.models.js");
-const uploadOnCloudinary = require("../utils/cloudinary.js");
+const { uploadOnCloudinary } = require("../utils/cloudinary.js");
 const { addLedgerAndCostCenterForSite } = require("./ledger.controller.js");
 const { sendNotification } = require("./notification.controller.js");
 
@@ -20,6 +20,7 @@ const getSites = async (req, res) => {
       .populate("projectSchedule")
       .populate("paymentSchedule")
       .populate("workOrder")
+      .sort({ name: 1 })
       .exec();
     if (sites.length === 0)
       return res.status(404).json({ error: "Sites Not Found" });
@@ -33,7 +34,8 @@ const getSites = async (req, res) => {
 const getSite = async (req, res) => {
   try {
     const id = req.params.id;
-    if (id === undefined) return res.status(500).json({ error: "Id undefined" });
+    if (id === undefined)
+      return res.status(500).json({ error: "Id undefined" });
     const site = await Site.findById(id)
       .populate("bill")
       .populate("purchaseOrder")
@@ -113,7 +115,10 @@ const createSite = async (req, res) => {
       return res.status(400).json({ message: "Site already exists" });
 
     const upload = agreementLocalPath
-      ? await uploadOnCloudinary(agreementLocalPath)
+      ? await uploadOnCloudinary(agreementLocalPath, {
+          folder: "sites/agreements",
+          public_id: `${name}-${Date.now()}`,
+        })
       : null;
 
     const existingClient = client ? await Client.findById(client) : null;
@@ -155,7 +160,10 @@ const createSite = async (req, res) => {
         : null,
       projectType,
       address,
-      agreement: upload?.url || null,
+      agreement: {
+        secure_url: upload?.secure_url || null,
+        public_id: upload?.public_id || null,
+      },
     });
 
     const savedSite = await newSite.save();
@@ -165,11 +173,11 @@ const createSite = async (req, res) => {
     for (const employee of employees) {
       sendNotification(
         employee._id,
-       `Congratulations Team 🎉 we have a new project Confirmed in ${savedSite.address}.`
+        `Congratulations Team 🎉 we have a new project Confirmed in ${savedSite.address}.`,
       );
       sendNotification(
         employee._id,
-       `${savedSite.name} have been assigned to you ${savedSite.incharge.name}.`
+        `${savedSite.name} have been assigned to you ${savedSite.incharge.name}.`,
       );
     }
     res.status(201).json({
@@ -200,7 +208,10 @@ const updateSite = async (req, res) => {
 
     const agreementLocalPath = req.file?.path;
     const upload = agreementLocalPath
-      ? await uploadOnCloudinary(agreementLocalPath)
+      ? await uploadOnCloudinary(agreementLocalPath, {
+          folder: "sites/agreements",
+          public_id: `${name}-${Date.now()}`,
+        })
       : null;
 
     const existingClient = client ? await Client.findById(client) : null;
@@ -277,7 +288,11 @@ const updateSite = async (req, res) => {
       await existingQuality.save();
     }
 
-    if (upload?.url) existingSite.agreement = upload.url;
+    if (upload?.secure_url)
+      existingSite.agreement = {
+        secure_url: upload.secure_url,
+        public_id: upload.public_id,
+      };
 
     const updated = await existingSite.save();
     await assignSiteToUsers(updated, existingIncharge, existingSupervisor);
@@ -371,7 +386,7 @@ const deleteSite = async (req, res) => {
     // console.log('existingContractor:', existingContractors);
     for (const contractor of existingContractors) {
       contractor.site = contractor.site.filter(
-        (s) => s.id?.toString() !== deletedSite._id.toString()
+        (s) => s.id?.toString() !== deletedSite._id.toString(),
       );
       await contractor.save();
     }
@@ -383,7 +398,7 @@ const deleteSite = async (req, res) => {
 
     if (deletedSite.supervisor && existingSupervisor) {
       const index = existingSupervisor.site?.findIndex(
-        (id) => id.toString() === deletedSite._id.toString()
+        (id) => id.toString() === deletedSite._id.toString(),
       );
       if (index !== -1) {
         existingSupervisor.site.splice(index, 1);
@@ -393,7 +408,7 @@ const deleteSite = async (req, res) => {
 
     if (existingIncharge) {
       const index = existingIncharge.site?.findIndex(
-        (id) => id.toString() === deletedSite._id.toString()
+        (id) => id.toString() === deletedSite._id.toString(),
       );
       if (index !== -1) {
         existingIncharge.site.splice(index, 1);
@@ -403,7 +418,7 @@ const deleteSite = async (req, res) => {
 
     if (deletedSite.qualityEngineer && existingQuality) {
       const index = existingQuality.site?.findIndex(
-        (id) => id.toString() === deletedSite._id.toString()
+        (id) => id.toString() === deletedSite._id.toString(),
       );
       if (index !== -1) {
         existingQuality.site.splice(index, 1);
@@ -432,7 +447,7 @@ const assignSiteToUsers = async (site, incharge, supervisor) => {
 
       // Check if this site is already assigned
       const alreadyAssigned = user.site?.some(
-        (s) => String(s.id) === String(site._id)
+        (s) => String(s.id) === String(site._id),
       );
 
       if (!alreadyAssigned) {
@@ -442,7 +457,7 @@ const assignSiteToUsers = async (site, incharge, supervisor) => {
         console.log(`✅ Assigned site '${site.name}' to ${user.userName}`);
       } else {
         console.log(
-          `⚠️ Site '${site.name}' already assigned to ${user.userName}`
+          `⚠️ Site '${site.name}' already assigned to ${user.userName}`,
         );
       }
     };

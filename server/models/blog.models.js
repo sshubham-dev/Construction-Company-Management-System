@@ -3,24 +3,33 @@ const mongoose = require("mongoose");
 const BlogSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
-    excerpt: { type: String, required: true },
-    content: { type: String, required: true }, // HTML
-    category: { type: String },
-    featuredImage: { type: String },
+    slug: { type: String, unique: true },
 
-    status: {
+    shortDescription: String,
+
+    featureImage: {
+      secure_url: String,
+      public_id: String,
+    },
+
+    category: {
       type: String,
-      enum: ["draft", "published"],
-      default: "draft"
+      enum: ["architecture", "construction", "interior"],
     },
 
     seoTitle: String,
     seoDescription: String,
 
-    publishedAt: Date
+    content: Object,
+    // store editor JSON (TipTap / EditorJS)
+
+    status: {
+      type: String,
+      enum: ["draft", "published"],
+      default: "draft",
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Blog = mongoose.model("Blog", BlogSchema);

@@ -1,6 +1,6 @@
 const { Ledger } = require("../models/ledger.models"); // ✅ Fix import
 const Expenses = require("../models/expenses.models"); // ✅ your expense schema
-const uploadOnCloudinary = require("../utils/cloudinary"); // ✅ adjust as needed
+const {uploadOnCloudinary} = require("../utils/cloudinary"); // ✅ adjust as needed
 const Employee = require("../models/employee.models");
 const {
   sendApproveByAdmin,
@@ -77,11 +77,15 @@ const createExpense = async (req, res) => {
     const files = req.files || (req.file ? [req.file] : []);
 
     for (const file of files) {
-      const upload = await uploadOnCloudinary(file.path);
-      if (!upload?.url) continue;
+      const upload = await uploadOnCloudinary(file.path, {
+      folder: "expenses",
+      public_id: `${req.user.userName}-${Date.now()}`,
+    });
+      if (!upload?.secure_url) continue;
 
       attachments.push({
-        url: upload.url,
+        url: upload.secure_url,
+        public_id: upload.public_id,
         fileType: file.mimetype.includes("pdf") ? "pdf" : "image",
       });
     }
@@ -265,11 +269,15 @@ const updateExpense = async (req, res) => {
     // console.log("first", req.files)
 
     for (const file of files) {
-      const upload = await uploadOnCloudinary(file.path);
-      if (!upload?.url) continue;
+      const upload = await uploadOnCloudinary(file.path, {
+      folder: "expenses",
+      public_id: `${req.user.userName}-${Date.now()}`,
+    });
+      if (!upload?.secure_url) continue;
 
       expense.attachments.push({
-        url: upload.url,
+        url: upload.secure_url,
+        public_id: upload.public_id,
         fileType: file.mimetype.includes("pdf") ? "pdf" : "image",
       });
     }

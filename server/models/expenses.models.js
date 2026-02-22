@@ -71,6 +71,7 @@ const expenseSchema = new mongoose.Schema(
     attachments: [
       {
         url: String,
+        public_id: String,
         fileType: String, // image / pdf
       },
     ],

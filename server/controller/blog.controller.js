@@ -1,28 +1,37 @@
 const Blog = require("../models/blog.models");
 const { sendNotification } = require("./notification.controller.js");
+const { uploadOnCloudinary } = require("../utils/cloudinary.js");
+// const { makeSlug } = require("../utils/slugify.js");
+
+const makeSlug = (text) => {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+};
 
 const createBlog = async (req, res) => {
   try {
     const {
       title,
-      slug,
-      excerpt,
+      shortDescription,
       content,
       category,
-      featuredImage,
       seoTitle,
       seoDescription,
       status,
+      featureImage, // 👈 URL already uploaded
     } = req.body;
 
-    // Basic validation
-    if (!title || !slug || !excerpt || !content) {
+    const slug = req.body.slug || makeSlug(title);
+
+    if (!title || !slug || !content) {
       return res.status(400).json({
         message: "Required fields missing",
       });
     }
 
-    // Check slug uniqueness
     const existing = await Blog.findOne({ slug });
     if (existing) {
       return res.status(409).json({
@@ -33,14 +42,13 @@ const createBlog = async (req, res) => {
     const blog = await Blog.create({
       title,
       slug,
-      excerpt,
+      shortDescription,
       content,
       category,
-      featuredImage,
+      featureImage, // 👈 save directly
       seoTitle,
       seoDescription,
       status,
-      publishedAt: status === "published" ? new Date() : null,
     });
 
     res.status(201).json(blog);
@@ -53,6 +61,7 @@ const createBlog = async (req, res) => {
 const getAllBlogs = async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ updatedAt: -1 });
+    // console.log("blogs", blogs);
     res.status(200).json(blogs);
   } catch (error) {
     console.error(error);
@@ -64,10 +73,12 @@ const getAllBlogs = async (req, res) => {
 
 const getBlogById = async (req, res) => {
   try {
+    console.log(req.params.id);
     const blog = await Blog.findById(req.params.id);
     if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
     }
+    // console.log("blog", blog);
     res.status(200).json(blog);
   } catch (error) {
     console.error(error);
@@ -81,26 +92,31 @@ const updateBlog = async (req, res) => {
   try {
     const {
       title,
-      slug,
-      excerpt,
+      shortDescription,
       content,
-      featuredImage,
       category,
       seoTitle,
       seoDescription,
+      status,
+      featureImage
     } = req.body;
+    // console.log("req u", req.body);
+    console.log("image", featureImage);
+
+    const slug = req.body.slug || makeSlug(req.body.title);
 
     const updatedBlog = await Blog.findByIdAndUpdate(
       req.params.id,
       {
         title,
         slug,
-        excerpt,
+        shortDescription,
         content,
-        featuredImage,
         category,
+        featureImage,
         seoTitle,
         seoDescription,
+        status,
       },
       { new: true },
     );
@@ -126,6 +142,7 @@ const deleteBlog = async (req, res) => {
     if (!deletedBlog) {
       return res.status(404).json({ message: "Blog not found" });
     }
+    await cloudinary.uploader.destroy(deletedBlog.featureImage);
     res.status(200).json({ message: "Blog deleted successfully" });
   } catch (error) {
     console.error(error);
@@ -138,17 +155,38 @@ const deleteBlog = async (req, res) => {
 /* PUBLIC (WEBSITE) */
 const getPublishedBlogs = async (req, res) => {
   const blogs = await Blog.find({ status: "published" }).sort({
-    publishedAt: -1,
+    createdAt: -1,
   });
   res.json(blogs);
 };
 
 const getBlogBySlug = async (req, res) => {
+  console.log(req.params.slug);
   const blog = await Blog.findOne({
     slug: req.params.slug,
-    status: "published",
+    // status: "published",
   });
   res.json(blog);
+};
+
+const uploadBlogImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    const slug = req.body.slug || "blog";
+    const upload = await uploadOnCloudinary(req.file.path, {
+      folder: "blogs/content",
+      public_id: `${slug}-${Date.now()}`,
+    });
+    res.status(200).json({
+      url: upload?.secure_url, // Cloudinary CDN URL
+      public_id: upload?.public_id,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Upload failed" });
+  }
 };
 
 module.exports = {
@@ -159,4 +197,5 @@ module.exports = {
   deleteBlog,
   getPublishedBlogs,
   getBlogBySlug,
+  uploadBlogImage,
 };

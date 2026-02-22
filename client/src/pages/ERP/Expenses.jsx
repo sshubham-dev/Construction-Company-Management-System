@@ -70,7 +70,7 @@ const Expenses = () => {
 
   const handlePostExpense = async (id) => {
     try {
-      await axios.patch(`/api/v1/expenses/post/${id}`);
+      await axios.put(`/api/v1/expenses/post/${id}`);
       fetchExpenses();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to post expense");
@@ -81,7 +81,7 @@ const Expenses = () => {
     if (!window.confirm("Cancel this expense?")) return;
 
     try {
-      await axios.patch(`/api/v1/expenses/cancel/${id}`);
+      await axios.put(`/api/v1/expenses/cancel/${id}`);
       fetchExpenses();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to cancel expense");
