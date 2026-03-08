@@ -66,9 +66,10 @@ const register = async (req, res) => {
         const isPasswordValid = await userExist.isPasswordCorrect(password);
         if (isPasswordValid && newPassword) {
           userExist.avatar = {
-            secure_url: upload?.secure_url || userExist.avatar?.secure_url || null,
+            secure_url:
+              upload?.secure_url || userExist.avatar?.secure_url || null,
             public_id: upload?.public_id || userExist.avatar?.public_id || null,
-          }
+          };
           console.log(newPassword);
           userExist.password = newPassword;
           await userExist.save({ validateBeforeSave: false });
@@ -249,6 +250,12 @@ const login = async (req, res) => {
         sameSite: "none",
         expires: new Date(Date.now() + 60 * 60 * 1000),
       };
+      // notifyRole(
+      //   "Employee",
+      //   "Login Alert",
+      //   `User ${user.userName} has logged in.`,
+      //   "/",
+      // );
       return res
         .status(200)
         .cookie("accessToken", accessToken, options)
@@ -360,7 +367,8 @@ const updateUser = async (req, res) => {
     const existingUser = await User.findById(id).select("-refreshToken");
     if (upload.secure_url) {
       existingUser.avatar = {
-        secure_url: upload?.secure_url || existingUser.avatar?.secure_url || null,
+        secure_url:
+          upload?.secure_url || existingUser.avatar?.secure_url || null,
         public_id: upload?.public_id || existingUser.avatar?.public_id || null,
       };
       await existingUser.save();

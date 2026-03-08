@@ -9,7 +9,7 @@ const {
   sendApproveByAccountHead,
 } = require("./approval.controller.js");
 const User = require("../models/user.models");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const getExtraWorks = async (req, res) => {
   try {
@@ -126,7 +126,7 @@ const createExtraWork = async (req, res, next) => {
           link: `/extra-work/${clientExtraWork._id}`,
         });
         await employee.save();
-        sendNotification(
+        sendPushNotification(
           employee._id,
           `${user.userName} has created extra work for ${existingSite.name}`
         );
@@ -179,7 +179,7 @@ const createExtraWork = async (req, res, next) => {
           link: `/extra-work/${contractorExtraWork._id}`,
         });
         await employee.save();
-        sendNotification(
+        sendPushNotification(
           employee.userId,
           `${user.userName} has created extra work for ${existingSite.name}`
         );

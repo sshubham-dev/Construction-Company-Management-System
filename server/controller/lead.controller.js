@@ -1,7 +1,7 @@
 const Lead = require("../models/lead.models"); // Adjust the path as necessary
 const User = require("../models/user.models");
 const { convertToClient } = require("./client.controller");
-const { sendNotification } = require("./notification.controller");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 // Create a new lead
 const createLead = async (req, res) => {
   try {
@@ -30,11 +30,13 @@ const createLead = async (req, res) => {
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
-      sendNotification(
+      sendPushNotification(
         employee._id,
+        "Lead Alert",
         `We got a new Lead from ${
           newLead?.contactAgent ? newLead?.contactAgent : newLead?.source
         }`,
+        "/"
       );
       employee.notification.push({
         title: "Lead Alert",

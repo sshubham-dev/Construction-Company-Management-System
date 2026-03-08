@@ -7,7 +7,7 @@ const {
 const Site = require("../models/site.models");
 const User = require("../models/user.models");
 const mongoose = require("mongoose");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 const Employee = require("../models/employee.models");
 
 const getQualitySchedules = async (req, res) => {
@@ -154,7 +154,7 @@ const createQualitySchedule = async (req, res) => {
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
-              sendNotification(
+              sendPushNotification(
           employee._id,
           `${user.userName} has created Quality Schedule for ${existingSite.name}`
         );
@@ -264,7 +264,7 @@ const updateQualitySchedule = async (req, res) => {
     }
 
     const updatedQualitySchedule = await existingQualitySchedule.save();
-    sendNotification(
+    sendPushNotification(
       updatedQualitySchedule.createdBy,
       `Quality Schedule for ${updatedQualitySchedule.site.name} has been deleted`
     );
@@ -285,7 +285,7 @@ const deleteQualitySchedule = async (req, res) => {
     const deletedProjectSchedule = await QualitySchedule.findByIdAndDelete(_id);
     if (!deletedProjectSchedule)
       return res.status(500).json({ error: "Something went wrong" });
-    sendNotification(
+    sendPushNotification(
       user._id,
       `Quality Schedule for ${deletedProjectSchedule.site.name} has been deleted`
     );

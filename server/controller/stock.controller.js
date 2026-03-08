@@ -1,6 +1,6 @@
 const { Stock, Stock_Group } = require("../models/stock.models");
 const Store = require("../models/store.models");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 // Utility: calculate sale price
 function calcSalePrice(stock) {

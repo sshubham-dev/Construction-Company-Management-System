@@ -3,24 +3,28 @@ import axios from "axios";
 import { FiUsers, FiChevronRight, FiX } from "react-icons/fi";
 import ProgressBar from "./ProgressBar";
 import Section from "./Section";
+import { useSelector } from "react-redux";
 
 const EmployeeAttendance = () => {
   const [employees, setEmployees] = useState([]);
   const [attendances, setAttendances] = useState([]);
   const [absentStaff, setAbsentStaff] = useState([]);
   const [showAbsentPanel, setShowAbsentPanel] = useState(false);
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     fetchEmployees();
     fetchAttendance();
-  }, []);
+  }, [user?._id]);
 
   // Fetch all employees
   const fetchEmployees = async () => {
     try {
       const response = await axios.get("/api/v1/employee");
       if (Array.isArray(response.data)) {
-        const activeEmployee = response.data.filter((emp)=>emp.status.toLowerCase() === 'active')
+        const activeEmployee = response.data.filter(
+          (emp) => emp.status.toLowerCase() === "active",
+        );
         setEmployees(activeEmployee);
       } else {
         console.error("Invalid employee data:", response.data);
@@ -61,11 +65,13 @@ const EmployeeAttendance = () => {
       const presentIds = attendances
         .filter((a) => a.status?.toLowerCase() === "present")
         .map((a) => a.user?.id);
-        console.log(attendances)
-        console.log(employees)
+      console.log(attendances);
+      console.log(employees);
 
       // Employees who are not marked as present today
-      const absent = employees.filter((emp) => !presentIds.includes(emp?.userId));
+      const absent = employees.filter(
+        (emp) => !presentIds.includes(emp?.userId),
+      );
       setAbsentStaff(absent);
     }
   }, [employees, attendances]);
@@ -73,7 +79,7 @@ const EmployeeAttendance = () => {
   // Calculate stats
   const totalStaff = employees.length;
   const presentStaff = attendances.filter(
-    (a) => a.status?.toLowerCase() === "present"
+    (a) => a.status?.toLowerCase() === "present",
   ).length;
   const progress = totalStaff > 0 ? (presentStaff / totalStaff) * 100 : 0;
 

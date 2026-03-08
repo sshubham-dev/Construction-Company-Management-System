@@ -1,6 +1,10 @@
 const Collection = require("../models/collection.models");
 const Receipt = require("../models/receipt.models"); // your existing receipt model
-const {uploadOnCloudinary} = require("../utils/cloudinary.js");
+const { uploadOnCloudinary } = require("../utils/cloudinary.js");
+const {
+  sendPushNotification,
+  notifyRole,
+} = require("../utils/pushNotification.js");
 /* ---------------- CREATE COLLECTION ENTRY ---------------- */
 
 const createCollection = async (req, res) => {
@@ -11,7 +15,7 @@ const createCollection = async (req, res) => {
       folder: "collections/proofs",
       public_id: `${data.clientLedgerId}-${Date.now()}`,
     });
-    
+
     const collection = await Collection.create({
       date: data.date,
       clientLedgerId: data.clientLedgerId,
@@ -27,7 +31,12 @@ const createCollection = async (req, res) => {
       },
       submittedBy: req.user?._id, // if auth middleware exists
     });
-
+    notifyRole(
+      "Employee",
+      "Payment Alert",
+      `₹ ${data.amount} received for ${data.purpose}`,
+      "/",
+    );
     res.status(201).json(collection);
   } catch (err) {
     res.status(500).json({ message: err.message });

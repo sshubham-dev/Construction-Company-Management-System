@@ -1,6 +1,6 @@
 const Payment = require('../models/payment.models');
 const { Ledger } = require("../models/ledger.models");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const generatePaymentNo = async (req, res) => {
   try {

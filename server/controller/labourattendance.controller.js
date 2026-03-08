@@ -2,7 +2,7 @@ const { LabourAttendance } = require("../models/attendance.models");
 const Contractor = require("../models/contractor.models");
 const Site = require("../models/site.models");
 const User = require("../models/user.models");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const getLabourAttendances = async (req, res) => {
   try {
@@ -100,7 +100,7 @@ const createLabourAttendance = async (req, res) => {
           const employees = await User.find({ role: "Employee" });
 
       for (const employee of employees) {
-        sendNotification(
+        sendPushNotification(
           employee?._id,
           `${user.userName} has created Labour Report for ${existingSite.name}`
         );

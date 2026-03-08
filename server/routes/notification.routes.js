@@ -2,7 +2,11 @@ const express = require("express");
 const Notification = express.Router();
 const User = require("../models/user.models");
 const { userAuth } = require("../middlewares/auth.middleware");
-const { saveSubscription, unsubscribe, checkSubscription } = require("../controller/notification.controller");
+const {
+  saveSubscription,
+  unsubscribe,
+  checkSubscription,
+} = require("../controller/notification.controller");
 // Get notifications for a specific user
 
 Notification.get("/", userAuth, async (req, res) => {
@@ -19,7 +23,7 @@ Notification.get("/", userAuth, async (req, res) => {
     const notification = [...user.notification]; // Create a copy of the notification array
     const seenNotifications = notification.filter((msg) => msg.isRead === true);
     const unseenNotifications = notification.filter(
-      (msg) => msg.isRead === false
+      (msg) => msg.isRead === false,
     );
 
     // console.log('Seen Notifications:', seenNotifications);
@@ -34,8 +38,7 @@ Notification.get("/", userAuth, async (req, res) => {
 
 Notification.post("/subscribe", userAuth, saveSubscription);
 Notification.post("/unsubscribe", userAuth, unsubscribe);
-Notification.post("/subscription/check", checkSubscription);
-
+Notification.post("/check", checkSubscription);
 
 Notification.put("/mark-all-read", userAuth, async (req, res) => {
   try {
@@ -44,14 +47,16 @@ Notification.put("/mark-all-read", userAuth, async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: { "notification.$[].isRead": true } }, // Update all array items
-      { new: true }
+      { new: true },
     );
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    return res.status(200).json({ message: "All notifications marked as read" });
+    return res
+      .status(200)
+      .json({ message: "All notifications marked as read" });
   } catch (err) {
     console.error("Error updating notifications:", err);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -65,9 +70,9 @@ Notification.put("/mark-read/:id", userAuth, async (req, res) => {
     const userId = req.user._id;
 
     const user = await User.findOneAndUpdate(
-      { _id: userId, "notification._id": id }, 
+      { _id: userId, "notification._id": id },
       { $set: { "notification.$.isRead": true } },
-      { new: true }
+      { new: true },
     );
 
     if (!user) {
@@ -91,7 +96,7 @@ Notification.delete("/:userId", userAuth, async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.notification = user.notification.filter(
-      (n) => !ids.includes(n._id.toString())
+      (n) => !ids.includes(n._id.toString()),
     );
 
     await user.save();
@@ -101,6 +106,5 @@ Notification.delete("/:userId", userAuth, async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
 
 module.exports = Notification;

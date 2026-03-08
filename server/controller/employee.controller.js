@@ -2,7 +2,7 @@ const Employee = require("../models/employee.models");
 const User = require("../models/user.models");
 const bcrypt = require("bcryptjs");
 const { convertToUser } = require("./user.controller");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const employeeById = async (req, res) => {
   try {

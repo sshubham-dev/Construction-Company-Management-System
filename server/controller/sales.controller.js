@@ -1,5 +1,5 @@
 const Sales = require('../models/sales.models');
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 // Create a new sale
 const createSale = async (req, res) => {

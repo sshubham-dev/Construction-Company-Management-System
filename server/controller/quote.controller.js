@@ -1,6 +1,6 @@
 const { Rate, Quote, Package } = require("../models/quote.models");
 const Lead = require("../models/lead.models");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const PACKAGES = [
   {
@@ -12,20 +12,20 @@ const PACKAGES = [
     items: [
       { label: "Footing", unit: "SQFT", rate: 700 },
       { label: "Basement (per sqft)", unit: "SQFT", rate: 1900 },
-      { label: "Parking", unit: "SQFT", rate: 1200 },
+      { label: "Parking", unit: "SQFT", rate: 1236.18 },
 
       // MAIN FLOOR WORK
-      { label: "Floor (Residential)", unit: "SQFT", rate: 1800 },
+      { label: "Floor (Residential)", unit: "SQFT", rate: 1873 },
       { label: "Floor (Commercial)", unit: "SQFT", rate: 1400 },
 
       // HEADROOM & PARAPET
-      { label: "Headroom", unit: "SQFT", rate: 1800 },
-      { label: "Parapet Wall", unit: "SQFT", rate: 217 },
+      { label: "Headroom", unit: "SQFT", rate: 1873 },
+      { label: "Parapet Wall", unit: "SQFT", rate: 220},
 
       // WALLS & TANKS
       { label: "Boundary Wall", unit: "SQFT", rate: 350 },
       { label: "Septic Tank", unit: "CFT", rate: 170 },
-      { label: "Underground Water Tank", unit: "CFT", rate: 344 },
+      { label: "Underground Water Tank", unit: "Ltr", rate: 25 },
     ],
 
     // 2) MATERIAL OPTIONS (drives selectedCustomizations)
@@ -37,7 +37,7 @@ const PACKAGES = [
         options: [
           { label: "AAC Blocks", rateImpact: 0 },
           { label: "Fly Ash Bricks", rateImpact: 0 },
-          { label: "Red Bricks", rateImpact: 40 },
+          { label: "Red Bricks", rateImpact: 35 },
         ],
       },
       {
@@ -165,19 +165,19 @@ const PACKAGES = [
     type: "construction",
 
     items: [
-      { label: "Footing", unit: "SQFT", rate: 550 },
-      { label: "Basement (per sqft)", unit: "SQFT", rate: 1700 },
-      { label: "Parking", unit: "SQFT", rate: 1100 },
+      { label: "Footing", unit: "SQFT", rate: 590 },
+      { label: "Basement (per sqft)", unit: "SQFT", rate: 1750 },
+      { label: "Parking", unit: "SQFT", rate: 1155},
 
-      { label: "Floor (Residential)", unit: "SQFT", rate: 1600 },
-      { label: "Floor (Commercial)", unit: "SQFT", rate: 1200 },
+      { label: "Floor (Residential)", unit: "SQFT", rate: 1650 },
+      { label: "Floor (Commercial)", unit: "SQFT", rate: 1238 },
 
-      { label: "Headroom", unit: "SQFT", rate: 1600 },
+      { label: "Headroom", unit: "SQFT", rate: 1650 },
       { label: "Parapet Wall", unit: "SQFT", rate: 217 },
 
       { label: "Boundary Wall", unit: "SQFT", rate: 350 },
       { label: "Septic Tank", unit: "CFT", rate: 170 },
-      { label: "Underground Water Tank", unit: "CFT", rate: 344 },
+      { label: "Underground Water Tank", unit: "Ltr", rate: 24 },
     ],
 
     materialOptions: [
@@ -188,7 +188,7 @@ const PACKAGES = [
         options: [
           { label: "Fly Ash Bricks", rateImpact: 0 },
           { label: "AAC Blocks", rateImpact: 0 },
-          { label: "Red Bricks", rateImpact: 40 },
+          { label: "Red Bricks", rateImpact: 35 },
         ],
       },
       {

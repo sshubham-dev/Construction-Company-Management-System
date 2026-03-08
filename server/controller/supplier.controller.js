@@ -2,7 +2,7 @@ const Supplier = require('../models/supplier.models.js');
 const User = require('../models/user.models.js');
 const { addLedger } = require('./ledger.controller.js');
 const { convertToUser } = require('./user.controller.js');
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const getSuppliers = async (req, res) => {
     try {

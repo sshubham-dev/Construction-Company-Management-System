@@ -11,7 +11,7 @@ const {
   sendApproveByIncharge,
   sendApproveByContractor,
 } = require("./approval.controller.js");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const recalcTotals = (works = []) => {
   const totalValue = works.reduce((s, w) => s + (Number(w.amount) || 0), 0);
@@ -210,7 +210,7 @@ const createWorkorder = async (req, res) => {
     );
     const employees = await User.find({ role: "Employee" });
     for (const emp of employees) {
-      sendNotification(
+      sendPushNotification(
         emp._id,
         `A ${saved.workOrderName} Work Order for ${site.name} has been created by ${existingUser.userName}.`
       );
@@ -350,7 +350,7 @@ const updateWorkOrder = async (req, res) => {
     await wo.save();
     const employees = await User.find({ role: "Employee" });
     for (const emp of employees) {
-      sendNotification(
+      sendPushNotification(
         emp._id,
         `${user.userName} has updated the ${wo.workOrderName} of ${existingSite.name}`
       );

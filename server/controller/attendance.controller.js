@@ -3,7 +3,7 @@ const { Attendance, Leave } = require("../models/attendance.models");
 const User = require("../models/user.models.js");
 const { sendApproveByAdmin } = require("./approval.controller.js");
 const Employee = require("../models/employee.models");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const getAttendance = async (req, res) => {
   try {
@@ -137,7 +137,7 @@ const createAttendance = async (req, res) => {
     const employee = await User.find({role:"Employee"});
     if (employee.length > 0) {
       for (let emp of employee) {
-        sendNotification(
+        sendPushNotification(
           emp._id,
           `${existingUser.userName} is ${status} Today at ${timeIn}`
         );
@@ -174,7 +174,7 @@ const createLeave = async (req, res) => {
     await existingUser.save({ validateBeforeSave: false });
     const employee = await User.find();
     for (let emp of employee) {
-      sendNotification(
+      sendPushNotification(
         emp._id,
         `${existingUser.userName} requested for leave from ${from} to ${reportingDate}`
       );

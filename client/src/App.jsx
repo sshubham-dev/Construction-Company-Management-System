@@ -95,10 +95,6 @@ import LabourAttendanceScreen from "./screen/LabourAttendanceScreen.jsx";
 import CreateQuotation from "./components/CreateQuotation.jsx";
 import BusinessUnit from "./pages/ERP/BusinessUnit.jsx";
 import Quotations from "./pages/CRM/Quotation.jsx";
-import {
-  enableNotifications,
-  ensureSubscription,
-} from "./helper/notificationService.js";
 import TrafficLight from "./pages/HRMS/TrafficLight.jsx";
 import TrafficLightSystem from "./pages/HRMS/TrafficLightSystem.jsx";
 import MonthlyPerformanceScreen from "./screen/MonthlyPerformanceScreen.jsx";
@@ -117,7 +113,7 @@ import BlogPreviewer from "./pages/CMS/Blog/BlogPreviewer.jsx";
 import CollectionEntry from "./pages/Design/CollectionEntry.jsx";
 import Collections from "./pages/Design/Collections.jsx";
 import "jodit/es2021/jodit.min.css";
-
+import { initPushNotifications } from "./helper/notificationService.js";
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -126,18 +122,11 @@ const App = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    navigator.serviceWorker.ready.then(async (reg) => {
-      const sub = await reg.pushManager.getSubscription();
-      if (!sub) {
-        console.log("No subscription. Creating a new one…");
-        if (user) {
-          enableNotifications(user._id);
-        }
-      }
-    });
-    if (user) ensureSubscription(user?._id);
-  }, [user]);
+useEffect(() => {
+    if (user?._id) {
+      initPushNotifications(user._id);
+    }
+  }, [user?._id]); // Only runs when the user logs in or ID changes
 
   useEffect(() => {
     const isPageReloaded = performance.navigation.type === 1;

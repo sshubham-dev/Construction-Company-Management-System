@@ -4,7 +4,7 @@ const Client = require('../models/client.models');
 const Contractor = require('../models/contractor.models');
 const Supplier = require('../models/supplier.models');
 const Employee = require('../models/employee.models');
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 // CRUD for Ledger
 const createLedger = async (req, res) => {

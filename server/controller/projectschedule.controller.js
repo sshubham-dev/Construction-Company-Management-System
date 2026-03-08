@@ -7,7 +7,7 @@ const {
   sendApproveByAccountHead,
 } = require("./approval.controller.js");
 const User = require("../models/user.models.js");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const getProjectSchedules = async (req, res) => {
   try {
@@ -223,7 +223,7 @@ const createProjectSchedule = async (req, res) => {
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
-      sendNotification(
+      sendPushNotification(
         employee._id,
         `Project Schedule for ${existingSite.name} has been created by ${existingUser.userName}.`
       );

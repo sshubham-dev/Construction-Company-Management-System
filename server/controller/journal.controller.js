@@ -1,6 +1,6 @@
 const { Journal } = require("../models/journal.models");
 const Ledger = require("../models/ledger.models");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 // Utility to update ledger transactions
 const applyJournalToLedgers = async (journal, mode = "add") => {

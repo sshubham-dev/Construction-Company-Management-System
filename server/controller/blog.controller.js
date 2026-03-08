@@ -1,5 +1,5 @@
 const Blog = require("../models/blog.models");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 const { uploadOnCloudinary } = require("../utils/cloudinary.js");
 // const { makeSlug } = require("../utils/slugify.js");
 
@@ -60,7 +60,7 @@ const createBlog = async (req, res) => {
 
 const getAllBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.find().sort({ updatedAt: -1 });
+    const blogs = await Blog.find().sort({ updatedAt: -1});
     // console.log("blogs", blogs);
     res.status(200).json(blogs);
   } catch (error) {

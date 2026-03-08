@@ -16,7 +16,7 @@ const {
 } = require("./approval.controller.js");
 const { Ledger } = require("../models/ledger.models.js");
 const { Journal } = require("../models/journal.models.js");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const generateBillNo = async (req, res) => {
   try {
@@ -114,7 +114,7 @@ const getBill = async (req, res) => {
       .populate("site.id") // fetch full site details
       .populate("contractor.id") // fetch full contractor details
       .exec();
-    console.log(bill);
+    // console.log(bill);
     if (!bill) return res.status(404).json({ message: "No Bill Found" });
     return res.status(201).json(bill);
   } catch (error) {
@@ -225,7 +225,7 @@ const siteBill = async (req, res) => {
 //         createdAt: ContractorBill.createdAt || new Date(),
 //       });
 //       await employee.save();
-//               sendNotification(
+//               sendPushNotification(
 //                 employee.userId,
 //                 `${user.userName} has created bill for ${existingSite.name}`
 //               );
@@ -388,7 +388,7 @@ const createBill = async (req, res) => {
     sendApproveByIncharge(newBill, "Bill", user._id);
     const employee = await User.find({ role: "Employee" });
     for (let emp of employee) {
-      sendNotification(
+      sendPushNotification(
         emp._id,
         `A bill for ${existingSite.name} has been created by ${existingUser.userName}.`
       );

@@ -7,7 +7,7 @@ const Site = require("../models/site.models");
 const User = require("../models/user.models");
 const QualitySchedule = require("../models/qualityschedule.models.js");
 const ProjectSchedule = require("../models/projectschedule.models.js");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 // const moment = require("moment")
 
 // Create a new checklist
@@ -131,7 +131,7 @@ const createChecklist = async (req, res) => {
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
-      sendNotification(
+      sendPushNotification(
         employee._id,
         `Checklist for ${savedChecklist.checkFor} of ${existingSite.name} has been checked by ${existingUser.userName}.`
       );

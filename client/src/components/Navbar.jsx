@@ -30,15 +30,7 @@ const NavbarButton = ({ customFunc, icon, color, dotColor }) => (
 );
 
 const Navbar = ({ title, onMenuClick }) => {
-  const { activeMenu, setActiveMenu, setScreenSize } = useStateContext();
-
-  useEffect(() => {
-    // const handleResize = () => setScreenSize(window.innerWidth);
-    // window.addEventListener('resize', handleResize);
-    // handleResize();
-    // console.log(window.innerWidth)
-    // return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // const { activeMenu, setActiveMenu, setScreenSize } = useStateContext();
 
   const navigate = useNavigate();
   const { isLoggedIn, user } = useSelector((state) => {

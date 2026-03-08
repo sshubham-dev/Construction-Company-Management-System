@@ -1,6 +1,6 @@
 const Contra = require('../models/contra.models');
 const { Ledger } = require('../models/ledger.models');
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 
 // Create Contra voucher

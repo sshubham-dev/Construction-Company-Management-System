@@ -10,7 +10,10 @@ const PurchaseOrder = require("../models/purchaseOrder.models.js");
 const ExtraWork = require("../models/extrawork.models.js");
 const { uploadOnCloudinary } = require("../utils/cloudinary.js");
 const { addLedgerAndCostCenterForSite } = require("./ledger.controller.js");
-const { sendNotification } = require("./notification.controller.js");
+const {
+  sendPushNotification,
+  notifyRole,
+} = require("../utils/pushNotification.js");
 
 const getSites = async (req, res) => {
   try {
@@ -53,9 +56,9 @@ const getSite = async (req, res) => {
 
 const siteByUser = async (req, res) => {
   try {
-    const id = req.params.id;
+    const userId = req.params.userId;
     // console.log('id', id)
-    const user = await User.findById(id);
+    const user = await User.findById(userId);
     if (user && user.department === "Site Incharge") {
       const inchargeSite = await Site.find()
         .where("incharge.id")
@@ -171,11 +174,11 @@ const createSite = async (req, res) => {
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
-      sendNotification(
+      sendPushNotification(
         employee._id,
         `Congratulations Team 🎉 we have a new project Confirmed in ${savedSite.address}.`,
       );
-      sendNotification(
+      sendPushNotification(
         employee._id,
         `${savedSite.name} have been assigned to you ${savedSite.incharge.name}.`,
       );

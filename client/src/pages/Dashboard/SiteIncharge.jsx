@@ -9,14 +9,14 @@ import Schedule from '../../components/UI/Schedule';
 axios.defaults.withCredentials = true;
 
 const SiteIncharge = () => {
-  const sites = useSelector((state)=>state.site?.all)
-  console.log(sites)
+  // const sites = useSelector((state)=>state.site?.all)
+  // console.log(sites)
   const [selectedSite, setSelectedSite] = useState();
     const { user } = useSelector((state) => state.auth);
     const dispatch = useDispatch()
-    useEffect(()=>{
-      dispatch(fetchSiteByUser({id: user._id}))
-    },[dispatch])
+    // useEffect(()=>{
+    //   dispatch(fetchSiteByUser({id: user._id}))
+    // },[dispatch])
 
   return (
     <Layout>

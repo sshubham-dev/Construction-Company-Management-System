@@ -8,7 +8,7 @@ const Packages = express.Router();
 
 Rates.get("/",  userAuth, getRates);
 Packages.get("/",  userAuth, getPackages);
-Quotation.get("/", getAllQuotations);
+Quotation.get("/", userAuth, getAllQuotations);
 Rates.post("/",  userAuth, createOrUpdateRate);
 Quotation.post("/calculate", calculateQuote);
 Quotation.post("/", userAuth, createQuotation);

@@ -6,7 +6,7 @@ const ExtraWork = require('../models/extrawork.models.js');
 const { convertToUser } = require('./user.controller.js');
 const { addLedger } = require('./ledger.controller.js');
 const User = require('../models/user.models.js');
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const getContractors = async (req, res) => {
     try {

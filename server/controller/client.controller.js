@@ -3,7 +3,7 @@ const User = require("../models/user.models");
 const Site = require("../models/site.models");
 const { convertToUser } = require("./user.controller");
 const { addLedger } = require("./ledger.controller");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 
 const getClients = async (req, res) => {

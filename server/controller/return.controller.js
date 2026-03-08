@@ -5,7 +5,7 @@ const {
 } = require("./approval.controller.js");
 const Site = require("../models/site.models");
 const User = require("../models/user.models");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 const SalesInvoice = require("../models/salesinvoice.models.js");
 
 // Create a return
@@ -62,7 +62,7 @@ const createReturn = async (req, res) => {
         link: `/sites/return/${savedReturn._id}`,
       });
       await employee.save();
-      sendNotification(
+      sendPushNotification(
         employee._id,
         `Return Request raised by ${user.userName} for ${existingSite.name}`
       );

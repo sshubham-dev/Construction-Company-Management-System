@@ -1,12 +1,12 @@
-const  GRN  = require("../models/grn.models");
+const GRN = require("../models/grn.models");
 const { Store, StoreInventory } = require("../models/store.models");
 const Ledger = require("../models/ledger.models");
-const PurchaseOrder = require("../models/purchaseorder.models");
+const PurchaseOrder = require("../models/purchaseOrder.models");
 
 async function generateGRNNo(storeCode) {
   const count = await GRN.countDocuments();
   return `GRN/${storeCode}/${new Date().getFullYear()}/${String(
-    count + 1
+    count + 1,
   ).padStart(4, "0")}`;
 }
 
@@ -146,14 +146,12 @@ const postGRN = async (req, res) => {
       const po = await PurchaseOrder.findById(grn.purchaseOrderId._id);
 
       if (po.finalApprovalStatus !== "Approved") {
-        return res
-          .status(400)
-          .json({ message: "PO not approved for GRN" });
+        return res.status(400).json({ message: "PO not approved for GRN" });
       }
 
       for (const grnItem of grn.items) {
         const poItem = po.items.find(
-          (i) => i.itemId.toString() === grnItem.stockId._id.toString()
+          (i) => i.itemId.toString() === grnItem.stockId._id.toString(),
         );
 
         if (poItem) {
@@ -165,17 +163,13 @@ const postGRN = async (req, res) => {
       po.deliveryRecords.push({
         grnId: grn._id,
         deliveryDate: new Date(),
-        status: po.items.every(
-          (i) => i.receivedQty >= i.requestedQty
-        )
+        status: po.items.every((i) => i.receivedQty >= i.requestedQty)
           ? "Full"
           : "Partial",
       });
 
       // Delivery status
-      po.deliveryStatus = po.items.every(
-        (i) => i.receivedQty >= i.requestedQty
-      )
+      po.deliveryStatus = po.items.every((i) => i.receivedQty >= i.requestedQty)
         ? "Delivered"
         : "Partially Delivered";
 
@@ -186,8 +180,7 @@ const postGRN = async (req, res) => {
        3. UPDATE STORE SNAPSHOT
     =============================== */
     const store = await Store.findById(grn.storeId._id);
-    store.currentStockValue =
-      (store.currentStockValue || 0) + grossAmount;
+    store.currentStockValue = (store.currentStockValue || 0) + grossAmount;
     await store.save();
 
     /* ===============================
@@ -202,15 +195,13 @@ const postGRN = async (req, res) => {
     const invoice = await createPurchaseInvoiceFromGRN(grn, req.user._id);
     grn.purchaseInvoiceId = invoice._id;
 
-    
     await grn.save();
 
-
-res.json({
-  message: "GRN posted & Purchase Invoice created",
-  grn,
-  purchaseInvoice: invoice,
-});
+    res.json({
+      message: "GRN posted & Purchase Invoice created",
+      grn,
+      purchaseInvoice: invoice,
+    });
   } catch (err) {
     console.error("Post GRN Error:", err);
     res.status(500).json({ message: "Failed to post GRN" });
@@ -455,31 +446,28 @@ const cancelGRN = async (req, res) => {
 
       for (const grnItem of grn.items) {
         const poItem = po.items.find(
-          (i) =>
-            i.itemId.toString() === grnItem.stockId._id.toString()
+          (i) => i.itemId.toString() === grnItem.stockId._id.toString(),
         );
 
         if (poItem) {
           poItem.receivedQty = Math.max(
             0,
-            poItem.receivedQty - grnItem.acceptedQty
+            poItem.receivedQty - grnItem.acceptedQty,
           );
         }
       }
 
       // Remove delivery record
       po.deliveryRecords = po.deliveryRecords.filter(
-        (d) => d.grnId.toString() !== grn._id.toString()
+        (d) => d.grnId.toString() !== grn._id.toString(),
       );
 
       // Recalculate delivery status
-      po.deliveryStatus = po.items.every(
-        (i) => i.receivedQty >= i.requestedQty
-      )
+      po.deliveryStatus = po.items.every((i) => i.receivedQty >= i.requestedQty)
         ? "Delivered"
         : po.items.some((i) => i.receivedQty > 0)
-        ? "Partially Delivered"
-        : "Pending";
+          ? "Partially Delivered"
+          : "Pending";
 
       await po.save();
     }
@@ -490,7 +478,7 @@ const cancelGRN = async (req, res) => {
     const store = await Store.findById(grn.storeId._id);
     store.currentStockValue = Math.max(
       0,
-      (store.currentStockValue || 0) - reversalAmount
+      (store.currentStockValue || 0) - reversalAmount,
     );
     await store.save();
 
@@ -513,7 +501,6 @@ const cancelGRN = async (req, res) => {
   }
 };
 
-
 const listGRN = async (req, res) => {
   const grns = await GRN.find()
     .populate("storeId supplierId purchaseOrderId")
@@ -523,7 +510,7 @@ const listGRN = async (req, res) => {
 
 const getGRN = async (req, res) => {
   const grn = await GRN.findById(req.params.id).populate(
-    "storeId supplierId purchaseOrderId items.stockId"
+    "storeId supplierId purchaseOrderId items.stockId",
   );
   res.json(grn);
 };

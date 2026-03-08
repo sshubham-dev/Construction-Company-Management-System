@@ -1,4 +1,4 @@
-const {PurchaseOrder} = require('../models/purchaseorder.models.js'); // Update the path as needed
+const PurchaseOrder = require('../models/purchaseOrder.models.js'); // Update the path as needed
 const Site = require('../models/site.models.js');
 const Supplier = require('../models/supplier.models.js');
 const mongoose = require('mongoose');
@@ -7,7 +7,7 @@ const {
     sendApproveBySupplier,
     sendApproveByAccountHead
 } = require('./approval.controller.js')
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 // Create a new purchase order
 const createPurchaseOrder = async (req, res) => {

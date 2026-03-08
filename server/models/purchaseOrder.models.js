@@ -353,4 +353,4 @@ const PurchaseOrder =
   mongoose.models.PurchaseOrder ||
   mongoose.model("PurchaseOrder", purchaseOrderSchema);
 
-module.exports = { PurchaseOrder };
+module.exports =  PurchaseOrder ;

@@ -15,7 +15,7 @@ const Layout = ({ children }) => {
       <ProfileCard
         name={user?.userName}
         role={user?.department}
-        avatar={user?.avatar}
+        avatar={user?.avatar?.secure_url}
       />
       <Attendance />
       {user?.department !== "Ceo" && <Performance />}

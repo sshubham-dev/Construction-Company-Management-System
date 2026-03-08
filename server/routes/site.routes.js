@@ -11,7 +11,7 @@ Site.post('/', upload.single('agreement'), adminAuth, createSite);
 Site.get('/:id', userAuth, getSite);
 Site.put('/:id', upload.single('agreement'), userAuth, updateSite);
 Site.delete('/:id', adminAuth, deleteSite);
-Site.get('/user/:id', userAuth, siteByUser);
+Site.get('/user/:userId', userAuth, siteByUser);
 
 
 module.exports = Site;

@@ -6,7 +6,7 @@ const {
   sendApproveByAccountHead,
 } = require("./approval.controller.js");
 const User = require("../models/user.models.js");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const getPaymentSchedules = async (req, res) => {
   try {
@@ -105,7 +105,7 @@ const createPaymentSchedule = async (req, res) => {
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
-      sendNotification(
+      sendPushNotification(
         employee._id,
         `Payment Schedule for ${existingSite.name} has been created by ${existingUser.userName}.`
       );

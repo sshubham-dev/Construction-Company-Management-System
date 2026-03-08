@@ -6,7 +6,7 @@ const {
 const Site = require("../models/site.models");
 const User = require("../models/user.models");
 const { Store } = require("../models/store.models");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 const Employee = require("../models/employee.models");
 
 async function generatePrNumber() {
@@ -82,7 +82,7 @@ const createPurchaseRequest = async (req, res) => {
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
-      sendNotification(
+      sendPushNotification(
         employee._id,
         `Purchase request of ${newPR.category} for ${existingSite.name} has been created by ${user.userName}.`
       );

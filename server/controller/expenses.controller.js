@@ -7,7 +7,7 @@ const {
   sendApproveByAccountHead,
 } = require("./approval.controller.js");
 const User = require("../models/user.models");
-const { sendNotification } = require("./notification.controller.js");
+const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
 
 const resolvePaidByLedger = async (userId) => {
   const employee = await Employee.findOne({ userId });
@@ -118,7 +118,7 @@ const createExpense = async (req, res) => {
     const employee = await User.find({ role: "Employee" });
     if (employee.length > 0) {
       for (let emp of employee) {
-        sendNotification(
+        sendPushNotification(
           emp._id,
           `${amount} paid by ${user.userName} for ${expenseLedger.name} expense of ${expenseForLedger.name}.`
         );
@@ -287,7 +287,7 @@ const updateExpense = async (req, res) => {
     const employee = await User.find({ role: "Employee" });
     if (employee.length > 0) {
       for (let emp of employee) {
-        sendNotification(
+        sendPushNotification(
           emp._id,
           `${amount} paid by ${user.userName} for ${expense?.expenseLedger.name} expense of ${expense?.expenseForLedger.name}.`
         );
