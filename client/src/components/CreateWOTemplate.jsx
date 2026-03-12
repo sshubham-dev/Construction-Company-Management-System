@@ -237,6 +237,8 @@ const CreateWOTemplate = ({ templateId, onClose, onSuccess }) => {
               <option value="window">Window</option>
               <option value="grill">Grill</option>
               <option value="railing">Railing</option>
+              <option value="material false ceiling">With Material False Ceiling</option>
+              <option value="false ceiling">False Ceiling</option>
             </select>
           </div>
 

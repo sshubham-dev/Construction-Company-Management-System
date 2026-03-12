@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {  useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import logo from "../asset/logo.png";
 import moment from "moment";
 import axios from "axios";
@@ -22,21 +22,19 @@ const BillScreen = () => {
   const [rejectId, setRejectId] = useState("");
   const [editId, setEditId] = useState("");
   useEffect(() => {
-
-      getbill(id);
-
+    getbill(id);
   }, [id]);
 
   const getbill = async (id) => {
     try {
       if (id) {
         const billData = await axios.get(`/api/v1/bill/${id}`);
-        console.log(billData)
+        console.log(billData);
         setBill(billData.data);
         setContractorBill(billData.data);
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast.error(error.message);
     }
   };
@@ -107,7 +105,7 @@ const BillScreen = () => {
 
         {/* Work Details Card */}
         <div className="border border-gray-300 rounded-xl p-4 mb-6 shadow-sm">
-          <h3 className="font-semibold text-lg mb-3">Work Details</h3>
+          <h3 className="font-semibold text-lg mb-3">Work Details:</h3>
 
           {/* WORK ORDER */}
           {bill?.billType === "workorder" && (
@@ -151,33 +149,37 @@ const BillScreen = () => {
 
           {/* SUPPLY LABOUR */}
           {bill?.billType === "supplylabour" && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <p className="text-gray-500">Skilled Male</p>
-                <p className="font-medium">
-                  {bill?.billOf?.skilledMale} × ₹{bill?.billOf?.skilledMaleRate}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-500">Skilled Female</p>
-                <p className="font-medium">
-                  {bill?.billOf?.skilledFemale} × ₹
-                  {bill?.billOf?.skilledFemaleRate}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-500">Unskilled Male</p>
-                <p className="font-medium">
-                  {bill?.billOf?.unskilledMale} × ₹
-                  {bill?.billOf?.unskilledMaleRate}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-500">Unskilled Female</p>
-                <p className="font-medium">
-                  {bill?.billOf?.unskilledFemale} × ₹
-                  {bill?.billOf?.unskilledFemaleRate}
-                </p>
+            <div>
+              <p className="text-gray-700 mb-2">Work: {bill?.billOf?.work}</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-500">Skilled Male</p>
+                  <p className="font-medium">
+                    {bill?.billOf?.skilledMale} × ₹
+                    {bill?.billOf?.skilledMaleRate}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Skilled Female</p>
+                  <p className="font-medium">
+                    {bill?.billOf?.skilledFemale} × ₹
+                    {bill?.billOf?.skilledFemaleRate}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Unskilled Male</p>
+                  <p className="font-medium">
+                    {bill?.billOf?.unskilledMale} × ₹
+                    {bill?.billOf?.unskilledMaleRate}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Unskilled Female</p>
+                  <p className="font-medium">
+                    {bill?.billOf?.unskilledFemale} × ₹
+                    {bill?.billOf?.unskilledFemaleRate}
+                  </p>
+                </div>
               </div>
             </div>
           )}

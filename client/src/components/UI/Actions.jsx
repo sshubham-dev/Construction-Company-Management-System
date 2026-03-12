@@ -20,6 +20,7 @@ import CreateLabourAttendance from "../CreateLabourAttendance";
 import CreateGRN from "../CreateGRN";
 import CreateDeliveryNote from "../CreateDeliveryNote";
 import CollectionEntry from "../../pages/Design/CollectionEntry";
+import CreateSalary from "../CreateSalary";
 
 export default function Actions({ role }) {
   const [activeAction, setActiveAction] = useState(null);
@@ -321,10 +322,6 @@ export default function Actions({ role }) {
       title: "Add New Employee",
       component: <CreateEmployee onClose={() => setActiveAction(null)} />,
     },
-    CreatePayslip: {
-      title: "Create Payslip",
-      component: <div>Create Payslip Component</div>,
-    },
     PaymentSchedule: {
       title: "Payment Schedule",
       component: (
@@ -358,6 +355,10 @@ export default function Actions({ role }) {
     CollectionEntry: {
       title: "Record Payment",
       component: <CollectionEntry onClose={() => setActiveAction(null)} />,
+    },
+    CreatePayslip: {
+      title: "Calculate Salary",
+      component: <CreateSalary onClose={() => setActiveAction(null)} />,
     },
   };
 

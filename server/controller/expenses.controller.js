@@ -196,6 +196,74 @@ const getExpenseById = async (req, res) => {
   res.json(expense);
 };
 
+const getExpensesByMonth = async (req, res) => {
+  try {
+
+    const { employeeId, userId, month } = req.query;
+
+    if (!month) {
+      return res.status(400).json({
+        message: "month is required",
+      });
+    }
+
+    let finalUserId = userId;
+
+    // if employeeId provided, resolve userId
+    if (employeeId) {
+
+      const employee = await Employee.findById(employeeId);
+
+      if (!employee) {
+        return res.status(404).json({
+          message: "Employee not found",
+        });
+      }
+
+      finalUserId = employee.userId;
+    }
+
+    if (!finalUserId) {
+      return res.status(400).json({
+        message: "employeeId or userId is required",
+      });
+    }
+
+    // month range
+    const startDate = new Date(`${month}-01`);
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + 1);
+
+    // find expenses
+    const expenses = await Expenses.find({
+      createdBy: finalUserId,
+      date: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+    });
+
+    const totalAmount = expenses.reduce(
+      (sum, e) => sum + e.amount,
+      0
+    );
+
+    res.json({
+      userId: finalUserId,
+      month,
+      totalAmount,
+      expenses,
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message,
+    });
+
+  }
+};
+
 /* ======================================================
    UPDATE EXPENSE (DRAFT ONLY)
 ====================================================== */
@@ -332,4 +400,5 @@ module.exports = {
   getExpenseById,
   updateExpense,
   deleteExpense,
+  getExpensesByMonth,
 };

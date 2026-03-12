@@ -114,6 +114,8 @@ import CollectionEntry from "./pages/Design/CollectionEntry.jsx";
 import Collections from "./pages/Design/Collections.jsx";
 import "jodit/es2021/jodit.min.css";
 import { initPushNotifications } from "./helper/notificationService.js";
+import FAQs from "./pages/CMS/FAQs.jsx";
+import Payroll from "./pages/HRMS/Payroll.jsx";
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -122,7 +124,7 @@ const App = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-useEffect(() => {
+  useEffect(() => {
     if (user?._id) {
       initPushNotifications(user._id);
     }
@@ -173,6 +175,7 @@ useEffect(() => {
           path="/hrms/employee/attendance"
           element={<AttendanceReport />}
         />
+        <Route path="/hrms/payroll" element={<Payroll />} />
         <Route path="/hrms" element={<TrafficLight />} />
         <Route path="/hrms/traffic-light" element={<TrafficLight />} />
         <Route path="/hrms/traffic" element={<TrafficLightSystem />} />
@@ -371,6 +374,8 @@ useEffect(() => {
         <Route path="/cms/blogs" element={<Blogs />} />
         <Route path="/cms/blog/preview/:id" element={<BlogPreviewer />} />
         <Route path="/cms/blog/edit/:id" element={<BlogEdit />} />
+
+        <Route path="/cms/faqs" element={<FAQs />} />
 
         <Route path="/work-details" element={<WorkDetails />} />
 

@@ -56,7 +56,7 @@ const getSite = async (req, res) => {
 
 const siteByUser = async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const { userId } = req.params;
     // console.log('id', id)
     const user = await User.findById(userId);
     if (user && user.department === "Site Incharge") {

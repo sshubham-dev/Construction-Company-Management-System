@@ -516,6 +516,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: <ImBlog />,
       role: ["Admin", "Company", "Ceo", "Marketing", "Account Head"],
     },
+    {
+      to: "/cms/faqs",
+      name: "FAQs",
+      icon: <ImBlog />,
+      role: ["Admin", "Company", "Ceo", "Marketing", "Account Head"],
+    },
 
     /* Site Management*/
     // {
@@ -714,6 +720,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: "Attendance Management",
       icon: <FaUserCheck />,
       role: ["Admin", "Company", "Ceo", "Account Head", "H.R", "Marketing"],
+    },
+    {
+      to: "/hrms/payroll",
+      name: "Payroll",
+      icon: "",
+      role: ["Admin", "Company", "Ceo", "Account Head", "H.R"],
     },
     {
       to: "/hrms/monthly-performance",

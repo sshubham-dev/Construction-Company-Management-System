@@ -2,7 +2,10 @@ const { LabourAttendance } = require("../models/attendance.models");
 const Contractor = require("../models/contractor.models");
 const Site = require("../models/site.models");
 const User = require("../models/user.models");
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
+const {
+  sendPushNotification,
+  notifyRole,
+} = require("../utils/pushNotification.js");
 
 const getLabourAttendances = async (req, res) => {
   try {
@@ -21,8 +24,24 @@ const getLabourAttendances = async (req, res) => {
 const getLabourAttendance = async (req, res) => {
   try {
     const labourAttendance = await LabourAttendance.findById(
-      req.params.id
+      req.params.id,
     ).exec();
+    if (!labourAttendance)
+      return res.status(404).json({ message: "Labour Attendance Not Found" });
+    return res.status(201).json(labourAttendance);
+  } catch (error) {
+    console.log(error);
+    return res.status(501).json({ message: error.message });
+  }
+};
+
+const getSiteLabourAttendance = async (req, res) => {
+  try {
+    const { site } = req.params;
+    const labourAttendance = await LabourAttendance.find()
+      .where("site.id")
+      .equals(site)
+      .exec();
     if (!labourAttendance)
       return res.status(404).json({ message: "Labour Attendance Not Found" });
     return res.status(201).json(labourAttendance);
@@ -47,7 +66,7 @@ const createLabourAttendance = async (req, res) => {
       unskilledFemaleRate = 0,
       work,
     } = req.body;
-    const user = req.user
+    const user = req.user;
 
     const existingSite = await Site.findById(site);
     if (!existingSite) {
@@ -97,23 +116,23 @@ const createLabourAttendance = async (req, res) => {
     });
 
     const savedAttendance = await attendance.save();
-          const employees = await User.find({ role: "Employee" });
+    const employees = await User.find({ role: "Employee" });
 
-      for (const employee of employees) {
-        sendPushNotification(
-          employee?._id,
-          `${user.userName} has created Labour Report for ${existingSite.name}`
-        );
-        employee.notification.push({
-          title: "Labour Report Alert",
-          message: `Labour Report raised by ${user.userName} for ${existingSite.name}`,
-          createdAt: savedAttendance.createdAt
-            ? savedAttendance.createdAt
-            : new Date(),
-          link: `/sites/labour-attendance`,
-        });
-        await employee.save();
-      }
+    for (const employee of employees) {
+      sendPushNotification(
+        employee?._id,
+        `${user.userName} has created Labour Report for ${existingSite.name}`,
+      );
+      employee.notification.push({
+        title: "Labour Report Alert",
+        message: `Labour Report raised by ${user.userName} for ${existingSite.name}`,
+        createdAt: savedAttendance.createdAt
+          ? savedAttendance.createdAt
+          : new Date(),
+        link: `/sites/labour-attendance`,
+      });
+      await employee.save();
+    }
     return res.status(201).json(savedAttendance);
   } catch (error) {
     console.log(error);
@@ -137,10 +156,10 @@ const updateLabourAttendance = async (req, res) => {
       work,
     } = req.body;
     const existingLabourAttendance = await LabourAttendance.findById(
-      req.params.id
+      req.params.id,
     ).exec();
 
-        if (!existingLabourAttendance)
+    if (!existingLabourAttendance)
       return res.status(404).json({ message: "Labour Attendance Not Found" });
 
     // const existingSite = await Site.findById(site);
@@ -161,10 +180,12 @@ const updateLabourAttendance = async (req, res) => {
     //   contractorName = existingContractor.name;
     // }
 
-    existingLabourAttendance.site = existingLabourAttendance.site,
-    existingLabourAttendance.contractor = existingLabourAttendance.contractor,
-    existingLabourAttendance.contractorId = existingLabourAttendance.contractorId,
-    existingLabourAttendance.skilledFemale = skilledFemale;
+    ((existingLabourAttendance.site = existingLabourAttendance.site),
+      (existingLabourAttendance.contractor =
+        existingLabourAttendance.contractor),
+      (existingLabourAttendance.contractorId =
+        existingLabourAttendance.contractorId),
+      (existingLabourAttendance.skilledFemale = skilledFemale));
     existingLabourAttendance.skilledFemaleRate = skilledFemaleRate;
     existingLabourAttendance.unskilledFemale = unskilledFemale;
     existingLabourAttendance.unskilledFemaleRate = unskilledFemaleRate;
@@ -174,8 +195,7 @@ const updateLabourAttendance = async (req, res) => {
     existingLabourAttendance.unskilledMaleRate = unskilledMaleRate;
     existingLabourAttendance.work = work;
 
-
-    await existingLabourAttendance.save()
+    await existingLabourAttendance.save();
     return res.status(201).json(existingLabourAttendance);
   } catch (error) {
     console.log(error);
@@ -186,7 +206,7 @@ const updateLabourAttendance = async (req, res) => {
 const deleteLabourAttendance = async (req, res) => {
   try {
     const deletedLabourAttendance = await LabourAttendance.findByIdAndDelete(
-      req.params.id
+      req.params.id,
     ).exec();
     if (!deletedLabourAttendance)
       return res.status(404).json({ message: "Labour Attendance Not Found" });
@@ -205,4 +225,5 @@ module.exports = {
   createLabourAttendance,
   updateLabourAttendance,
   deleteLabourAttendance,
+  getSiteLabourAttendance,
 };

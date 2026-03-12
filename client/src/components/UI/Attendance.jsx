@@ -82,7 +82,7 @@ export default function Attendance() {
         );
 
         setPresent(monthlyPresent);
-        console.log("This Month's Present Records:", monthlyPresent);
+        // console.log("This Month's Present Records:", monthlyPresent);
       } else {
         console.error("Invalid attendance data:", data);
       }

@@ -30,20 +30,20 @@ const CreateBill = ({ onClose, editId = null }) => {
   // for edit mode (optional)
   useEffect(() => {
     if (user && user?.department === "Site Incharge") {
-      console.log(user._id);
+      // console.log(user._id);
       getUserSites(user._id);
     } else if (user && user?.department === "Site Supervisor") {
-      console.log(user);
+      // console.log(user);
       getUserSites(user._id);
     } else if (user && user?.department === "Client") {
-      console.log(user);
+      // console.log(user);
       getUserSites(user._id);
     } else {
       const getSites = async () => {
         try {
           const siteData = await axios.get("/api/v1/site");
           setSites(siteData.data);
-          console.log(siteData.data);
+          // console.log(siteData.data);
         } catch (error) {
           console.error(error);
           setError(error.message);
@@ -56,7 +56,7 @@ const CreateBill = ({ onClose, editId = null }) => {
   const getUserSites = async (id) => {
     try {
       const siteData = await axios.get(`/api/v1/site/user/${id}`);
-      console.log(siteData.data);
+      // console.log(siteData.data);
       setSites(siteData.data);
     } catch (error) {
       console.error(error);
@@ -69,12 +69,14 @@ const CreateBill = ({ onClose, editId = null }) => {
     (async () => {
       try {
         const res = await axios.get("/api/v1/contractor");
+        // const data = res.data.filter((con) => con.);
+        // console.log(res.data)
         setContractors(res.data || []);
       } catch (err) {
         console.error("load contractors:", err);
       }
     })();
-  }, []);
+  }, [sites]);
 
   // when site or contractor or billType changes -> fetch relevant candidate items
   useEffect(() => {
@@ -94,7 +96,7 @@ const CreateBill = ({ onClose, editId = null }) => {
           }
           // fetch workorders for site + contractor
           const res = await axios.get(
-            `/api/v1/work-order/${siteId}/${contractorId}`
+            `/api/v1/work-order/${siteId}/${contractorId}`,
           );
           // flatten eligible stages (due > 0)
           const orders = Array.isArray(res.data)
@@ -106,7 +108,7 @@ const CreateBill = ({ onClose, editId = null }) => {
               (work.stages || work.stages || []).forEach((stage, si) => {
                 // prefer 'due' or stage.amount - stage.paid
                 const due = Number(
-                  stage.due ?? stage.amount - (stage.paid || 0) ?? 0
+                  stage.due ?? stage.amount - (stage.paid || 0) ?? 0,
                 );
                 if (due <= 0) return;
                 items.push({
@@ -132,7 +134,7 @@ const CreateBill = ({ onClose, editId = null }) => {
           setCandidates(items);
         } else if (billType === "extrawork") {
           const res = await axios.get(
-            `/api/v1/extra-work?site=${siteId}&contractor=${contractorId}`
+            `/api/v1/extra-work/${siteId}/${contractorId}`,
           );
           const extras = Array.isArray(res.data)
             ? res.data
@@ -162,30 +164,24 @@ const CreateBill = ({ onClose, editId = null }) => {
 
           setCandidates(items);
         } else if (billType === "supplylabour") {
-          // supply labour - contractorId expected to be "Supply Labour" or blank; but server filter by contractor param
-          const params = new URLSearchParams();
-          params.append("site", siteId);
-          // we will request supply labour entries
-          params.append("contractor", "Supply Labour");
-          const res = await axios.get(
-            `/api/v1/labour-attendance?${params.toString()}`
-          );
+          const res = await axios.get(`/api/v1/labour-attendance/${siteId}`);
+          console.log(res);
           const rows = Array.isArray(res.data) ? res.data : res.data.rows || [];
           const items = [];
-          console.log(rows);
+          // console.log(rows);
           rows.forEach((r) => {
             // compute totals per row: sum qty * rate for each category
             const skilledMaleRate = Number(
-              r.skilledMaleRate || r.skilledMale_rate || 0
+              r.skilledMaleRate || r.skilledMale_rate || 0,
             );
             const skilledFemaleRate = Number(
-              r.skilledFemaleRate || r.skilledFemale_rate || 0
+              r.skilledFemaleRate || r.skilledFemale_rate || 0,
             );
             const unskilledMaleRate = Number(
-              r.unskilledMaleRate || r.unskilledMale_rate || 0
+              r.unskilledMaleRate || r.unskilledMale_rate || 0,
             );
             const unskilledFemaleRate = Number(
-              r.unskilledFemaleRate || r.unskilledFemale_rate || 0
+              r.unskilledFemaleRate || r.unskilledFemale_rate || 0,
             );
             const sm = Number(r.skilledMale || 0);
             const sf = Number(r.skilledFemale || 0);
@@ -205,6 +201,7 @@ const CreateBill = ({ onClose, editId = null }) => {
               label: ` ${r.work} — ${date}`,
               labourId: r._id,
               row: r,
+              work: r.work,
               skilledMale: sm,
               skilledMaleRate,
               skilledFemale: sf,
@@ -240,7 +237,7 @@ const CreateBill = ({ onClose, editId = null }) => {
         c.extraDetailId === key ||
         c.labourId === key ||
         c.workId === key ||
-        idx === Number(key)
+        idx === Number(key),
     );
     if (!item) {
       // maybe key is index
@@ -249,6 +246,7 @@ const CreateBill = ({ onClose, editId = null }) => {
       setToPay("");
       return;
     }
+    console.log("item", item);
     setSelectedRef(item);
     setToPay("");
   };
@@ -285,11 +283,9 @@ const CreateBill = ({ onClose, editId = null }) => {
       const base = {
         billType,
         site: siteId,
-        contractor:
-          billType !== "workorder" || billType !== "extrawork"
-            ? "Supply Labour"
-            : "Supply Labour",
-        contractorId: billType === "workorder" || billType === "extrawork"
+        contractor: billType === "supplylabour" ? "Supply Labour" : "",
+        contractorId:
+          billType === "workorder" || billType === "extrawork"
             ? contractorId
             : null,
         toPay: pay,
@@ -329,6 +325,7 @@ const CreateBill = ({ onClose, editId = null }) => {
           labourAttendanceId: selectedRef.labourId,
         };
         base.meta = {
+          work: selectedRef.work,
           skilledMale: selectedRef.skilledMale,
           skilledMaleRate: selectedRef.skilledMaleRate,
           skilledFemale: selectedRef.skilledFemale,
@@ -344,7 +341,7 @@ const CreateBill = ({ onClose, editId = null }) => {
       const res = await axios.post("/api/v1/bill", base);
       toast.success(res.data?.message || "Bill created");
       // optionally dispatch notifications reload
-        dispatch(fetchNotifications(user._id));
+      dispatch(fetchNotifications(user._id));
       onClose && onClose();
     } catch (err) {
       console.error("create bill:", err);
@@ -397,6 +394,7 @@ const CreateBill = ({ onClose, editId = null }) => {
             Supply Labour -{" "}
             {new Date(selectedRef.row.date).toLocaleDateString()}
           </h4>
+          <p className="font-semibold">Work - {selectedRef.work}</p>
           <div className="grid grid-cols-1 gap-2 mt-2 text-sm">
             <div>
               Skilled Male: {selectedRef.skilledMale} × ₹

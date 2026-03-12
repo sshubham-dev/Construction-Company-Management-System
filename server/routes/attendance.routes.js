@@ -15,6 +15,7 @@ const {
   updateLeave,
   deleteAttendance,
   deleteLeave,
+  getEmployeeAttendance,
 } = require("../controller/attendance.controller");
 const { userAuth, adminAuth } = require("../middlewares/auth.middleware");
 const { Attendance } = require("../models/attendance.models");
@@ -24,6 +25,7 @@ const {
   updateLabourAttendance,
   deleteLabourAttendance,
   getLabourAttendance,
+  getSiteLabourAttendance,
 } = require("../controller/labourattendance.controller");
 
 Attendances.route("/")
@@ -35,7 +37,7 @@ LabourAttendances.route("/")
 Leaves.route("/").get(userAuth, getLeave).post(userAuth, createLeave);
 
 Attendances.get("/report", getAttendances);
-
+Attendances.get("/employee", getEmployeeAttendance);
 Attendances.route("/:id")
   .put(userAuth, updateAttendance)
   .get(userAuth, getAttendanceByUser)
@@ -71,7 +73,7 @@ Attendances.get("/export-data/:id", async (req, res) => {
     return res.status(501).json({ message: error.message });
   }
 });
-
+LabourAttendances.route("/:site").get(getSiteLabourAttendance);
 LabourAttendances.route("/:id")
   .get(getLabourAttendance)
   .put(updateLabourAttendance)

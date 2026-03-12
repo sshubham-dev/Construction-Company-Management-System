@@ -47,11 +47,11 @@ const employeeSchema = new mongoose.Schema(
 
     /* ================= DOCUMENTS ================= */
     cv: {
-            secure_url: String,
+      secure_url: String,
       public_id: String,
     },
     offerletter: {
-            secure_url: String,
+      secure_url: String,
       public_id: String,
     },
     certificates: [{ type: String }],
@@ -64,18 +64,19 @@ const employeeSchema = new mongoose.Schema(
         redPenalty: { type: Number, default: 1000 },
       },
 
-      targets:[{
-        targetType: {
-          type: String,
-          enum: ["site-work", "revenue"],
+      targets: [
+        {
+          targetType: {
+            type: String,
+          },
+          baseTargetValue: Number, // e.g. 30000
+          bonusType: {
+            type: String,
+            enum: ["FIXED", "PERCENTAGE"],
+          },
+          bonusValue: Number, // 3000 OR 10 (means 10%)
         },
-        baseTargetValue: Number, // e.g. 30000
-        bonusType: {
-          type: String,
-          enum: ["fixed", "percentage"],
-        },
-        bonusValue: Number, // 3000 OR 10 (means 10%)
-      }],
+      ],
     },
     monthlyPerformance: [
       {
@@ -97,7 +98,7 @@ const employeeSchema = new mongoose.Schema(
       netPayableToEmployee: { type: Number, default: 0 },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 /* -----------------------------

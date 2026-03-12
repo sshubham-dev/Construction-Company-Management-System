@@ -3,7 +3,10 @@ const { Attendance, Leave } = require("../models/attendance.models");
 const User = require("../models/user.models.js");
 const { sendApproveByAdmin } = require("./approval.controller.js");
 const Employee = require("../models/employee.models");
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
+const {
+  sendPushNotification,
+  notifyRole,
+} = require("../utils/pushNotification.js");
 
 const getAttendance = async (req, res) => {
   try {
@@ -37,6 +40,40 @@ const getAttendanceByUser = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(501).json({ message: error.message });
+  }
+};
+
+const getEmployeeAttendance = async (req, res) => {
+  try {
+    const { employeeId } = req.query;
+
+    if (!employeeId) {
+      return res.status(400).json({
+        message: "employeeId and month are required",
+      });
+    }
+
+    // find employee
+    const employee = await Employee.findById(employeeId);
+
+    if (!employee) {
+      return res.status(404).json({
+        message: "Employee not found",
+      });
+    }
+
+    const userId = employee.userId;
+
+    // find attendance
+    const attendance = await Attendance.find()
+    .where("user.id").equals(userId)
+    .exec();
+
+    res.json(attendance);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
@@ -106,7 +143,7 @@ const createAttendance = async (req, res) => {
     const user = req.user;
 
     const existingUser = await User.findById(user._id).select(
-      "-password -refreshToken"
+      "-password -refreshToken",
     );
 
     const existAttendance = await Attendance.findOne()
@@ -134,12 +171,12 @@ const createAttendance = async (req, res) => {
     await newAttendance.save();
 
     existingUser.attendance.push(newAttendance._id);
-    const employee = await User.find({role:"Employee"});
+    const employee = await User.find({ role: "Employee" });
     if (employee.length > 0) {
       for (let emp of employee) {
         sendPushNotification(
           emp._id,
-          `${existingUser.userName} is ${status} Today at ${timeIn}`
+          `${existingUser.userName} is ${status} Today at ${timeIn}`,
         );
       }
     }
@@ -176,7 +213,7 @@ const createLeave = async (req, res) => {
     for (let emp of employee) {
       sendPushNotification(
         emp._id,
-        `${existingUser.userName} requested for leave from ${from} to ${reportingDate}`
+        `${existingUser.userName} requested for leave from ${from} to ${reportingDate}`,
       );
     }
     sendApproveByAdmin(savedLeave, "Leave", user._id);
@@ -257,4 +294,5 @@ module.exports = {
   updateLeave,
   deleteAttendance,
   deleteLeave,
+  getEmployeeAttendance,
 };
