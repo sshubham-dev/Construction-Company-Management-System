@@ -9,11 +9,11 @@ const {
 } = require('../controller/supplier.controller.js');
 const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
-Supplier.get('/', getSuppliers);
-Supplier.post('/', createSupplier);
+Supplier.get('/', userAuth, getSuppliers);
+Supplier.post('/', userAuth, createSupplier);
 Supplier.route('/:id')
     .get(getSupplier)
-    .put(updateSupplier)
+    .put(userAuth,updateSupplier)
     .delete(deleteSupplier);
 
 module.exports = Supplier;

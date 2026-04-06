@@ -25,11 +25,11 @@ export default function Schedule() {
       try {
         const projectRes = await axios.get(`/api/v1/project-schedule/monthly`);
         setProjectSchedule(projectRes.data);
-        // console.log("Project Schedule:", projectRes.data);
+        console.log("Project Schedule:", projectRes.data);
 
         const qualityRes = await axios.get(`/api/v1/quality-schedule/monthly`);
         setQualitySchedule(qualityRes.data);
-        // console.log('Quality:', qualityRes.data)
+        console.log("Quality:", qualityRes.data);
       } catch (error) {
         console.error("Error fetching schedules:", error);
       }
@@ -40,8 +40,11 @@ export default function Schedule() {
 
   // 🔹 Compute Summaries
   const calculateSummary = (data, dateKey) => {
+    if (!Array.isArray(data))
+      return { completed: 0, missed: 0, upcoming: 0, pending: 0 };
     const today = moment();
-    let missed = 0,
+    let completed = 0,
+      missed = 0,
       upcoming = 0,
       pending = 0;
 
@@ -52,12 +55,14 @@ export default function Schedule() {
       } else if (date.isSame(today, "day") || date.isAfter(today, "day")) {
         upcoming++;
       }
-      if (task.status !== "Green") {
+      if (task.status === "Green") {
+        completed++;
+      } else if (task.status !== "Green") {
         pending++;
       }
     });
 
-    return { missed, upcoming, pending };
+    return { completed, missed, upcoming, pending };
   };
 
   const projectSummary = calculateSummary(projectSchedule, "planned");
@@ -102,9 +107,7 @@ export default function Schedule() {
       )}
 
       {/* 🔹 For CEO/Admin/Account Head → Show Both */}
-      {["Ceo", "Admin", "Account Head"].includes(
-        user?.department
-      ) && (
+      {["Ceo", "Admin", "Account Head"].includes(user?.department) && (
         <div className="space-y-3">
           {/* Project Summary */}
           <div
@@ -116,8 +119,9 @@ export default function Schedule() {
               <ListChecks size={20} className="text-indigo-500" />
             </div>
             <p className="text-md font-bold mt-1">
-              {projectSummary.missed} Missed • {projectSummary.upcoming}{" "}
-              Upcoming • {projectSummary.pending} Pending
+              {projectSummary.completed} Completed • {projectSummary.missed}{" "}
+              Missed • {projectSummary.upcoming} Upcoming •{" "}
+              {projectSummary.pending} Pending
             </p>
           </div>
 
@@ -131,8 +135,9 @@ export default function Schedule() {
               <ListChecks size={20} className="text-purple-500" />
             </div>
             <p className="text-md font-bold mt-1">
-              {qualitySummary.missed} Missed • {qualitySummary.upcoming}{" "}
-              Upcoming • {qualitySummary.pending} Pending
+              {qualitySummary.completed} Completed • {qualitySummary.missed}{" "}
+              Missed • {qualitySummary.upcoming} Upcoming •{" "}
+              {qualitySummary.pending} Pending
             </p>
           </div>
         </div>
@@ -261,7 +266,7 @@ function SidePanel({ title, onClose, data, getStatusIcon, type }) {
                     <>
                       {(() => {
                         const lastReplanDate = Array.isArray(
-                          task?.rePlannedDates
+                          task?.rePlannedDates,
                         )
                           ? task.rePlannedDates.at(-1)?.date
                           : null;

@@ -49,7 +49,7 @@ const journalSchema = new mongoose.Schema(
 );
 
 
-journalSchema.pre("save", function (next) {
+journalSchema.pre("save", function () {
   let debit = 0,
     credit = 0;
 
@@ -59,12 +59,11 @@ journalSchema.pre("save", function (next) {
   }
 
   if (debit !== credit) {
-    return next(new Error("Total debit and credit must be equal."));
+    return new Error("Total debit and credit must be equal.");
   }
 
   this.totalDebit = debit;
   this.totalCredit = credit;
-  next();
 });
 
 const Journal = mongoose.model("Journal", journalSchema);
@@ -97,9 +96,8 @@ const stockJournalSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-stockJournalSchema.pre("save", function (next) {
+stockJournalSchema.pre("save", function () {
   this.totalAmount = this.items.reduce((sum, item) => sum + item.amount, 0);
-  next();
 });
 
 const StockJournal = mongoose.model("Stock_Journal", stockJournalSchema);

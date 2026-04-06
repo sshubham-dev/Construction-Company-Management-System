@@ -2,239 +2,168 @@ const mongoose = require("mongoose");
 
 const assetSchema = new mongoose.Schema(
   {
-    // ---------------------------
-    // Identification
-    // ---------------------------
-    name: { type: String, required: true },
-    category: {
-      type: String,
-      enum: [
-        "Machine",
-        "Shuttering",
-        "Scaffolding",
-        "Vehicle",
-        "IT",
-        "Tool",
-        "OfficeAsset",
-        "Other",
-      ],
-      required: true,
-    },
+    name: { type: String, required: true, trim: true },
+    assetCode: { type: String, unique: true },
+    stockId: { type: mongoose.Schema.Types.ObjectId, ref: "Stock" },
+    storeId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
 
-    assetCode: {
-      type: String,
-      unique: true,
-      trim: true,
-      // Example: MACH-001, SHUT-045, IT-030
-    },
-
-    itemId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Stock",
-      required: false,
-      // Only if linked to your stock master
-    },
-
-    // ---------------------------
-    // Ownership (Store = BU)
-    // ---------------------------
-    store: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Store",
-      required: true,
-    },
-
-    // ---------------------------
-    // Purchase Details
-    // ---------------------------
-    purchaseDetails: {
-      supplierId: { type: mongoose.Schema.Types.ObjectId, ref: "Supplier" },
-      purchaseDate: Date,
-      purchaseRate: Number,
-      billNo: String,
-    },
-
-    // ---------------------------
-    // Current Status
-    // ---------------------------
     status: {
       type: String,
-      enum: ["Available", "Issued", "InRepair", "Lost", "Scrapped"],
-      default: "Available",
+      enum: ["AVAILABLE", "ISSUED", "UNDER_MAINTENANCE", "SCRAPPED"],
+      default: "AVAILABLE",
     },
-
-    currentHolder: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: "holderType",
-      // user/site/businessUnit
-    },
-
-    holderType: {
+    condition: {
       type: String,
-      enum: ["User", "Site", "BusinessUnit", null],
-      default: null,
+      enum: ["GOOD", "AVERAGE", "DAMAGED"],
+      default: "GOOD",
     },
 
-    // ---------------------------
-    // Issue History
-    // ---------------------------
-    issueHistory: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "AssetIssue",
-      },
-    ],
+    purchaseDate: Date,
+    purchaseCost: Number,
 
-    // ---------------------------
-    // Maintenance / Repair Logs
-    // ---------------------------
-    maintenance: [
-      {
-        date: { type: Date, default: Date.now },
-        description: String,
-        cost: Number,
-        performedBy: String, // internal/external vendor
-      },
-    ],
+    serialNumber: String,
 
-    // ---------------------------
-    // Depreciation (optional future)
-    // ---------------------------
-    depreciatedValue: Number,
-    expectedLifeMonths: Number,
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+    },
 
-    // ---------------------------
-    // Custom Fields (future use)
-    // ---------------------------
-    additionalInfo: mongoose.Schema.Types.Mixed,
+    isRentable: {
+      type: Boolean,
+      default: false,
+    },
+    rent: {
+      type: Number,
+      default: 0,
+    },
+
+    maintenanceIntervalDays: Number,
+
+    description: String,
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const assetIssueSchema = new mongoose.Schema(
   {
-    // -----------------------------
-    // Link to Asset
-    // -----------------------------
     assetId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Asset",
       required: true,
+      index: true,
     },
 
-    // -----------------------------
-    // Issue From (Store / BU)
-    // -----------------------------
-    issuedByBU: {
+    fromStoreId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "BusinessUnit",
+      ref: "Store",
       required: true,
-      // Store that owns this asset
-    },
-
-    issuedByUser: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // store manager or operator
-    },
-
-    // -----------------------------
-    // Issue To (Responsible Party)
-    // -----------------------------
-    issuedTo: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      refPath: "issuedToType",
+      index: true,
     },
 
     issuedToType: {
       type: String,
-      enum: ["User", "Site", "BusinessUnit"],
+      enum: ["Site", "Employee"],
       required: true,
-      // Site (construction site)
-      // User (staff member)
-      // BusinessUnit (office/store/other branch)
     },
 
-    // -----------------------------
-    // Issue Details
-    // -----------------------------
+    issuedToId: {
+      type: mongoose.Schema.Types.ObjectId,
+      refpath: issuedToType,
+      required: true,
+      index: true,
+    },
+
     issueDate: {
       type: Date,
       default: Date.now,
     },
 
     expectedReturnDate: Date,
+    actualReturnDate: Date,
 
-    // -----------------------------
-    // Usage Tracking
-    // -----------------------------
-    rentRate: Number, // rate based on unit
-    rentUnit: {
+    issueCondition: {
       type: String,
-      enum: ["Day", "Hour", "Trip", "None"],
-      default: "None",
+      enum: ["New", "Good", "Used"],
+      default: "Good",
     },
 
-    usage: {
-      daysUsed: { type: Number, default: 0 },
-      hoursUsed: { type: Number, default: 0 },
-      tripsUsed: { type: Number, default: 0 }, // for mal gadi
+    returnCondition: {
+      type: String,
+      enum: ["Good", "Damaged", "Scrap"],
     },
 
-    calculatedRent: { type: Number, default: 0 },
-
-    // -----------------------------
-    // Return Details
-    // -----------------------------
-    returnDate: Date,
-
-    returnReceivedByBU: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "BusinessUnit",
-      // Normally same as issuedByBU
-    },
-
-    returnReceivedByUser: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+    rentPerDay: Number,
+    totalRent: Number,
 
     status: {
       type: String,
-      enum: ["Issued", "Returned", "Lost", "Damaged"],
-      default: "Issued",
+      enum: ["ISSUED", "RETURNED", "OVERDUE", "LOST"],
+      default: "ISSUED",
     },
-
-    // -----------------------------
-    // Damage / Loss Reporting
-    // -----------------------------
-    damageReport: {
-      isDamaged: { type: Boolean, default: false },
-      damageDescription: String,
-      damageCost: Number,
-    },
-
-    lossReport: {
-      isLost: { type: Boolean, default: false },
-      lossCost: Number,
-    },
-
-    // -----------------------------
-    // Accounting Integration
-    // -----------------------------
-    ledgerEntryId: {
+    receivedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Ledger",
+      ref: "User",
     },
-
-    // -----------------------------
-    // Notes
-    // -----------------------------
     remarks: String,
   },
-  { timestamps: true }
+  { timestamps: true },
+);
+/* 🔧 RENT CALCULATION */
+assetIssueSchema.pre("save", function () {
+  if (this.actualReturnDate && this.issueDate && this.rentPerDay) {
+    const days =
+      (this.actualReturnDate - this.issueDate) / (1000 * 60 * 60 * 24);
+
+    this.totalRent = Math.max(1, Math.ceil(days)) * this.rentPerDay;
+  }
+});
+assetIssueSchema.virtual("overdueDays").get(function () {
+  if (this.status === "Overdue" && this.expectedReturnDate) {
+    const today = new Date();
+    const diff = (today - this.expectedReturnDate) / (1000 * 60 * 60 * 24);
+
+    return Math.floor(diff);
+  }
+  return 0;
+});
+
+const assetMaintenanceSchema = new mongoose.Schema(
+  {
+    assetId: { type: mongoose.Schema.Types.ObjectId, ref: "Asset" },
+
+    maintenanceType: {
+      type: String,
+      enum: ["REPAIR", "SERVICE", "INSPECTION"],
+    },
+
+    cost: Number,
+
+    description: String,
+
+    nextDueDate: Date,
+
+    status: {
+      type: String,
+      enum: ["PENDING", "COMPLETED"],
+      default: "COMPLETED",
+    },
+  },
+  { timestamps: true },
 );
 
-const Assets = mongoose.model("Asstes", assetSchema);
+const Asset = mongoose.model("Asset", assetSchema);
+const AssetMaintenance = mongoose.model(
+  "AssetMaintenance",
+  assetMaintenanceSchema,
+);
 const AssetIssue = mongoose.model("AssetIssue", assetIssueSchema);
-module.exports = { Assets, AssetIssue };
+module.exports = {
+  Asset,
+  AssetIssue,
+  AssetMaintenance,
+};

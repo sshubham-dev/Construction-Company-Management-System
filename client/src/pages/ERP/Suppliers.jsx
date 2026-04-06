@@ -88,7 +88,7 @@ const Suppliers = () => {
                                         <p className="text-gray-500 text-sm tracking-wide"> {supplier.whatsapp} </p>
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        {supplier.gst}
+                                        {supplier.gstNo}
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         {/* <button onClick={() => handleRedirect(supplier._id)} className="mr-2">

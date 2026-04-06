@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import CreateLedger from "../../components/CreateLedger";
 import Modal from "../../components/Modal";
-
+import { useSelector } from "react-redux";
 
 const LedgerList = () => {
   const [ledgers, setLedgers] = useState([]);
@@ -11,9 +11,11 @@ const LedgerList = () => {
   const [selectedLedger, setSelectedLedger] = useState(null);
   const [editLedger, setEditLedger] = useState(null);
   const [showForm, setShowForm] = useState(false);
+    const { user } = useSelector((state) => state.auth);
 
   const fetchLedgers = async () => {
-    const res = await axios.get("/api/v1/ledger");
+    const res = await axios.get("/api/v1/ledger",{ params: { companyId: user.companyId } });
+    console.log(res.data)
     setLedgers(res.data);
     setFiltered(res.data);
   };
@@ -25,11 +27,7 @@ const LedgerList = () => {
   const handleSearch = (e) => {
     const keyword = e.target.value.toLowerCase();
     setSearch(keyword);
-    setFiltered(
-      ledgers.filter((l) =>
-        l.name.toLowerCase().includes(keyword)
-      )
-    );
+    setFiltered(ledgers.filter((l) => l.name.toLowerCase().includes(keyword)));
   };
 
   return (
@@ -73,11 +71,9 @@ const LedgerList = () => {
             </div>
 
             <div className="text-sm space-y-1">
-              <p>Group: {ledger.under}</p>
+              <p>Group: {ledger.groupId?.name}</p>
               <p>Opening: ₹{ledger.openingBalance}</p>
-              <p className="font-medium">
-                Current: ₹{ledger.currentBalance}
-              </p>
+              <p className="font-medium">Current: ₹{ledger.currentBalance}</p>
 
               <div className="pt-2 text-xs">
                 <p className="text-green-700">
@@ -108,19 +104,50 @@ const LedgerList = () => {
             </h2>
 
             <div className="space-y-2 text-sm">
-              <p><strong>Alias:</strong> {selectedLedger.alias || "-"}</p>
-              <p><strong>Group:</strong> {selectedLedger.under}</p>
-              <p><strong>Opening Balance:</strong> ₹{selectedLedger.openingBalance}</p>
-              <p><strong>Current Balance:</strong> ₹{selectedLedger.currentBalance}</p>
+              <p>
+                <strong>Alias:</strong> {selectedLedger.alias || "-"}
+              </p>
+              <p>
+                <strong>Group:</strong> {selectedLedger.groupId?.name || "-"}
+              </p>
+              <p>
+                <strong>Company:</strong> {selectedLedger.companyId?.name || "-"}
+              </p>
+              <p>
+                <strong>Opening Balance:</strong> ₹
+                {selectedLedger.openingBalance}
+              </p>
+              <p>
+                <strong>Current Balance:</strong> ₹
+                {selectedLedger.currentBalance}
+              </p>
 
-              <p><strong>Receivable:</strong> ₹{selectedLedger.summary?.receivable || 0}</p>
-              <p><strong>Payable:</strong> ₹{selectedLedger.summary?.payable || 0}</p>
+              <p>
+                <strong>Receivable:</strong> ₹
+                {selectedLedger.summary?.receivable || 0}
+              </p>
+              <p>
+                <strong>Payable:</strong> ₹
+                {selectedLedger.summary?.payable || 0}
+              </p>
 
-              <p><strong>PAN:</strong> {selectedLedger.taxRegistrationDetails?.panNo || "-"}</p>
-              <p><strong>GST:</strong> {selectedLedger.taxRegistrationDetails?.gstNo || "-"}</p>
+              <p>
+                <strong>PAN:</strong>{" "}
+                {selectedLedger.taxRegistrationDetails?.panNo || "-"}
+              </p>
+              <p>
+                <strong>GST:</strong>{" "}
+                {selectedLedger.taxRegistrationDetails?.gstNo || "-"}
+              </p>
 
-              <p><strong>Address:</strong> {selectedLedger.mailingDetails?.address || "-"}</p>
-              <p><strong>Bank:</strong> {selectedLedger.bankingDetails?.bankName || "-"}</p>
+              <p>
+                <strong>Address:</strong>{" "}
+                {selectedLedger.mailingDetails?.address || "-"}
+              </p>
+              <p>
+                <strong>Bank:</strong>{" "}
+                {selectedLedger.bankingDetails?.bankName || "-"}
+              </p>
             </div>
           </div>
         </div>
@@ -162,4 +189,3 @@ const LedgerList = () => {
 };
 
 export default LedgerList;
-

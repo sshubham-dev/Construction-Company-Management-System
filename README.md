@@ -98,5 +98,5 @@ For feedback or support, reach out to us at shubhamkrg1819@gmail.com.
 Developed and maintained by [@sshubham-dev](https://github.com/sshubham-dev).
 
 ---
-
+## MONGO_URI=mongodb+srv://shubham:Sshubham1919@bhuvi-manager.bcutehz.mongodb.net/Management?retryWrites=true&w=majority&appName=Bhuvi-Manager
 

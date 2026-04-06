@@ -1,41 +1,12 @@
+const mongoose = require("mongoose");
+
 const Ledger = require("../models/ledger.models");
 const SalesInvoice = require("../models/salesinvoice.models");
 const Site = require("../models/site.models");
 const { Stock } = require("../models/stock.models");
 const { Store } = require("../models/store.models");
 
-const applySalesInvoiceToLedgers = async (invoice, mode = "add") => {
-  const multiplier = mode === "add" ? 1 : -1;
 
-  const siteLedger = await Ledger.findOne({
-    referenceType: "Site",
-    referenceId: invoice.site.id,
-  });
-
-  if (!siteLedger) {
-    throw new Error("Site ledger not found");
-  }
-
-  // Debit Site (Receivable)
-  siteLedger.currentBalance += multiplier * invoice.netAmount;
-  await siteLedger.save();
-
-  // Credit Sales Account
-  const salesLedger = await Ledger.findOne({ name: "Sales Account" });
-  if (salesLedger) {
-    salesLedger.currentBalance -= multiplier * invoice.grossAmount;
-    await salesLedger.save();
-  }
-
-  // Credit Output GST
-  if (invoice.gstAmount > 0) {
-    const gstLedger = await Ledger.findOne({ name: "Output GST" });
-    if (gstLedger) {
-      gstLedger.currentBalance -= multiplier * invoice.gstAmount;
-      await gstLedger.save();
-    }
-  }
-};
 
 const createSalesInvoice = async (req, res) => {
   try {
@@ -52,227 +23,288 @@ const createSalesInvoice = async (req, res) => {
   }
 };
 
-const postSalesInvoice = async (req, res) => {
-  try {
-    const invoice = await SalesInvoice.findById(req.params.id);
-    if (!invoice) {
-      return res.status(404).json({ error: "Sales Invoice not found" });
-    }
 
-    if (invoice.status !== "Draft") {
-      return res.status(400).json({
-        error: "Only Draft invoice can be posted",
-      });
-    }
-
-    await applySalesInvoiceToLedgers(invoice, "add");
-    invoice.status = "Posted";
-    await invoice.save();
-
-    res.json({
-      message: "Sales invoice posted successfully",
-      invoice,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const cancelSalesInvoice = async (req, res) => {
-  try {
-    const invoice = await SalesInvoice.findById(req.params.id);
-    if (!invoice) {
-      return res.status(404).json({ error: "Sales Invoice not found" });
-    }
-
-    if (invoice.status !== "Posted") {
-      return res.status(400).json({
-        error: "Only Posted invoice can be cancelled",
-      });
-    }
-
-    await applySalesInvoiceToLedgers(invoice, "subtract");
-
-    invoice.status = "Cancelled";
-    await invoice.save();
-
-    res.json({
-      message: "Sales invoice cancelled",
-      invoice,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const getSalesInvoices = async (req, res) => {
-  try {
-    const invoices = await SalesInvoice.find().sort({ createdAt: -1 });
-    if(invoices.length === 0){
-      return res.status(404).json({ error: "No Sales Invoices found" });
-    }
-    res.json(invoices);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-// GET /api/v1/sales-invoice/site/:siteId/returnable
-const getReturnableSalesInvoices = async (req, res) => {
-  const { siteId } = req.params;
-
-  const invoices = await SalesInvoice.find({
-    "site.id": siteId,
-    status: "Posted",
-  })
-    .select("invoiceNo items")
-    .sort({ createdAt: -1 });
-
-  res.json(invoices);
-};
-
-const getSalesInvoiceById = async (req, res) => {
-  try {
-    const invoice = await SalesInvoice.findById(req.params.id);
-    if (!invoice) {
-      return res.status(404).json({ error: "Sales Invoice not found" });
-    }
-    res.json(invoice);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
+/* =====================================
+   GENERATE INVOICE NUMBER
+===================================== */
 const generateSalesInvoiceNo = async () => {
   const year = new Date().getFullYear();
 
-  // Find last invoice of current year
-  const lastInvoice = await SalesInvoice.findOne({
+  const last = await SalesInvoice.findOne({
     salesInvoiceNo: new RegExp(`^SI-${year}-`),
   })
     .sort({ createdAt: -1 })
     .select("salesInvoiceNo")
     .lean();
 
-  let nextNumber = 1;
+  let next = 1;
 
-  if (lastInvoice?.salesInvoiceNo) {
-    const lastSeq = parseInt(lastInvoice.salesInvoiceNo.split("-").pop(), 10);
-
-    if (!isNaN(lastSeq)) {
-      nextNumber = lastSeq + 1;
-    }
+  if (last?.salesInvoiceNo) {
+    const lastSeq = parseInt(last.salesInvoiceNo.split("-").pop(), 10);
+    if (!isNaN(lastSeq)) next = lastSeq + 1;
   }
 
-  return `SI-${year}-${String(nextNumber).padStart(6, "0")}`;
+  return `SI-${year}-${String(next).padStart(6, "0")}`;
 };
 
-const createSalesInvoiceFromDN = async (deliveryNote, userId) => {
-  // 1. Prevent duplicate invoice
-  const existing = await SalesInvoice.findOne({
-    deliveryNoteId: deliveryNote._id,
-  });
-  if (existing) return existing;
+/* =====================================
+   LEDGER ENGINE
+===================================== */
+const applySalesInvoiceToLedgers = async (
+  invoice,
+  session,
+  mode = "add"
+) => {
+  const multiplier = mode === "add" ? 1 : -1;
 
-  /* ======================
-     FETCH LEDGERS
-  ====================== */
-  const site = await Site.findById(deliveryNote.site.id);
-  const store = await Store.findById(deliveryNote.store.id);
+  const siteLedger = await Ledger.findById(
+    invoice.siteLedgerId
+  ).session(session);
 
-  if (!site?.ledger || !store?.ledgerId) {
-    throw new Error("Ledger not configured for site or store");
+  if (!siteLedger) throw new Error("Site ledger not found");
+
+  // Debit Site (Receivable)
+  siteLedger.currentBalance += multiplier * invoice.netAmount;
+  await siteLedger.save({ session });
+
+  // Credit Sales
+  const salesLedger = await Ledger.findOne({
+    name: "Sales Account",
+  }).session(session);
+
+  if (salesLedger) {
+    salesLedger.currentBalance -= multiplier * invoice.grossAmount;
+    await salesLedger.save({ session });
   }
 
-  /* ======================
-     BUILD ITEMS
-  ====================== */
-  const items = [];
+  // Output GST
+  if (invoice.gstAmount > 0) {
+    const gstLedger = await Ledger.findOne({
+      name: "Output GST",
+    }).session(session);
+
+    if (gstLedger) {
+      gstLedger.currentBalance -= multiplier * invoice.gstAmount;
+      await gstLedger.save({ session });
+    }
+  }
+};
+
+/* =====================================
+   CREATE FROM DN (STRICT)
+===================================== */
+const createSalesInvoiceFromDN = async (
+  deliveryNote,
+  userId,
+  session
+) => {
+  const existing = await SalesInvoice.findOne({
+    deliveryNoteId: deliveryNote._id,
+  }).session(session);
+
+  if (existing) return existing;
+
+  const site = await Site.findById(deliveryNote.site.id).session(session);
+  const store = await Store.findById(deliveryNote.store.id).session(session);
+
+  if (!site?.ledger || !store?.ledgerId) {
+    throw new Error("Ledger not configured");
+  }
+
+  const stockIds = deliveryNote.items.map(i => i.itemId);
+
+  const stocks = await Stock.find({
+    _id: { $in: stockIds },
+  }).lean();
+
+  const stockMap = new Map(
+    stocks.map(s => [s._id.toString(), s])
+  );
+
   let grossAmount = 0;
   let gstAmount = 0;
+  const items = [];
 
   for (const dnItem of deliveryNote.items) {
     if (dnItem.acceptedQty <= 0) continue;
 
-    // Fetch stock for rate & GST
-    const stock = await Stock.findById(dnItem.itemId);
-    if (!stock) {
-      throw new Error(`Stock not found for ${dnItem.item}`);
-    }
+    const stock = stockMap.get(dnItem.itemId.toString());
+    if (!stock) throw new Error("Stock not found");
 
-    const qty = Number(dnItem.acceptedQty);
-    const rate = Number(stock.salePrice || 0);
+    const qty = dnItem.acceptedQty;
+    const rate = stock.salePrice;
 
-    if (!rate || isNaN(rate)) {
-      throw new Error(`Rate not configured for ${dnItem.item}`);
-    }
+    if (!rate) throw new Error(`Rate missing for ${dnItem.item}`);
 
     const amount = qty * rate;
-    const gstRate = Number(stock.gstRate || 0);
-    const gst = (amount * gstRate) / 100;
-    const total = amount + gst;
+    const gst = (amount * (stock.gstRate || 0)) / 100;
 
     items.push({
       stockId: dnItem.itemId,
+      dnItemId: dnItem._id,
       item: dnItem.item,
       unit: dnItem.unit,
-      deliveredQty:qty,
+      deliveredQty: qty,
       rate,
       amount,
-      gstRate,
+      gstRate: stock.gstRate || 0,
       gstAmount: gst,
-      totalAmount: total,
+      totalAmount: amount + gst,
     });
 
     grossAmount += amount;
     gstAmount += gst;
   }
 
-  if (items.length === 0) {
-    throw new Error("No accepted items to invoice");
-  }
+  if (!items.length) throw new Error("No items to invoice");
 
   const netAmount = grossAmount + gstAmount;
 
-  /* ======================
-     CREATE INVOICE
-  ====================== */
-  const invoice = await SalesInvoice.create({
-    salesInvoiceNo: await generateSalesInvoiceNo(),
+  const invoice = await SalesInvoice.create(
+    [
+      {
+        salesInvoiceNo: await generateSalesInvoiceNo(),
 
-    deliveryNoteId: deliveryNote._id,
-    purchaseRequestId: deliveryNote.purchaseRequestId,
+        deliveryNoteId: deliveryNote._id,
+        purchaseRequestId: deliveryNote.purchaseRequestId,
 
-    site: deliveryNote.site,
-    store: deliveryNote.store,
+        site: deliveryNote.site,
+        store: deliveryNote.store,
 
-    siteLedgerId: site.ledger,
-    storeLedgerId: store.ledgerId,
+        siteLedgerId: site.ledger,
+        storeLedgerId: store.ledgerId,
 
-    items,
+        items,
 
-    grossAmount,
-    gstAmount,
-    netAmount,
-    totalPaid: 0,
-    totalDue: netAmount,
+        grossAmount,
+        gstAmount,
+        netAmount,
 
-    status: "Draft",
-    createdBy: userId,
-    source: "DeliveryNote",
-  });
+        totalPaid: 0,
+        totalDue: netAmount,
 
-  return invoice;
+        status: "Draft",
+        createdBy: userId,
+        source: "DeliveryNote",
+      },
+    ],
+    { session }
+  );
+
+  return invoice[0];
+};
+
+/* =====================================
+   POST INVOICE
+===================================== */
+const postSalesInvoice = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const invoice = await SalesInvoice.findById(
+      req.params.id
+    ).session(session);
+
+    if (!invoice) throw new Error("Invoice not found");
+
+    if (invoice.status !== "Draft") {
+      throw new Error("Only Draft invoice can be posted");
+    }
+
+    await applySalesInvoiceToLedgers(invoice, session, "add");
+
+    invoice.status = "Posted";
+    invoice.postedAt = new Date();
+
+    await invoice.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({
+      message: "Sales invoice posted successfully",
+      invoice,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/* =====================================
+   CANCEL INVOICE
+===================================== */
+const cancelSalesInvoice = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const invoice = await SalesInvoice.findById(
+      req.params.id
+    ).session(session);
+
+    if (!invoice) throw new Error("Invoice not found");
+
+    if (invoice.status !== "Posted") {
+      throw new Error("Only Posted invoice can cancel");
+    }
+
+    await applySalesInvoiceToLedgers(invoice, session, "subtract");
+
+    invoice.status = "Cancelled";
+
+    await invoice.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({
+      message: "Sales invoice cancelled",
+      invoice,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/* =====================================
+   GET
+===================================== */
+const getSalesInvoices = async (req, res) => {
+  const invoices = await SalesInvoice.find().sort({ createdAt: -1 });
+  res.json(invoices);
+};
+
+const getSalesInvoiceById = async (req, res) => {
+  const invoice = await SalesInvoice.findById(req.params.id);
+  if (!invoice) return res.status(404).json({ error: "Not found" });
+  res.json(invoice);
+};
+
+/* =====================================
+   RETURNABLE
+===================================== */
+const getReturnableSalesInvoices = async (req, res) => {
+  const invoices = await SalesInvoice.find({
+    "site.id": req.params.siteId,
+    status: "Posted",
+  }).select("salesInvoiceNo items");
+
+  res.json(invoices);
 };
 
 module.exports = {
-  createSalesInvoice,
+  createSalesInvoiceFromDN,
   postSalesInvoice,
   cancelSalesInvoice,
   getSalesInvoices,
   getSalesInvoiceById,
-  createSalesInvoiceFromDN,
   getReturnableSalesInvoices,
+  createSalesInvoice
 };

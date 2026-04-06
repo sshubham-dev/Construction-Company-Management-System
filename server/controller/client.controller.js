@@ -2,16 +2,17 @@ const Client = require("../models/client.models");
 const User = require("../models/user.models");
 const Site = require("../models/site.models");
 const { convertToUser } = require("./user.controller");
-const { addLedger } = require("./ledger.controller");
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
-
+const {
+  sendPushNotification,
+  notifyRole,
+} = require("../utils/pushNotification.js");
 
 const getClients = async (req, res) => {
   try {
     const clients = await Client.find()
-    .populate("site.id")
-    .sort({ name: 1 })
-    .exec();
+      .populate("site.id")
+      .sort({ name: 1 })
+      .exec();
     if (!clients || clients.length === 0)
       return res.status(404).json({ message: "Clients Not Found" });
     res.status(200).json(clients);
@@ -35,7 +36,9 @@ const getClient = async (req, res) => {
 
 const createClient = async (req, res) => {
   try {
-    const { name, email, gstNo, phone, whatsapp, address, isUser, service } = req.body;
+    const { name, email, gstNo, phone, whatsapp, address, isUser, service } =
+      req.body;
+      const user = req.user; // Assuming req.user is populated by auth middleware
 
     const existingClient = await Client.findOne({ $or: [{ name }] });
     if (existingClient)
@@ -46,12 +49,13 @@ const createClient = async (req, res) => {
     const newClient = await Client({
       name,
       email,
+      companyId: user.companyId,
       gstNo,
       phone,
       whatsapp,
       address,
       isUser,
-      service
+      service,
     });
 
     const savedClient = await newClient.save();
@@ -61,6 +65,7 @@ const createClient = async (req, res) => {
     res.status(201).json({ message: "Client Created Successfuly" });
     // const isGSTApplicable = gstNo !== "" ? true : false;
     // addLedger(savedClient, "Sundry Debtor", isGSTApplicable, false, "client");
+
     if (savedClient.isUser === true) {
       const password = `${name}@${phone}`;
       await convertToUser(savedClient._id, "Client", password);
@@ -111,24 +116,28 @@ const convertToClient = async (req, res) => {
 const updateClient = async (req, res) => {
   try {
     const id = req.params.id;
-    const { name, email, gstNo, phone, whatsapp, address, isUser } = req.body;
+    const { name, email, gstNo, phone, whatsapp, address, isUser, service } =
+      req.body;
+      const user = req.user; // Assuming req.user is populated by auth middleware
     const existingClient = await Client.findById(id);
     if (!existingClient)
       return res.status(404).json({ message: "Client not found" });
 
-    (existingClient.name = name || existingClient?.name),
+    ((existingClient.name = name || existingClient?.name),
       (existingClient.email = email || existingClient?.email),
       (existingClient.gstNo = gstNo || existingClient?.gstNo),
       (existingClient.phone = phone || existingClient?.phone),
       (existingClient.whatsapp = whatsapp || existingClient?.whatsapp),
       (existingClient.address = address || existingClient?.address),
       (existingClient.isUser = isUser || existingClient?.isUser),
-      await existingClient.save();
+      (existingClient.service = service || existingClient?.service),
+      (existingClient.companyId = user.companyId || existingClient?.companyId),
+      await existingClient.save());
     res.json({ message: "Client updated successfully" });
     if (existingClient.isUser === true) {
       const password = `${name}@${phone}`;
       await convertToUser(existingClient._id, "Client", password);
-      console.log('created user for client')
+      console.log("created user for client");
     }
   } catch (error) {
     console.log(error);
@@ -140,7 +149,7 @@ const deleteClient = async (req, res) => {
   try {
     const id = req.params.id;
 
-    const deletedClient = await Client.findOneAndDelete(id);
+    const deletedClient = await Client.findByIdAndDelete(id);
 
     if (!deletedClient)
       return res.status(404).json({ message: "Client not found" });

@@ -1,239 +1,161 @@
-import React, { useEffect, useState } from "react";
-import toast, { Toaster } from "react-hot-toast";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchNotifications } from "../features/notification/notificationSlice";
-import Select from "react-select";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import CreatableSelect from "react-select/creatable";
-import CreateStock from "./CreateStock";
-import Modal from "./Modal";
-import moment from "moment";
+import Select from "react-select";
+import { toast, Toaster } from "react-hot-toast";
 
-const CreatePurchaseRequest = ({ onClose, id, index }) => {
-  const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+const CreatePurchaseRequest = ({ onClose, editId }) => {
+  const isEdit = Boolean(editId);
 
-  const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const [sites, setSites] = useState([]);
   const [stores, setStores] = useState([]);
-  const [categories, setCategory] = useState([]);
-  const [materials, setMaterial] = useState([]);
-  const [orderFor, setOrderFor] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [stocks, setStocks] = useState([]);
 
-  const [createModal, setCreateModal] = useState(false);
-  const [item, setItem] = useState(null);
-
-  const units = [
-    "SQFT",
-    "RFT",
-    "LUMSUM",
-    "NOS",
-    "FIXED",
-    "RMT",
-    "SQMT",
-    "CUM",
-    "BAG",
-    "KG",
-    "TONES",
-    "LITERS",
-  ];
-
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     site: "",
     store: "",
+    category: "",
     reqDate: "",
     requirementFor: "",
-    category: "",
-    items: [
-      {
-        itemId: "",
-        item: "",
-        unit: "",
-        requestedQty: 0,
-      },
-    ],
+    remarks: "",
+    items: [],
   });
-
-  const [purchaseReqToEdit, setPurchaseReqToEdit] = useState(null);
 
   /* =========================
      LOAD MASTER DATA
   ========================== */
   useEffect(() => {
-    const loadMasters = async () => {
-      try {
-        const [storeRes, categoryRes] = await Promise.all([
-          axios.get("/api/v1/store"),
-          axios.get("/api/v1/stock-group"),
-        ]);
-
-        setStores(storeRes.data);
-        setCategory(categoryRes.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
     loadMasters();
-  }, []);
-  useEffect(() => {
-    if (user && user?.department === "Site Incharge") {
-      console.log(user._id);
-      getUserSites(user._id);
-    } else if (user && user?.department === "Site Supervisor") {
-      console.log(user);
-      getUserSites(user._id);
-    } else if (user && user?.department === "Client") {
-      console.log(user);
-      getUserSites(user._id);
-    } else {
-      const getSites = async () => {
-        try {
-          const siteData = await axios.get("/api/v1/site");
-          setSites(siteData.data);
-          console.log(siteData.data);
-        } catch (error) {
-          console.error(error);
-          setError(error.message);
-        }
-      };
-      getSites();
-    }
-    const fetchCategory = async () => {
-      try {
-        const response = await axios.get("/api/v1/stock-group");
-        setCategory(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchCategory();
-  }, [user]);
+    if (isEdit) loadPR();
+  }, [editId]);
 
-  const getUserSites = async (id) => {
+  const loadMasters = async () => {
     try {
-      const siteData = await axios.get(`/api/v1/site/user/${id}`);
-      console.log(siteData.data);
-      setSites(siteData.data);
-    } catch (error) {
-      console.error(error);
-      setError(error.message);
+      const [siteRes, storeRes, catRes, stockRes] = await Promise.all([
+        axios.get("/api/v1/site"),
+        axios.get("/api/v1/store"),
+        axios.get("/api/v1/stock-group"),
+        axios.get("/api/v1/stock"),
+      ]);
+
+      setSites(siteRes.data);
+      setStores(storeRes.data);
+      setCategories(catRes.data);
+      setStocks(stockRes.data);
+    } catch {
+      toast.error("Failed to load data");
     }
   };
-  /* =========================
-     EDIT MODE LOAD
-  ========================== */
-  useEffect(() => {
-    if (!id) return;
-
-    setPurchaseReqToEdit(id);
-
-    const fetchPR = async () => {
-      try {
-        const res = await axios.get(`/api/v1/purchase-request/${id}`);
-
-        setFormData({
-          site: res.data.site?.id._id || "",
-          store: res.data.store?.id || "",
-          reqDate: res.data.reqDate || "",
-          requirementFor: res.data.requirementFor || "",
-          category: res.data.category || "",
-          items: res.data.items || [],
-        });
-
-        fetchMaterial(res.data.category);
-      } catch (err) {
-        toast.error(err.message);
-      }
-    };
-
-    fetchPR();
-  }, [id]);
 
   /* =========================
-     FETCH MATERIALS
+     LOAD EDIT DATA
   ========================== */
-  useEffect(() => {
-    if (formData.category) {
-      fetchMaterial(formData.category);
-    }
-  }, [formData.category]);
-
-  const fetchMaterial = async (categoryName) => {
+  const loadPR = async () => {
     try {
-      const res = await axios.get("/api/v1/stock");
-      setMaterial(res.data.filter((i) => i.category === categoryName));
-    } catch (err) {
-      console.error(err);
+      const { data } = await axios.get(`/api/v1/purchase-request/${editId}`);
+
+      setForm({
+        site: data.site?._id || data.site,
+        store: data.store?._id || data.store,
+        category: data.category || "",
+        reqDate: data.reqDate?.split("T")[0] || "",
+        requirementFor: data.requirementFor || "",
+        remarks: data.remarks || "",
+        items: data.items.map((i) => ({
+          itemId: i.itemId._id || i.itemId,
+          name: i.itemId.name || "",
+          unit: i.unit,
+          requestedQty: i.requestedQty,
+        })),
+      });
+    } catch {
+      toast.error("Failed to load PR");
     }
   };
 
   /* =========================
-     HANDLERS
+     FILTER STOCK
   ========================== */
-  const handleChange = (name, value) => {
-    setFormData((p) => ({ ...p, [name]: value }));
-  };
+  const filteredStocks = form.category
+    ? stocks.filter((s) => s.category === form.category)
+    : stocks;
 
-  const handleRequirementChange = (field, value) => {
-    setFormData((prev) => {
-      const updated = [...prev.items];
+  /* =========================
+     ITEM HANDLING
+  ========================== */
 
-      if (field === "item") {
-        updated[step - 1].itemId = value.value;
-        updated[step - 1].item = value.label;
-      } else if (field === "item-new") {
-        updated[step - 1].itemId = null;
-        updated[step - 1].item = value;
-        setCreateModal(true);
-        setItem({ name: value });
-      } else {
-        updated[step - 1][field] = value;
-      }
-
-      return { ...prev, items: updated };
-    });
-  };
-
-  const handleNext = () => {
-    setFormData((prev) => ({
-      ...prev,
-      items: [
-        ...prev.items,
-        { itemId: "", item: "", unit: "", requestedQty: 0 },
-      ],
+  const addItem = () => {
+    setForm((p) => ({
+      ...p,
+      items: [...p.items, { itemId: "", name: "", unit: "", requestedQty: 0 }],
     }));
-    setStep(step + 1);
   };
 
-  const handlePrevious = () => {
-    if (step > 0) setStep(step - 1);
+  const removeItem = (index) => {
+    const updated = [...form.items];
+    updated.splice(index, 1);
+    setForm({ ...form, items: updated });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const updateItem = (index, field, value) => {
+    const updated = [...form.items];
+    updated[index][field] = value;
+    setForm({ ...form, items: updated });
+  };
+
+  const handleItemSelect = (index, selected) => {
+    const stock = stocks.find((s) => s._id === selected.value);
+
+    // prevent duplicate
+    const exists = form.items.find((i) => i.itemId === stock._id);
+    if (exists) {
+      return toast.error("Item already added");
+    }
+
+    updateItem(index, "itemId", stock._id);
+    updateItem(index, "name", stock.name);
+    updateItem(index, "unit", stock.unit);
+  };
+
+  /* =========================
+     SUBMIT
+  ========================== */
+
+  const handleSubmit = async (submit = false) => {
+    if (!form.site) return toast.error("Site required");
+    if (!form.store) return toast.error("Store required");
+    if (!form.items.length) return toast.error("Add items");
+
+    const payload = {
+      site: form.site,
+      store: form.store,
+      category: form.category,
+      reqDate: form.reqDate,
+      requirementFor: form.requirementFor,
+      remarks: form.remarks,
+      items: form.items.map((i) => ({
+        itemId: i.itemId,
+        requestedQty: Number(i.requestedQty),
+      })),
+    };
 
     try {
-      if (purchaseReqToEdit) {
-        const res = await axios.put(
-          `/api/v1/purchase-request/${purchaseReqToEdit}`,
-          formData
-        );
-        toast.success(res.data.message);
+      setLoading(true);
+
+      if (isEdit) {
+        await axios.put(`/api/v1/purchase-request/${editId}`, payload);
+        toast.success("PR updated");
       } else {
-        const res = await axios.post("/api/v1/purchase-request", formData);
-        toast.success(res.data.message);
+        const res = await axios.post("/api/v1/purchase-request", payload);
+
+        toast.success(submit ? "PR submitted" : "PR saved");
       }
 
-      dispatch(fetchNotifications(user._id));
       onClose();
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to save purchase request");
+      toast.error(err.response?.data?.error || "Error");
     } finally {
       setLoading(false);
     }
@@ -242,149 +164,142 @@ const CreatePurchaseRequest = ({ onClose, id, index }) => {
   /* =========================
      UI
   ========================== */
+
   return (
-    <div>
-      <form className="max-w-xl mx-auto" onSubmit={handleSubmit}>
-        {step === 0 && (
-          <>
-            {/* SITE */}
-            <div className="mb-4">
-              <label className="block text-sm font-semibold">Site</label>
-              <select
-                value={formData.site}
-                onChange={(e) => handleChange("site", e.target.value)}
-                className="border p-2 w-full"
-              >
-                <option value="">Select Site</option>
-                {sites.map((s) => (
-                  <option key={s._id} value={s._id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+    <div className="mx-auto space-y-4">
 
-            {/* STORE */}
-            <div className="mb-4">
-              <label className="block text-sm font-semibold">
-                Store (Optional)
-              </label>
-              <select
-                value={formData.store}
-                onChange={(e) => handleChange("store", e.target.value)}
-                className="border p-2 w-full"
-              >
-                <option value="">Select Store</option>
-                {stores.map((s) => (
-                  <option key={s._id} value={s._id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            {/* DATE */}
-            <div className="mb-4">
-              <label className="block text-sm font-semibold">
-                Required Date
-              </label>
+      {/* HEADER */}
+      <Select
+        placeholder="Select Site"
+        value={sites.find((s) => s._id === form.site) && {
+          value: form.site,
+          label: sites.find((s) => s._id === form.site)?.name,
+        }}
+        onChange={(v) => setForm({ ...form, site: v.value })}
+        options={sites.map((s) => ({ value: s._id, label: s.name }))}
+      />
+
+      <Select
+        placeholder="Select Store"
+        value={stores.find((s) => s._id === form.store) && {
+          value: form.store,
+          label: stores.find((s) => s._id === form.store)?.name,
+        }}
+        onChange={(v) => setForm({ ...form, store: v.value })}
+        options={stores.map((s) => ({ value: s._id, label: s.name }))}
+      />
+
+      <Select
+        placeholder="Category"
+        value={form.category ? { value: form.category, label: form.category } : null}
+        onChange={(v) =>
+          setForm({ ...form, category: v.value, items: [] })
+        }
+        options={categories.map((c) => ({
+          value: c.name,
+          label: c.name,
+        }))}
+      />
+
+      <input
+        type="date"
+        value={form.reqDate}
+        onChange={(e) => setForm({ ...form, reqDate: e.target.value })}
+        className="border p-2 w-full rounded"
+      />
+
+      <input
+        placeholder="Requirement For"
+        value={form.requirementFor}
+        onChange={(e) =>
+          setForm({ ...form, requirementFor: e.target.value })
+        }
+        className="border p-2 w-full rounded"
+      />
+
+      {/* ITEMS */}
+      <div className="space-y-2">
+        <button
+          onClick={addItem}
+          className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+        >
+          + Add Item
+        </button>
+
+        {form.items.map((item, i) => (
+          <div key={i} className="border p-3 rounded space-y-2 bg-white">
+
+            <Select
+              placeholder="Select Item"
+              value={
+                item.itemId
+                  ? { value: item.itemId, label: item.name }
+                  : null
+              }
+              onChange={(v) => handleItemSelect(i, v)}
+              options={filteredStocks.map((s) => ({
+                value: s._id,
+                label: s.name,
+              }))}
+            />
+
+            <div className="grid grid-cols-2 gap-2">
               <input
-                type="date"
-                value={formData.reqDate}
-                onChange={(e) => handleChange("reqDate", e.target.value)}
-                className="border p-2 w-full"
+                type="number"
+                placeholder="Qty"
+                value={item.requestedQty}
+                onChange={(e) =>
+                  updateItem(i, "requestedQty", e.target.value)
+                }
+                className="border p-2 rounded"
+              />
+
+              <input
+                value={item.unit}
+                readOnly
+                className="border p-2 bg-gray-100 rounded"
               />
             </div>
 
-            {/* CATEGORY */}
-            <div className="mb-4">
-              <label className="block text-sm font-semibold">
-                Material Category
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => handleChange("category", e.target.value)}
-                className="border p-2 w-full"
-              >
-                <option value="">Select Category</option>
-                {categories.map((c) => (
-                  <option key={c._id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="bg-blue-600 text-white px-4 py-2 rounded"
+              onClick={() => removeItem(i)}
+              className="text-red-600 text-xs"
             >
-              Add Items
+              Remove
             </button>
-          </>
+          </div>
+        ))}
+      </div>
+
+      {/* REMARKS */}
+      <textarea
+        placeholder="Remarks"
+        value={form.remarks}
+        onChange={(e) => setForm({ ...form, remarks: e.target.value })}
+        className="border p-2 w-full rounded"
+      />
+
+      {/* ACTIONS */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => handleSubmit(false)}
+          className="flex-1 bg-gray-600 text-white py-2 rounded"
+          disabled={loading}
+        >
+          Save Draft
+        </button>
+
+        {!isEdit && (
+          <button
+            onClick={() => handleSubmit()}
+            className="flex-1 bg-green-600 text-white py-2 rounded"
+            disabled={loading}
+          >
+            Submit PR
+          </button>
         )}
-
-        {step > 0 && (
-          <>
-            <CreatableSelect
-              value={{
-                value: formData.items[step - 1]?.itemId,
-                label: formData.items[step - 1]?.item,
-              }}
-              onChange={(v) => handleRequirementChange("item", v)}
-              onCreateOption={(v) => handleRequirementChange("item-new", v)}
-              options={materials.map((m) => ({ value: m._id, label: m.name }))}
-            />
-
-            <input
-              type="number"
-              className="border p-2 w-full mt-2"
-              placeholder="Quantity"
-              value={formData.items[step - 1]?.requestedQty}
-              onChange={(e) =>
-                handleRequirementChange("requestedQty", e.target.value)
-              }
-            />
-
-            <select
-              className="border p-2 w-full mt-2"
-              value={formData.items[step - 1]?.unit}
-              onChange={(e) => handleRequirementChange("unit", e.target.value)}
-            >
-              <option value="">Select Unit</option>
-              {units.map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
-            </select>
-
-            <div className="flex justify-between mt-4">
-              <button type="button" onClick={handlePrevious} className="btn">
-                Previous
-              </button>
-              <button type="button" onClick={handleNext} className="btn">
-                Next
-              </button>
-            </div>
-
-            <div className="flex justify-end mt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-green-600 text-white px-4 py-2 rounded"
-              >
-                {loading ? "Saving..." : "Submit"}
-              </button>
-            </div>
-          </>
-        )}
-      </form>
-
-      <Modal isOpen={createModal} onClose={() => setCreateModal(false)}>
-        <CreateStock onClose={() => setCreateModal(false)} item={item} />
-      </Modal>
+      </div>
 
       <Toaster position="top-right" />
     </div>

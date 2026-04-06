@@ -1,22 +1,22 @@
 import React, { Suspense } from 'react';
-import Header from '../../components/Header';
+import Header from '../../../components/Header';
 import toast, { Toaster } from 'react-hot-toast';
-const AreaChart = React.lazy(() => import('../../components/Graph/AreaChart'));
-const BubbleChart = React.lazy(() => import('../../components/Graph/BubbleChart'));
-const DoughnutChart = React.lazy(() => import('../../components/Graph/DoughnutChart'));
-const EventChart = React.lazy(() => import('../../components/Graph/EventChart'));
-const GradientChart = React.lazy(() => import('../../components/Graph/GradientChart'));
-const GroupedBarChart = React.lazy(() => import('../../components/Graph/GroupedBarChart'));
-const HBarChart = React.lazy(() => import('../../components/Graph/HBarChart'));
-const LineChart = React.lazy(() => import('../../components/Graph/LineChart'));
-const MultiAxisLineChart = React.lazy(() => import('../../components/Graph/MultiAxisLineChart'));
-const MultiTypeChart = React.lazy(() => import('../../components/Graph/MultiTypeChart'));
-const PieChart = React.lazy(() => import('../../components/Graph/PieChart'));
-const PolarAreaChart = React.lazy(() => import('../../components/Graph/PolarAreaChart'));
-const RadarChart = React.lazy(() => import('../../components/Graph/RadarChart'));
-const ScatterChart = React.lazy(() => import('../../components/Graph/ScatterChart'));
-const StackedBarChart = React.lazy(() => import('../../components/Graph/StackedBarChart'));
-const VBarChart = React.lazy(() => import('../../components/Graph/VBarChart'));
+const AreaChart = React.lazy(() => import('../../../components/Graph/AreaChart'));
+const BubbleChart = React.lazy(() => import('../../../components/Graph/BubbleChart'));
+const DoughnutChart = React.lazy(() => import('../../../components/Graph/DoughnutChart'));
+const EventChart = React.lazy(() => import('../../../components/Graph/EventChart'));
+const GradientChart = React.lazy(() => import('../../../components/Graph/GradientChart'));
+const GroupedBarChart = React.lazy(() => import('../../../components/Graph/GroupedBarChart'));
+const HBarChart = React.lazy(() => import('../../../components/Graph/HBarChart'));
+const LineChart = React.lazy(() => import('../../../components/Graph/LineChart'));
+const MultiAxisLineChart = React.lazy(() => import('../../../components/Graph/MultiAxisLineChart'));
+const MultiTypeChart = React.lazy(() => import('../../../components/Graph/MultiTypeChart'));
+const PieChart = React.lazy(() => import('../../../components/Graph/PieChart'));
+const PolarAreaChart = React.lazy(() => import('../../../components/Graph/PolarAreaChart'));
+const RadarChart = React.lazy(() => import('../../../components/Graph/RadarChart'));
+const ScatterChart = React.lazy(() => import('../../../components/Graph/ScatterChart'));
+const StackedBarChart = React.lazy(() => import('../../../components/Graph/StackedBarChart'));
+const VBarChart = React.lazy(() => import('../../../components/Graph/VBarChart'));
 
 
 const Ex = () => {

@@ -264,7 +264,7 @@ const quoteSchema = new mongoose.Schema(
 
 
 
-quoteSchema.pre("save", function (next) {
+quoteSchema.pre("save", function () {
   if (!this.name) {
     const clientName = this.lead?.name || "Client";
     const structureName = this.structure?.raw || "Structure";
@@ -290,7 +290,6 @@ quoteSchema.pre("save", function (next) {
   this.pdf.url = pdfFileName;
   this.pdf.lastGeneratedAt = new Date();
 
-  next();
 });
 
 const rateItemSchema = new mongoose.Schema({

@@ -1,266 +1,192 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
+import Select from "react-select";
+import { toast, Toaster } from "react-hot-toast";
 
-const CreateStock = ({ editId, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
+const CreateStock = ({ onClose, editId }) => {
+  const isEdit = Boolean(editId);
+  const [groups, setGroups] = useState([]);
+  const [form, setForm] = useState({
+    itemCode: "",
     name: "",
     category: "",
     unit: "",
-    purchasePrice: "",
-    mrp: "",
-    gstRate: 18,
-    // surchargeage: {
-    //   staffSalary: 0,
-    //   profit: 0,
-    //   expenses: 0,
-    //   investment: 0,
-    //   tax: 0,
-    // },
-  });
-  const [groups, setGroup] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [workUnits, setWorkUnits] = useState([]);
-  const isEdit = Boolean(editId);
+    itemType: "CONSUMABLE",
 
-  // Load Units + Groups
+    hsnCode: "",
+    gstRate: 0,
+
+    purchasePrice: 0,
+    mrp: 0,
+  });
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const unitRes = await axios.post("/api/v1/work-details/name", {
-          title: "Unit",
-        });
-        setWorkUnits(unitRes.data.description);
-      } catch (err) {
-        console.error("Error loading data:", err);
-      }
-    };
-    const fetchGroup = async () => {
-      try {
-        const response = await axios.get("/api/v1/stock-group");
-        setGroup(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchGroup();
-    loadData();
+    fetchGroups();
   }, []);
 
-  // Load existing stock (Edit Mode)
+  const fetchGroups = async () => {
+    const res = await axios.get("/api/v1/stock-group");
+    setGroups(res.data.map((g) => ({ value: g.name, label: g.name })));
+  };
+
   useEffect(() => {
-    if (!editId) return;
+    if (!isEdit) return;
 
     const loadStock = async () => {
-      try {
-        const { data } = await axios.get(`/api/v1/stock/${editId}`);
+      const res = await axios.get(`/api/v1/stock/${editId}`);
+      const data = res.data;
 
-        setFormData({
-          name: data.name || "",
-          category: data.category || "",
-          unit: data.unit || "",
-          purchasePrice: data.purchasePrice || "",
-          mrp: data.mrp || "",
-          gstRate: data.gstRate || 18,
-          // surchargeage: {
-          //   staffSalary:
-          //     data.surchargeage?.staffSalary || 0,
-          //   profit: data.surchargeage?.profit || 0,
-          //   expenses: data.surchargeage?.expenses || 0,
-          //   investment: data.surchargeage?.investment || 0,
-          //   tax: data.surchargeage?.tax || 0,
-          // },
-        });
-      } catch (err) {
-        console.error("Error loading stock:", err);
-      }
+      setForm({
+        ...form,
+        ...data,
+      });
     };
 
     loadStock();
   }, [editId]);
 
-  // Form field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    // Surcharge nested object
-    if (name.startsWith("surcharge_")) {
-      const key = name.replace("surcharge_", "");
-      setFormData((prev) => ({
-        ...prev,
-        surchargeage: {
-          ...prev.surchargeage,
-          [key]: Number(value),
-        },
-      }));
-      return;
-    }
-
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setForm((p) => ({ ...p, [name]: value }));
   };
 
-  // Submit form
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
+  const handleSubmit = async () => {
     try {
-      const payload = { ...formData };
+      if (!form.name) return toast.error("Item name required");
+      if (!form.category) return toast.error("Category required");
+      if (!form.unit) return toast.error("Unit required");
+
+      const payload = {
+        ...form,
+        gstRate: Number(form.gstRate) || 0,
+        purchasePrice: Number(form.purchasePrice) || 0,
+        mrp: Number(form.mrp) || 0,
+      };
+
+      console.log(payload)
 
       if (editId !== undefined) {
-        const response = await axios.put(`/api/v1/stock/${editId}`, payload);
-        console.log(response.data)
-        onSave(response.data);
-        setLoading(false);
-        onClose();
+        await axios.put(`/api/v1/stock/${editId}`, payload);
+        toast.success("Item updated");
       } else {
-        const response = await axios.post("/api/v1/stock", payload);
-        onSave(response.data);
-        setLoading(false);
-              onClose();
+        await axios.post("/api/v1/stock", payload);
+        toast.success("Item created");
       }
 
+      onClose();
     } catch (err) {
-      console.error("Error saving stock:", err);
-      setLoading(false);
+      toast.error(err.response?.data?.error || "Error saving item");
     }
   };
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name */}
-        <div>
-          <label className="block text-sm font-medium">Name</label>
-          <input
-            type="text"
-            name="name"
-            className="border rounded p-2 w-full"
-            value={formData.name}
-            onChange={handleChange}
-          />
-        </div>
+    <div className="mx-auto space-y-4">
 
-        {/* Category */}
-        <div>
-          <label className="block text-sm font-medium">Category</label>
-          <select
-            type="text"
-            id="category"
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            className="border rounded p-2 w-full"
-          >
-            <option value="">Stock Group</option>
-            {groups.map((group, index) => (
-              <option key={index} value={group.name}>
-                {group.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* BASIC INFO */}
+      <Section title="Basic Information">
+        <Input
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          placeholder="Item Name"
+        />
+        <Input
+          name="itemCode"
+          value={form.itemCode}
+          onChange={handleChange}
+          placeholder="Item Code"
+        />
+        <Input
+          name="unit"
+          value={form.unit}
+          onChange={handleChange}
+          placeholder="Unit (e.g. Bag, Kg, Nos)"
+        />
+      </Section>
 
-        {/* Unit */}
-        <div>
-          <label className="block text-sm font-medium">Unit</label>
-          <select
-            name="unit"
-            className="border rounded p-2 w-full"
-            value={formData.unit}
-            onChange={handleChange}
-          >
-            <option value="">Select Unit</option>
-            {workUnits.map((u, i) => (
-              <option key={i} value={u.work}>
-                {u.work}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* GROUP */}
+      <Section title="Grouping">
+        <Select
+          options={groups}
+          value={groups.find((g) => g.value === form.category)}
+          onChange={(v) => setForm((p) => ({ ...p, category: v?.value || "" }))}
+          placeholder="Select Stock Group (Optional)"
+          isClearable
+        />
+        <select
+          name="itemType"
+          value={form.itemType}
+          onChange={handleChange}
+          className="border p-2 w-full rounded"
+        >
+          <option value="CONSUMABLE">Consumable</option>
+          <option value="ASSET">Asset</option>
+        </select>
+      </Section>
 
-        {/* Purchase Price */}
-        <div>
-          <label className="block text-sm font-medium">Purchase Price</label>
-          <input
-            type="number"
-            name="purchasePrice"
-            className="border rounded p-2 w-full"
-            value={formData.purchasePrice}
-            onChange={handleChange}
-            min="0"
-            step="any"
-          />
-        </div>
+      {/* TAX */}
+      <Section title="Tax Details">
+        <Input
+          name="hsnCode"
+          value={form.hsnCode}
+          onChange={handleChange}
+          placeholder="HSN Code"
+        />
+        <Input
+          type="number"
+          name="gstRate"
+          value={form.gstRate}
+          onChange={handleChange}
+          placeholder="GST %"
+        />
+      </Section>
 
-        {/* MRP */}
-        <div>
-          <label className="block text-sm font-medium">MRP</label>
-          <input
-            type="number"
-            name="mrp"
-            className="border rounded p-2 w-full"
-            value={formData.mrp}
-            onChange={handleChange}
-            min="0"
-            step="any"
-          />
-        </div>
+      {/* PRICING */}
+      <Section title="Pricing">
+        <Input
+          type="number"
+          name="purchasePrice"
+          value={form.purchasePrice}
+          onChange={handleChange}
+          placeholder="Purchase Price"
+        />
+        <Input
+          type="number"
+          name="mrp"
+          value={form.mrp}
+          onChange={handleChange}
+          placeholder="MRP"
+        />
+      </Section>
 
-        {/* GST */}
-        <div>
-          <label className="block text-sm font-medium">GST Rate (%)</label>
-          <input
-            type="number"
-            name="gstRate"
-            className="border rounded p-2 w-full"
-            value={formData.gstRate}
-            onChange={handleChange}
-          />
-        </div>
+      <div className="flex justify-end gap-2">
+        <button onClick={onClose} className="px-4 py-2 border rounded">
+          Cancel
+        </button>
+        <button
+          onClick={handleSubmit}
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
+          {isEdit ? "Update Item" : "Create Item"}
+        </button>
+      </div>
 
-        {/* Surcharge */}
-        {/* <div>
-          <label className="font-medium text-sm">Surcharge (%)</label>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {Object.keys(formData.surchargeage).map((key, index) => (
-              <div key={index} className="flex flex-col mb-2">
-                <label className="font-medium text-sm">{`${key.toUpperCase()} (%)`}</label>
-                <input
-                  key={key}
-                  type="number"
-                  name={`surcharge_${key}`}
-                  placeholder={key}
-                  className="border rounded p-2"
-                  value={formData.surchargeage[key]}
-                  onChange={handleChange}
-                />
-              </div>
-            ))}
-          </div>
-        </div> */}
-
-        {/* Buttons */}
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="bg-gray-500 text-white p-2 rounded"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-500 text-white p-2 rounded"
-          >
-            {loading ? "Saving..." : isEdit ? "Update" : "Save"}
-          </button>
-        </div>
-      </form>
+      <Toaster position="top-right" />
     </div>
   );
 };
 
 export default CreateStock;
+
+/* UI Helpers */
+
+const Section = ({ title, children }) => (
+  <div className="border rounded p-4 space-y-3 bg-white">
+    <p className="text-sm font-medium">{title}</p>
+    {children}
+  </div>
+);
+
+const Input = ({ ...props }) => (
+  <input {...props} className="border p-2 w-full rounded" />
+);

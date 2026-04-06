@@ -12,6 +12,7 @@ const CreateUser = ({ onClose, isEdit }) => {
     phone: "",
     role: "",
     department: "",
+    companyId: "",
   });
   const roles = ["Admin", "Client", "Supplier", "Employee"];
   const departments = [
@@ -30,11 +31,11 @@ const CreateUser = ({ onClose, isEdit }) => {
     "Store Incharge",
     "H.R",
     "Account Head",
-    "Store Incharge"
+    "Store Incharge",
   ];
   const [userIdToEdit, setUserIdToEdit] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (isEdit) {
       setUserIdToEdit(isEdit);
@@ -213,8 +214,9 @@ const CreateUser = ({ onClose, isEdit }) => {
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
           disabled={loading}
         >
-          {loading ? "Submitting..." : `${userIdToEdit ? "Edit User" : "Add User"}`}
-          
+          {loading
+            ? "Submitting..."
+            : `${userIdToEdit ? "Edit User" : "Add User"}`}
         </button>
       </form>
       <Toaster position="top-right" reverseOrder={false} />

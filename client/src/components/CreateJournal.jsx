@@ -1,45 +1,54 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Select from "react-select";
 
-const adjustmentMethods = [
-  { value: "Advance", label: "Advance" },
-  { value: "New Ref", label: "New Ref" },
-  { value: "Agst Ref", label: "Against Ref" },
-  { value: "On Account", label: "On Account" },
-];
-
-const CreateJournal = ({ onClose }) => {
+const CreateJournal = ({ onClose, refresh, editData }) => {
+  const isEdit = Boolean(editData?._id);
+  const [costCenters, setCostCenters] = useState([]);
+  const [costCenterId, setCostCenterId] = useState("");
   const [ledgers, setLedgers] = useState([]);
   const [entries, setEntries] = useState([]);
-  const [voucherNo, setVoucherNo] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [narration, setNarration] = useState("");
   const [loading, setLoading] = useState(false);
 
+  /* ======================
+     FETCH LEDGERS
+  ====================== */
   useEffect(() => {
-    const fetchLedgers = async () => {
-      const res = await axios.get("/api/v1/ledger");
-      setLedgers(res.data);
-    };
-    const generateVoucherNo = async () => {
-      const res = await axios.get("/api/v1/journal/next-voucher");
-      setVoucherNo(res.data.voucherNo);
-    };
-    fetchLedgers();
-    generateVoucherNo();
+    axios.get("/api/v1/ledger").then((res) => {
+      setLedgers(res.data || []);
+    });
+    axios.get("/api/v1/cost-center").then((res) => {
+      setCostCenters(res.data || []);
+    });
   }, []);
 
+  /* ======================
+     EDIT LOAD
+  ====================== */
+  useEffect(() => {
+    if (!isEdit) return;
+
+    setDate(editData.date?.split("T")[0]);
+    setNarration(editData.narration || "");
+    setCostCenterId(editData.costCenterId?._id || "");
+    setEntries(
+      editData.entries.map((e) => ({
+        ledgerId: e.ledgerId?._id || e.ledgerId,
+        type: e.type,
+        amount: e.amount,
+      })),
+    );
+  }, [editData]);
+
+  /* ======================
+     ENTRY HANDLERS
+  ====================== */
   const addEntry = () => {
     setEntries((prev) => [
       ...prev,
-      {
-        account: null,
-        type: "From", // or 'To'
-        amount: 0,
-        method: null,
-        reference: "",
-      },
+      { ledgerId: "", type: "DEBIT", amount: "" },
     ]);
   };
 
@@ -49,138 +58,182 @@ const CreateJournal = ({ onClose }) => {
     setEntries(updated);
   };
 
-  const isBalanced = () => {
-    const totalFrom = entries
-      .filter((e) => e.type === "From")
-      .reduce((acc, e) => acc + Number(e.amount || 0), 0);
-    const totalTo = entries
-      .filter((e) => e.type === "To")
-      .reduce((acc, e) => acc + Number(e.amount || 0), 0);
-    return totalFrom === totalTo;
+  const removeEntry = (index) => {
+    setEntries(entries.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!isBalanced()) {
-      alert("Debit and credit amounts must be equal!");
-      return;
+  /* ======================
+     TOTALS
+  ====================== */
+  const totals = entries.reduce(
+    (acc, e) => {
+      if (e.type === "DEBIT") acc.debit += Number(e.amount || 0);
+      else acc.credit += Number(e.amount || 0);
+      return acc;
+    },
+    { debit: 0, credit: 0 },
+  );
+
+  const isBalanced = totals.debit === totals.credit && totals.debit > 0;
+
+  /* ======================
+     SUBMIT
+  ====================== */
+  const handleSubmit = async () => {
+    if (!isBalanced) {
+      return alert("Debit and Credit must match");
     }
+
     setLoading(true);
+
     try {
-      await axios.post("/api/v1/journal", {
-        voucherNo,
+      const payload = {
         date,
         narration,
-        entries,
-      });
+        costCenterId,
+        entries: entries.map((e) => ({
+          ledgerId: e.ledgerId,
+          type: e.type,
+          amount: Number(e.amount),
+        })),
+      };
+
+      if (isEdit) {
+        await axios.put(`/api/v1/journal/${editData._id}`, payload);
+      } else {
+        await axios.post("/api/v1/journal", payload);
+      }
+
+      refresh && refresh();
       onClose();
     } catch (err) {
-      console.error(err);
+      alert(err.response?.data?.error || "Error saving journal");
     } finally {
       setLoading(false);
     }
   };
 
+  /* ======================
+     OPTIONS
+  ====================== */
+  const ledgerOptions = ledgers.map((l) => ({
+    value: l._id,
+    label: l.name,
+  }));
+
+  const costCenterOptions = costCenters.map((c) => ({
+    value: c._id,
+    label: c.name,
+  }));
+  /* ======================
+     UI
+  ====================== */
   return (
-    <div className="p-4 max-w-3xl mx-auto space-y-5">
-      <h2 className="text-xl font-semibold">Create Journal Entry</h2>
+    <div className="space-y-4">
+      {/* DATE */}
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+        className="w-full border rounded-lg p-2 text-sm"
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <input
-          type="text"
-          value={voucherNo}
-          readOnly
-          className="border p-2 rounded w-full"
-          placeholder="Voucher No"
-        />
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="border p-2 rounded w-full"
-        />
-      </div>
+      {/* COST CENTER */}
+      <Select
+        options={costCenterOptions}
+        value={costCenterOptions.find((o) => o.value === costCenterId)}
+        onChange={(e) => setCostCenterId(e?.value || "")}
+        placeholder="Select Cost Center (Optional)"
+        isClearable
+      />
 
-      <div className="space-y-5">
+      {/* ENTRIES */}
+      <div className="space-y-3">
         {entries.map((entry, index) => (
           <div
             key={index}
-            className="p-4 border rounded-md space-y-3 bg-white shadow-sm"
+            className="border rounded-lg p-3 bg-gray-50 space-y-2"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-              <Select
-                options={ledgers.map((l) => ({
-                  value: l._id,
-                  label: l.name,
-                }))}
-                placeholder="Account"
-                value={ledgers
-                  .map((l) => ({ value: l._id, label: l.name }))
-                  .find((opt) => opt.value === entry.account)}
-                onChange={(e) => updateEntry(index, "account", e.value)}
-              />
+            {/* ROW 1 */}
+            <Select
+              options={ledgerOptions}
+              value={ledgerOptions.find((o) => o.value === entry.ledgerId)}
+              onChange={(e) => updateEntry(index, "ledgerId", e?.value)}
+              placeholder="Select Ledger"
+            />
+
+            {/* ROW 2 */}
+            <div className="grid grid-cols-2 gap-2">
               <select
-                className="border p-2 rounded"
                 value={entry.type}
                 onChange={(e) => updateEntry(index, "type", e.target.value)}
+                className="border p-2 rounded-lg text-sm"
               >
-                <option value="From">From (Debit)</option>
-                <option value="To">To (Credit)</option>
+                <option value="DEBIT">Debit</option>
+                <option value="CREDIT">Credit</option>
               </select>
+
               <input
                 type="number"
-                placeholder="Amount"
                 value={entry.amount}
-                onChange={(e) =>
-                  updateEntry(index, "amount", parseFloat(e.target.value) || 0)
-                }
-                className="border p-2 rounded"
+                onChange={(e) => updateEntry(index, "amount", e.target.value)}
+                placeholder="Amount"
+                className="border p-2 rounded-lg text-sm"
               />
-              <Select
-                options={adjustmentMethods}
-                placeholder="Adjustment"
-                onChange={(e) => updateEntry(index, "method", e.value)}
-              />
-              <input
-                type="text"
-                placeholder="Reference"
-                value={entry.reference}
-                onChange={(e) =>
-                  updateEntry(index, "reference", e.target.value)
-                }
-                className="border p-2 rounded"
-              />
+            </div>
+
+            {/* REMOVE */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => removeEntry(index)}
+                className="text-red-500 text-xs"
+              >
+                Remove
+              </button>
             </div>
           </div>
         ))}
-        <button
-          onClick={addEntry}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-        >
-          + Add Entry
-        </button>
       </div>
 
+      {/* ADD ENTRY */}
+      <button
+        onClick={addEntry}
+        className="w-full py-2 bg-green-600 text-white rounded-lg text-sm"
+      >
+        + Add Entry
+      </button>
+
+      {/* TOTAL */}
+      <div className="flex justify-between text-sm font-medium">
+        <span>Debit: {totals.debit}</span>
+        <span>Credit: {totals.credit}</span>
+      </div>
+
+      {!isBalanced && <div className="text-red-500 text-xs">Not balanced</div>}
+
+      {/* NARRATION */}
       <textarea
-        className="border w-full p-2 rounded mt-4"
-        placeholder="Narration"
         value={narration}
         onChange={(e) => setNarration(e.target.value)}
+        placeholder="Narration"
+        className="w-full border rounded-lg p-2 text-sm"
       />
 
-      <div className="flex justify-end gap-4 mt-4">
+      {/* ACTIONS */}
+      <div className="flex justify-end gap-2 pt-2">
         <button
-          type="button"
           onClick={onClose}
-          className="bg-gray-500 text-white px-4 py-2 rounded"
+          className="px-3 py-2 border rounded-lg text-sm"
         >
           Cancel
         </button>
+
         <button
           onClick={handleSubmit}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          disabled={loading}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
         >
-          {loading ? "Saving..." : "Submit Journal"}
+          {loading ? "Saving..." : isEdit ? "Update" : "Create"}
         </button>
       </div>
     </div>

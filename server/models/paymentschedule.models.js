@@ -78,7 +78,7 @@ const paymentScheduleSchema = new mongoose.Schema({
     },
 });
 
-paymentScheduleSchema.pre('save', function (next) {
+paymentScheduleSchema.pre('save', function () {
     const PaymentDetails = this.paymentDetails;
     console.log('PaymentDetails:', PaymentDetails)
 
@@ -134,7 +134,6 @@ paymentScheduleSchema.pre('save', function (next) {
         this.amountdue = null;
     }
 
-    next();
 });
 
 const Payment_Schedule = mongoose.model('Payment_Schedule', paymentScheduleSchema);

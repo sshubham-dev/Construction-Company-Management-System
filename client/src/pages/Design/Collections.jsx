@@ -69,7 +69,7 @@ const Collections = () => {
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-2 space-y-5">
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
@@ -107,11 +107,11 @@ const Collections = () => {
           <thead className="bg-gray-50 text-gray-600">
             <tr>
               <th className="p-3 text-left">Date</th>
-              <th>Client</th>
-              <th>Amount</th>
-              <th>Purpose</th>
-              <th>Status</th>
-              <th></th>
+              <th className="p-3">Client</th>
+              <th className="p-2">Amount</th>
+              <th className="p-3">Purpose</th>
+              <th className="p-3">Status</th>
+              <th className="p-3">Action</th>
             </tr>
           </thead>
 
@@ -125,17 +125,17 @@ const Collections = () => {
                   {new Date(row.date).toLocaleDateString()}
                 </td>
 
-                <td className="font-medium">
+                <td className="font-medium p-3">
                   {row.clientLedgerId?.name}
                 </td>
 
-                <td>₹ {row.amount}</td>
+                <td className="p-2">₹ {row.amount}</td>
 
-                <td className="capitalize text-gray-600">
+                <td className="capitalize text-gray-600 p-3">
                   {row.purpose}
                 </td>
 
-                <td>
+                <td className="p-3">
                   <span
                     className={`px-2 py-1 border rounded-full text-xs ${statusColor[row.status]}`}
                   >
@@ -143,7 +143,7 @@ const Collections = () => {
                   </span>
                 </td>
 
-                <td>
+                <td className="p-3">
                   <button
                     onClick={() => setSelected(row)}
                     className="text-blue-600 font-medium hover:underline"

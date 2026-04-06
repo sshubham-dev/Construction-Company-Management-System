@@ -1,5 +1,8 @@
 const mongoose = require("mongoose");
 
+/* =========================
+   PO ITEM SCHEMA
+========================= */
 const poItemSchema = new mongoose.Schema(
   {
     itemId: {
@@ -7,60 +10,50 @@ const poItemSchema = new mongoose.Schema(
       ref: "Stock",
       required: true,
     },
-
-    item: String, // snapshot name
     unit: String,
 
-    requestedQty: {
+    orderedQty: {
       type: Number,
       required: true,
+      min: 0,
     },
 
     receivedQty: {
       type: Number,
-      default: 0, // updated ONLY by GRN
+      default: 0,
+      min: 0,
     },
 
     invoicedQty: {
       type: Number,
-      default: 0, // updated ONLY by Purchase Invoice
+      default: 0,
+      min: 0,
     },
 
     rate: {
       type: Number,
       required: true,
+      min: 0,
     },
-
-    gstRate: Number,
-
-    amount: Number, // requestedQty * rate (snapshot)
 
     description: String,
   },
   { timestamps: true },
 );
 
-const deliveryRecordSchema = new mongoose.Schema(
-  {
-    grnId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "GRN",
-    },
+/* =========================
+   VALIDATION
+========================= */
+poItemSchema.pre("save", function () {
+  if (this.receivedQty > this.requestedQty) {
+    return new Error("Received qty cannot exceed requested qty");
+  }
 
-    deliveryDate: {
-      type: Date,
-      default: Date.now,
-    },
+  if (this.invoicedQty > this.receivedQty) {
+    return new Error("Invoiced qty cannot exceed received qty");
+  }
+});
 
-    status: {
-      type: String,
-      enum: ["Partial", "Full"],
-    },
-
-    remarks: String,
-  },
-  { timestamps: true },
-);
 
 const purchaseOrderSchema = new mongoose.Schema(
   {
@@ -89,100 +82,30 @@ const purchaseOrderSchema = new mongoose.Schema(
     ========================== */
     purchaseRequestId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Purchase_Request",
+      ref: "PurchaseRequest",
     },
 
     /* =========================
        SUPPLIER
     ========================== */
     supplier: {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Supplier",
-        required: true,
-      },
-      name: String,
-      phone: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Supplier",
+      required: true,
     },
 
     /* =========================
        DELIVERY DESTINATION
     ========================== */
-    deliveryTo: {
-      type: String,
-      enum: ["Store", "Site"],
-      required: true,
-    },
-
     deliveryFor: {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        refPath: "deliveryTo",
-      },
-      name: String,
-      contactPerson: String,
-      phone: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
     },
 
     /* =========================
        ITEMS
     ========================== */
     items: [poItemSchema],
-
-    /* =========================
-       APPROVAL FLOW (FIXED)
-    ========================== */
-    commercialApprovalStatus: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
-    },
-
-    supplierApproval: {
-      type: String,
-      enum: ["Pending", "Accepted", "Rejected"],
-      default: "Pending",
-    },
-
-    accountHeadApproval: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
-    },
-
-    finalApprovalStatus: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
-    },
-
-    /* =========================
-       FINANCIAL SUMMARY
-    ========================== */
-    totalBeforeTax: Number,
-    totalTaxAmount: Number,
-    totalAfterTax: Number,
-
-    totalPaid: {
-      type: Number,
-      default: 0,
-    },
-
-    totalDue: {
-      type: Number,
-      default: 0,
-    },
-
-    /* =========================
-       DELIVERY / GRN LINK
-    ========================== */
-    deliveryRecords: [deliveryRecordSchema],
-
-    deliveryStatus: {
-      type: String,
-      enum: ["Pending", "Partially Delivered", "Delivered"],
-      default: "Pending",
-    },
 
     /* =========================
        BILLING
@@ -195,17 +118,8 @@ const purchaseOrderSchema = new mongoose.Schema(
     ],
 
     paymentLedger: {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Ledger",
-      },
-      name: String,
-    },
-
-    paymentStatus: {
-      type: String,
-      enum: ["Pending", "Partially Paid", "Paid"],
-      default: "Pending",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger",
     },
 
     /* =========================
@@ -213,144 +127,71 @@ const purchaseOrderSchema = new mongoose.Schema(
     ========================== */
     purchaseReturns: [
       {
-        purchaseReturnId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Purchase_Return",
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Return",
       },
     ],
+
+    status: {
+      type: String,
+      enum: [
+        "DRAFT",
+        "APPROVED",
+        "ORDERED",
+        "PARTIAL",
+        "COMPLETED",
+        "CANCELLED",
+      ],
+      default: "DRAFT",
+    },
 
     remarks: String,
   },
   { timestamps: true },
 );
 
+/* =========================
+   INDEXES
+========================= */
 purchaseOrderSchema.index({ "supplier.id": 1 });
-purchaseOrderSchema.index({ deliveryStatus: 1 });
 
+/* =========================
+   VIRTUALS
+========================= */
 purchaseOrderSchema.virtual("isFullyReceived").get(function () {
-  return this.items.every((i) => i.receivedQty >= i.requestedQty);
+  return (
+    this.items.length > 0 &&
+    this.items.every((i) => i.receivedQty >= i.requestedQty)
+  );
 });
 
 purchaseOrderSchema.virtual("isFullyInvoiced").get(function () {
-  return this.items.every((i) => i.invoicedQty >= i.receivedQty);
-});
-
-purchaseOrderSchema.pre("save", function (next) {
-  let totalBeforeTax = 0;
-  let totalTaxAmount = 0;
-
-  this.items.forEach((item) => {
-    const amount = (item.requestedQty || 0) * (item.rate || 0);
-    item.amount = amount;
-
-    totalBeforeTax += amount;
-
-    const gst = item.gstRate ? (amount * item.gstRate) / 100 : 0;
-
-    totalTaxAmount += gst;
-  });
-
-  this.totalBeforeTax = totalBeforeTax;
-  this.totalTaxAmount = totalTaxAmount;
-  this.totalAfterTax = totalBeforeTax + totalTaxAmount;
-
-  this.totalDue = Math.max(
-    0,
-    (this.totalAfterTax || 0) - (this.totalPaid || 0),
+  return (
+    this.items.length > 0 &&
+    this.items.every((i) => i.receivedQty > 0 && i.invoicedQty >= i.receivedQty)
   );
-
-  next();
 });
 
-// const purchaseInvoiceItemSchema = new mongoose.Schema({
-//   stockId: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: "Stock",
-//     required: true,
-//   },
+purchaseOrderSchema.virtual("deliveryStatusAuto").get(function () {
+  const totalRequested = this.items.reduce((a, i) => a + i.requestedQty, 0);
+  const totalReceived = this.items.reduce((a, i) => a + i.receivedQty, 0);
 
-//   description: String,
+  if (totalReceived === 0) return "Pending";
+  if (totalReceived < totalRequested) return "Partially Delivered";
+  return "Delivered";
+});
 
-//   grnQty: Number,            // acceptedQty from GRN
-//   invoicedQty: {
-//     type: Number,
-//     required: true,
-//   },
+purchaseOrderSchema.virtual("paymentStatusAuto").get(function () {
+  if (!this.totalPaid || this.totalPaid === 0) return "Pending";
+  if (this.totalPaid < this.totalAfterTax) return "Partially Paid";
+  return "Paid";
+});
 
-//   rate: {
-//     type: Number,
-//     required: true,
-//   },
-
-//   gstRate: Number,
-
-//   amount: Number,           // invoicedQty * rate
-// });
-
-// const purchaseInvoiceSchema = new mongoose.Schema(
-//   {
-//     invoiceNo: {
-//       type: String,
-//       unique: true,
-//       index: true,
-//     },
-
-//     invoiceDate: {
-//       type: Date,
-//       required: true,
-//     },
-
-//     supplierId: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "Supplier",
-//       required: true,
-//     },
-
-//     storeId: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "Store",
-//       required: true,
-//     },
-
-//     purchaseOrderId: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "PurchaseOrder",
-//     },
-
-//     grnId: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "GRN",
-//       required: true,
-//     },
-
-//     items: [purchaseInvoiceItemSchema],
-
-//     grossAmount: Number,
-//     gstAmount: Number,
-//     netAmount: Number,
-
-//     status: {
-//       type: String,
-//       enum: ["Draft", "Posted", "Cancelled"],
-//       default: "Draft",
-//     },
-
-//     ledgerId: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "Ledger", // Supplier ledger
-//     },
-
-//     createdBy: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "User",
-//     },
-//   },
-//   { timestamps: true }
-// );
-
+/* =========================
+   MODEL EXPORT
+========================= */
 const PurchaseOrder =
   mongoose.models.PurchaseOrder ||
   mongoose.model("PurchaseOrder", purchaseOrderSchema);
 
-module.exports =  PurchaseOrder ;
+module.exports = PurchaseOrder;

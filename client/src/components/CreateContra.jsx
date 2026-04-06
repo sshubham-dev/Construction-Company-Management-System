@@ -1,174 +1,194 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import Select from "react-select";
 
-const CreateContra = ({ onClose }) => {
-    const [loading, setLoading] = useState(false);
-    const [form, setForm] = useState({
-        voucherNo: "",
-        date: "",
-        from: "",
-        to: "",
-        amount: 0,
-        description: "",
+const CreateContra = ({ onClose, refresh }) => {
+  const [loading, setLoading] = useState(false);
+  const [accounts, setAccounts] = useState([]);
+  const [costCenters, setCostCenters] = useState([]);
+  const [form, setForm] = useState({
+    date: new Date().toISOString().split("T")[0],
+    from: "",
+    to: "",
+    amount: "",
+    narration: "",
+    costCenterId: "",
+  });
+
+  /* ======================
+     FETCH LEDGERS
+  ====================== */
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const res = await axios.get("/api/v1/ledger");
+        const data = Array.isArray(res.data) ? res.data : [];
+
+        // Only cash/bank accounts
+        const filtered = data.filter(
+          (l) =>
+            l?.under?.toLowerCase().includes("bank") ||
+            l?.under?.toLowerCase().includes("cash"),
+        );
+
+        setAccounts(filtered);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchAccounts();
+    axios.get("/api/v1/cost-center").then((res) => {
+      setCostCenters(res.data || []);
     });
-    const [accounts, setAccounts] = useState([]);
+  }, []);
 
-    useEffect(() => {
-        const fetchAccount = async () => {
-            try {
-                const response = await axios.get('/api/v1/ledger');
-                const Ledgers = Array.isArray(response.data) ? response.data : [];
-                const accountLedger = Ledgers.filter(ledger =>
-                    ledger?.under && ledger.under.toLowerCase().includes("accounts")
-                );
-                console.log("ledger", accountLedger)
-                setAccounts(accountLedger);
-            } catch (error) {
-                console.error("Error fetching ledgers:", error);
-            }
-        };
+  /* ======================
+     HANDLE CHANGE
+  ====================== */
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
 
-        const fetchVoucherNo = async () => {
-            try {
-                const response = await axios.get('/api/v1/contra/next-voucher');
-                console.log(response.data);
-                setForm(prev => ({ ...prev, voucherNo: response.data.voucherNo }));
-            } catch (error) {
-                console.error("Error fetching voucher number:", error);
-            }
-        };
+  /* ======================
+     SUBMIT
+  ====================== */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        fetchAccount();
-        fetchVoucherNo();
-    }, []);
+    if (form.from === form.to) {
+      return alert("From and To cannot be same");
+    }
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-    };
+    setLoading(true);
+    console.log("Submitting Contra:", form);
+    try {
+      await axios.post("/api/v1/contra", {
+        date: form.date,
+        from: form.from,
+        to: form.to,
+        amount: Number(form.amount),
+        narration: form.narration,
+        costCenterId: form.costCenterId,
+      });
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+      if (refresh) refresh();
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.error || "Error creating contra");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        try {
-            const response = await axios.post("/api/v1/contra", form);
-            setForm({
-                voucherNo: "",
-                date: "",
-                from: "",
-                to: "",
-                amount: 0,
-                description: "",
-            });
-            onClose();
-        } catch (error) {
-            console.error("Error creating voucher:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const costCenterOptions = costCenters.map((c) => ({
+    value: c._id,
+    label: c.name,
+  }));
 
-    return (
-        <div>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 mb-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Voucher No</label>
-                    <input
-                        name="voucherNo"
-                        type="text"
-                        value={form.voucherNo}
-                        readOnly
-                        disabled  // Prevent user changes
-                        className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                </div>
+  return (
+    <form onSubmit={handleSubmit} className="grid gap-4">
+      {/* DATE */}
+      <div>
+        <label>Date</label>
+        <input
+          type="date"
+          name="date"
+          value={form.date}
+          onChange={handleChange}
+          className="border p-2 w-full rounded"
+          required
+        />
+      </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Date</label>
-                    <input
-                        type="date"
-                        name="date"
-                        value={form.date}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                </div>
+      {/* COST CENTER */}
+      <Select
+        options={costCenterOptions}
+        value={costCenterOptions.find((o) => o.value === form.costCenterId)}
+        onChange={(opt) => setForm((prev) => ({ ...prev, costCenterId: opt?.value || "" }))}
+        // onChange={(e) => updateForm("costCenterId", e?.value || "")}
+        placeholder="Select Cost Center (Optional)"
+        isClearable
+      />
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">From Account</label>
-                    <select
-                        name="from"
-                        value={form.from}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 block w-full px-2 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">Select Account</option>
-                        {accounts.map((account) => (
-                            <option key={account._id} value={account._id}>{account.name}</option>
-                        ))}
-                    </select>
-                </div>
+      {/* FROM */}
+      <div>
+        <label>From Account</label>
+        <select
+          name="from"
+          value={form.from}
+          onChange={handleChange}
+          required
+          className="border p-2 w-full rounded"
+        >
+          <option value="">Select</option>
+          {accounts.map((a) => (
+            <option key={a._id} value={a._id}>
+              {a.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">To Account</label>
-                    <select
-                        name="to"
-                        value={form.to}
-                        onChange={handleChange}
-                        required
-                        className="mt-1 block w-full px-2 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">Select Account</option>
-                        {accounts.map((account) => (
-                            <option key={account._id} value={account._id}>{account.name}</option>
-                        ))}
-                    </select>
-                </div>
+      {/* TO */}
+      <div>
+        <label>To Account</label>
+        <select
+          name="to"
+          value={form.to}
+          onChange={handleChange}
+          required
+          className="border p-2 w-full rounded"
+        >
+          <option value="">Select</option>
+          {accounts.map((a) => (
+            <option key={a._id} value={a._id}>
+              {a.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Amount</label>
-                    <input
-                        type="number"
-                        name="amount"
-                        value={form.amount}
-                        onChange={handleChange}
-                        required
-                        min={1}
-                        className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                </div>
+      {/* AMOUNT */}
+      <div>
+        <label>Amount</label>
+        <input
+          type="number"
+          name="amount"
+          value={form.amount}
+          onChange={handleChange}
+          min={1}
+          required
+          className="border p-2 w-full rounded"
+        />
+      </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Description</label>
-                    <input
-                        type="text"
-                        name="description"
-                        value={form.description}
-                        onChange={handleChange}
-                        className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                </div>
+      {/* NARRATION */}
+      <div>
+        <label>Narration</label>
+        <input
+          type="text"
+          name="narration"
+          value={form.narration}
+          onChange={handleChange}
+          className="border p-2 w-full rounded"
+        />
+      </div>
 
-                <div className="flex justify-end gap-4">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="bg-gray-500 text-white p-2 rounded"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                        {loading ? "Saving..." : "Create Voucher"}
-                    </button>
-                </div>
-            </form>
-        </div>
-    );
+      {/* ACTIONS */}
+      <div className="flex justify-end gap-3">
+        <button type="button" onClick={onClose} className="btn-gray">
+          Cancel
+        </button>
+
+        <button type="submit" disabled={loading} className="btn-primary">
+          {loading ? "Saving..." : "Create"}
+        </button>
+      </div>
+    </form>
+  );
 };
 
 export default CreateContra;

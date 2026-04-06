@@ -70,6 +70,7 @@ const createContractor = async (req, res) => {
             jobWork,
             isUser: isUser ? isUser : false, // Ensure isUser is not undefined
             gstNo: gstNo ? gstNo : '', // Ensure gstNo is not undefined
+            companyId: user.companyId
         });
 
         const existingContractor = await Contractor.findOne({ name });
@@ -136,6 +137,7 @@ const updateContractor = async (req, res) => {
     contractor.jobWork = jobWork || '';
     contractor.gstNo = gstNo?.trim() || '';
     contractor.isUser = isUser === true || isUser === 'true';
+    contractor.companyId = req.user.companyId; // Ensure companyId is set to the user's companyId
 
     // 💾 Save (triggers ledger sync)
     const updatedContractor = await contractor.save();

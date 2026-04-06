@@ -69,8 +69,14 @@ const siteSchema = new mongoose.Schema(
       ref: "BusinessUnit",
     },
 
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
+
     // Ledger (ERP Link)
-    ledger: { type: mongoose.Schema.Types.ObjectId, ref: "Ledger" },
+    costcenter: { type: mongoose.Schema.Types.ObjectId, ref: "CostCenter" },
+    store: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
 
     // Project contractual data
     agreement: {
@@ -199,7 +205,7 @@ const siteSchema = new mongoose.Schema(
 // ===============================
 
 // Auto-generate siteId
-siteSchema.pre("save", async function (next) {
+siteSchema.pre("save", async function () {
   try {
     if (!this.siteId) {
       const cleaned = this.name
@@ -216,56 +222,27 @@ siteSchema.pre("save", async function (next) {
       this.siteId = `${prefix}-${suffix}`;
     }
 
-    const ledgerId = await syncLedger({
-      doc: this,
-      type: "Site",
-      under: "Project Accounts",
-      getAddress: (doc) => ({
-        name: doc.name,
-        address: doc.address || "",
-      }),
-      getTaxDetails: () => ({}),
-    });
-
-    if (ledgerId) this.ledger = ledgerId;
-
-    next();
   } catch (err) {
     console.error("Error in site ledger sync:", err);
-    next(err);
+    return err;
   }
 });
 
 // Ledger update on site update
-siteSchema.pre("findOneAndUpdate", async function (next) {
+siteSchema.pre("findOneAndUpdate", async function () {
   try {
     const site = await this.model.findOne(this.getQuery());
-    if (!site) return next();
+    if (!site) return;
 
     const update = this.getUpdate() || {};
 
     if (update.$set) Object.assign(site, update.$set);
     Object.assign(site, update);
 
-    const ledgerId = await syncLedger({
-      doc: site,
-      type: "Site",
-      under: "Project Accounts",
-      getAddress: (doc) => ({
-        name: doc.name,
-        address: doc.address || "",
-      }),
-      getTaxDetails: () => ({}),
-    });
-
-    if (!update.$set) update.$set = {};
-    update.$set.ledger = ledgerId;
     this.setUpdate(update);
-
-    next();
   } catch (err) {
     console.error("Error updating site ledger sync:", err);
-    next(err);
+    return err;
   }
 });
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Tabs } from "antd";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
 import moment from "moment";
@@ -695,8 +695,6 @@ const Approval = () => {
           data={expenseData}
         />
         {/* </Modal> */}
-
-        <Toaster position="top-right" reverseOrder={false} />
       </section>
     </div>
   );

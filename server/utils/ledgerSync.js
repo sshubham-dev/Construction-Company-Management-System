@@ -1,6 +1,4 @@
-
-const { Ledger } = require('../models/ledger.models.js');
-
+const { Ledger, Group } = require("../models/ledger.models.js");
 const syncLedger = async ({
   doc,
   type,
@@ -8,6 +6,7 @@ const syncLedger = async ({
   getAddress = () => ({}),
   getTaxDetails = () => ({}),
 }) => {
+
   const ledgerData = {
     name: doc.name,
     alias: doc.name,
@@ -21,10 +20,7 @@ const syncLedger = async ({
 
   // 1. If ledger already linked, UPDATE ONLY
   if (doc.ledger) {
-    await Ledger.updateOne(
-      { _id: doc.ledger },
-      { $set: ledgerData }
-    );
+    await Ledger.updateOne({ _id: doc.ledger }, { $set: ledgerData });
     return doc.ledger;
   }
 

@@ -1,13 +1,22 @@
 const { Ledger } = require("../models/ledger.models"); // ✅ Fix import
 const Expenses = require("../models/expenses.models"); // ✅ your expense schema
-const {uploadOnCloudinary} = require("../utils/cloudinary"); // ✅ adjust as needed
+const { uploadOnCloudinary } = require("../utils/cloudinary"); // ✅ adjust as needed
 const Employee = require("../models/employee.models");
 const {
   sendApproveByAdmin,
   sendApproveByAccountHead,
 } = require("./approval.controller.js");
 const User = require("../models/user.models");
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
+const {
+  sendPushNotification,
+  notifyRole,
+} = require("../utils/pushNotification.js");
+const {
+  createVoucher,
+  postVoucher,
+  cancelVoucher,
+  updateVoucher,
+} = require("../services/ERP/voucher/voucher.service.js");
 
 const resolvePaidByLedger = async (userId) => {
   const employee = await Employee.findOne({ userId });
@@ -19,44 +28,19 @@ const resolvePaidByLedger = async (userId) => {
   return ledger;
 };
 
-const applyExpenseToLedgers = async (expense, mode = "add") => {
-  const multiplier = mode === "add" ? 1 : -1;
-  const amount = Number(expense.amount);
-
-  const expenseLedger = await Ledger.findById(expense.expenseLedger.id);
-  const expenseForLedger = await Ledger.findById(expense.expenseForLedger.id);
-  const paidByLedger = await Ledger.findById(expense.paidByLedger.id);
-
-  if (!expenseLedger || !paidByLedger || !expenseForLedger) {
-    throw new Error("Ledger missing for posting expense");
-  }
-
-  // Debit Expense Ledger
-  expenseLedger.currentBalance =
-    (expenseLedger.currentBalance || 0) + multiplier * amount;
-
-  expenseForLedger.currentBalance =
-    (expenseForLedger.currentBalance || 0) + multiplier * amount;
-  expenseForLedger.received =
-    (expenseForLedger.received || 0) + multiplier * amount;
-
-  // Credit Paid By Ledger (company owes employee)
-  paidByLedger.currentBalance =
-    (paidByLedger.currentBalance || 0) - multiplier * amount;
-  paidByLedger.paid = (paidByLedger.paid || 0) + multiplier * amount;
-
-  await expenseLedger.save();
-  await paidByLedger.save();
-  await expenseForLedger.save();
-};
-
 /* ======================================================
    CREATE EXPENSE (DRAFT)
 ====================================================== */
 const createExpense = async (req, res) => {
   try {
-    const { date, amount, narration, expenseLedgerId, expenseForLedgerId } =
-      req.body;
+    const {
+      date,
+      amount,
+      narration,
+      expenseLedgerId,
+      expenseForLedgerId,
+      expenseCategory,
+    } = req.body;
     const user = req.user;
 
     if (!expenseLedgerId || !expenseForLedgerId) {
@@ -78,9 +62,9 @@ const createExpense = async (req, res) => {
 
     for (const file of files) {
       const upload = await uploadOnCloudinary(file.path, {
-      folder: "expenses",
-      public_id: `${req.user.userName}-${Date.now()}`,
-    });
+        folder: "expenses",
+        public_id: `${req.user.userName}-${Date.now()}`,
+      });
       if (!upload?.secure_url) continue;
 
       attachments.push({
@@ -94,7 +78,7 @@ const createExpense = async (req, res) => {
       date,
       amount: Number(amount),
       narration,
-
+      // companyId: user.companyId,
       expenseLedger: {
         id: expenseLedger._id,
         name: expenseLedger.name,
@@ -113,6 +97,7 @@ const createExpense = async (req, res) => {
       attachments,
       status: "Draft",
       createdBy: req.user._id,
+      expenseCategory,
     });
 
     const employee = await User.find({ role: "Employee" });
@@ -120,7 +105,7 @@ const createExpense = async (req, res) => {
       for (let emp of employee) {
         sendPushNotification(
           emp._id,
-          `${amount} paid by ${user.userName} for ${expenseLedger.name} expense of ${expenseForLedger.name}.`
+          `${amount} paid by ${user.userName} for ${expenseLedger.name} expense of ${expenseForLedger.name}.`,
         );
       }
     }
@@ -146,8 +131,38 @@ const postExpense = async (req, res) => {
         .json({ message: "Only Draft expense can be posted" });
     }
 
-    await applyExpenseToLedgers(expense, "add");
+    // 🔥 Create voucher
+    const voucher = await createVoucher({
+      companyId: expense.companyId,
+      type: "JOURNAL",
+      date: expense.date,
+      narration: expense.narration,
 
+      reference: "Expense" + " " + expense.expenseNo,
+      referenceId: expense._id,
+
+      costCenterId: expense.expenseForLedger.id,
+
+      entries: [
+        {
+          ledgerId: expense.expenseLedger.id,
+          type: "DEBIT",
+          amount: expense.amount,
+        },
+        {
+          ledgerId: expense.paidByLedger.id,
+          type: "CREDIT",
+          amount: expense.amount,
+        },
+      ],
+
+      // createdBy: user._id,
+    });
+
+    await postVoucher(voucher._id);
+
+    // 🔗 link back
+    expense.voucherId = voucher._id;
     expense.status = "Posted";
     await expense.save();
 
@@ -171,7 +186,7 @@ const cancelExpense = async (req, res) => {
         .json({ message: "Only Posted expense can be cancelled" });
     }
 
-    await applyExpenseToLedgers(expense, "subtract");
+    await cancelVoucher(expense.voucherId);
 
     expense.status = "Cancelled";
     await expense.save();
@@ -185,83 +200,86 @@ const cancelExpense = async (req, res) => {
 /* ======================================================
    GET EXPENSES
 ====================================================== */
-const getAllExpenses = async (req, res) => {
-  const expenses = await Expenses.find().sort({ createdAt: -1 });
-  res.json(expenses);
+const getExpenses = async (req, res) => {
+  try {
+    const { employeeId, userId, month, year, type, status, approval } =
+      req.query;
+
+    let query = {};
+
+    /* -----------------------------
+       Resolve employee → user
+    ------------------------------ */
+
+    let finalUserId = userId;
+
+    if (employeeId) {
+      const employee = await Employee.findById(employeeId);
+
+      if (!employee) {
+        return res.status(404).json({ message: "Employee not found" });
+      }
+
+      finalUserId = employee.userId;
+    }
+
+    if (finalUserId) {
+      query.createdBy = finalUserId;
+    }
+
+    /* -----------------------------
+       Date Filter
+    ------------------------------ */
+
+    if (month && year) {
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 1);
+
+      query.date = { $gte: start, $lt: end };
+    }
+
+    /* -----------------------------
+       Expense Type
+    ------------------------------ */
+
+    if (type) {
+      query["expenseLedger.id"] = type;
+    }
+
+    /* -----------------------------
+       Status
+    ------------------------------ */
+
+    if (status) query.status = status;
+
+    if (approval) query.isApproved = approval;
+
+    /* -----------------------------
+       Fetch Expenses
+    ------------------------------ */
+
+    const expenses = await Expenses.find(query)
+      .populate("expenseLedger.id")
+      .populate("expenseForLedger.id")
+      .populate("paidByLedger.id")
+      .sort({ date: -1 });
+
+    const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+    res.json({
+      totalAmount,
+      count: expenses.length,
+      expenses,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 const getExpenseById = async (req, res) => {
   const expense = await Expenses.findById(req.params.id);
   if (!expense) return res.status(404).json({ message: "Expense not found" });
   res.json(expense);
-};
-
-const getExpensesByMonth = async (req, res) => {
-  try {
-
-    const { employeeId, userId, month } = req.query;
-
-    if (!month) {
-      return res.status(400).json({
-        message: "month is required",
-      });
-    }
-
-    let finalUserId = userId;
-
-    // if employeeId provided, resolve userId
-    if (employeeId) {
-
-      const employee = await Employee.findById(employeeId);
-
-      if (!employee) {
-        return res.status(404).json({
-          message: "Employee not found",
-        });
-      }
-
-      finalUserId = employee.userId;
-    }
-
-    if (!finalUserId) {
-      return res.status(400).json({
-        message: "employeeId or userId is required",
-      });
-    }
-
-    // month range
-    const startDate = new Date(`${month}-01`);
-    const endDate = new Date(startDate);
-    endDate.setMonth(endDate.getMonth() + 1);
-
-    // find expenses
-    const expenses = await Expenses.find({
-      createdBy: finalUserId,
-      date: {
-        $gte: startDate,
-        $lt: endDate,
-      },
-    });
-
-    const totalAmount = expenses.reduce(
-      (sum, e) => sum + e.amount,
-      0
-    );
-
-    res.json({
-      userId: finalUserId,
-      month,
-      totalAmount,
-      expenses,
-    });
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: error.message,
-    });
-
-  }
 };
 
 /* ======================================================
@@ -289,6 +307,7 @@ const updateExpense = async (req, res) => {
       date,
       amount,
       narration,
+      expenseCategory,
       expenseLedgerId,
       expenseForLedgerId,
       remarks,
@@ -326,6 +345,8 @@ const updateExpense = async (req, res) => {
     ---------------------------------- */
     if (date) expense.date = date;
     if (amount !== undefined) expense.amount = Number(amount);
+    if (expenseCategory !== undefined)
+      expense.expenseCategory = expenseCategory;
     if (narration !== undefined) expense.narration = narration;
     if (remarks !== undefined) expense.remarks = remarks;
 
@@ -338,9 +359,9 @@ const updateExpense = async (req, res) => {
 
     for (const file of files) {
       const upload = await uploadOnCloudinary(file.path, {
-      folder: "expenses",
-      public_id: `${req.user.userName}-${Date.now()}`,
-    });
+        folder: "expenses",
+        public_id: `${req.user.userName}-${Date.now()}`,
+      });
       if (!upload?.secure_url) continue;
 
       expense.attachments.push({
@@ -357,11 +378,14 @@ const updateExpense = async (req, res) => {
       for (let emp of employee) {
         sendPushNotification(
           emp._id,
-          `${amount} paid by ${user.userName} for ${expense?.expenseLedger.name} expense of ${expense?.expenseForLedger.name}.`
+          `${amount} paid by ${user.userName} for ${expense?.expenseLedger.name} expense of ${expense?.expenseForLedger.name}.`,
         );
       }
     }
     sendApproveByAdmin(expense, "Expense", user._id);
+    
+    await updateVoucher(expense.voucherId);
+
     res.json({
       message: "Expense updated successfully",
       expense,
@@ -396,9 +420,8 @@ module.exports = {
   createExpense,
   postExpense,
   cancelExpense,
-  getAllExpenses,
   getExpenseById,
   updateExpense,
   deleteExpense,
-  getExpensesByMonth,
+  getExpenses,
 };

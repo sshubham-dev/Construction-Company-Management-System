@@ -6,20 +6,30 @@ const grnItemSchema = new mongoose.Schema({
     ref: "Stock",
     required: true,
   },
-  description: String,
+
+  poItemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true, // link to PO item
+  },
 
   orderedQty: Number,
+
   receivedQty: {
     type: Number,
     required: true,
+    min: 0,
   },
+
   acceptedQty: {
     type: Number,
     required: true,
+    min: 0,
   },
+
   rejectedQty: {
     type: Number,
     required: true,
+    min: 0,
   },
 
   rate: {
@@ -27,27 +37,48 @@ const grnItemSchema = new mongoose.Schema({
     required: true,
   },
 
-  amount: {
+  gstRate: {
     type: Number,
-    required: true,
+    default: 0,
   },
 
   remarks: String,
 });
 
+grnItemSchema.pre("save", function () {
+  if (this.acceptedQty + this.rejectedQty !== this.receivedQty) {
+    return new Error("Accepted + Rejected must equal Received");
+  }
+
+  if (this.acceptedQty > this.receivedQty) {
+    return new Error("Accepted cannot exceed received");
+  }
+});
+
 const grnSchema = new mongoose.Schema(
   {
+    /* =========================
+       BASIC
+    ========================== */
     grnNo: {
       type: String,
       unique: true,
       index: true,
     },
 
-    date: {
-      type: Date,
+    /* =========================
+       DELIVERY DESTINATION
+    ========================== */
+    deliveryTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
       required: true,
+      index: true,
     },
 
+    /* =========================
+       STORE (OWNER)
+    ========================== */
     storeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",
@@ -55,29 +86,40 @@ const grnSchema = new mongoose.Schema(
       index: true,
     },
 
+    /* =========================
+       SUPPLIER
+    ========================== */
     supplierId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Supplier",
       required: true,
     },
 
+    /* =========================
+       PO LINK
+    ========================== */
     purchaseOrderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "PurchaseOrder",
     },
 
+    /* =========================
+       ITEMS
+    ========================== */
     items: [grnItemSchema],
 
-    grossAmount: Number,
-    gstAmount: Number,
-    netAmount: Number,
-
+    /* =========================
+       STATUS
+    ========================== */
     status: {
       type: String,
-      enum: ["Draft", "Posted", "Cancelled"],
-      default: "Draft",
+      enum: ["DRAFT", "POSTED", "CANCELLED"],
+      default: "DRAFT",
     },
 
+    /* =========================
+       AUDIT
+    ========================== */
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -87,18 +129,15 @@ const grnSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-      purchaseInvoiceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "PurchaseInvoice",
-  },
-  cancelledBy: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-},
-cancelledAt: Date,
 
+    cancelledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    cancelledAt: Date,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const GRN = mongoose.model("GRN", grnSchema);

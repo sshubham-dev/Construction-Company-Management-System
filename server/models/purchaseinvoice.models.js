@@ -1,77 +1,178 @@
 const mongoose = require("mongoose");
 
 const purchaseInvoiceItemSchema = new mongoose.Schema({
-  stockId: { type: mongoose.Schema.Types.ObjectId, ref: "Stock" },
+  stockId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Stock",
+    required: true,
+  },
+  //   grnId: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "GRN",
+  // },
   item: String,
   unit: String,
-  receivedQty: Number,
-  rate: Number,
+
+  receivedQty: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+
+  rate: {
+    type: Number,
+    required: true,
+  },
+
   amount: Number,
-  gstRate: Number,
+
+  gstRate: {
+    type: Number,
+    default: 0,
+  },
+
   gstAmount: Number,
   totalAmount: Number,
 });
+purchaseInvoiceItemSchema.pre("save", function () {
+  if (this.receivedQty <= 0) {
+    return new Error("Invoice qty must be greater than 0");
+  }
+});
 
-const purchaseInvoiceSchema = new mongoose.Schema({
-  invoiceNo: { type: String, unique: true, index: true },
+const purchaseInvoiceSchema = new mongoose.Schema(
+  {
+    invoiceNo: {
+      type: String,
+      unique: true,
+      index: true,
+    },
 
-  invoiceDate: { type: Date, default: Date.now },
+    invoiceDate: {
+      type: Date,
+      default: Date.now,
+    },
 
-  grnId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "GRN",
-    required: true,
-    unique: true, // 1 GRN → 1 Invoice
+    /* =========================
+       GRN LINK (MANDATORY)
+    ========================== */
+    grnId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "GRN",
+      required: true,
+      unique: true, // 1 GRN → 1 Invoice
+    },
+
+    purchaseOrderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PurchaseOrder",
+    },
+
+    /* =========================
+       SUPPLIER (SNAPSHOT)
+    ========================== */
+    supplier: {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Supplier",
+      },
+      name: String,
+    },
+
+    supplierLedgerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger",
+      required: true,
+    },
+
+    /* =========================
+       STORE
+    ========================== */
+    store: {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Store",
+      },
+      name: String,
+    },
+
+    /* =========================
+       ITEMS
+    ========================== */
+    items: [purchaseInvoiceItemSchema],
+
+    /* =========================
+       FINANCIAL
+    ========================== */
+    grossAmount: Number,
+    gstAmount: Number,
+    netAmount: Number,
+
+    totalPaid: {
+      type: Number,
+      default: 0,
+    },
+
+    totalDue: {
+      type: Number,
+      required: true,
+    },
+
+    /* =========================
+       STATUS
+    ========================== */
+    status: {
+      type: String,
+      enum: ["Draft", "Posted", "Cancelled"],
+      default: "Draft",
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["Pending", "Partially Paid", "Paid"],
+      default: "Pending",
+    },
+
+    /* =========================
+       AUDIT
+    ========================== */
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
+  { timestamps: true },
+);
 
-  purchaseOrderId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "PurchaseOrder",
-  },
+purchaseInvoiceSchema.pre("save", function () {
+  let gross = 0;
+  let gst = 0;
 
-  supplier: {
-    id: { type: mongoose.Schema.Types.ObjectId, ref: "Supplier" },
-    name: String,
-  },
+  const round = (n) => Math.round(n * 100) / 100;
 
-  supplierLedgerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Ledger",
-    required: true,
-  },
+  this.items.forEach((item) => {
+    const amount = round((item.receivedQty || 0) * (item.rate || 0));
+    item.amount = amount;
 
-  store: {
-    id: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
-    name: String,
-  },
+    gross += amount;
 
-  items: [purchaseInvoiceItemSchema],
+    const tax = item.gstRate ? round((amount * item.gstRate) / 100) : 0;
 
-  grossAmount: Number,
-  gstAmount: Number,
-  netAmount: Number,
+    item.gstAmount = tax;
+    item.totalAmount = round(amount + tax);
 
-  paymentStatus: {
-    type: String,
-    enum: ["Pending", "Partially Paid", "Paid"],
-    default: "Pending",
-  },
+    gst += tax;
+  });
 
-  totalPaid: { type: Number, default: 0 },
-  totalDue: { type: Number, required: true },
+  this.grossAmount = round(gross);
+  this.gstAmount = round(gst);
+  this.netAmount = round(gross + gst);
 
-  status: {
-    type: String,
-    enum: ["Draft", "Posted", "Cancelled"],
-    default: "Draft",
-  },
+  this.totalDue = round(Math.max(0, this.netAmount - (this.totalPaid || 0)));
+});
 
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
-}, { timestamps: true });
-
-
-const PurchaseInvoice = mongoose.model("PurchaseInvoice", purchaseInvoiceSchema);
+const PurchaseInvoice = mongoose.model(
+  "PurchaseInvoice",
+  purchaseInvoiceSchema,
+);
 module.exports = PurchaseInvoice;

@@ -125,7 +125,7 @@ const Stock = () => {
     <div>
       <Header category="Page" title="Stock Management" />
 
-      <section className="container mx-auto mt-4 px-2">
+      <section className="container mx-auto mt-4">
         <div className="w-full mx-auto">
           {/* Top bar */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
@@ -156,7 +156,7 @@ const Stock = () => {
 
           {/* Table */}
           <div className="bg-white rounded-lg shadow overflow-x-auto">
-            <table className="min-w-[900px] w-full border-collapse">
+            <table className="min-w-[800px] w-full border-collapse">
               <thead>
                 <tr className="bg-gray-100 text-left text-xs sm:text-sm">
                   <th className="px-3 py-2">Name</th>
@@ -164,7 +164,7 @@ const Stock = () => {
                   <th className="px-3 py-2">Unit</th>
                   <th className="px-3 py-2">Purchase</th>
                   <th className="px-3 py-2">Sale</th>
-                  <th className="px-3 py-2">MRP</th>
+                  {/* <th className="px-3 py-2">MRP</th> */}
                   <th className="px-3 py-2">Total Qty</th>
                   <th className="px-3 py-2">Actions</th>
                 </tr>
@@ -184,7 +184,7 @@ const Stock = () => {
                       <td className="px-3 py-2 text-blue-700 font-semibold">
                         ₹ {item.salePrice || 0}
                       </td>
-                      <td className="px-3 py-2">₹ {item.mrp || 0}</td>
+                      {/* <td className="px-3 py-2">₹ {item.mrp || 0}</td> */}
 
                       <td className="px-3 py-2 font-medium">
                         {getTotalQty(item)}
@@ -244,7 +244,7 @@ const Stock = () => {
       <Toaster position="top-right" />
 
       {/* Modals */}
-      <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)}>
+      <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} head="Create Stock">
         <CreateStock
           onSave={handleAdd}
           onClose={() => setIsCreateOpen(false)}

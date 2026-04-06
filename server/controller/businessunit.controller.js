@@ -31,19 +31,19 @@ const createBusinessUnit = async (req, res) => {
     await businessUnit.save();
 
     // 2️⃣ Auto-create primary ledger for Business Unit
-    const ledger = new Ledger({
-      name: `${businessUnit.name} Capital`,
-      under: "Capital Account",
-      referenceType: "BusinessUnit",
-      referenceId: businessUnit._id,
-      openingBalance: 0,
-    });
+    // const ledger = new Ledger({
+    //   name: `${businessUnit.name} Capital`,
+    //   under: "Capital Account",
+    //   referenceType: "BusinessUnit",
+    //   referenceId: businessUnit._id,
+    //   openingBalance: 0,
+    // });
 
-    const savedLedger = await ledger.save();
+    // const savedLedger = await ledger.save();
 
     // 3️⃣ Attach ledger to Business Unit
-    businessUnit.ledgerId = savedLedger._id;
-    await businessUnit.save();
+    // businessUnit.ledgerId = savedLedger._id;
+    // await businessUnit.save();
 
     res.status(201).json(businessUnit);
   } catch (error) {
@@ -56,8 +56,9 @@ const createBusinessUnit = async (req, res) => {
 const getBusinessUnits = async (req, res) => {
   try {
     const units = await BusinessUnit.find()
-      .populate("manager", "userName")
-      .populate("ledgerId", "name");
+    .populate("manager")
+    .sort({ name: 1 })
+    .exec();
 
     res.json(units);
   } catch (error) {
@@ -70,8 +71,7 @@ const getBusinessUnitById = async (req, res) => {
   try {
     // console.log(req)
     const unit = await BusinessUnit.findById(req.params.id)
-      .populate("manager")
-      .populate("ledgerId")
+    .populate("manager")
       .exec();
 
     if (!unit) {
@@ -88,6 +88,7 @@ const getBusinessUnitById = async (req, res) => {
 // UPDATE
 const updateBusinessUnit = async (req, res) => {
   try {
+    console.log("Update Request Body:", req.body);
     const unit = await BusinessUnit.findById(req.params.id);
     if (!unit) {
       return res.status(404).json({ error: "Business Unit not found" });

@@ -27,11 +27,10 @@ const purchaseSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-purchaseSchema.pre('save', function (next) {
+purchaseSchema.pre('save', function () {
     this.totalAmount = this.items.reduce((sum, item) => sum + item.amount, 0);
     this.taxAmount = this.items.reduce((sum, item) => sum + item.tax, 0);
     this.grandTotal = this.totalAmount + this.taxAmount;
-    next();
   });
   
 

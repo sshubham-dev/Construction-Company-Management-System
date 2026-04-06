@@ -184,6 +184,7 @@ const getMonthlyProjectSchedule = async (req, res) => {
 
     // console.log("Filtered Monthly Project Schedules:", projectSchedules.length);
     res.status(200).json(projectSchedules);
+    
   } catch (error) {
     console.error("Error in getMonthlyProjectSchedule:", error);
     res.status(500).json({ error: "Internal Server Error" });

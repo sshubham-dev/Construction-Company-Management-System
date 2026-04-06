@@ -51,6 +51,11 @@ const contractorSchema = new mongoose.Schema(
       ref: "BusinessUnit",
     },
 
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
+
     checklist: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -118,7 +123,7 @@ const contractorSchema = new mongoose.Schema(
     totalPaid: { type: Number, default: 0 }, // From payment vouchers
     totalDue: { type: Number, default: 0 }, // Auto: billed - paid - returns
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // ============================================================
@@ -130,40 +135,36 @@ async function recalcContractorFinance(contractor) {
   contractor.totalBilled = contractor.totalBilled || 0;
   contractor.totalPaid = contractor.totalPaid || 0;
 
-  contractor.totalDue =
-    contractor.totalBilled - contractor.totalPaid;
+  contractor.totalDue = contractor.totalBilled - contractor.totalPaid;
 
   if (contractor.totalDue < 0) contractor.totalDue = 0; // safety
 }
 
-
 // ============================================================
 // 🔄 PRE-SAVE MIDDLEWARE
 // ============================================================
-contractorSchema.pre("save", async function (next) {
+contractorSchema.pre("save", async function () {
   try {
     await recalcContractorFinance(this);
 
-    const ledgerId = await syncLedger({
-      doc: this,
-      type: "Contractor",
-      under: "Sundry Creditors",
-      getAddress: (doc) => ({
-        name: doc.name,
-        address: doc.address || "",
-      }),
-      getTaxDetails: (doc) => ({
-        gstNo: doc.gstNo || "",
-        panNo: doc.panNo || "",
-      }),
-    });
+    // const ledgerId = await syncLedger({
+    //   doc: this,
+    //   type: "Contractor",
+    //   under: "Sundry Creditors",
+    //   getAddress: (doc) => ({
+    //     name: doc.name,
+    //     address: doc.address || "",
+    //   }),
+    //   getTaxDetails: (doc) => ({
+    //     gstNo: doc.gstNo || "",
+    //     panNo: doc.panNo || "",
+    //   }),
+    // });
 
-    if (ledgerId) this.ledger = ledgerId;
-
-    next();
+    // if (ledgerId) this.ledger = ledgerId;
   } catch (err) {
     console.error("Error in contractor pre-save:", err);
-    next(err);
+    return err;
   }
 });
 
@@ -187,23 +188,23 @@ contractorSchema.pre("findOneAndUpdate", async function (next) {
     await recalcContractorFinance(contractor);
 
     // Sync ledger
-    const ledgerId = await syncLedger({
-      doc: contractor,
-      type: "Contractor",
-      under: "Sundry Creditors",
-      getAddress: (doc) => ({
-        name: doc.name,
-        address: doc.address || "",
-      }),
-      getTaxDetails: (doc) => ({
-        gstNo: doc.gstNo || "",
-        panNo: doc.panNo || "",
-      }),
-    });
+    // const ledgerId = await syncLedger({
+    //   doc: contractor,
+    //   type: "Contractor",
+    //   under: "Sundry Creditors",
+    //   getAddress: (doc) => ({
+    //     name: doc.name,
+    //     address: doc.address || "",
+    //   }),
+    //   getTaxDetails: (doc) => ({
+    //     gstNo: doc.gstNo || "",
+    //     panNo: doc.panNo || "",
+    //   }),
+    // });
 
-    if (!update.$set) update.$set = {};
+    // if (!update.$set) update.$set = {};
 
-    update.$set.ledger = ledgerId;
+    // update.$set.ledger = ledgerId;
 
     // FIXED: remove optional chaining
     update.$set.totalDue = contractor.totalDue || 0;

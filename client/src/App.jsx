@@ -1,9 +1,12 @@
 import React, { useEffect } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import UserManagement from "./pages/Dashboard/User.jsx";
-import Sites from "./pages/Site/Site.jsx";
-import Clients from "./pages/CRM/Clients.jsx";
+import { logout } from "./features/auth/authSlice.js";
+import "./index.css";
+import "jodit/es2021/jodit.min.css";
+
+
+// Components
 import Profile from "./components/Profile.jsx";
 import Login from "./components/Login.jsx";
 import Register from "./components/Register.jsx";
@@ -13,6 +16,15 @@ import PaymentSchedules from "./pages/Site/PaymentSchedule.jsx";
 import Bills from "./pages/Site/Bill.jsx";
 import CheckList from "./pages/Site/CheckList.jsx";
 import Contractors from "./pages/Site/Contractors.jsx";
+import CreatePayChallan from "./components/CreatePayChallan.jsx";
+import ResetPasswd from "./components/ResetPasswd.jsx";
+import UserProfile from "./components/ProfileCard.jsx";
+import RecordInventory from "./components/RecordInventory.jsx";
+import CreateJournal from "./components/CreateJournal.jsx";
+import CreateQuotation from "./components/CreateQuotation.jsx";
+
+
+// Dashboard Pages
 import Admin from "./pages/Dashboard/Admin.jsx";
 import Accountant from "./pages/Dashboard/Accountant.jsx";
 import Design_Head from "./pages/Dashboard/Design_Head.jsx";
@@ -21,8 +33,21 @@ import SiteSupervisour from "./pages/Dashboard/SiteSupervisour.jsx";
 import Quality_Engineer from "./pages/Dashboard/Quality_Engineer.jsx";
 import Design_Engineer from "./pages/Dashboard/Design_Engineer.jsx";
 import Marketing from "./pages/Dashboard/Marketing.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
+import Approval from "./pages/Dashboard/Approval.jsx";
+import Attendance from "./pages/Dashboard/Attendance.jsx";
+import Account_Head from "./pages/Dashboard/AccountHead.jsx";
 import Client from "./pages/Dashboard/Client.jsx";
+import WorkDetails from "./pages/Dashboard/WorkDetails.jsx";
+import UserManagement from "./pages/Dashboard/User.jsx";
+import StoreIncharge from "./pages/Dashboard/StoreIncharge.jsx";
+import CEO from "./pages/Dashboard/CEO.jsx";
+import HR from "./pages/Dashboard/HR.jsx";
+import StoreHelper from "./pages/Dashboard/StoreHelper.jsx";
+import Notification from "./pages/Dashboard/Notification.jsx";
+
+
+
+// Screens
 import SiteScreen from "./screen/SiteScreen.jsx";
 import ClientScreen from "./screen/ClientScreen.jsx";
 import WorkOrderScreen from "./screen/WorkOrderScreen.jsx";
@@ -30,92 +55,127 @@ import BillScreen from "./screen/BillScreen.jsx";
 import Payment_SchedulScreen from "./screen/Payment_SchedulScreen.jsx";
 import Project_ScheduleScreen from "./screen/Project_ScheduleScreen.jsx";
 import ContractorScreen from "./screen/ContractorScreen.jsx";
-import WorkDetails from "./pages/Dashboard/WorkDetails.jsx";
-import ExtraWork from "./pages/Site/ExtraWork.jsx";
-import PurchaseOrders from "./pages/ERP/PurchaseOrders.jsx";
-import Suppliers from "./pages/ERP/Suppliers.jsx";
 import PurchaseOrderScreen from "./screen/PurchaseOrderScreen.jsx";
-import Employee from "./pages/HRMS/Employee.jsx";
 import ExtraWorkScreen from "./screen/ExtraWorkScreen.jsx";
-import { logout } from "./features/auth/authSlice.js";
-import QualitySchedules from "./pages/Site/QualitySchedules.jsx";
-import "./index.css";
-import UserProfile from "./components/ProfileCard.jsx";
-import SupplierScreen from "./screen/SupplierScreen.jsx";
-import QualityScheduleScreen from "./screen/QualityScheduleScreen.jsx";
-import Approval from "./pages/Dashboard/Approval.jsx";
-import ResetPasswd from "./components/ResetPasswd.jsx";
-import Attendance from "./pages/Dashboard/Attendance.jsx";
-import Account_Head from "./pages/Dashboard/AccountHead.jsx";
-import ERP from "./pages/ERP/ERP.jsx";
-import RecordInventory from "./components/RecordInventory.jsx";
-import CRM from "./pages/CRM/CRM.jsx";
-import InventoryScreen from "./screen/InventoryScreen.jsx";
-import Store from "./pages/ERP/Store.jsx";
-import Purchase from "./pages/ERP/Purchase.jsx";
-import Sales from "./pages/ERP/Sales.jsx";
-import Lead from "./pages/CRM/Lead.jsx";
-import Project from "./pages/CRM/Project.jsx";
-import Stock from "./pages/ERP/Stock.jsx";
-import Expenses from "./pages/ERP/Expenses.jsx";
-import BalanceSheet from "./pages/ERP/BalanceSheet.jsx";
-import SitesDashboard from "./pages/Site/SitesDashboard.jsx";
-import ReturnOrders from "./pages/ERP/ReturnOrders.jsx";
-import { TbInvoice } from "react-icons/tb";
-import Invoice from "./pages/CRM/Invoice.jsx";
-import AccountManagement from "./pages/ERP/AccountManagement.jsx";
-import Order from "./pages/ERP/Order.jsx";
-import PurchaseRequest from "./pages/Site/PurchaseRequest.jsx";
-import Inventory from "./pages/ERP/Inventory.jsx";
-import UserScreen from "./screen/UserScreen.jsx";
-import Report from "./pages/Site/Report.jsx";
-import ReturnOrderScreen from "./screen/ReturnOrderScreen.jsx";
-import Receipt_Payment from "./pages/ERP/Receipt_Payment.jsx";
-import Contra from "./pages/ERP/Contra.jsx";
-import ERPReport from "./pages/ERP/ERPReport.jsx";
-import LedgerList from "./pages/ERP/Ledger.jsx";
-import Journal from "./pages/ERP/Journal.jsx";
-import ReturnRequest from "./pages/Site/Return.jsx";
-import AttendanceReport from "./pages/HRMS/AttendanceReport.jsx";
-import StoreHelper from "./pages/Dashboard/StoreHelper.jsx";
-import Setting from "./pages/Setting.jsx";
-import Notification from "./pages/Dashboard/Notification.jsx";
-import ReturnScreen from "./screen/ReturnScreen.jsx";
-import PurchaseRequestScreen from "./screen/PurchaseRequestScreen.jsx";
-import CheckListScreen from "./screen/CheckListScreen.jsx";
-import CEO from "./pages/Dashboard/CEO.jsx";
-import LeadDetail from "./pages/CRM/LeadDetail.jsx";
-import StoreIncharge from "./pages/Dashboard/StoreIncharge.jsx";
-import HR from "./pages/Dashboard/HR.jsx";
-import ProjectReport from "./pages/Design/ProjectReport.jsx";
-import ERPSettings from "./pages/ERP/ERPSettings.jsx";
-import CreateBlog from "./pages/CMS/Blog/CreateBlog.jsx";
-import WOTemplateScreen from "./screen/WOTemplateScreen.jsx";
-import LabourAttendanceScreen from "./screen/LabourAttendanceScreen.jsx";
-import CreateQuotation from "./components/CreateQuotation.jsx";
-import BusinessUnit from "./pages/ERP/BusinessUnit.jsx";
-import Quotations from "./pages/CRM/Quotation.jsx";
-import TrafficLight from "./pages/HRMS/TrafficLight.jsx";
-import TrafficLightSystem from "./pages/HRMS/TrafficLightSystem.jsx";
 import MonthlyPerformanceScreen from "./screen/MonthlyPerformanceScreen.jsx";
-import MonthlyPerformance from "./pages/HRMS/MonthlyPerformance.jsx";
 import BusinessUnitScreen from "./screen/BusinessUnitScreen.jsx";
 import StoreScreen from "./screen/StoreScreen.jsx";
 import GRNScreen from "./screen/GRNScreen.jsx";
-import GRN from "./pages/ERP/GRN.jsx";
-import DeliveryNotes from "./pages/ERP/DeliveryNotes.jsx";
 import DeliveryNoteScreen from "./screen/DeliveryNoteScreen.jsx";
-import SalesInvoice from "./pages/ERP/SalesInvoice.jsx";
 import SalesInvoiceScreen from "./screen/SalesInvoiceScreen.jsx";
-import Blogs from "./pages/CMS/Blogs.jsx";
-import BlogEdit from "./pages/CMS/Blog/BlogEdit.jsx";
-import BlogPreviewer from "./pages/CMS/Blog/BlogPreviewer.jsx";
+import PayChallanScreen from "./screen/PayChallanScreen.jsx";
+import SupplierScreen from "./screen/SupplierScreen.jsx";
+import QualityScheduleScreen from "./screen/QualityScheduleScreen.jsx";
+import InventoryScreen from "./screen/InventoryScreen.jsx";
+import UserScreen from "./screen/UserScreen.jsx";
+import ReturnOrderScreen from "./screen/ReturnOrderScreen.jsx";
+import ReturnScreen from "./screen/ReturnScreen.jsx";
+import CheckListScreen from "./screen/CheckListScreen.jsx";
+import PurchaseRequestScreen from "./screen/PurchaseRequestScreen.jsx";
+import WOTemplateScreen from "./screen/WOTemplateScreen.jsx";
+import LabourAttendanceScreen from "./screen/LabourAttendanceScreen.jsx";
+
+
+
+// Sites
+import ExtraWork from "./pages/Site/ExtraWork.jsx";
+import QualitySchedules from "./pages/Site/QualitySchedules.jsx";
+import Sites from "./pages/Site/Site.jsx";
+import SitesDashboard from "./pages/Site/SitesDashboard.jsx";
+import PurchaseRequest from "./pages/Site/PurchaseRequest.jsx";
+import Report from "./pages/Site/Report.jsx";
+import ReturnRequest from "./pages/Site/Return.jsx";
+
+
+
+
+// CRM
+import LeadDetail from "./pages/CRM/LeadDetail.jsx";
+import Lead from "./pages/CRM/Lead.jsx";
+import CRM from "./pages/CRM/CRM.jsx";
+import Project from "./pages/CRM/Project.jsx";
+import Invoice from "./pages/CRM/Invoice.jsx";
+import Clients from "./pages/CRM/Clients.jsx";
+import Quotations from "./pages/CRM/Quotation.jsx";
+
+
+
+import Setting from "./pages/Setting.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import { initPushNotifications } from "./helper/notificationService.js";
+
+
+// Design
+import ProjectReport from "./pages/Design/ProjectReport.jsx";
 import CollectionEntry from "./pages/Design/CollectionEntry.jsx";
 import Collections from "./pages/Design/Collections.jsx";
-import "jodit/es2021/jodit.min.css";
-import { initPushNotifications } from "./helper/notificationService.js";
-import FAQs from "./pages/CMS/FAQs.jsx";
+
+
+
+// HRMS
+import AttendanceReport from "./pages/HRMS/AttendanceReport.jsx";
 import Payroll from "./pages/HRMS/Payroll.jsx";
+import TrafficLight from "./pages/HRMS/TrafficLight.jsx";
+import TrafficLightSystem from "./pages/HRMS/TrafficLightSystem.jsx";
+import Employee from "./pages/HRMS/Employee.jsx";
+import MonthlyPerformance from "./pages/HRMS/MonthlyPerformance.jsx";
+
+
+// CMS
+import BlogPreviewer from "./pages/CMS/Blog/BlogPreviewer.jsx";
+import FAQs from "./pages/CMS/FAQs.jsx";
+import Projects from "./pages/CMS/Projects.jsx";
+import ProjectDetail from "./pages/CMS/ProjectDetail.jsx";
+import Blogs from "./pages/CMS/Blogs.jsx";
+import BlogEdit from "./pages/CMS/Blog/BlogEdit.jsx";
+import CreateBlog from "./pages/CMS/Blog/CreateBlog.jsx";
+
+
+// ERP
+import Voucher from "./pages/ERP/Voucher.jsx";
+import Company from "./pages/ERP/Company.jsx";
+import CostCenter from "./pages/ERP/CostCenter.jsx";
+import LedgerList from "./pages/ERP/Ledger.jsx";
+import BusinessUnit from "./pages/ERP/BusinessUnit.jsx";
+import SalesInvoice from "./pages/ERP/SalesInvoice.jsx";
+import Expenses from "./pages/ERP/Expenses.jsx";
+import PaymentChallan from "./pages/ERP/PaymentChallan.jsx";
+import ERPSettings from "./pages/ERP/ERPSettings.jsx";
+import Suppliers from "./pages/ERP/Suppliers.jsx";
+import InvoiceForm from "./pages/ERP/Components/InvoiceForm.jsx";
+
+
+// ERP/Inventory
+import Inventory from "./pages/ERP/Inventory.jsx";
+import Store from "./pages/ERP/Store.jsx";
+import Stock from "./pages/ERP/Stock.jsx";
+import PurchaseOrders from "./pages/ERP/PurchaseOrders.jsx";
+import DeliveryNotes from "./pages/ERP/DeliveryNotes.jsx";
+import GRN from "./pages/ERP/GRN.jsx";
+import ReturnOrders from "./pages/ERP/ReturnOrders.jsx";
+import StockAudit from "./pages/ERP/Stock/StockAudit.jsx";
+
+
+// ERP/Reports
+import AccountManagement from "./pages/ERP/Reports/AccountManagement.jsx"; // 
+import BalanceSheet from "./pages/ERP/Reports/BalanceSheet.jsx"; //
+import CashFlow from "./pages/ERP/Reports/CashFlow.jsx"; //
+import ERP from "./pages/ERP/Reports/ERP.jsx"; //
+import ExpenseReports from "./pages/ERP/Reports/ExpenseReports.jsx"; //
+import LedgerReport from "./pages/ERP/Reports/LedgerReport.jsx" //
+import Outstanding from "./pages/ERP/Reports/Outstanding.jsx"; //
+import ProfitLoss from "./pages/ERP/Reports/ProfitLoss.jsx";
+import Purchase from "./pages/ERP/Reports/Purchase.jsx"; //
+import SiteProfit from "./pages/ERP/Reports/SiteProfit.jsx"; //
+import Sales from "./pages/ERP/Reports/Sales.jsx";
+import TrialBalance from "./pages/ERP/Reports/TrialBalance.jsx"; //
+
+import Order from "./pages/ERP/Order.jsx";
+import LedgerGroup from "./pages/ERP/LedgerGroup.jsx";
+
+
+
+
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -300,11 +360,21 @@ const App = () => {
         <Route path="/return-order/:from" element={<ReturnOrders />} />
         <Route path="/return-order/:id" element={<ReturnOrderScreen />} />
 
-        <Route path="/erp" element={<ERP />} />
+        <Route path="/erp/company" element={<Company />} />
         <Route path="/erp-setting" element={<ERPSettings />} />
+        <Route path="/erp/groups" element={<LedgerGroup />} />
+
+        <Route path="/erp" element={<ERP />} />
         <Route path="/erp/account" element={<AccountManagement />} />
-        <Route path="/erp/expenses" element={<Expenses />} />
+        <Route path="/erp/expenses" element={<ExpenseReports />} />
         <Route path="/erp/balance-sheet" element={<BalanceSheet />} />
+        <Route path="/erp/cash-flow" element={<CashFlow />} />
+        <Route path="/erp/ledger-report" element={<LedgerReport />} />
+        <Route path="/erp/outstanding" element={<Outstanding />} />
+        <Route path="/erp/p&l" element={<ProfitLoss />} />
+        <Route path="/erp/site-profit" element={<SiteProfit />} />
+        <Route path="/erp/trial-balance" element={<TrialBalance />} />
+
         <Route path="/erp/inventory" element={<Store />} />
         <Route path="/erp/inventory/grn" element={<GRN />} />
         <Route path="/erp/inventory/grn/:id" element={<GRNScreen />} />
@@ -316,7 +386,7 @@ const App = () => {
           path="/erp/inventory/store/:storeId/stock"
           element={<StoreScreen />}
         />
-        <Route path="/erp/report/:of" element={<ERPReport />} />
+        {/* <Route path="/erp/report/:of" element={<ERPReport />} /> */}
         <Route path="/erp/inventory/stock" element={<Stock />} />
         <Route path="/erp/inventory/sales" element={<Sales />} />
         <Route path="/erp/inventory/sales-invoice" element={<SalesInvoice />} />
@@ -333,18 +403,24 @@ const App = () => {
         <Route path="/erp/inventory/order" element={<Order />} />
         <Route path="/erp/business_unit" element={<BusinessUnit />} />
         <Route path="/erp/business_unit/:id" element={<BusinessUnitScreen />} />
-        {/* <Route path='/erp/journal' element={<Journal />} /> */}
+        <Route path='/erp/:voucher' element={<Voucher />} />
         <Route path="/erp/ledger" element={<LedgerList />} />
-        <Route path="/erp/receipt_payment" element={<Receipt_Payment />} />
-        <Route path="/erp/contra" element={<Contra />} />
+        <Route path="/erp/cost-center" element={<CostCenter />} />
+        <Route path="/erp/invoice/create" element={<InvoiceForm />} />
+        <Route path="/erp/invoice" element={<Invoice />} />
+        <Route
+          path="/erp/payment-challan/create"
+          element={<CreatePayChallan />}
+        />
+        <Route path="/erp/payment-challan" element={<PaymentChallan />} />
+        <Route path="/erp/payment-challan/:id" element={<PayChallanScreen />} />
+
         <Route path="/erp/stock/journal" element={<Order />} />
+        <Route path="/erp/inventory/stock/audit" element={<StockAudit />} />
         <Route path="/erp/:note" element={<Order />} />
         <Route path="/erp/summary" element={<Order />} />
-        <Route path="/erp/balance-sheet" element={<Order />} />
-        <Route path="/erp/p&l" element={<Order />} />
         <Route path="/erp/stock/summary" element={<Order />} />
         <Route path="/erp/ration-analysis" element={<Order />} />
-        <Route path="/erp/trial-balance" element={<Order />} />
         <Route path="/erp/inventory/return-order" element={<ReturnOrders />} />
         <Route
           path="/erp/inventory/return-request"
@@ -368,7 +444,7 @@ const App = () => {
         <Route path="/design/collection-entry" element={<CollectionEntry />} />
         <Route path="/design/collections" element={<Collections />} />
 
-        <Route path="/site-kharchi" element={<Expenses />} />
+        <Route path="/my_expenses" element={<Expenses />} />
 
         <Route path="/cms/blog/editor" element={<CreateBlog />} />
         <Route path="/cms/blogs" element={<Blogs />} />
@@ -376,6 +452,10 @@ const App = () => {
         <Route path="/cms/blog/edit/:id" element={<BlogEdit />} />
 
         <Route path="/cms/faqs" element={<FAQs />} />
+
+        <Route path="/cms/projects" element={<Projects />} />
+        <Route path="/cms/project/:id" element={<ProjectDetail />} />
+
 
         <Route path="/work-details" element={<WorkDetails />} />
 

@@ -2,166 +2,50 @@ const mongoose = require("mongoose");
 
 const stockSchema = new mongoose.Schema(
   {
-    // ---------------------------------------------------------
-    // Basic Item Details
-    // ---------------------------------------------------------
-    name: { type: String, required: true, trim: true },
-    category: { type: String, required: true },
+    itemCode: { type: String, unique: true, index: true },
+
+    name: { type: String, required: true, trim: true, index: true },
+
+    category: { type: String, required: true, index: true },
+
     unit: { type: String, required: true },
+
     itemType: {
       type: String,
-      enum: ["Consumable", "AssetComponent"],
-      default: "Consumable",
+      default: "CONSUMABLE",
+      index: true,
     },
+
     hsnCode: String,
-    gstRate: { type: Number, default: 18 },
+    gstRate: { type: Number, default: 0 },
 
-    // ---------------------------------------------------------
-    // Pricing (purchase & mrp are user-entered)
-    // ---------------------------------------------------------
-    purchasePrice: { type: Number, default: 0 }, // user input
-    mrp: { type: Number, default: 0 }, // user input
+    purchasePrice: { type: Number, default: 0 },
+    mrp: { type: Number, default: 0 },
 
-    surchargePercentage: {
-      staffSalary: { type: Number, default: 0 },
-      profit: { type: Number, default: 0 },
-      expenses: { type: Number, default: 0 },
-      investment: { type: Number, default: 0 },
-      tax: { type: Number, default: 0 },
-    },
-
-    // Auto calculated sale price = purchasePrice + surcharge
-    salePrice: { type: Number, default: 0 },
-
-    // ---------------------------------------------------------
-    // Multi Store Stock Levels
-    // ---------------------------------------------------------
-    stockByStore: [
-      {
-        storeId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Store",
-          required: true,
-        },
-        openingStock: { type: Number, default: 0 },
-        currentStock: { type: Number, default: 0 },
-        reservedStock: { type: Number, default: 0 },
-        lastUpdated: { type: Date, default: Date.now },
-      },
-    ],
-
-    // ---------------------------------------------------------
-    // Purchase History
-    // ---------------------------------------------------------
-    purchaseHistory: [
-      {
-        purchaseOrderId: { type: mongoose.Schema.Types.ObjectId, ref: "Purchase_Order" },
-        supplierId: { type: mongoose.Schema.Types.ObjectId, ref: "Supplier" },
-        quantity: Number,
-        unitPrice: Number,
-        totalAmount: Number,
-        date: { type: Date, default: Date.now },
-      },
-    ],
-
-
-
-    // ---------------------------------------------------------
-    // Sales History
-    // ---------------------------------------------------------
-    salesHistory: [
-      {
-        salesOrderId: { type: mongoose.Schema.Types.ObjectId, ref: "SalesInvoice" },
-        soldTo: { type: mongoose.Schema.Types.ObjectId, refPath: "soldToType" },
-        soldToType: { type: String, enum: ["Site", "Client", "BusinessUnit", "Store"] },
-        quantity: Number,
-        saleRate: Number,
-        totalAmount: Number,
-        date: { type: Date, default: Date.now },
-      },
-    ],
-
-    // ---------------------------------------------------------
-    // Return History
-    // ---------------------------------------------------------
-    returnHistory: [
-      {
-        returnType: { type: String, enum: ["PurchaseReturn", "SalesReturn"] },
-        referenceId: {
-          type: mongoose.Schema.Types.ObjectId,
-          refPath: "returnTypeRef",
-        },
-        returnTypeRef: {
-          type: String,
-          enum: ["Purchase_Order", "SalesInvoice"],
-        },
-        quantity: Number,
-        reason: String,
-        date: { type: Date, default: Date.now },
-      },
-    ],
-
-    // ---------------------------------------------------------
-    // Stock Movement Audit Trail
-    // ---------------------------------------------------------
-    movementLog: [
-      {
-        type: {
-          type: String,
-          enum: ["Purchase", "Sale", "Return", "Adjustment", "Transfer"],
-          required: true,
-        },
-        storeId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Store",
-        },
-        quantity: Number,
-        rate: Number,
-        narration: String,
-        date: { type: Date, default: Date.now },
-      },
-    ],
-
-    // ---------------------------------------------------------
-    // Status
-    // ---------------------------------------------------------
     isActive: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const stockGroupSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    code: {
-      type: String,
-      // required: true,
-      // unique: true,
-      trim: true,
-    },
-    unit: [
-      {
-        type: String,
-      },
-    ],
-    item: [
-      {
-        name: String,
-        id: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Stock",
-        },
-      },
-    ],
-    profit: {
-      type: Number,
+    name: { type: String, required: true, unique: true, trim: true, index: true },
+    code: { type: String, trim: true },
+
+    unit: [String],
+
+    defaultMargin: { type: Number, default: 0 },
+
+    /* =========================
+       STATUS
+    ========================== */
+
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const stockAuditSchema = new mongoose.Schema(
@@ -176,12 +60,7 @@ const stockAuditSchema = new mongoose.Schema(
       // Example: RN-ST-2025-01 (Ranchi Store Jan 2025)
     },
 
-    businessUnitId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "BusinessUnit",
-      required: true,
-      // Ranchi Store, Patna Store, etc.
-    },
+    storeId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
 
     auditedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -200,7 +79,7 @@ const stockAuditSchema = new mongoose.Schema(
     // ----------------------------
     items: [
       {
-        itemId: {
+        stockId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Stock",
           required: true,
@@ -213,45 +92,15 @@ const stockAuditSchema = new mongoose.Schema(
 
         differenceType: {
           type: String,
-          enum: ["Excess", "Shortage", "Match"],
-          default: "Match",
+          enum: ["EXCESS", "SHORTAGE", "MATCH"],
         },
+
+        rate: Number,
+        value: Number,
 
         remarks: String,
       },
     ],
-
-    // ----------------------------
-    // Audit Summary
-    // ----------------------------
-    totalItemsAudited: Number,
-    totalShortageValue: Number,
-    totalExcessValue: Number,
-
-    // ----------------------------
-    // Adjustment Workflow
-    // ----------------------------
-    adjustmentRequired: {
-      type: Boolean,
-      default: false,
-    },
-
-    adjustmentStatus: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected", "Completed"],
-      default: "Pending",
-    },
-
-    approvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-
-    adjustmentVoucherId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "StockAdjustment",
-      // Optional: adjustment voucher if created
-    },
 
     // ----------------------------
     // Attachments (photos, PDFs)
@@ -268,96 +117,47 @@ const stockAuditSchema = new mongoose.Schema(
     // ----------------------------
     comments: String,
 
-    isFinalSubmitted: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum: ["DRAFT", "APPROVED", "POSTED"],
+      default: "DRAFT",
+    },
+
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-/**
- * Increase stock for a store
- * session optional
- */
-stockSchema.statics.increaseStockForStore = async function (
-  itemId,
-  storeId,
-  qty,
-  rate = 0,
-  session = null
-) {
-  const StockItem = this;
-  const item = await StockItem.findById(itemId).session(session);
-  if (!item) throw new Error("Stock item not found");
+const stockTransferSchema = new mongoose.Schema(
+  {
+    fromStoreId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
+    toStoreId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
 
-  let rec = item.stockByStore.find(
-    (s) => s.storeId?.toString() === storeId?.toString()
-  );
-  if (!rec) {
-    rec = {
-      storeId,
-      openingStock: 0,
-      currentStock: 0,
-      reservedStock: 0,
-      lastUpdated: new Date(),
-    };
-    item.stockByStore.push(rec);
-  }
+    items: [
+      {
+        stockId: { type: mongoose.Schema.Types.ObjectId, ref: "Stock" },
+        quantity: Number,
+        rate: Number,
+      },
+    ],
 
-  rec.currentStock = (rec.currentStock || 0) + (qty || 0);
-  rec.lastUpdated = new Date();
+    status: {
+      type: String,
+      enum: ["DRAFT", "POSTED"],
+      default: "DRAFT",
+    },
 
-  item.purchaseHistory.push({
-    purchaseOrderId: null,
-    supplierId: null,
-    quantity: qty,
-    unitPrice: rate,
-    totalAmount: qty * rate,
-    date: new Date(),
-  });
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    narration: String,
+  },
+  { timestamps: true },
+);
 
-  item.latestPurchasePrice = rate || item.latestPurchasePrice;
-  item.save({ session });
-  return item;
-};
-
-/**
- * Decrease stock for a store
- */
-stockSchema.statics.decreaseStockForStore = async function (
-  itemId,
-  storeId,
-  qty,
-  session = null
-) {
-  const StockItem = this;
-  const item = await StockItem.findById(itemId).session(session);
-  if (!item) throw new Error("Stock item not found");
-
-  const rec = item.stockByStore.find(
-    (s) => s.storeId?.toString() === storeId?.toString()
-  );
-  if (!rec) throw new Error("Stock not found in this store");
-  if ((rec.currentStock || 0) < qty) throw new Error("Insufficient stock");
-
-  rec.currentStock = (rec.currentStock || 0) - qty;
-  rec.lastUpdated = new Date();
-
-  item.movementLog.push({
-    type: "OUT",
-    businessUnitId: storeId,
-    qty,
-    rate: item.latestPurchasePrice || 0,
-    reason: "Issue/ Sale",
-    date: new Date(),
-  });
-
-  await item.save({ session });
-  return item;
-};
-
+const Stock_Transfer = mongoose.model("Stock_Transfer", stockTransferSchema);
 const Stock = mongoose.model("Stock", stockSchema);
 const Stock_Audit = mongoose.model("Stock_Audit", stockAuditSchema);
 const Stock_Group = mongoose.model("Stock_Group", stockGroupSchema);
-module.exports = { Stock, Stock_Group, Stock_Audit };
+module.exports = { Stock, Stock_Group, Stock_Audit, Stock_Transfer };

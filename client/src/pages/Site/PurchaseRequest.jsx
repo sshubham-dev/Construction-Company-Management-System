@@ -24,7 +24,7 @@ const PurchaseRequest = () => {
   useEffect(() => {
     const fetchPurchaseRequest = async () => {
       const response = await axios.get("/api/v1/purchase-request");
-      console.log(...response.data);
+      console.log(response.data);
       setPurchaseRequest(response.data);
     };
     fetchPurchaseRequest();
@@ -133,7 +133,7 @@ const PurchaseRequest = () => {
                     <td className="p-3 text-left">
                       {" "}
                       <Link to={`/purchase-request/${request._id}`}>
-                        {request.site.name}
+                        {request.site?.name}
                       </Link>
                     </td>
                     <td className="p-3 text-left">{request.requirementFor}</td>
@@ -191,7 +191,7 @@ const PurchaseRequest = () => {
                   >
                     <td className="p-3 text-left">
                       <Link to={`/purchase-request/${request._id}`}>
-                        {request.site.name}
+                        {request.site?.name}
                       </Link>
                     </td>
                     <td className="p-3 text-left flex flex-col">

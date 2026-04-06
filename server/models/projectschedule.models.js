@@ -71,7 +71,7 @@ const projectScheduleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-projectScheduleSchema.pre("save", async function (next){
+projectScheduleSchema.pre("save", async function (){
   try {
         const schedule = this.projectDetail;
     schedule.flatMap((work) => {
@@ -80,10 +80,9 @@ projectScheduleSchema.pre("save", async function (next){
       work.difference = Math.ceil((actual - planned) / (1000 * 60 * 60 * 24));
       // work.reason = "Delay in work completion"
     });
-    next();
   } catch (err) {
     console.error("Error in project schedule:", err);
-    next(err);
+    return err
   }
 })
 

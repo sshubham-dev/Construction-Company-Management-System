@@ -1,29 +1,26 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Select from "react-select";
+import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
 
-const CreateLedger = ({ onClose, editData = null }) => {
+const CreateLedger = ({ onClose, editData }) => {
   const isEdit = Boolean(editData?._id);
-
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   /* =========================
      STATE
   ========================== */
   const [ledger, setLedger] = useState({
     name: "",
     alias: "",
-    under: "",
-    statutoryDetails: {
-      isGSTApplicable: false,
-      isTDSDeductible: false,
-    },
+    groupId: "",
+    companyId: "",
     mailingDetails: {
       name: "",
+      phoneNo: "",
+      email: "",
       address: "",
       state: "",
-    },
-    taxRegistrationDetails: {
-      panNo: "",
-      gstNo: "",
     },
     bankingDetails: {
       accountHolder: "",
@@ -32,14 +29,22 @@ const CreateLedger = ({ onClose, editData = null }) => {
       bankName: "",
       branch: "",
     },
+    statutoryDetails: {
+      isGSTApplicable: false,
+      isTDSDeductible: false,
+    },
+    taxDetails: {
+      panNo: "",
+      gstNo: "",
+    },
     openingBalance: 0,
   });
 
-  const [referenceType, setReferenceType] = useState("");
-  const [referenceId, setReferenceId] = useState("");
-
   const [ledgerGroups, setLedgerGroups] = useState([]);
   const [references, setReferences] = useState([]);
+  const [company, setCompany] = useState([]);
+  const [referenceType, setReferenceType] = useState("");
+  const [referenceId, setReferenceId] = useState("");
 
   const [loading, setLoading] = useState(false);
 
@@ -47,49 +52,62 @@ const CreateLedger = ({ onClose, editData = null }) => {
      LOAD MASTER DATA
   ========================== */
   useEffect(() => {
-    axios.get("/api/v1/ledger-group").then((res) => {
-      setLedgerGroups(res.data);
-    });
+    const fetchGroups = async () => {
+      const res = await axios.get("/api/v1/ledger-group", {
+        params: { companyId: user?.companyId },
+      });
+      console.log(res.data);
+      setLedgerGroups(res.data || []);
+    };
+
+    const fetchCompany = async () => {
+      const res = await axios.get("/api/v1/company");
+      // console.log(res.data);
+      setCompany(res.data);
+    };
+    fetchGroups();
+    fetchCompany();
   }, []);
 
   /* =========================
-     LOAD EDIT DATA
+     EDIT MODE
   ========================== */
   useEffect(() => {
     if (!isEdit) return;
 
-    setLedger({
-      name: editData.name,
-      alias: editData.alias,
-      under: editData.under,
-      statutoryDetails: editData.statutoryDetails || {},
-      mailingDetails: editData.mailingDetails || {},
-      taxRegistrationDetails: editData.taxRegistrationDetails || {},
-      bankingDetails: editData.bankingDetails || {},
-      openingBalance: editData.openingBalance || 0,
-    });
-
+    const fetchLedger = async () => {
+      try {
+        const res = await axios.get(`/api/v1/ledger/${editData._id}`);
+        setLedger({
+          ...res.data,
+          companyId: res.data.companyId?._id || "",
+          groupId: res.data.groupId?._id || "",
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchLedger();
     setReferenceType(editData.referenceType || "");
     setReferenceId(editData.referenceId || "");
-  }, [isEdit, editData]);
+  }, [editData]);
 
   /* =========================
-     LOAD REFERENCES BASED ON TYPE
+     LOAD REFERENCES
   ========================== */
   useEffect(() => {
-    if (!referenceType) {
-      setReferences([]);
-      return;
-    }
+    if (!referenceType) return setReferences([]);
 
     axios
-      .get(`/api/v1/${referenceType.toLowerCase()}/`)
-      .then((res) => setReferences(res.data))
+      .get(`/api/v1/${referenceType.toLowerCase()}`, {
+        params: { companyId: ledger?.companyId },
+      })
+      .then((res) => setReferences(res.data || []))
       .catch(() => setReferences([]));
   }, [referenceType]);
 
   /* =========================
-     HANDLE INPUT
+     HANDLE CHANGE
   ========================== */
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -121,89 +139,94 @@ const CreateLedger = ({ onClose, editData = null }) => {
     try {
       const payload = {
         ...ledger,
+        referenceType,
+        referenceId,
       };
-
-      // only send reference on create
-      if (!isEdit && referenceType && referenceId) {
-        payload.referenceType = referenceType;
-        payload.referenceId = referenceId;
-      }
-
+      console.log(payload);
       if (isEdit) {
         await axios.put(`/api/v1/ledger/${editData._id}`, payload);
+        toast.success("Ledger updated");
       } else {
         await axios.post("/api/v1/ledger", payload);
+        toast.success("Ledger created");
       }
 
       onClose();
-    } catch (error) {
-      console.error("Ledger save error:", error);
+    } catch (err) {
+      console.error(err);
+      toast.error("Error saving ledger");
     } finally {
       setLoading(false);
     }
   };
 
   /* =========================
+     OPTIONS
+  ========================== */
+  const groupOptions = ledgerGroups.map((g) => ({
+    label: g.name,
+    value: g._id,
+  }));
+
+  const companyOptions = company.map((c) => ({
+    label: c.name,
+    value: c._id,
+  }));
+
+  const referenceOptions = references.map((r) => ({
+    label: r.name,
+    value: r._id,
+  }));
+
+  /* =========================
      UI
   ========================== */
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5 pb-6">
       {/* BASIC */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-4 h-full">
         <input
           name="name"
           value={ledger.name}
           onChange={handleChange}
           placeholder="Ledger Name"
-          className="border p-2 rounded"
+          className="border p-2 w-full rounded"
           required
         />
+
         <input
           name="alias"
           value={ledger.alias}
           onChange={handleChange}
           placeholder="Alias"
-          className="border p-2 rounded"
+          className="border p-2 w-full rounded"
         />
       </div>
 
+      {/* COMPANY */}
+      <Select
+        options={companyOptions}
+        value={companyOptions.find((c) => c.value === ledger.companyId)}
+        onChange={(e) =>
+          setLedger((prev) => ({
+            ...prev,
+            companyId: e?.value || "",
+          }))
+        }
+        placeholder="Company"
+      />
+
       {/* GROUP */}
       <Select
-        value={
-          ledger.under ? { label: ledger.under, value: ledger.under } : null
+        options={groupOptions}
+        value={groupOptions.find((g) => g.value === ledger.groupId)}
+        onChange={(e) =>
+          setLedger((prev) => ({ ...prev, groupId: e?.value || "" }))
         }
-        onChange={(e) => setLedger((prev) => ({ ...prev, under: e.value }))}
-        options={ledgerGroups.map((g) => ({
-          label: g.name,
-          value: g.name,
-        }))}
         placeholder="Ledger Group"
       />
 
-      {/* STATUTORY */}
-      <div className="flex gap-6">
-        <label className="flex gap-2 items-center">
-          <input
-            type="checkbox"
-            name="statutoryDetails.isGSTApplicable"
-            checked={ledger.statutoryDetails.isGSTApplicable}
-            onChange={handleChange}
-          />
-          GST Applicable
-        </label>
-
-        <label className="flex gap-2 items-center">
-          <input
-            type="checkbox"
-            name="statutoryDetails.isTDSDeductible"
-            checked={ledger.statutoryDetails.isTDSDeductible}
-            onChange={handleChange}
-          />
-          TDS Deductible
-        </label>
-      </div>
-
-      {/* MAILING DETAILS */}
+      {/* MAILING */}
       <div>
         <h4 className="font-medium mb-2">Mailing Details</h4>
 
@@ -213,6 +236,20 @@ const CreateLedger = ({ onClose, editData = null }) => {
             value={ledger.mailingDetails.name}
             onChange={handleChange}
             placeholder="Mailing Name"
+            className="border p-2 rounded"
+          />
+          <input
+            name="mailingDetails.phoneNo"
+            value={ledger.mailingDetails.phoneNo}
+            onChange={handleChange}
+            placeholder="Phone Number"
+            className="border p-2 rounded"
+          />
+          <input
+            name="mailingDetails.email"
+            value={ledger.mailingDetails.email}
+            onChange={handleChange}
+            placeholder="Email"
             className="border p-2 rounded"
           />
 
@@ -235,44 +272,67 @@ const CreateLedger = ({ onClose, editData = null }) => {
         />
       </div>
 
+            {/* STATUTORY */}
+      <div className="flex gap-6">
+        <label>
+          <input
+            type="checkbox"
+            name="statutoryDetails.isGSTApplicable"
+            checked={ledger.statutoryDetails.isGSTApplicable}
+            onChange={handleChange}
+          />{" "}
+          GST
+        </label>
+
+        <label>
+          <input
+            type="checkbox"
+            name="statutoryDetails.isTDSDeductible"
+            checked={ledger.statutoryDetails.isTDSDeductible}
+            onChange={handleChange}
+          />{" "}
+          TDS
+        </label>
+      </div>
+
       {/* BANK */}
       <div>
-        <h4 className="font-medium mb-2">Banking Details</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <h3 className="font-medium mb-2">Bank Detail</h3>
+        <div className="space-y-2 border px-4 py-6 rounded">
           <input
             name="bankingDetails.accountHolder"
             value={ledger.bankingDetails.accountHolder}
             onChange={handleChange}
             placeholder="Account Holder"
-            className="border p-2 rounded"
-          />
-          <input
-            name="bankingDetails.accountNumber"
-            value={ledger.bankingDetails.accountNumber}
-            onChange={handleChange}
-            placeholder="Account Number"
-            className="border p-2 rounded"
-          />
-          <input
-            name="bankingDetails.ifscCode"
-            value={ledger.bankingDetails.ifscCode}
-            onChange={handleChange}
-            placeholder="IFSC Code"
-            className="border p-2 rounded"
+            className="border p-2 w-full rounded"
           />
           <input
             name="bankingDetails.bankName"
             value={ledger.bankingDetails.bankName}
             onChange={handleChange}
             placeholder="Bank Name"
-            className="border p-2 rounded"
+            className="border p-2 w-full rounded"
+          />
+          <input
+            name="bankingDetails.accountNumber"
+            value={ledger.bankingDetails.accountNumber}
+            onChange={handleChange}
+            placeholder="Account Number"
+            className="border p-2 w-full rounded"
+          />
+          <input
+            name="bankingDetails.ifscCode"
+            value={ledger.bankingDetails.ifscCode}
+            onChange={handleChange}
+            placeholder="IFSC Code"
+            className="border p-2 w-full rounded"
           />
           <input
             name="bankingDetails.branch"
             value={ledger.bankingDetails.branch}
             onChange={handleChange}
             placeholder="Branch"
-            className="border p-2 rounded"
+            className="border p-2 w-full rounded"
           />
         </div>
       </div>
@@ -285,67 +345,41 @@ const CreateLedger = ({ onClose, editData = null }) => {
           value={ledger.openingBalance}
           onChange={handleChange}
           placeholder="Opening Balance"
-          className="border p-2 rounded"
+          className="border p-2 w-full rounded"
         />
       )}
 
-      {/* REFERENCE (CREATE ONLY) */}
+      {/* REFERENCE */}
       {!isEdit && (
         <>
           <Select
-            placeholder="Reference Type"
-            value={
-              referenceType
-                ? { label: referenceType, value: referenceType }
-                : null
-            }
-            onChange={(e) => {
-              setReferenceType(e.value);
-              setReferenceId("");
-            }}
             options={[
-              { label: "Client", value: "Client" },
               { label: "Site", value: "Site" },
-              { label: "Supplier", value: "Supplier" },
               { label: "Contractor", value: "Contractor" },
+              { label: "Supplier", value: "Supplier" },
               { label: "Employee", value: "Employee" },
             ]}
+            onChange={(e) => setReferenceType(e?.value || "")}
+            placeholder="Reference Type"
           />
 
           <Select
-            placeholder={`Select ${referenceType}`}
+            options={referenceOptions}
+            onChange={(e) => setReferenceId(e?.value || "")}
+            placeholder="Select Reference"
             isDisabled={!referenceType}
-            value={
-              references.find((r) => r._id === referenceId)
-                ? {
-                    label: references.find((r) => r._id === referenceId)?.name,
-                    value: referenceId,
-                  }
-                : null
-            }
-            onChange={(e) => setReferenceId(e.value)}
-            options={references.map((r) => ({
-              label: r.name,
-              value: r._id,
-            }))}
           />
         </>
       )}
 
-      {/* ACTIONS */}
-      <div className="flex justify-end gap-3 pt-4">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-4 py-2 bg-gray-400 text-white rounded"
-        >
+      {/* ACTION */}
+      <div className="flex justify-end gap-3">
+        <button type="button" onClick={onClose} className="btn-gray">
           Cancel
         </button>
-        <button
-          disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-        >
-          {loading ? "Saving..." : isEdit ? "Update Ledger" : "Create Ledger"}
+
+        <button disabled={loading} className="btn-primary">
+          {loading ? "Saving..." : isEdit ? "Update" : "Create"}
         </button>
       </div>
     </form>

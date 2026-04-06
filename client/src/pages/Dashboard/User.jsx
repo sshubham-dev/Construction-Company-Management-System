@@ -1,7 +1,7 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom'
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
@@ -20,7 +20,7 @@ const UserManagement = () => {
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [editId, setEditId] = useState('');
-
+  const [search, setSearch] = useState("");
   useEffect(() => {
     const getUsers = async () => {
       try {
@@ -40,6 +40,15 @@ const UserManagement = () => {
     setEditId(id)
   };
 
+    const filtered = useMemo(() => {
+      if (!search) return users;
+  
+      return users.filter((user) => {
+        const text = `${user?.userName}`.toLowerCase();
+        return text.includes(search.toLowerCase());
+      });
+    }, [users, search]);
+
   const handleRedirect = (id) => {
     navigate(`/user/${id}`);
   };
@@ -58,12 +67,22 @@ const UserManagement = () => {
       <Header category="Page" title="User's" />
       <section className="h-full w-full flex justify-center ">
         <div className="overflow-x-auto w-full max-w-screen-xl mx-auto">
-          <div className="w-full mx-auto mb-6 text-gray-700 py-1 flex flex-row sm:flex-row justify-between items-center">
+          <div className="w-full mx-auto mb-4 text-gray-700 py-1 flex flex-row sm:flex-row justify-between items-center">
             <h2 className="text-lg sm:text-xl text-green-600 mb-2 sm:mb-0 sm:mr-4">Total Users: {users.length}</h2>
             <button onClick={() => setCreateModal(true)} className="bg-green-500 rounded-full text-white p-2 mt-2 sm:mt-0">
               <MdAdd className='text-xl' />
             </button>
           </div>
+
+                  <div className="bg-white border rounded-xl p-2 mb-6 shadow-sm">
+          <input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full outline-none text-sm"
+          />
+        </div>
+
           {/* </div> */}
           <div className="overflow-x-auto"
             style={{
@@ -80,7 +99,7 @@ const UserManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 text-blue-gray-900">
-                {users.map((user) => (
+                {filtered.map((user) => (
                   <tr key={user._id} className="border-b border-blue-gray-200">
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
@@ -117,7 +136,6 @@ const UserManagement = () => {
             </table>
           </div>
         </div>
-        <Toaster position="top-right" reverseOrder={false} />
       </section>
       {error && <p className="text-red-500 mt-2">{error}</p>}
       {/* Contractor Modal */}

@@ -1,112 +1,226 @@
-import React, { useState } from 'react';
-import CreateJournal from '../../components/CreateJournal';
-import Header from '../../components/Header';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import Header from "../../components/Header";
 import { IoIosAddCircle } from "react-icons/io";
+import CreateJournal from "../../components/CreateJournal";
+import Modal from "../../components/Modal";
+import toast, { Toaster } from "react-hot-toast";
 
 const Journal = () => {
+  const [journals, setJournals] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  /* ======================
+     FETCH
+  ====================== */
+  const fetchJournals = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get("/api/v1/journal");
+      setJournals(res.data || []);
+    } catch (err) {
+      toast.error("Failed to load journals");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJournals();
+  }, []);
+
+  /* ======================
+     POST / CANCEL
+  ====================== */
+  const handlePost = async (id) => {
+    try {
+      await axios.post(`/api/v1/journal/${id}/post`);
+      toast.success("Posted");
+      fetchJournals();
+    } catch (err) {
+      toast.error("Post failed");
+    }
+  };
+
+  const handleCancel = async (id) => {
+    try {
+      await axios.post(`/api/v1/journal/${id}/cancel`);
+      toast.success("Cancelled");
+      fetchJournals();
+    } catch (err) {
+      toast.error("Cancel failed");
+    }
+  };
+
+  /* ======================
+     STATUS COLOR
+  ====================== */
+  const statusColor = {
+    DRAFT: "bg-yellow-100 text-yellow-700",
+    POSTED: "bg-green-100 text-green-700",
+    CANCELLED: "bg-red-100 text-red-700",
+  };
+
+  /* ======================
+     TOTAL CALC
+  ====================== */
+  const getTotals = (entries = []) => {
+    let debit = 0;
+    let credit = 0;
+
+    entries.forEach((e) => {
+      if (e.type === "DEBIT") debit += e.amount;
+      else credit += e.amount;
+    });
+
+    return { debit, credit };
+  };
+
+  /* ======================
+     UI
+  ====================== */
   return (
-    <div>
-      <Header category="Page" title="Contra Voucher" />
-      <section className="h-full w-full mb-16 flex justify-center">
-        <div className='overflow-x-auto w-full max-w-screen-xl mx-auto'>
-          <div className="flex justify-end mb-6 space-x-2">
-            <button
-              className="bg-blue-500 text-white py-2 px-2 rounded-4xl shadow-lg "
-              onClick={() => setIsModalOpen(true)}>
-              <IoIosAddCircle size={24} />
-            </button>
-          </div>
-          <div className='grid grid-flow-row grid-cols-1 md:grid-flow-cols md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white rounded-xl shadow p-4'>
-            <div className=" p-4 border rounded-lg bg-gray-100 w-full overflow-auto">
-              {/* <h3 className="text-lg font-bold">Journal Entry Details</h3> */}
-              <p><strong>Voucher Number:</strong> </p>
-              <p><strong>Date:</strong> </p>
-              <p><strong>Narration:</strong> </p>
+    <div className="p-2 sm:p-4">
+      <Header category="Page" title="Journal Voucher" />
 
-              <h4 className="mt-4 font-bold"> Entries</h4>
-              <table className="w-full mt-2 border">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th className=" p-2">Account</th>
-                    <th className=" p-2">Debit</th>
-                    <th className=" p-2">Credit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className=" p-2"></td>
-                    <td className="p-2"></td>
-                    <td className="p-2"></td>
-                  </tr>
-                </tbody>
-              </table>
-              <div className="flex justify-between">
-              <p className="mt-2 font-bold text-wrap">Total Debit:  </p>
-              <p className="mt-2 font-bold text-wrap">Total Credit: </p>
-              </div>
-            </div>
-            <div className=" p-4 border rounded-lg bg-gray-100 w-full overflow-auto">
-              {/* <h3 className="text-lg font-bold">Journal Entry Details</h3> */}
-              <p><strong>Voucher Number:</strong> </p>
-              <p><strong>Date:</strong> </p>
-              <p><strong>Narration:</strong> </p>
+      {/* ADD BUTTON */}
+      <div className="flex justify-end mb-4">
+        <button
+          className="bg-blue-500 text-white p-2 rounded-full"
+          onClick={() => setIsModalOpen(true)}
+        >
+          <IoIosAddCircle size={24} />
+        </button>
+      </div>
 
-              <h4 className="mt-4 font-bold">Entries</h4>
-              <table className="w-full overflow-auto mt-2 border">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th className=" p-2">Account</th>
-                    <th className=" p-2">Debit</th>
-                    <th className=" p-2">Credit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className=" p-2"></td>
-                    <td className=" p-2"></td>
-                    <td className=" p-2"></td>
-                  </tr>
-                </tbody>
-              </table>
-              <div className="flex justify-between">
-              <p className="mt-2 font-bold text-wrap">Total Debit:  </p>
-              <p className="mt-2 font-bold text-wrap">Total Credit: </p>
-              </div>
+      {/* LOADING */}
+      {loading ? (
+        <div className="text-center py-4">Loading...</div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {journals.length === 0 ? (
+            <div>No journals found</div>
+          ) : (
+            journals.map((j) => {
+              const { debit, credit } = getTotals(j.entries);
 
-              {/* <h4 className="mt-4 font-bold">Stock Items</h4>
-            <table className="w-full mt-2 border">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2">Item</th>
-                  <th className="border p-2">Quantity</th>
-                  <th className="border p-2">Rate</th>
-                  <th className="border p-2">Amount</th>
-                  <th className="border p-2">Adjustment Type</th>
-                  <th className="border p-2">Reason</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
-                  <td className="border p-2"></td>
-                </tr>
-              </tbody>
-            </table>
-            <p className="mt-2 font-bold">Total Stock Amount: </p> */}
-            </div>
-          </div>
-          {isModalOpen && (
-            <CreateJournal onClose={() => setIsModalOpen(false)} isOpen={isModalOpen} />
+              return (
+                <div
+                  key={j._id}
+                  className="border rounded-lg bg-white shadow p-3 flex flex-col gap-2"
+                >
+                  {/* HEADER */}
+                  <div className="flex justify-between items-center">
+                    <div className="font-semibold text-sm">
+                      {j.voucherNo}
+                    </div>
+
+                    <span
+                      className={`px-2 py-1 text-xs rounded ${statusColor[j.status]}`}
+                    >
+                      {j.status}
+                    </span>
+                  </div>
+
+                  {/* DATE */}
+                  <div className="text-xs text-gray-500">
+                    {new Date(j.date).toLocaleDateString()}
+                  </div>
+
+                  {/* NARRATION */}
+                  <div className="text-sm">{j.narration || "-"}</div>
+
+                  {/* ENTRIES */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-1 text-left">Ledger</th>
+                          <th className="p-1">Dr</th>
+                          <th className="p-1">Cr</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {j.entries.map((e, i) => (
+                          <tr key={i}>
+                            <td className="p-1">
+                              {e.ledgerId?.name}
+                            </td>
+
+                            <td className="p-1 text-center">
+                              {e.type === "DEBIT" ? e.amount : "-"}
+                            </td>
+
+                            <td className="p-1 text-center">
+                              {e.type === "CREDIT" ? e.amount : "-"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* TOTAL */}
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span>Dr: {debit}</span>
+                    <span>Cr: {credit}</span>
+                  </div>
+
+                  {/* ACTIONS */}
+                  <div className="flex justify-end gap-2 text-xs">
+                    {j.status === "DRAFT" && (
+                      <>
+                        <button
+                          onClick={() => handlePost(j._id)}
+                          className="text-green-600"
+                        >
+                          Post
+                        </button>
+
+                        <button
+                          onClick={() => handleCancel(j._id)}
+                          className="text-red-600"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+
+                    {j.status === "POSTED" && (
+                      <button
+                        onClick={() => handleCancel(j._id)}
+                        className="text-red-600"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
-      </section>
-    </div>
-  )
-}
+      )}
 
-export default Journal
+      {/* MODAL */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        head="Create Journal"
+      >
+        <CreateJournal
+          onClose={() => {
+            setIsModalOpen(false);
+            fetchJournals();
+          }}
+        />
+      </Modal>
+
+      <Toaster position="top-right" />
+    </div>
+  );
+};
+
+export default Journal;

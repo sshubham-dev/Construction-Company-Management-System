@@ -1,26 +1,34 @@
-const express = require('express');
+const express = require("express");
 const Ledger = express.Router();
 const Group = express.Router();
+const CostCenter = express.Router();
 const {
-    createLedger,
-    createGroup,
-    getLedgers,
-    getGroups,
-    getLedgerById,
-    getGroupById,
-    updateLedger,
-    updateGroup,
-    deleteGroup,
-    deleteLedger,
-    mapLedger
-} = require('../controller/ledger.controller'); // Adjust the path as necessary
-const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
+  create,
+  getAll,
+  getOne,
+  update,
+  remove,
 
-Ledger.route('/').get(getLedgers).post(createLedger);
-Ledger.route('/:id').get(getLedgerById).put(updateLedger).delete(deleteLedger)
-Ledger.route('/map/:id').put(mapLedger)
+  createGroup,
+  getGroups,
+  updateGroup,
 
-Group.route('/').get(getGroups).post(createGroup);
-Group.route('/:id').get(getGroupById).put(updateGroup).delete(deleteGroup);
+  createCostCenter,
+  getCostCenters,
+  updateCostCenter,
+  deleteCostCenter,
+} = require("../controller/ledger.controller"); // Adjust the path as necessary
 
-module.exports = { Ledger, Group };
+const { adminAuth, userAuth } = require("../middlewares/auth.middleware");
+
+Ledger.route("/").get(getAll).post(create);
+Ledger.route("/:id").get(getOne).put(update).delete(remove);
+// Ledger.route("/map/:id").put(mapLedger);
+
+Group.route("/").get(userAuth,getGroups).post(userAuth,createGroup);
+Group.route("/:id").put(userAuth,updateGroup);
+
+CostCenter.route("/").get(userAuth,getCostCenters).post(userAuth,createCostCenter);
+CostCenter.route("/:id").put(userAuth,updateCostCenter).delete(userAuth,deleteCostCenter);
+
+module.exports = { Ledger, Group, CostCenter };

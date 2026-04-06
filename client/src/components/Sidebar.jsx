@@ -154,8 +154,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
 
     {
-      to: "/site-kharchi",
-      name: "Expenses Record",
+      to: "/my_expenses",
+      name: "Record Expenses",
       icon: <GiExpense />,
       role: [
         "Admin",
@@ -176,22 +176,101 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
 
     {
-      to: '/design/collections',
-      name: 'Record Client Payment',
+      to: "/design/collections",
+      name: "Record Client Payment",
       icon: <FaWallet />,
-      role: ['Company', 'Ceo', 'Account Head', 'Design Head', 'Design Engineer', 'Site Incharge', 'Quality Head', 'Quality Engineer'],
+      role: [
+        "Company",
+        "Ceo",
+        "Account Head",
+        "Design Head",
+        "Design Engineer",
+        "Site Incharge",
+        "Quality Head",
+        "Quality Engineer",
+      ],
     },
 
     /* ERP */
     /* Accounts Management*/
+    {
+      name: "Accounts Management",
+      // icon: <TbReportAnalytics />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
+    {
+      to: "/erp",
+      name: "ERP",
+      icon: <MdAccountBalance />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
     {
       to: "/erp/account",
       name: "Accounts Management",
       icon: <MdAccountBalance />,
       role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
     },
+    {
+      to: "/erp/expenses",
+      name: "Expenses Report",
+      icon: <GiExpense />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
+    {
+      to: "/erp/balance-sheet",
+      name: "Balance Sheet",
+      icon: <FaBalanceScale />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
+    {
+      to: "/erp/p&l",
+      name: "Profit & Loss",
+      icon: <FaBalanceScale />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
+    {
+      to: "/erp/cash-flow",
+      name: "Cash Flow",
+      icon: <FaBalanceScale />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
+    {
+      to: "/erp/ledger-report",
+      name: "Ledger Report",
+      icon: <FaBalanceScale />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
+    {
+      to: "/erp/outstanding",
+      name: "Outstanding",
+      icon: <FaBalanceScale />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
+    {
+      to: "/erp/site-profit",
+      name: "Site Profit",
+      icon: <FaBalanceScale />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
+    {
+      to: "/erp/trial-balance",
+      name: "TrialBalance",
+      icon: <FaBalanceScale />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
 
     // ERP Setups
+    {
+      name: "Accounting Setups",
+      // icon: <TbReportAnalytics />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
+    {
+      to: "/erp/company",
+      name: "Company Management",
+      icon: <MdAccountBalance />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
     {
       to: "/erp/business_unit",
       name: "Business Unit",
@@ -199,16 +278,45 @@ const Sidebar = ({ isOpen, onClose }) => {
       role: ["Admin", "Company", "Ceo", "Account Head"],
     },
     {
+      to: "/erp/groups",
+      name: "Groups",
+      icon: <IoIosJournal />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
+    {
       to: "/erp/ledger",
-      name: "Report",
+      name: "Ledgers",
+      icon: <TbReportAnalytics />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
+    {
+      to: "/erp/cost-center",
+      name: "Cost Center",
+      icon: <PiNoteFill />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
+    {
+      to: "/erp-setting",
+      name: "Setting",
       icon: <TbReportAnalytics />,
       role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
     },
 
     // Vouchers
     {
-      to: "/erp/receipt_payment",
-      name: "Receipt & Payment",
+      name: "Accounting Vouchers",
+      // icon: <TbReportAnalytics />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
+    {
+      to: "/erp/payment",
+      name: "Payment",
+      icon: <FaReceipt />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
+    {
+      to: "/erp/receipt",
+      name: "Receipt",
       icon: <FaReceipt />,
       role: ["Admin", "Company", "Ceo", "Account Head"],
     },
@@ -225,37 +333,37 @@ const Sidebar = ({ isOpen, onClose }) => {
       role: ["Admin", "Company", "Ceo", "Account Head"],
     },
 
-    // Financial Reports
-    // {
-    //   to: '/erp/credit-note',
-    //   name: 'Credit / Debit Note',
-    //   icon: <PiNoteFill />,
-    //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
-    // },
     {
-      to: "/erp/balance-sheet",
-      name: "Balance Sheet",
-      icon: <FaBalanceScale />,
+      name: "Helper",
       role: ["Admin", "Company", "Ceo", "Account Head"],
     },
-    // {
-    //   to: '/erp/expenses',
-    //   name: 'Expenses',
-    //   icon: <FaWallet />,
-    //   role: ['Admin', 'Company', 'Ceo', 'Account Head'],
-    // },
-
     {
-      to: "/erp-setting",
-      name: "Setting",
-      icon: <TbReportAnalytics />,
+      to: "/erp/payment-challan",
+      name: "Payment Challans",
+      icon: <IoIosJournal />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
+    {
+      to: "/erp/invoice",
+      name: "Invoice",
+      icon: <TbInvoice />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
+    {
+      to: "/erp/invoice/create",
+      name: "Create Invoice",
+      icon: <IoIosJournal />,
       role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
     },
 
     /* Inventory Management*/
     {
+      name: "Inventory",
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
+    {
       to: "/erp/inventory",
-      name: "Inventory Management",
+      name: "Stores",
       icon: <MdWarehouse />,
       role: [
         "Admin",
@@ -285,6 +393,34 @@ const Sidebar = ({ isOpen, onClose }) => {
     {
       to: "/erp/inventory/assets",
       name: "Assets",
+      icon: <MdInventory />,
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Accountant",
+        "Account Head",
+        "Store Helper",
+        "Store Incharge",
+      ],
+    },
+    {
+      to: "/erp/inventory/suppliers",
+      name: "Suppliers",
+      icon: <MdTrolley />,
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Accountant",
+        "Account Head",
+        "Store Incharge",
+      ],
+    },
+
+    {
+      to: "/erp/inventory/stock/audit",
+      name: "Stock Audit",
       icon: <MdInventory />,
       role: [
         "Admin",
@@ -426,27 +562,12 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
 
     // Suppliers Management
-    {
-      to: "/erp/inventory/suppliers",
-      name: "Suppliers",
-      icon: <MdTrolley />,
-      role: [
-        "Admin",
-        "Company",
-        "Ceo",
-        "Accountant",
-        "Account Head",
-        "Store Incharge",
-      ],
-    },
 
     /* Customer Management*/
-    // {
-    //   to: '/design',
-    //   name: 'Design',
-    //   icon: <MdDesignServices />,
-    //   role: ['Company', 'Ceo', 'Design Head', 'Design Engineer']
-    // },
+    {
+      name: "CRM",
+      role: ["Company", "Ceo", "Design Head", "Design Engineer","Account Head",],
+    },
     {
       to: "/crm/leads",
       name: "Lead",
@@ -475,18 +596,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         "Account Head",
       ],
     },
-    // {
-    //   to: '/crm/project',
-    //   name: 'Project',
-    //   icon: <AiOutlineProject />,
-    //   role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
-    // },
-    // {
-    //   to: '/crm/invoice',
-    //   name: 'Invoice',
-    //   icon: <TbInvoice />,
-    //   role: ['Admin', 'Company', 'Ceo', 'Design Head', 'Design Engineer', 'Account Head'],
-    // },
+    ,
     {
       to: "/crm/Quotation",
       name: "Quotation",
@@ -511,25 +621,66 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
 
     {
+      name: "CMS",
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Marketing",
+        "Account Head",
+        "Design Engineer",
+        "Quality Engineer",
+      ],
+    },
+    {
       to: "/cms/blogs",
       name: "Blogs",
       icon: <ImBlog />,
-      role: ["Admin", "Company", "Ceo", "Marketing", "Account Head"],
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Marketing",
+        "Account Head",
+        "Design Engineer",
+        "Quality Engineer",
+      ],
     },
     {
       to: "/cms/faqs",
       name: "FAQs",
       icon: <ImBlog />,
-      role: ["Admin", "Company", "Ceo", "Marketing", "Account Head"],
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Marketing",
+        "Account Head",
+        "Design Engineer",
+        "Quality Engineer",
+      ],
+    },
+    {
+      to: "/cms/projects",
+      name: "Projects",
+      icon: <ImBlog />,
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Marketing",
+        "Account Head",
+        "Design Engineer",
+        "Quality Engineer",
+      ],
     },
 
     /* Site Management*/
-    // {
-    //   to: '/site/report',
-    //   name: 'Sites Report',
-    //   icon: <FaPersonShelter />,
-    //   role: ['Admin', 'Company', 'Ceo', 'Account Head']
-    // },
+    {
+      name: "Sites",
+      // icon: <FaPersonShelter />,
+      role: ["Admin", "Company", "Ceo", "Account Head"],
+    },
     {
       to: "/sites/project-schedules",
       name: "Project Schedules",
@@ -716,6 +867,10 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
     /* Employee Management*/
     {
+      name: "HRMS",
+      role: ["Admin", "Company", "Ceo", "Account Head", "H.R", "Marketing"],
+    },
+    {
       to: "/hrms/employee/attendance",
       name: "Attendance Management",
       icon: <FaUserCheck />,
@@ -739,6 +894,10 @@ const Sidebar = ({ isOpen, onClose }) => {
     //   icon: '',
     //   role: ['Admin', 'Company', 'Ceo', 'Account Head', 'H.R'],
     // },
+    {
+      name: "General Settings",
+      role: ["Admin", "Company", "Ceo", "Account Head", "H.R", "Marketing"],
+    },
     {
       to: "/approval",
       name: "Approval",

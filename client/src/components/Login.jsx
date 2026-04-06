@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, NavLink } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { login, logout } from "../features/auth/authSlice.js";
 import { IoEyeOff, IoEye } from "react-icons/io5";
@@ -140,8 +140,7 @@ const Login = () => {
           Register
         </button>
 
-        {/* Toast & Error */}
-        <Toaster position="top-right" />
+        {/*  Error */}
         {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
       </section>
     </div>

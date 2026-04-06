@@ -2,11 +2,11 @@ const mongoose = require("mongoose");
 
 const workStageSchema = new mongoose.Schema(
   {
-    id: { type: String }, 
+    id: { type: String },
     name: { type: String, required: true },
     percentage: { type: Number, required: true }, // 0-100
-    stageRate: { type: Number, default: 0 }, 
-    amount: { type: Number, default: 0 }, 
+    stageRate: { type: Number, default: 0 },
+    amount: { type: Number, default: 0 },
     paid: { type: Number, default: 0 },
     due: { type: Number, default: 0 },
     status: {
@@ -19,9 +19,9 @@ const workStageSchema = new mongoose.Schema(
         billId: { type: mongoose.Schema.Types.ObjectId, ref: "Bill" },
         paid: Number,
       },
-    ]
+    ],
   },
-  { _id: false }
+  { _id: false },
 );
 
 const subWorkSchema = new mongoose.Schema(
@@ -30,12 +30,12 @@ const subWorkSchema = new mongoose.Schema(
     name: { type: String, required: true },
     included: { type: Boolean, default: false },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const workDetailSchema = new mongoose.Schema(
   {
-    id: { type: String }, 
+    id: { type: String },
     name: { type: String, required: true },
     unit: { type: String, default: "SQFT" },
     qty: { type: Number, default: 0 },
@@ -48,7 +48,7 @@ const workDetailSchema = new mongoose.Schema(
     status: { type: String, default: "Pending" },
     notes: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const workOrderSchema = new mongoose.Schema(
@@ -57,7 +57,11 @@ const workOrderSchema = new mongoose.Schema(
     workOrderNo: { type: String, index: true },
 
     contractor: {
-      id: { type: mongoose.Schema.Types.ObjectId, ref: "Contractor", required: true },
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Contractor",
+        required: true,
+      },
       name: { type: String, required: true },
     },
 
@@ -66,9 +70,16 @@ const workOrderSchema = new mongoose.Schema(
       name: { type: String, required: true },
     },
 
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
-    templateRef: { type: mongoose.Schema.Types.ObjectId, ref: "WorkOrderTemplate" },
+    templateRef: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "WorkOrderTemplate",
+    },
 
     date: { type: Date, default: Date.now },
     startDate: Date,
@@ -91,74 +102,10 @@ const workOrderSchema = new mongoose.Schema(
     contractorApprove: { type: String, default: "Pending" },
     accountheadApprove: { type: String, default: "Pending" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-
-// workOrderSchema.pre("save", function (next) {
-//   try {
-//     if (!this.works || !Array.isArray(this.works)) {
-//       this.totalValue = 0;
-//       this.totalPaid = 0;
-//       this.totalDue = 0;
-//       return next();
-//     }
-
-//     let totalValue = 0;
-//     let totalPaid = 0;
-
-//     this.works = this.works.map((w) => {
-//       const qty = Number(w.qty || 0);
-//       const rate = Number(w.rate || 0);
-
-//       // compute work amount
-//       const amount = Number((qty * rate).toFixed(2));
-//       // rebuild stages safely
-//       let stages = Array.isArray(w.stages) ? w.stages : [];
-//       stages = stages.map((s) => {
-//         const perc = Number(s.percentage || 0);
-//         const stageRate = Number(((rate * perc) / 100).toFixed(2));
-//         const stageAmount = Number((qty * stageRate).toFixed(2));
-//         const paid = Number(s.paid || 0);
-
-//         return {
-//           ...s,
-//           stageRate,
-//           amount: stageAmount,
-//           paid,
-//           due: Number((stageAmount - paid).toFixed(2)),
-//         };
-//       });
-
-//       // compute paid for this work
-//       const paid = stages.reduce((sum, st) => sum + Number(st.paid || 0), 0);
-//       const due = Number((amount - paid).toFixed(2));
-
-//       // update overall totals
-//       totalValue += amount;
-//       totalPaid += paid;
-
-//       return {
-//         ...w,
-//         amount,
-//         paid,
-//         due,
-//         stages,
-//       };
-//     });
-
-//     this.totalValue = Number(totalValue.toFixed(2));
-//     this.totalPaid = Number(totalPaid.toFixed(2));
-//     this.totalDue = Number((totalValue - totalPaid).toFixed(2));
-
-//     next();
-//   } catch (err) {
-//     next(err);
-//   }
-// });
-
-
-workOrderSchema.pre('save', function (next) {
+workOrderSchema.pre("save", function () {
   try {
     const wo = this;
 
@@ -191,17 +138,19 @@ workOrderSchema.pre('save', function (next) {
         });
       } else {
         // fallback single stage
-        w.stages = [{
-          id: w.stages?.[0]?.id || undefined,
-          name: w.stages?.[0]?.name || "Full Work",
-          percentage: 100,
-          stageRate: w.rate,
-          amount: w.amount,
-          paid: Number(w.paid) || 0,
-          due: Number((w.amount - (Number(w.paid) || 0)).toFixed(2)),
-          status: (Number(w.paid) >= w.amount) ? "Completed" : "Pending",
-          bill: w.stages?.[0]?.bill || []
-        }];
+        w.stages = [
+          {
+            id: w.stages?.[0]?.id || undefined,
+            name: w.stages?.[0]?.name || "Full Work",
+            percentage: 100,
+            stageRate: w.rate,
+            amount: w.amount,
+            paid: Number(w.paid) || 0,
+            due: Number((w.amount - (Number(w.paid) || 0)).toFixed(2)),
+            status: Number(w.paid) >= w.amount ? "Completed" : "Pending",
+            bill: w.stages?.[0]?.bill || [],
+          },
+        ];
       }
 
       // Aggregate for work
@@ -212,7 +161,11 @@ workOrderSchema.pre('save', function (next) {
       // If all stages completed => Completed
       // If any stage completed and others pending => Partial / In Progress
       const allCompleted = w.stages.every((st) => st.status === "Completed");
-      const someInProgress = w.stages.some((st) => st.status === "In Progress" || st.status === "Pending" && st.paid > 0);
+      const someInProgress = w.stages.some(
+        (st) =>
+          st.status === "In Progress" ||
+          (st.status === "Pending" && st.paid > 0),
+      );
       if (allCompleted) w.status = "Completed";
       else if (someInProgress) w.status = "In Progress";
       else w.status = "Pending";
@@ -229,13 +182,10 @@ workOrderSchema.pre('save', function (next) {
 
     // Approval statuses normalization (optional)
     if (!wo.approvalStatus) wo.approvalStatus = "Pending";
-
-    next();
-  } catch (e) {
-    next(e);
+  } catch (err) {
+    return err;
   }
 });
-
 
 const templateDescriptionSchema = new mongoose.Schema(
   {
@@ -263,7 +213,7 @@ const templateDescriptionSchema = new mongoose.Schema(
       },
     ],
   },
-  { _id: false }
+  { _id: false },
 );
 
 const workOrderTemplateSchema = new mongoose.Schema(
@@ -272,13 +222,13 @@ const workOrderTemplateSchema = new mongoose.Schema(
     trade: { type: String, required: true }, // "civil", "electrical" ...
     description: [templateDescriptionSchema],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const WorkOrder = mongoose.model("Work_Order", workOrderSchema);
 const WorkOrderTemplate = mongoose.model(
   "WorkOrder_Template",
-  workOrderTemplateSchema
+  workOrderTemplateSchema,
 );
 
 module.exports = { WorkOrder, WorkOrderTemplate };

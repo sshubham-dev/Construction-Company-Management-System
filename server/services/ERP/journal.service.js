@@ -1,0 +1,173 @@
+const Voucher = require("../../models/voucher.models");
+const { Ledger } = require("../../models/ledger.models");
+const { getVouchers } = require("./voucher/query.service");
+const { generateVoucherNo } = require("../../utils/voucherNoGenerator");
+
+/* ======================
+   CREATE
+====================== */
+async function createJournalVoucher(data, user) {
+  const { date, narration, entries, costCenterId, companyId } = data;
+
+  if (!entries || entries.length < 2) {
+    throw new Error("Minimum two entries required");
+  }
+
+  let debit = 0;
+  let credit = 0;
+
+  const formattedEntries = [];
+
+  for (const e of entries) {
+    if (!e.ledgerId || !e.type || !e.amount) {
+      throw new Error("Invalid entry");
+    }
+
+    const ledger = await Ledger.findById(e.ledgerId);
+    if (!ledger) throw new Error("Ledger not found");
+
+    if (e.type === "DEBIT") debit += e.amount;
+    if (e.type === "CREDIT") credit += e.amount;
+
+    formattedEntries.push({
+      ledgerId: e.ledgerId,
+      type: e.type,
+      amount: e.amount,
+    });
+  }
+
+    const voucherNo = await generateVoucherNo({
+    companyId: data.companyId,
+    type: "JOURNAL",
+  });
+
+  if (debit !== credit) {
+    throw new Error("Debit and Credit must match");
+  }
+
+  const voucher = await Voucher.create({
+    voucherNo,
+    type: "JOURNAL",
+    date,
+    narration,
+    entries: formattedEntries,
+    totalDebit: debit,
+    totalCredit: credit,
+    costCenterId,
+    companyId,
+    status: "DRAFT",
+  });
+
+  return voucher;
+}
+
+/* ======================
+   UPDATE (ONLY DRAFT)
+====================== */
+async function updateJournalVoucher(id, data) {
+  const voucher = await Voucher.findById(id);
+
+  if (!voucher) throw new Error("Voucher not found");
+
+  if (voucher.status !== "DRAFT") {
+    throw new Error("Only Draft voucher can be updated");
+  }
+
+  const { entries, narration, date, costCenterId } = data;
+
+  let debit = 0;
+  let credit = 0;
+
+  const formattedEntries = [];
+
+  for (const e of entries) {
+    if (!e.ledgerId || !e.type || !e.amount) {
+      throw new Error("Invalid entry");
+    }
+
+    if (e.type === "DEBIT") debit += e.amount;
+    if (e.type === "CREDIT") credit += e.amount;
+
+    formattedEntries.push({
+      ledgerId: e.ledgerId,
+      type: e.type,
+      amount: e.amount,
+    });
+  }
+
+  if (debit !== credit) {
+    throw new Error("Debit and Credit must match");
+  }
+
+  voucher.entries = formattedEntries;
+  voucher.narration = narration;
+  voucher.date = date;
+  voucher.costCenterId = costCenterId;
+  voucher.totalDebit = debit;
+  voucher.totalCredit = credit;
+
+  await voucher.save();
+
+  return voucher;
+}
+
+/* ======================
+   DELETE (ONLY DRAFT)
+====================== */
+async function deleteJournalVoucher(id) {
+  const voucher = await Voucher.findById(id);
+
+  if (!voucher) throw new Error("Voucher not found");
+
+  if (voucher.status !== "DRAFT") {
+    throw new Error("Only Draft voucher can be deleted");
+  }
+
+  await voucher.deleteOne();
+
+  return true;
+}
+
+/* ======================
+   GET ALL
+====================== */
+async function getAllJournals(query) {
+const result = await getVouchers("JOURNAL", query);
+  return result;
+
+}
+
+/* ======================
+   GET ONE
+====================== */
+async function getJournalById(id) {
+  const voucher = await Voucher.findById(id)
+    .populate("entries.ledgerId")
+    .populate("createdBy");
+
+  if (!voucher) throw new Error("Voucher not found");
+
+  return voucher;
+}
+
+/* ======================
+   GET BY VOUCHER NO
+====================== */
+async function getJournalByVoucherNo(voucherNo) {
+  const voucher = await Voucher.findOne({ voucherNo, type: "JOURNAL" })
+    .populate("entries.ledgerId")
+    .populate("createdBy");
+
+  if (!voucher) throw new Error("Voucher not found");
+
+  return voucher;
+}
+
+module.exports = {
+  createJournalVoucher,
+  updateJournalVoucher,
+  deleteJournalVoucher,
+  getAllJournals,
+  getJournalById,
+  getJournalByVoucherNo,
+};

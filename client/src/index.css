@@ -1,8 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.cdnfonts.com/css/sukar');
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.cdnfonts.com/css/sukar");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
 @layer base {
   html {
     @apply text-gray-800;
@@ -17,8 +20,8 @@
 }
 
 :root {
-  --font-primary: 'font-sukar', sans-serif;
-  --font-secondary: 'font-sans', sans-serif;
+  --font-primary: "font-sukar", sans-serif;
+  --font-secondary: "font-sans", sans-serif;
 }
 
 @media (max-width: 768px) {
@@ -160,5 +163,3 @@ body {
   border: none !important;
   box-shadow: none !important;
 }
-
-

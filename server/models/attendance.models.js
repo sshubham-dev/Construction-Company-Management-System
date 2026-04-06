@@ -106,7 +106,7 @@ const LabourAttendanceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-LabourAttendanceSchema.pre("save", function (next) {
+LabourAttendanceSchema.pre("save", function () {
   const doc = this;
 
   // Convert all to numbers safely
@@ -138,8 +138,7 @@ LabourAttendanceSchema.pre("save", function (next) {
 
   // Compute due
   doc.due = doc.amount - doc.paid;
-
-  next();
+  return
 });
 
 const Attendance = mongoose.model("Attendance", attendanceSchema);

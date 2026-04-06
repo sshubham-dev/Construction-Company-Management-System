@@ -19,6 +19,7 @@ export default function BlogEdit() {
   if (!blog) return <div>Loading...</div>;
 
   const handleSubmit = async (data) => {
+    // console.log("update data:", data)
     await updateBlog(id, data);
     navigate("/cms/blogs");
   };

@@ -124,7 +124,7 @@ const Store = () => {
           </div>
         ))}
       </div>
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} head="Create Store">
         <CreateStore
           onClose={() => {
             setIsModalOpen(false);

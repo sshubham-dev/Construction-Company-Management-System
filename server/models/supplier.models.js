@@ -36,7 +36,11 @@ const supplierSchema = new mongoose.Schema(
     },
 
     bank: {
-      type: String,
+      holder: String,
+      name: String,
+      ac: String,
+      ifsc: String,
+      branch: String,
     },
 
     jobWork: {
@@ -67,6 +71,11 @@ const supplierSchema = new mongoose.Schema(
     businessUnitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessUnit",
+    },
+
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
     },
 
     // ================================
@@ -104,9 +113,9 @@ const supplierSchema = new mongoose.Schema(
     // ===================================
 
     totalBilled: { type: Number, default: 0 }, // Sum of PO invoice amounts
-    totalPaid: { type: Number, default: 0 },   // From payment vouchers
+    totalPaid: { type: Number, default: 0 }, // From payment vouchers
     totalReturns: { type: Number, default: 0 }, // Sum of credit notes
-    totalDue: { type: Number, default: 0 },     // Auto: billed - paid - returns
+    totalDue: { type: Number, default: 0 }, // Auto: billed - paid - returns
 
     status: {
       type: String,
@@ -114,13 +123,13 @@ const supplierSchema = new mongoose.Schema(
       default: "Active",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // ======================================================
 // PRE-SAVE: CREATE/UPDATE LEDGER + UPDATE PAYABLE AMOUNTS
 // ======================================================
-supplierSchema.pre("save", async function (next) {
+supplierSchema.pre("save", async function () {
   try {
     const payable =
       (this.totalBilled || 0) -
@@ -129,28 +138,26 @@ supplierSchema.pre("save", async function (next) {
 
     this.totalDue = payable < 0 ? 0 : payable;
 
-    const ledgerId = await syncLedger({
-      doc: this,
-      type: "Supplier",
-      under: "Sundry Creditors",
-      getAddress: (doc) => ({
-        name: doc.name,
-        address: doc.address || "",
-        email: doc.email || "",
-        phone: doc.phone || "",
-        whatsapp: doc.whatsapp || "",
-      }),
-      getTaxDetails: (doc) => ({
-        gstNo: doc.gstNo || "",
-      }),
-    });
+    // const ledgerId = await syncLedger({
+    //   doc: this,
+    //   type: "Supplier",
+    //   under: "Sundry Creditors",
+    //   getAddress: (doc) => ({
+    //     name: doc.name,
+    //     address: doc.address || "",
+    //     email: doc.email || "",
+    //     phone: doc.phone || "",
+    //     whatsapp: doc.whatsapp || "",
+    //   }),
+    //   getTaxDetails: (doc) => ({
+    //     gstNo: doc.gstNo || "",
+    //   }),
+    // });
 
-    if (ledgerId) this.ledger = ledgerId;
-
-    next();
+    // if (ledgerId) this.ledger = ledgerId;
   } catch (err) {
     console.error("Error in supplier ledger sync:", err);
-    next(err);
+    return err;
   }
 });
 
@@ -174,23 +181,23 @@ supplierSchema.pre("findOneAndUpdate", async function (next) {
     if (!update.$set) update.$set = {};
     update.$set.totalDue = payable < 0 ? 0 : payable;
 
-    const ledgerId = await syncLedger({
-      doc: merged,
-      type: "Supplier",
-      under: "Sundry Creditors",
-      getAddress: (doc) => ({
-        name: doc.name,
-        address: doc.address || "",
-        email: doc.email || "",
-        phone: doc.phone || "",
-        whatsapp: doc.whatsapp || "",
-      }),
-      getTaxDetails: (doc) => ({
-        gstNo: doc.gstNo || "",
-      }),
-    });
+    // const ledgerId = await syncLedger({
+    //   doc: merged,
+    //   type: "Supplier",
+    //   under: "Sundry Creditors",
+    //   getAddress: (doc) => ({
+    //     name: doc.name,
+    //     address: doc.address || "",
+    //     email: doc.email || "",
+    //     phone: doc.phone || "",
+    //     whatsapp: doc.whatsapp || "",
+    //   }),
+    //   getTaxDetails: (doc) => ({
+    //     gstNo: doc.gstNo || "",
+    //   }),
+    // });
 
-    if (ledgerId) update.$set.ledger = ledgerId;
+    // if (ledgerId) update.$set.ledger = ledgerId;
 
     this.setUpdate(update);
     next();

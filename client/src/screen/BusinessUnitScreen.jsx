@@ -69,8 +69,8 @@ const navigate = useNavigate();
           <Info label="Type" value={unit.type} />
           <Info label="Phone" value={unit.phone || "-"} />
           <Info label="Email" value={unit.email || "-"} />
-          <Info label="GST" value={unit.gstNo || "-"} />
-          <Info label="PAN" value={unit.panNo || "-"} />
+          {/* <Info label="GST" value={unit.gstNo || "-"} /> */}
+          {/* <Info label="PAN" value={unit.panNo || "-"} /> */}
           <Info label="Manager" value={unit.manager?.name || "-"} />
           <Info
             label="Status"
@@ -83,11 +83,8 @@ const navigate = useNavigate();
       <Section title="Address">
         <p className="text-sm">
           {[
-            unit.address?.street,
             unit.address?.city,
             unit.address?.district,
-            unit.address?.state,
-            unit.address?.pincode,
           ]
             .filter(Boolean)
             .join(", ")}
@@ -97,7 +94,7 @@ const navigate = useNavigate();
       {/* LEDGER */}
       <Section title="Accounting">
         <p className="text-sm break-all">
-          Ledger ID: {unit.ledgerId._id || "-"}
+          {/* Ledger ID: {unit?.ledgerId || "-"} */}
         </p>
         <p className="text-xs text-gray-500 mt-1">
           All financial entries for this branch flow through this ledger

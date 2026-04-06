@@ -87,9 +87,65 @@ const approveCollection = async (req, res) => {
   }
 };
 
+const postCollection = async (collectionId, user) => {
+  const collection = await Collection.findById(collectionId);
+
+  if (!collection) throw new Error("Collection not found");
+
+  if (collection.status !== "pending") {
+    throw new Error("Already processed");
+  }
+
+  // 🔥 CREATE VOUCHER
+  const voucher = await createVoucher({
+    companyId: collection.companyId, // ⚠️ make sure exists
+    type: "RECEIPT",
+    date: collection.date,
+    narration: collection.narration,
+
+    reference: "Collection",
+    referenceId: collection._id,
+
+    entries: [
+      {
+        ledgerId: collection.receivedInto,
+        type: "DEBIT", // Bank/Cash increases
+        amount: collection.amount,
+      },
+      {
+        ledgerId: collection.clientLedgerId,
+        type: "CREDIT", // Client decreases
+        amount: collection.amount,
+      },
+    ],
+
+    createdBy: user._id,
+  });
+
+  await postVoucher(voucher._id);
+
+  // 🔗 link back
+  collection.voucherId = voucher._id;
+  collection.status = "approved";
+
+  await collection.save();
+
+  return collection;
+};
+
 /* ---------------- REJECT ---------------- */
 
 const rejectCollection = async (req, res) => {
+  const { id } = req.params;
+
+  await Collection.findByIdAndUpdate(id, {
+    status: "rejected",
+  });
+
+  res.json({ message: "Rejected" });
+};
+
+const cancelCollection = async (req, res) => {
   const { id } = req.params;
 
   await Collection.findByIdAndUpdate(id, {
@@ -103,5 +159,7 @@ module.exports = {
   createCollection,
   getCollections,
   approveCollection,
+  postCollection,
+  cancelCollection,
   rejectCollection,
 };

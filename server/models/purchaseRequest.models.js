@@ -1,5 +1,8 @@
 const mongoose = require("mongoose");
 
+/* =========================
+   PR ITEM
+========================= */
 const prItemSchema = new mongoose.Schema(
   {
     itemId: {
@@ -7,101 +10,143 @@ const prItemSchema = new mongoose.Schema(
       ref: "Stock",
       required: true,
     },
-    item: String,
     unit: String,
-    requestedQty: { type: Number, required: true },
+
+    requestedQty: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    issuedQty: {
+      type: Number,
+      default: 0, // updated via DN
+      min: 0,
+    },
+    remarks: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
+/* =========================
+   VALIDATION
+========================= */
+prItemSchema.pre("validate", function () {
+  if (this.issuedQty > this.requestedQty) {
+    return new Error("Issued qty cannot exceed requested qty");
+  }
+});
+
+/* =========================
+   MAIN PR SCHEMA
+========================= */
 const purchaseRequestSchema = new mongoose.Schema(
   {
+    /* =========================
+       BASIC DETAILS
+    ========================== */
     prNumber: {
       type: String,
       unique: true,
       trim: true,
+      index: true,
     },
-    createdDate: { type: Date, default: Date.now },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
     category: String,
     requirementFor: String,
+
     reqDate: Date,
-    // Site
+
+    /* =========================
+       SITE
+    ========================== */
     site: {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Site",
-        required: true,
-      },
-      name: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Site",
+      required: true,
     },
 
-    // store assigned later during approval / issue
-    store:  {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-             ref: "Store",
-        required: true,
-      },
-      name: String,
+    /* =========================
+       STORE
+    ========================== */
+    store: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
     },
+    /* =========================
+       ITEMS
+    ========================== */
     items: [prItemSchema],
-    // Approval flow
-    storeApprove: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
-    },
-    adminApprove: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
-    },
-    accountsApprove: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
-    },
+
+    /* =========================
+       APPROVAL FLOW
+    ========================== */
     inchargeApprove: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
-    },
-    approvalStatus: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
+      enum: ["PENDING", "APPROVED", "REJECTED"],
+      default: "PENDING",
     },
 
-    deliveryStatus: {
+    status: {
       type: String,
-      enum: ["Pending", "Partially Delivered", "Delivered"],
-      default: "Pending",
+      enum: [
+        "DRAFT",
+        "PENDING",
+        "APPROVED",
+        "REJECTED",
+        "PARTIAL",
+        "COMPLETED",
+      ],
+      default: "DRAFT",
     },
+
+    /* =========================
+       DELIVERY (LINK ONLY)
+    ========================== */
     deliveryNotes: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Delivery_Note",
+        ref: "DeliveryNote",
       },
     ],
 
-    paymentStatus: {
-      type: String,
-      enum: ["Pending", "Partially Paid", "Paid"],
-      default: "Pending",
-    },
-    salesInvoiceId: [
+    /* =========================
+       BILLING LINK
+    ========================== */
+    salesInvoices: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "SalesInvoice",
       },
     ],
+
+    remarks: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-const PurchaseRequest = mongoose.model(
-  "PurchaseRequest",
-  purchaseRequestSchema
-);
+/* =========================
+   VIRTUALS
+========================= */
+purchaseRequestSchema.virtual("deliveryStatusAuto").get(function () {
+  const totalRequested = this.items.reduce((a, i) => a + i.requestedQty, 0);
+  const totalIssued = this.items.reduce((a, i) => a + i.issuedQty, 0);
+
+  if (totalIssued === 0) return "Pending";
+  if (totalIssued < totalRequested) return "Partially Delivered";
+  return "Delivered";
+});
+
+/* =========================
+   MODEL
+========================= */
+const PurchaseRequest =
+  mongoose.models.PurchaseRequest ||
+  mongoose.model("PurchaseRequest", purchaseRequestSchema);
+
 module.exports = PurchaseRequest;

@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
 import mdx from "@mdx-js/rollup";
 import { visualizer } from "rollup-plugin-visualizer";
@@ -19,10 +19,10 @@ export default defineConfig(({ mode }) => {
       react({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
       ViteImageOptimizer(),
       // Only open visualizer in production build to analyze bundle size
-      visualizer({ 
+      visualizer({
         open: isProd,
-        filename: "bundle-report.html" 
-      }), 
+        filename: "bundle-report.html",
+      }),
       VitePWA({
         registerType: "autoUpdate",
         strategies: "injectManifest",
@@ -38,14 +38,27 @@ export default defineConfig(({ mode }) => {
           background_color: "#eeffda",
           theme_color: "#a2ee46",
           icons: [
-            { src: "icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-            { src: "icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
-            { src: "maskable-icon.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+            {
+              src: "icons/icon-192x192.png",
+              sizes: "192x192",
+              type: "image/png",
+            },
+            {
+              src: "icons/icon-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
+            },
+            {
+              src: "maskable-icon.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable",
+            },
           ],
         },
         injectManifest: {
           // This ensures your 4.4MB+ file actually gets cached
-          maximumFileSizeToCacheInBytes: 7 * 1024 * 1024, 
+          maximumFileSizeToCacheInBytes: 7 * 1024 * 1024,
         },
         // Fallback for general Workbox settings
         workbox: {
@@ -53,10 +66,13 @@ export default defineConfig(({ mode }) => {
         },
         devOptions: {
           enabled: true, // Allows testing PWA in dev mode
-          type: 'module',
+          type: "module",
         },
       }),
     ],
+    optimizeDeps: {
+      include: ["antd", "axios", "dayjs", "react-router-dom", "lucide-react"],
+    },
     build: {
       minify: "terser", // Terser often produces smaller bundles than esbuild for large projects
       terserOptions: {
@@ -65,9 +81,9 @@ export default defineConfig(({ mode }) => {
           drop_debugger: isProd,
         },
       },
-      target: "modules",
+      target: "esnext",
       cssCodeSplit: true,
-      chunkSizeWarningLimit: 1000, 
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
           // CRITICAL: This splits your 4.4MB file into manageable pieces
@@ -75,9 +91,12 @@ export default defineConfig(({ mode }) => {
             if (id.includes("node_modules")) {
               if (id.includes("react")) return "vendor-core";
               if (id.includes("lodash")) return "vendor-utils";
-              if (id.includes("@mui") || id.includes("@emotion")) return "vendor-ui";
-              if (id.includes("chart.js") || id.includes("recharts")) return "vendor-charts";
-              if (id.includes("axios") || id.includes("query")) return "vendor-network";
+              if (id.includes("@mui") || id.includes("@emotion"))
+                return "vendor-ui";
+              if (id.includes("chart.js") || id.includes("recharts"))
+                return "vendor-charts";
+              if (id.includes("axios") || id.includes("query"))
+                return "vendor-network";
               return "vendor-others";
             }
           },

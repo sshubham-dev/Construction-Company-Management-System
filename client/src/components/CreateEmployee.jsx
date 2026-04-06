@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { MdOutlineRemoveCircle, MdOutlineAddCircle } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -27,8 +27,9 @@ const CreateEmployee = ({ onClose, isEdit }) => {
     birthdate: "",
     address: "",
     department: "",
-    reportingManagerId: "",
-    businessUnitId: "",
+    reportingManagerId: null,
+    businessUnitId: null,
+    companyId: null,
     baseSalary: "",
     status: "Active",
     isUser: false,
@@ -62,6 +63,7 @@ const CreateEmployee = ({ onClose, isEdit }) => {
   ];
   const [reportingManager, setReportingManager] = useState([]);
   const [businessUnit, setBusinessUnit] = useState([]);
+  const [company, setCompany] = useState([]);
   // const employees = useSelector((state) => state.employee.all);
   useEffect(() => {
     const fetchManager = async () => {
@@ -76,14 +78,21 @@ const CreateEmployee = ({ onClose, isEdit }) => {
       fetchEmployee(isEdit);
     }
   }, [isEdit]);
+
   useEffect(() => {
     fetchUnits();
+    fetchCompany();
   }, []);
 
   const fetchUnits = async () => {
     const res = await axios.get("/api/v1/business-unit");
     console.log(res.data);
     setBusinessUnit(res.data);
+  };
+  const fetchCompany = async () => {
+    const res = await axios.get("/api/v1/company");
+    console.log(res.data);
+    setCompany(res.data);
   };
   const fetchEmployee = async (id) => {
     console.log(isEdit);
@@ -100,6 +109,7 @@ const CreateEmployee = ({ onClose, isEdit }) => {
       department: emp?.department,
       reportingManagerId: emp?.reportingManagerId,
       businessUnitId: emp?.businessUnitId,
+      companyId: emp?.companyId,
       baseSalary: emp?.baseSalary,
       status: emp?.status,
       isUser: emp?.isUser,
@@ -394,6 +404,20 @@ const CreateEmployee = ({ onClose, isEdit }) => {
 
             <select
               className={inputClass}
+              name="companyId"
+              value={employee?.companyId}
+              onChange={inputData}
+            >
+              <option value="">Select Company</option>
+              {company.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className={inputClass}
               name="reportingManagerId"
               value={employee.reportingManagerId || ""}
               onChange={inputData}
@@ -601,7 +625,6 @@ const CreateEmployee = ({ onClose, isEdit }) => {
         )}
       </div>
 
-      <Toaster />
     </div>
   );
 };

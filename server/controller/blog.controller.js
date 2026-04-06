@@ -101,7 +101,7 @@ const updateBlog = async (req, res) => {
       featureImage
     } = req.body;
     // console.log("req u", req.body);
-    console.log("image", featureImage);
+    // console.log("image", featureImage);
 
     const slug = req.body.slug || makeSlug(req.body.title);
 
@@ -118,7 +118,7 @@ const updateBlog = async (req, res) => {
         seoDescription,
         status,
       },
-      { new: true },
+      { returnDocument: 'after' },
     );
 
     if (!updatedBlog) {

@@ -189,7 +189,7 @@ const saveChecklist = async (req, res) => {
 // Get all checklists
 const getAllChecklists = async (req, res) => {
   try {
-    const checklists = await Checklist.find().populate("createdBy");
+    const checklists = await Checklist.find().populate("createdBy").sort({createdAt: -1});
     res.status(200).json(checklists);
   } catch (error) {
     res.status(500).json({ error: error.message });

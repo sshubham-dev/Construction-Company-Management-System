@@ -1,52 +1,84 @@
+const mongoose = require("mongoose");
 const { Stock, Stock_Group } = require("../models/stock.models");
-const Store = require("../models/store.models");
+const {StoreInventory, StoreStockMovement }= require("../models/store.models");
 const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
+// const StoreInventory = mongoose.model("StoreInventory");
+// const StoreStockMovement = mongoose.model("StoreStockMovement");
 
-// Utility: calculate sale price
+
+/* =====================================
+   UTILITY: CALCULATE SALE PRICE
+===================================== */
 function calcSalePrice(stock) {
-  const surcharge =
-    (stock.surchargePercentage.staffSalary || 0) +
-    (stock.surchargePercentage.profit || 0) +
-    (stock.surchargePercentage.expenses || 0) +
-    (stock.surchargePercentage.investment || 0) +
-    (stock.surchargePercentage.tax || 0);
+  const surcharge = {
+    staffSalary: stock?.surchargePercentage?.staffSalary || 0,
+    profit: stock?.surchargePercentage?.profit || 0,
+    expenses: stock?.surchargePercentage?.expenses || 0,
+    investment: stock?.surchargePercentage?.investment || 0,
+    tax: stock?.surchargePercentage?.tax || 0,
+  };
 
-  return stock.purchasePrice + (stock.purchasePrice * surcharge) / 100;
+  const totalPercent =
+    surcharge.staffSalary +
+    surcharge.profit +
+    surcharge.expenses +
+    surcharge.investment +
+    surcharge.tax;
+
+  return stock.purchasePrice + (stock.purchasePrice * totalPercent) / 100;
 }
 
-// CREATE STOCK
+/* =====================================
+   CREATE STOCK (MASTER)
+===================================== */
 const createStock = async (req, res) => {
   try {
     const data = req.body;
 
     if (!data.name || !data.category || !data.unit) {
-      return res.status(400).json({ error: "Name, category, unit required" });
+      throw new Error("Name, category, unit required");
     }
 
-    const newStock = new Stock({
-      ...data,
+    // Prevent duplicate
+    const exists = await Stock.findOne({
+      name: data.name,
+      unit: data.unit,
     });
 
-    newStock.salePrice = calcSalePrice(newStock);
+    if (exists) {
+      throw new Error("Stock already exists");
+    }
 
-    newStock.movementLog.push({
-      type: "Adjustment",
-      narration: "Initial entry",
+    const stock = new Stock({
+      name: data.name,
+      category: data.category,
+      unit: data.unit,
+      itemType: data.itemType || "CONSUMABLE",
+
+      purchasePrice: Number(data.purchasePrice || 0),
+      gstRate: Number(data.gstRate || 0),
+
+      surchargePercentage: data.surchargePercentage || {},
+      description: data.description || "",
     });
 
-    const saved = await newStock.save();
+    stock.salePrice = calcSalePrice(stock);
 
-    res.status(201).json(saved);
+    await stock.save();
+
+    res.status(201).json(stock);
   } catch (err) {
-    console.error("Create Stock Error:", err);
-    res.status(500).json({ error: err.message });
+    console.log(err)
+    res.status(400).json({ error: err.message });
   }
 };
 
-// Get All Stocks
+/* =====================================
+   GET ALL STOCK
+===================================== */
 const getStocks = async (req, res) => {
   try {
-    const stocks = await Stock.find();
+    const stocks = await Stock.find().sort({ createdAt: -1 });
 
     res.json(stocks);
   } catch (err) {
@@ -54,126 +86,312 @@ const getStocks = async (req, res) => {
   }
 };
 
-// Get Stock by ID
+/* =====================================
+   GET STOCK BY ID
+===================================== */
 const getStockById = async (req, res) => {
   try {
     const stock = await Stock.findById(req.params.id);
-    if (!stock) {
-      return res.status(404).json({ error: "Stock not found" });
-    }
-    res.status(200).json(stock);
+
+    if (!stock) throw new Error("Stock not found");
+
+    res.json(stock);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 };
 
-// Update Stock
+/* =====================================
+   UPDATE STOCK (MASTER ONLY)
+===================================== */
 const updateStock = async (req, res) => {
   try {
-    const data = req.body;
-
     const stock = await Stock.findById(req.params.id);
-    if (!stock) return res.status(404).json({ error: "Stock not found" });
 
-    Object.assign(stock, data);
+    if (!stock) throw new Error("Stock not found");
 
-    // Recalculate sale price
-    stock.salePrice = calcSalePrice(stock);
+    const allowedFields = [
+      "name",
+      "category",
+      "unit",
+      "purchasePrice",
+      "gstRate",
+      "surchargePercentage",
+      "description",
+    ];
 
-    stock.movementLog.push({
-      type: "Adjustment",
-      narration: "Stock updated",
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        stock[field] = req.body[field];
+      }
     });
 
-    const updated = await stock.save();
-    res.json(updated);
-  } catch (err) {
-    console.error("Update Stock Error:", err);
-    res.status(500).json({ error: err.message });
-  }
-};
+    stock.salePrice = calcSalePrice(stock);
 
-// Delete Stock
-const deleteStock = async (req, res) => {
-  try {
-    const stock = await Stock.findByIdAndDelete(req.params.id);
-    if (!stock) {
-      return res.status(404).json({ error: "Stock not found" });
-    }
-    res.status(200).json({ message: "Stock deleted successfully" });
+    await stock.save();
+
+    res.json(stock);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 };
 
-// Create Stock Group
+/* =====================================
+   DELETE STOCK
+===================================== */
+const deleteStock = async (req, res) => {
+  try {
+    const stock = await Stock.findById(req.params.id);
+
+    if (!stock) throw new Error("Stock not found");
+
+    // Optional: prevent delete if used
+    // const used = await StoreInventory.findOne({ stockId: stock._id });
+
+    await stock.deleteOne();
+
+    res.json({ message: "Deleted successfully" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+/* =====================================
+   CREATE STOCK GROUP
+===================================== */
 const createStockGroup = async (req, res) => {
   try {
     const { name, code, unit } = req.body;
-    const stockGroup = new Stock_Group({
+
+    if (!name) throw new Error("Name required");
+
+    const exists = await Stock_Group.findOne({ name });
+    if (exists) throw new Error("Group already exists");
+
+    const group = await Stock_Group.create({
       name,
       code,
       unit,
     });
-    await stockGroup.save();
-    res.status(201).json(stockGroup);
+
+    res.status(201).json(group);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 };
 
-// Get All Stock Groups
+/* =====================================
+   GET GROUPS
+===================================== */
 const getStockGroups = async (req, res) => {
-  try {
-    const stockGroups = await Stock_Group.find();
-    res.status(200).json(stockGroups);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+  const data = await Stock_Group.find();
+  res.json(data);
 };
 
-// Get Stock Group by ID
-const getStockGroupById = async (req, res) => {
-  try {
-    const stockGroup = await Stock_Group.findById(req.params.id);
-    if (!stockGroup) {
-      return res.status(404).json({ error: "Stock Group not found" });
-    }
-    res.status(200).json(stockGroup);
-  } catch (err) {
-    console.log(err);
-    res.status(400).json({ error: err.message });
-  }
-};
-
-// Update Stock Group
+/* =====================================
+   UPDATE GROUP
+===================================== */
 const updateStockGroup = async (req, res) => {
   try {
-    const stockGroup = await Stock_Group.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    if (!stockGroup) {
-      return res.status(404).json({ error: "Stock Group not found" });
-    }
-    res.status(200).json(stockGroup);
+    const group = await Stock_Group.findById(req.params.id);
+
+    if (!group) throw new Error("Group not found");
+
+    Object.assign(group, req.body);
+
+    await group.save();
+
+    res.json(group);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 };
 
-// Delete Stock Group
+/* =====================================
+   DELETE GROUP
+===================================== */
 const deleteStockGroup = async (req, res) => {
   try {
-    const stockGroup = await Stock_Group.findByIdAndDelete(req.params.id);
-    if (!stockGroup) {
-      return res.status(404).json({ error: "Stock Group not found" });
-    }
-    res.status(200).json({ message: "Stock Group deleted successfully" });
+    const group = await Stock_Group.findById(req.params.id);
+
+    if (!group) throw new Error("Group not found");
+
+    await group.deleteOne();
+
+    res.json({ message: "Deleted" });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+};
+
+
+const applyStoreStockMovement = async ({
+  storeId,
+  stockId,
+  quantity,
+  rate = 0,
+  direction,
+  type,
+  referenceType,
+  referenceId,
+  narration,
+  createdBy,
+  session,
+}) => {
+  if (!["IN", "OUT"].includes(direction)) {
+    throw new Error("Invalid direction");
+  }
+
+  let inventory = await StoreInventory.findOne({
+    storeId,
+    stockId,
+  }).session(session);
+
+  if (!inventory) {
+    inventory = new StoreInventory({
+      storeId,
+      stockId,
+      quantity: 0,
+      averageRate: 0,
+    });
+  }
+
+  /* =========================
+     IN (GRN / RETURN)
+  ========================== */
+  if (direction === "IN") {
+    const newQty = inventory.quantity + quantity;
+
+    inventory.averageRate =
+      newQty === 0
+        ? 0
+        : (
+            inventory.quantity * inventory.averageRate +
+            quantity * rate
+          ) / newQty;
+
+    inventory.quantity = newQty;
+    inventory.lastPurchaseRate = rate;
+  }
+
+  /* =========================
+     OUT (DN / ISSUE)
+  ========================== */
+  if (direction === "OUT") {
+    if (inventory.quantity < quantity) {
+      throw new Error("Insufficient stock");
+    }
+
+    inventory.quantity -= quantity;
+  }
+
+  await inventory.save({ session });
+
+  /* =========================
+     MOVEMENT LOG
+  ========================== */
+  await StoreStockMovement.create(
+    [
+      {
+        storeId,
+        stockId,
+        quantity,
+        rate,
+        direction,
+        type,
+        referenceType,
+        referenceId,
+        narration,
+        createdBy,
+      },
+    ],
+    { session }
+  );
+
+  return inventory;
+};
+
+const adjustStock = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const {
+      storeId,
+      stockId,
+      quantity,
+      direction,
+      rate,
+      narration,
+    } = req.body;
+
+    await applyStoreStockMovement({
+      storeId,
+      stockId,
+      quantity,
+      rate,
+      direction,
+      type: "ADJUSTMENT",
+      referenceType: "Manual",
+      narration,
+      createdBy: req.user._id,
+      session,
+    });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({ message: "Stock adjusted" });
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const getStoreInventory = async (req, res) => {
+  try {
+    const { storeId } = req.params;
+
+    const inventory = await StoreInventory.find({ storeId })
+      .populate("stockId", "name unit category")
+      .sort({ "stockId.name": 1 });
+
+    res.json(inventory);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const getStoreStock = async (req, res) => {
+  const data = await StoreInventory.find({
+    storeId: req.params.storeId,
+  }).populate("stockId");
+
+  res.json(data);
+};
+
+const getStockSummary = async (req, res) => {
+  const result = await StoreInventory.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalQty: { $sum: "$quantity" },
+        totalValue: { $sum: "$stockValue" },
+      },
+    },
+  ]);
+
+  res.json(result[0] || { totalQty: 0, totalValue: 0 });
+};
+
+const getItemStock = async (req, res) => {
+  const data = await StoreInventory.find({
+    stockId: req.params.stockId,
+  }).populate("storeId");
+
+  res.json(data);
 };
 
 module.exports = {
@@ -183,8 +401,12 @@ module.exports = {
   updateStock,
   deleteStock,
   createStockGroup,
-  getStockGroupById,
   getStockGroups,
   updateStockGroup,
   deleteStockGroup,
+  applyStoreStockMovement,
+  getItemStock,
+  getStockSummary,
+  getStoreStock,
+  adjustStock
 };

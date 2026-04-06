@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Select from "react-select";
 
-const CreateReceipt_Payment = ({ type = "Payment", onClose }) => {
+const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
   const isPayment = type === "Payment";
 
   /* ---------------- STATE ---------------- */
@@ -13,52 +13,65 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose }) => {
 
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
+    costCenterId: "",
     fromLedgerId: "",
     toLedgerId: "",
     amount: "",
     referenceNo: "",
     description: "",
-    settlement: [],
+    invoices: [], // ✅ NEW
   });
+  const [costCenters, setCostCenters] = useState([]);
 
-  /* ---------------- GROUP LOGIC USING "under" ---------------- */
+  /* ---------------- GROUP LOGIC ---------------- */
   const CASH_BANK_UNDER = ["Cash-in-Hand", "Bank Accounts", "Cash", "Bank"];
   const PARTY_UNDER = ["Sundry Debtors", "Sundry Creditors"];
 
   /* ---------------- LOAD LEDGERS ---------------- */
   useEffect(() => {
     const loadLedgers = async () => {
-      const response = await axios.get("/api/v1/ledger");
-      setLedgers(response.data);
-      // console.log("response", response.data.filter((l) => CASH_BANK_UNDER.map(u => u.toLowerCase()).includes(l.under.toLowerCase())));
+      const res = await axios.get("/api/v1/ledger");
+      setLedgers(res.data || []);
     };
     loadLedgers();
+        axios.get("/api/v1/cost-center").then((res) => {
+      setCostCenters(res.data || []);
+    });
   }, []);
+
+  const mapOptions = (arr) =>
+    arr.map((l) => ({ value: l._id, label: `${l.name} (${l.under})` }));
 
   const cashBankLedgers = useMemo(
     () =>
       ledgers.filter((l) =>
         CASH_BANK_UNDER.map((u) => u.toLowerCase()).includes(
-          l.under.toLowerCase(),
-        ),
+          l.under.toLowerCase()
+        )
       ),
-    [ledgers],
+    [ledgers]
   );
 
   const partyLedgers = useMemo(
-    () => ledgers.filter((l) => PARTY_UNDER.map((u) => u.toLowerCase()).includes(l.under.toLowerCase())),
-    [ledgers],
+    () =>
+      ledgers.filter((l) =>
+        PARTY_UNDER.map((u) => u.toLowerCase()).includes(
+          l.under.toLowerCase()
+        )
+      ),
+    [ledgers]
   );
 
   const nonCashBankLedgers = useMemo(
-    () => ledgers.filter((l) => !CASH_BANK_UNDER.map(u => u.toLowerCase()).includes(l.under.toLowerCase())),
-    [ledgers],
+    () =>
+      ledgers.filter(
+        (l) =>
+          !CASH_BANK_UNDER.map((u) => u.toLowerCase()).includes(
+            l.under.toLowerCase()
+          )
+      ),
+    [ledgers]
   );
-
-  /* ---------------- SELECT OPTIONS ---------------- */
-
-  const mapOptions = (arr) =>
-    arr.map((l) => ({ value: l._id, label: `${l.name} (${l.under})` }));
 
   const fromOptions = isPayment
     ? mapOptions(cashBankLedgers)
@@ -70,77 +83,114 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose }) => {
 
   const partyLedgerId = isPayment ? form.toLedgerId : form.fromLedgerId;
 
-  /* ---------------- LOAD DOCUMENTS BY PURPOSE ---------------- */
-
+  /* ---------------- LOAD DOCUMENTS ---------------- */
   useEffect(() => {
     if (!purpose || !partyLedgerId) return;
 
     axios
       .get("/api/v1/documents", {
-        params: {
-          purpose,
-          ledgerId: partyLedgerId,
-        },
+        params: { purpose, ledgerId: partyLedgerId },
       })
-      .then((res) => setDocuments(res.data));
+      .then((res) => setDocuments(res.data || []))
+      .catch(() => setDocuments([]));
   }, [purpose, partyLedgerId]);
 
   /* ---------------- HELPERS ---------------- */
+  const updateForm = (key, value) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
-  const updateForm = (key, value) => setForm((p) => ({ ...p, [key]: value }));
-
-  const handleSettlementAmount = (docId, value) => {
+  const handleInvoiceAmount = (invoiceId, value) => {
     const amount = Number(value) || 0;
 
     setForm((prev) => {
-      const existing = prev.settlement.filter((s) => s.docId !== docId);
+      const existing = prev.invoices.filter(
+        (i) => i.invoiceId !== invoiceId
+      );
 
       if (amount > 0) {
-        existing.push({ docId, amount });
+        existing.push({ invoiceId, amount });
       }
 
-      return { ...prev, settlement: existing };
+      return { ...prev, invoices: existing };
     });
   };
 
-  const totalSettled = useMemo(
-    () => form.settlement.reduce((s, i) => s + (i.amount || 0), 0),
-    [form.settlement],
+  const totalAllocated = useMemo(
+    () => form.invoices.reduce((s, i) => s + (i.amount || 0), 0),
+    [form.invoices]
   );
 
-  const remaining = Number(form.amount || 0) - totalSettled;
+  const remaining = Number(form.amount || 0) - totalAllocated;
+
+  /* ---------------- AUTO ALLOCATE ---------------- */
+  const autoAllocate = () => {
+    let remaining = Number(form.amount || 0);
+    const allocations = [];
+
+    for (let doc of documents) {
+      if (remaining <= 0) break;
+
+      const alloc = Math.min(doc.balance, remaining);
+
+      allocations.push({
+        invoiceId: doc._id,
+        amount: alloc,
+      });
+
+      remaining -= alloc;
+    }
+
+    setForm((prev) => ({ ...prev, invoices: allocations }));
+  };
 
   /* ---------------- SUBMIT ---------------- */
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (totalSettled > Number(form.amount))
-      return alert("Settlement exceeds voucher amount");
+    if (!form.fromLedgerId || !form.toLedgerId)
+      return alert("Select ledgers");
+
+    if (form.fromLedgerId === form.toLedgerId)
+      return alert("From and To cannot be same");
+
+    if (totalAllocated > Number(form.amount))
+      return alert("Allocated exceeds amount");
 
     setLoading(true);
 
     try {
-      await axios.post(isPayment ? "/api/v1/payment" : "/api/v1/receipt", {
-        ...form,
-        purpose,
-      });
+      await axios.post(
+        isPayment ? "/api/v1/payment" : "/api/v1/receipt",
+        {
+          date: form.date,
+          costCenterId: form.costCenterId,
+          from: form.fromLedgerId,
+          to: form.toLedgerId,
+          amount: Number(form.amount),
+          narration: form.description,
+          referenceNo: form.referenceNo,
+          invoices: form.invoices,
+        }
+      );
 
+      if (refresh) refresh();
       onClose();
     } catch (err) {
-      alert(err.response?.data?.message || "Error saving voucher");
+      console.log(err)
+      alert(err.response?.data?.error || "Error saving voucher");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  /* ---------------- UI ---------------- */
+    const costCenterOptions = costCenters.map((c) => ({
+    value: c._id,
+    label: c.name,
+  }));
 
+  /* ---------------- UI ---------------- */
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-lg font-semibold">
-        {isPayment ? "Create Payment Voucher" : "Create Receipt Voucher"}
-      </h2>
 
       {/* DATE */}
       <input
@@ -151,7 +201,16 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose }) => {
         required
       />
 
-      {/* FROM LEDGER */}
+            {/* COST CENTER */}
+      <Select
+        options={costCenterOptions}
+        value={costCenterOptions.find((o) => o.value === form.costCenterId)}
+        onChange={(e) => updateForm("costCenterId", e?.value || "")}
+        placeholder="Select Cost Center (Optional)"
+        isClearable
+      />
+
+      {/* FROM */}
       <Select
         options={fromOptions}
         placeholder={isPayment ? "Pay From (Cash/Bank)" : "Receive From"}
@@ -159,7 +218,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose }) => {
         isClearable
       />
 
-      {/* TO LEDGER */}
+      {/* TO */}
       <Select
         options={toOptions}
         placeholder={isPayment ? "Pay To" : "Receive Into (Cash/Bank)"}
@@ -205,18 +264,31 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose }) => {
       {/* DOCUMENT LIST */}
       {documents.length > 0 && (
         <div className="border rounded p-3 space-y-2 text-sm">
+          
+          <div className="flex justify-between items-center">
+            <span className="font-medium">Invoice Allocation</span>
+            <button
+              type="button"
+              onClick={autoAllocate}
+              className="text-blue-600 text-xs"
+            >
+              Auto Allocate
+            </button>
+          </div>
+
           {documents.map((doc) => (
             <div key={doc._id} className="grid grid-cols-4 gap-2 items-center">
               <div>
                 {doc.docType} #{doc.docNo}
               </div>
-              <div>Outstanding: {doc.balance}</div>
+
+              <div>Due: {doc.balance}</div>
 
               <input
                 type="number"
                 max={doc.balance}
                 onChange={(e) =>
-                  handleSettlementAmount(doc._id, e.target.value)
+                  handleInvoiceAmount(doc._id, e.target.value)
                 }
                 className="border p-1 rounded"
               />
@@ -224,12 +296,12 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose }) => {
           ))}
 
           <div className="text-right font-medium">
-            Settled: {totalSettled} | Remaining: {remaining}
+            Allocated: {totalAllocated} | Remaining: {remaining}
           </div>
         </div>
       )}
 
-      {/* REF NO */}
+      {/* REF */}
       <input
         placeholder="Reference No"
         value={form.referenceNo}
@@ -237,7 +309,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose }) => {
         className="border p-2 rounded w-full"
       />
 
-      {/* DESCRIPTION */}
+      {/* NARRATION */}
       <textarea
         placeholder="Narration"
         value={form.description}

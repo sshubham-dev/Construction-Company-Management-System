@@ -71,10 +71,6 @@ const paymentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "CostCenter",
     },
-    postedAt: Date,
-    postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    cancelledAt: Date,
-    cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

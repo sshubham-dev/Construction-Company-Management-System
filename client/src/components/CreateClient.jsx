@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { MdOutlineRemoveCircle, MdOutlineAddCircle } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
@@ -354,9 +354,9 @@ const CreateClient = ({ onClose, isEdit }) => {
           </button>
         </div>
       </form>
-      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };
+
 
 export default CreateClient;

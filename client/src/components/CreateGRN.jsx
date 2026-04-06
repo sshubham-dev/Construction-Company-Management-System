@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Select from "react-select";
 
-
 const CreateGRN = ({ onClose, editId = null }) => {
   const isEdit = Boolean(editId);
 
@@ -11,6 +10,7 @@ const CreateGRN = ({ onClose, editId = null }) => {
 
   const [store, setStore] = useState(null);
   const [supplier, setSupplier] = useState(null);
+  const [suppliers, setSuppliers] = useState([]);
   const [poList, setPoList] = useState([]);
   const [selectedPO, setSelectedPO] = useState(null);
 
@@ -21,10 +21,30 @@ const CreateGRN = ({ onClose, editId = null }) => {
      LOAD LOGGED-IN USER STORE
   ============================ */
   useEffect(() => {
-    axios.get("/api/v1/store").then(res => {
-      setStore(res.data.store);
-    });
+    // const fetchStore = async () => {
+    //   const res = await axios.get("/api/v1/store");
+    //   console.log(res.data)
+    //   setStore(res.data[0]);
+    // }
+    // fetchStore();
+    loadMasters();
   }, []);
+
+  const loadMasters = async () => {
+    try {
+      const [sup, store] = await Promise.all([
+        axios.get("/api/v1/supplier"),
+        axios.get("/api/v1/store"),
+        // axios.get("/api/v1/site"),
+      ]);
+
+      setSuppliers(sup.data);
+      setStore(store.data[0]);
+      // setSites(site.data);
+    } catch {
+      toast.error("Failed to load master data");
+    }
+  };
 
   /* ============================
      LOAD EXISTING GRN (EDIT)
@@ -45,7 +65,7 @@ const CreateGRN = ({ onClose, editId = null }) => {
       setSelectedPO(data.purchaseOrderId);
 
       setItems(
-        data.items.map(i => ({
+        data.items.map((i) => ({
           stockId: i.stockId._id || i.stockId,
           stockName: i.stockId.name,
           description: i.description,
@@ -56,7 +76,7 @@ const CreateGRN = ({ onClose, editId = null }) => {
           rate: i.rate,
           amount: i.amount,
           remarks: i.remarks || "",
-        }))
+        })),
       );
 
       setStep(2);
@@ -72,8 +92,9 @@ const CreateGRN = ({ onClose, editId = null }) => {
   ============================ */
   const fetchPOs = async (supplierId) => {
     const res = await axios.get(
-      `/api/v1/purchase-order/open?store=${store._id}&supplier=${supplierId}`
+      `/api/v1/purchase-order/open?store=${store._id}&supplier=${supplierId}`,
     );
+    console.log(res.data)
     setPoList(res.data);
   };
 
@@ -84,7 +105,7 @@ const CreateGRN = ({ onClose, editId = null }) => {
     setSelectedPO(po);
 
     setItems(
-      po.items.map(i => ({
+      po.items.map((i) => ({
         stockId: i.stockId._id || i.stockId,
         stockName: i.stockName,
         description: i.description,
@@ -95,7 +116,7 @@ const CreateGRN = ({ onClose, editId = null }) => {
         rate: i.rate,
         amount: i.pendingQty * i.rate,
         remarks: "",
-      }))
+      })),
     );
 
     setStep(2);
@@ -115,7 +136,8 @@ const CreateGRN = ({ onClose, editId = null }) => {
     }
 
     updated[index].amount =
-      Number(updated[index].acceptedQty || 0) * Number(updated[index].rate || 0);
+      Number(updated[index].acceptedQty || 0) *
+      Number(updated[index].rate || 0);
 
     setItems(updated);
   };
@@ -139,7 +161,7 @@ const CreateGRN = ({ onClose, editId = null }) => {
       supplierId: supplier.value,
       purchaseOrderId: selectedPO?._id,
 
-      items: items.map(i => ({
+      items: items.map((i) => ({
         stockId: i.stockId,
         description: i.description,
         orderedQty: i.orderedQty,
@@ -172,7 +194,6 @@ const CreateGRN = ({ onClose, editId = null }) => {
   ============================ */
   return (
     <div className=" max-w-xl mx-auto space-y-4">
-
       {/* STEP 1 */}
       {step === 1 && (
         <>
@@ -194,13 +215,17 @@ const CreateGRN = ({ onClose, editId = null }) => {
               setSupplier(v);
               fetchPOs(v.value);
             }}
+            options={suppliers.map((s) => ({
+              value: s._id,
+              label: s.name,
+            }))}
           />
 
           <Select
             placeholder="Select Purchase Order"
             isDisabled={isEdit}
-            options={poList.map(po => ({
-              label: po.poNo,
+            options={poList.map((po) => ({
+              label: po.poDate,
               value: po,
             }))}
             onChange={(v) => selectPO(v.value)}
@@ -247,9 +272,7 @@ const CreateGRN = ({ onClose, editId = null }) => {
               <input
                 disabled={!isEditable}
                 value={item.remarks}
-                onChange={(e) =>
-                  updateItem(i, "remarks", e.target.value)
-                }
+                onChange={(e) => updateItem(i, "remarks", e.target.value)}
                 className="border p-1 w-full mt-2"
                 placeholder="Remarks"
               />
@@ -275,11 +298,7 @@ const CreateGRN = ({ onClose, editId = null }) => {
               onClick={saveGRN}
               className="bg-green-600 text-white px-3 py-1 rounded"
             >
-              {loading
-                ? "Saving..."
-                : isEdit
-                ? "Update GRN"
-                : "Save GRN"}
+              {loading ? "Saving..." : isEdit ? "Update GRN" : "Save GRN"}
             </button>
           </div>
         </>

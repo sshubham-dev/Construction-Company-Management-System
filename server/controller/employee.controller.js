@@ -2,7 +2,10 @@ const Employee = require("../models/employee.models");
 const User = require("../models/user.models");
 const bcrypt = require("bcryptjs");
 const { convertToUser } = require("./user.controller");
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
+const {
+  sendPushNotification,
+  notifyRole,
+} = require("../utils/pushNotification.js");
 
 const employeeById = async (req, res) => {
   try {
@@ -20,9 +23,10 @@ const employeeById = async (req, res) => {
 const employees = async (req, res) => {
   try {
     const employees = await Employee.find()
-    .where('status').equals('Active')
-    .sort({ name: 1 })
-    .exec();
+      .where("status")
+      .equals("Active")
+      .sort({ name: 1 })
+      .exec();
 
     if (employees.length === 0)
       return res.status(500).json({ error: "Employees not Found" });
@@ -34,9 +38,9 @@ const employees = async (req, res) => {
 };
 
 const DEPARTMENT_CODE_MAP = {
-  "Accountant": "ACC",
-  "Marketing": "MKT",
-  "Ceo": "CEO",
+  Accountant: "ACC",
+  Marketing: "MKT",
+  Ceo: "CEO",
   "Site Incharge": "SI",
   "Site Supervisor": "SS",
   "Design Engineer": "DES",
@@ -86,6 +90,7 @@ const createEmployee = async (req, res) => {
       department,
       reportingManagerId,
       businessUnitId,
+      companyId,
       baseSalary,
       status,
       isUser,
@@ -98,6 +103,7 @@ const createEmployee = async (req, res) => {
 
       incentiveConfig,
     } = req.body;
+    const user = req.user; // Assuming req.user is populated by auth middleware
 
     /* ================= VALIDATIONS ================= */
 
@@ -147,6 +153,7 @@ const createEmployee = async (req, res) => {
       department,
       reportingManagerId: reportingManagerId || null,
       businessUnitId: businessUnitId || null,
+      companyId,
       baseSalary,
       status,
       isUser,
@@ -184,6 +191,7 @@ const createEmployee = async (req, res) => {
 const updateEmployeeData = async (req, res) => {
   try {
     const { id } = req.params;
+    const user = req.user; // Assuming req.user is populated by auth middleware
 
     const {
       name,
@@ -198,6 +206,7 @@ const updateEmployeeData = async (req, res) => {
       department,
       reportingManagerId,
       businessUnitId,
+      companyId,
       baseSalary,
       status,
       isUser,
@@ -217,7 +226,7 @@ const updateEmployeeData = async (req, res) => {
     }
 
     /* ===== GENERATE EMPLOYEE ID ===== */
-    const employeeID = await generateSerialNo(department);
+    const employeeID = employee.employeeID || (await generateSerialNo(department));
 
     // 🔁 Update basic + company fields safely
     Object.assign(employee, {
@@ -234,6 +243,7 @@ const updateEmployeeData = async (req, res) => {
       department,
       reportingManagerId,
       businessUnitId,
+      companyId: companyId,
       baseSalary,
       status,
 
@@ -275,8 +285,8 @@ const updateEmployeeData = async (req, res) => {
       employee,
     });
   } catch (error) {
-    console.error("Update Employee Error:", error);
-    return res.status(500).json({ error: "Something went wrong" });
+    console.log("Update Employee Error:", error);
+    return res.status(500).json({ error: error });
   }
 };
 

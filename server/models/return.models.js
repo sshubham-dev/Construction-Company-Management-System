@@ -1,65 +1,121 @@
 const mongoose = require("mongoose");
 
-const returnableSchema = new mongoose.Schema({
-  item: {
-    type: String,
+const returnItemSchema = new mongoose.Schema({
+  stockId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Stock",
     required: true,
   },
-  quantity: {
-    type: Number,
+
+  dnItemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true, // link to DN item
   },
-  receivedQuantity: {
+
+  unit: String,
+
+  returnQty: {
     type: Number,
+    required: true,
+    min: 0,
   },
-  unit: {
+
+  rate: Number,
+
+  amount: Number,
+
+  condition: {
     type: String,
+    enum: ["New", "Used", "Scrap"],
+    required: true,
   },
+
   remarks: String,
-  rate: {
-    type: Number,
-  },
-  amount: {
-    type: Number,
-  },
+});
+returnItemSchema.pre("save", function () {
+  if (this.returnQty > this.issuedQty) {
+    return new Error("Return qty cannot exceed issued qty");
+  }
 });
 
 const returnSchema = new mongoose.Schema(
   {
-    site: {
-      name: String,
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Site",
-      },
-    },
-    salesInvoice: {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "SalesInvoice",
-        required: true,
-      },
-      invoiceNo: String,
-    },
-    materialType: {
+    returnNo: {
       type: String,
-      required: true,
-      enum: ["New", "Used", "Scrap"],
+      unique: true,
+      index: true,
     },
-    date: Date,
-    returnDate: Date,
-    returnable: [returnableSchema],
-    status: [
-      {
-        name: String,
-        date: Date,
-      },
-    ],
+
+    /* =========================
+       RETURN TYPE
+    ========================== */
+    type: {
+      type: String,
+      enum: ["SITE_RETURN", "PURCHASE_RETURN"],
+      required: true,
+    },
+
+    /* =========================
+       SOURCE
+    ========================== */
+    fromStoreId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+    },
+
+    toStoreId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+    },
+
+    supplierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Supplier",
+    },
+
+    /* =========================
+       REFERENCES
+    ========================== */
+    deliveryNoteId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DeliveryNote",
+    },
+
+    purchaseInvoiceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PurchaseInvoice",
+    },
+
+    /* =========================
+       ITEMS
+    ========================== */
+    items: [returnItemSchema],
+
+    /* =========================
+       STATUS
+    ========================== */
+    status: {
+      type: String,
+      enum: ["DRAFT", "POSTED", "CANCELLED"],
+      default: "DRAFT",
+    },
+
+    /* =========================
+       AUDIT
+    ========================== */
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    remarks: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Return = mongoose.model("Return", returnSchema);

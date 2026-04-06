@@ -8,24 +8,25 @@ const deliveryItemSchema = new mongoose.Schema(
       required: true,
     },
 
-    item: String, // snapshot
+    // prItemId: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   required: true,
+    // },
+
     unit: String,
 
-    // From Purchase Request
     requestedQty: {
       type: Number,
       required: true,
       min: 0,
     },
 
-    // From Store (Issue)
     issuedQty: {
       type: Number,
       required: true,
       min: 0,
     },
 
-    // From Site (Confirmation)
     acceptedQty: {
       type: Number,
       default: 0,
@@ -40,60 +41,93 @@ const deliveryItemSchema = new mongoose.Schema(
 
     rejectionReason: String,
 
-    status: {
-      type: String,
-      enum: ["Issued", "Verified", "Mismatch"],
-      default: "Issued",
-    },
+    /* 🔥 PRICING SNAPSHOT */
+    costRate: {
+      type: Number,
+      required: true,
+    }, // from store inventory
+    sellingRate: Number, // after margin
+    gstRate: Number,
+
+    amount: Number,
+    taxAmount: Number,
   },
-  { _id: false }
+  { _id: false },
 );
+
+deliveryItemSchema.pre("save", function () {
+  if (this.acceptedQty + this.rejectedQty !== this.issuedQty) {
+    return new Error("Accepted + Rejected must equal Issued");
+  }
+
+  if (this.acceptedQty > this.issuedQty) {
+    return new Error("Accepted cannot exceed issued");
+  }
+});
 
 const deliveryNoteSchema = new mongoose.Schema(
   {
-    deliveryNoteNo: {
+    dnNo: {
       type: String,
       unique: true,
       index: true,
     },
 
+    /* =========================
+       SOURCE
+    ========================== */
+    fromStoreId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+      index: true,
+    },
+
+    /* =========================
+       DESTINATION
+    ========================== */
+
+    destination: {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: "deliveryTo",
+      },
+      deliveryTo: {
+        type: String,
+        enum: ["Site", "Client"],
+        required: true,
+      },
+    },
+
+    /* =========================
+       LINKED PR (optional)
+    ========================== */
     purchaseRequestId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "PurchaseRequest",
-      required: true,
     },
 
-    store: {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Store",
-        required: true,
-      },
-      name: String,
-    },
-
-    site: {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Site",
-        required: true,
-      },
-      name: String,
-    },
-
-    // Actors
+    /* =========================
+       ACTORS
+    ========================== */
     issuedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // store staff
+      ref: "User",
     },
 
     receivedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // site supervisor
+      ref: "User",
     },
 
+    /* =========================
+       ITEMS
+    ========================== */
     items: [deliveryItemSchema],
 
+    /* =========================
+       DATES
+    ========================== */
     issueDate: {
       type: Date,
       default: Date.now,
@@ -101,17 +135,18 @@ const deliveryNoteSchema = new mongoose.Schema(
 
     receivedDate: Date,
 
+    /* =========================
+       STATUS
+    ========================== */
     status: {
       type: String,
       enum: ["Draft", "Issued", "Verified", "Mismatch", "Cancelled"],
       default: "Draft",
     },
 
-    salesInvoiceId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "SalesInvoice",
-    },
-
+    /* =========================
+       ATTACHMENTS
+    ========================== */
     attachments: [
       {
         url: String,
@@ -121,44 +156,39 @@ const deliveryNoteSchema = new mongoose.Schema(
 
     remarks: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-deliveryNoteSchema.pre("save", async function (next) {
-  try {
-    if (this.deliveryNoteNo) return next();
+deliveryNoteSchema.pre("save", function () {
+  let total = 0;
+  let gst = 0;
 
-    const year = new Date(this.date || Date.now()).getFullYear();
+  const round = (n) => Math.round(n * 100) / 100;
 
-    const storeCode =
-      this.store?.name?.replace(/\s+/g, "").toUpperCase().slice(0, 8) ||
-      "STORE";
+  this.items.forEach((item) => {
+    const amount = round((item.acceptedQty || 0) * (item.sellingRate || 0));
+    item.amount = amount;
 
-    const lastDN = await this.constructor
-      .findOne({
-        "store.id": this.store.id,
-        deliveryNoteNo: { $regex: `^DN/${storeCode}/${year}/` },
-      })
-      .sort({ createdAt: -1 })
-      .lean();
+    total += amount;
 
-    let nextSeq = 1;
+    const tax = item.gstRate ? round((amount * item.gstRate) / 100) : 0;
 
-    if (lastDN?.deliveryNoteNo) {
-      const parts = lastDN.deliveryNoteNo.split("/");
-      const lastSeq = parseInt(parts[3], 10);
-      if (!isNaN(lastSeq)) nextSeq = lastSeq + 1;
-    }
+    item.taxAmount = tax;
+    gst += tax;
+  });
 
-    this.deliveryNoteNo = `DN/${storeCode}/${year}/${String(nextSeq).padStart(
-      4,
-      "0"
-    )}`;
+  this.totalAmount = round(total);
+  this.totalTax = round(gst);
+  this.netAmount = round(total + gst);
+});
 
-    next();
-  } catch (err) {
-    next(err);
-  }
+deliveryNoteSchema.virtual("statusAuto").get(function () {
+  const totalIssued = this.items.reduce((a, i) => a + i.issuedQty, 0);
+  const totalAccepted = this.items.reduce((a, i) => a + i.acceptedQty, 0);
+
+  if (totalAccepted === 0) return "Issued";
+  if (totalAccepted < totalIssued) return "Mismatch";
+  return "Verified";
 });
 
 const DeliveryNote =

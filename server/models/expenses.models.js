@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const expenseSchema = new mongoose.Schema(
   {
@@ -15,6 +15,14 @@ const expenseSchema = new mongoose.Schema(
       type: Date,
       required: true,
       default: Date.now,
+    },
+
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      default: null,
+      // required: true,
+      index: true,
     },
 
     /* ======================
@@ -46,6 +54,7 @@ const expenseSchema = new mongoose.Schema(
       id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Ledger",
+        // ref: "CostCenter",
         required: true,
       },
       name: String,
@@ -86,6 +95,14 @@ const expenseSchema = new mongoose.Schema(
     },
 
     /* ======================
+   LINKING
+====================== */
+    voucherId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Voucher",
+    },
+
+    /* ======================
        SYSTEM
     ====================== */
     createdBy: {
@@ -102,9 +119,8 @@ const expenseSchema = new mongoose.Schema(
 
     remarks: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-
-const Expenses = mongoose.model('Expense', expenseSchema);
+const Expenses = mongoose.model("Expense", expenseSchema);
 module.exports = Expenses;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import Header from '../components/Header';
 
 const TeamSection = () => {
@@ -42,7 +42,6 @@ const TeamSection = () => {
             ))}
         </div>
       </div>
-      <Toaster position="top-right" reverseOrder={false} />
     </section>
     </div>
   );

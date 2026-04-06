@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      min: 8,
+      minlength: 8,
       trim: true,
     },
     phone: {
@@ -142,21 +142,25 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessUnit",
     },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
   },
 
   { timestamps: true },
 );
 
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   const user = this;
-  if (!user.isModified("password")) return next();
+  if (!user.isModified("password")) return ;
   try {
     console.log("NewPasswd", user.password);
     const hash_password = await bcrypt.hash(user.password, 12);
     user.password = hash_password;
     console.log("hash_password", hash_password);
   } catch (error) {
-    next(error);
+    return error
   }
 });
 

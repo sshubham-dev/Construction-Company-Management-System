@@ -6,7 +6,17 @@ const collectionSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      default: null,
+      // required: true,
+    },
+    costCenterId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CostCenter",
+      default: null,
+    },
     clientLedgerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ledger",
@@ -30,7 +40,7 @@ const collectionSchema = new mongoose.Schema(
     narration: String,
 
     proofImage: {
-            secure_url: String,
+      secure_url: String,
       public_id: String,
     }, // file path
 
@@ -44,11 +54,14 @@ const collectionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+
+    voucherId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Voucher",
+      default: null,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-module.exports = mongoose.model(
-  "Collection",
-  collectionSchema
-);
+module.exports = mongoose.model("Collection", collectionSchema);

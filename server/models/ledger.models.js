@@ -4,15 +4,22 @@ const ledgerSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     alias: String,
+    groupId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group",
+      required: true,
+    },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+      index: true,
+    },
     referenceType: String, // dynamic reference type name
     referenceId: {
       type: mongoose.Schema.Types.ObjectId,
       refPath: "referenceType",
-    },
-    under: String, // grouping name
-    businessUnitId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "BusinessUnit",
+      default: null,
     },
     statutoryDetails: {
       isTDSDeductible: { type: Boolean, default: false },
@@ -20,6 +27,8 @@ const ledgerSchema = new mongoose.Schema(
     },
     mailingDetails: {
       name: String,
+      phoneNo: String,
+      email: String,
       address: String,
       state: String,
     },
@@ -30,7 +39,7 @@ const ledgerSchema = new mongoose.Schema(
       bankName: String,
       branch: String,
     },
-    taxRegistrationDetails: {
+    taxDetails: {
       panNo: String,
       gstNo: String,
     },
@@ -45,7 +54,7 @@ const ledgerSchema = new mongoose.Schema(
     },
     isActive: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const groupSchema = new mongoose.Schema(
@@ -53,30 +62,26 @@ const groupSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
 
-    alias: { type: String, trim: true },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+    },
 
     // Parent Group (Tally style)
-    under: {
-      type: String,
-      required: true,
-      default: "Primary",
-      trim: true,
+    parentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group",
+      default: null,
     },
 
     // Nature of Group (Accounting classification)
     nature: {
       type: String,
-      enum: ["Assets", "Liability", "Income", "Expenses"],
-      required: true,
-    },
-
-    normalBalance: {
-      type: String,
-      enum: ["Dr", "Cr"],
+      enum: ["ASSET", "LIABILITY", "INCOME", "EXPENSE"],
       required: true,
     },
 
@@ -86,22 +91,34 @@ const groupSchema = new mongoose.Schema(
     isReserved: { type: Boolean, default: false },
     // Example reserved groups: Bank Accounts, Cash-in-Hand, Duties & Taxes
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const costCenterSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, unique: true }, // Cost Center Name
-    type: { type: String, required: true },
-    under: { type: String, default: "Primary" }, // Parent Cost Center
+    name: { type: String, required: true, unique: true, trim: true }, // Cost Center Name
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+    },
+    parentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CostCenter",
+      default: null,
+    },
     isActive: { type: Boolean, default: true }, // Active/Inactive Status
-    description: { type: String }, // Additional Notes
-    referenceId: { type: mongoose.Schema.Types.ObjectId, refPath: "type" }, // Dynamic reference
+    type: { type: String, required: true },
+    reference: { type: mongoose.Schema.Types.ObjectId, refPath: "type" }, // Dynamic reference
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-ledgerSchema.index({ referenceType: 1, referenceId: 1 }, { unique: true });
+costCenterSchema.index({ name: 1, companyId: 1 }, { unique: true });
+
+ledgerSchema.index({ name: 1, companyId: 1 }, { unique: true });
+
+groupSchema.index({ name: 1, companyId: 1 }, { unique: true });
 
 const Group = mongoose.model("Group", groupSchema);
 const Ledger = mongoose.model("Ledger", ledgerSchema);

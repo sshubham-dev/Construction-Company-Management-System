@@ -9,7 +9,7 @@ axios.defaults.withCredentials = true;
 
 const CreateSalary = ({ onClose }) => {
   const [employees, setEmployees] = useState([]);
-  const [expenses, setExpenses] = useState([])
+  const [expenses, setExpenses] = useState([]);
 
   const [form, setForm] = useState({
     employeeId: "",
@@ -26,6 +26,7 @@ const CreateSalary = ({ onClose }) => {
     otherAdditions: 0,
     otherDeductions: 0,
   });
+  const [trafficlightBonus, setTrafficLightBonus] = useState(null);
 
   const [result, setResult] = useState(null);
 
@@ -45,8 +46,8 @@ const CreateSalary = ({ onClose }) => {
       employeeCode: emp.code,
       department: emp.department,
       baseSalary: emp.baseSalary,
-      trafficBonus: emp?.incentiveConfig?.trafficLight?.greenBonus || 0,
     });
+    setTrafficLightBonus(emp?.incentiveConfig?.trafficLight || 0);
   };
 
   useEffect(() => {
@@ -82,17 +83,17 @@ const CreateSalary = ({ onClose }) => {
     };
 
     const fetchExpenses = async () => {
-      const res = await axios.get("/api/v1/expenses/month", {
+      const res = await axios.get("/api/v1/expenses/", {
         params: {
           employeeId: form.employeeId,
           month: form.month,
         },
       });
 
-      console.log(res.data)
+      console.log(res.data);
 
       const total = res.data?.expenses.reduce((sum, e) => sum + e.amount, 0);
-      setExpenses(res.data?.expenses)
+      setExpenses(res.data?.expenses);
       setForm((prev) => ({
         ...prev,
         otherAdditions: total,
@@ -295,7 +296,7 @@ const CreateSalary = ({ onClose }) => {
                 trafficScore: e.target.value,
               })
             }
-                        min="0"
+            min="0"
             max="100"
           />
         </div>
@@ -334,7 +335,7 @@ const CreateSalary = ({ onClose }) => {
         {/* Other Addition */}
 
         <div>
-          <label className="text-sm text-gray-600">Other Deductions</label>
+          <label className="text-sm text-gray-600">Expenses</label>
 
           <input
             type="number"

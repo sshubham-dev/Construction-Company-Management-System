@@ -10,46 +10,33 @@ const CreateStore = ({ onClose, editId }) => {
   const [employees, setEmployees] = useState([]);
 
   const [form, setForm] = useState({
+    name: "",
+    code: "",
+    type: "STORE",
     businessUnitId: "",
+
+    isCentralStore: false,
+
+    storeHead: "",
+    storeIncharge: "",
+
+    stockValuationMethod: "WeightedAverage",
+
+    surcharge: {
+      staffSalary: "",
+      expenses: "",
+      investment: "",
+      profit: "",
+    },
+
     address: {
       line1: "",
-      line2: "",
       city: "",
-      district: "",
       state: "",
       pincode: "",
     },
-
-    managesConsumables: true,
-    managesAssets: true,
-    allowDirectSalesToClients: true,
-    allowInternalSalesToSites: true,
-    allowOfficeItemIssue: true,
-
-    stockValuationMethod: "FIFO",
-    defaultConsumableRateSource: "StoreRate",
-    gstRate: 18,
-
-    minimumStockAlert: {
-      enabled: true,
-      level: 10,
-    },
-
-    assetTrackingEnabled: true,
-
-    // ---- Store Roles ----
-    storeHead: "",
-    storeIncharge: "",
-    helper: "",
-
-    expenseCategories: [],
   });
 
-  const [expenseName, setExpenseName] = useState("");
-
-  /* =========================
-     LOAD MASTER DATA
-  ========================== */
   useEffect(() => {
     fetchBusinessUnits();
     fetchEmployees();
@@ -57,8 +44,7 @@ const CreateStore = ({ onClose, editId }) => {
 
   const fetchBusinessUnits = async () => {
     const res = await axios.get("/api/v1/business-unit");
-    console.log(res.data);
-    setBusinessUnits(res.data.map((bu) => ({ value: bu._id, label: bu.name })));
+    setBusinessUnits(res.data.map((b) => ({ value: b._id, label: b.name })));
   };
 
   const fetchEmployees = async () => {
@@ -66,48 +52,42 @@ const CreateStore = ({ onClose, editId }) => {
     setEmployees(res.data.map((e) => ({ value: e._id, label: e.name })));
   };
 
-  /* =========================
-     LOAD EDIT DATA
-  ========================== */
   useEffect(() => {
     if (!isEdit) return;
 
     const loadStore = async () => {
-      try {
-        const res = await axios.get(`/api/v1/store/${editId}`);
-        console.log(res.data);
-        setForm({
-          ...res.data,
-          businessUnitId: res.data.businessUnitId?._id || "",
-          storeHead: res.data.storeHead?._id || "",
-          storeIncharge: res.data.storeIncharge?._id || "",
-          helper: res.data.helper?._id || "",
-        });
-      } catch (err) {
-        console.error("Load store error:", err);
-      }
+      const res = await axios.get(`/api/v1/store/${editId}`);
+      const data = res.data;
+
+      setForm((prev) => ({
+        ...prev,
+        ...data,
+        businessUnitId: data.businessUnitId?._id,
+        storeHead: data.storeHead?._id,
+        storeIncharge: data.storeIncharge?._id,
+        surcharge: {
+          staffSalary: data.surcharge?.staffSalary || "",
+          expenses: data.surcharge?.expenses || "",
+          investment: data.surcharge?.investment || "",
+          profit: data.surcharge?.profit || "",
+        },
+      }));
     };
 
     loadStore();
   }, [editId]);
 
-  /* =========================
-     HANDLERS
-  ========================== */
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
     if (name.startsWith("address.")) {
       const key = name.split(".")[1];
       setForm((p) => ({ ...p, address: { ...p.address, [key]: value } }));
-    } else if (name.startsWith("minimumStockAlert.")) {
+    } else if (name.startsWith("surcharge.")) {
       const key = name.split(".")[1];
       setForm((p) => ({
         ...p,
-        minimumStockAlert: {
-          ...p.minimumStockAlert,
-          [key]: type === "checkbox" ? checked : value,
-        },
+        surcharge: { ...p.surcharge, [key]: value },
       }));
     } else if (type === "checkbox") {
       setForm((p) => ({ ...p, [name]: checked }));
@@ -116,220 +96,148 @@ const CreateStore = ({ onClose, editId }) => {
     }
   };
 
-  const addExpenseCategory = () => {
-    if (!expenseName.trim()) return;
-
-    setForm((p) => ({
-      ...p,
-      expenseCategories: [...p.expenseCategories, { name: expenseName.trim() }],
-    }));
-
-    setExpenseName("");
-  };
-
-  const removeExpenseCategory = (index) => {
-    const updated = [...form.expenseCategories];
-    updated.splice(index, 1);
-    setForm((p) => ({ ...p, expenseCategories: updated }));
-  };
-
-  /* =========================
-     SUBMIT
-  ========================== */
   const handleSubmit = async () => {
     try {
-      if (!form.businessUnitId) {
-        return toast.error("Business Unit is required");
-      }
+      if (!form.name) return toast.error("Store name required");
+      if (!form.businessUnitId) return toast.error("Business Unit required");
+      if (!form.storeHead) return toast.error("Store Head required");
+      if (!form.storeIncharge) return toast.error("Store Incharge required");
 
-      if (!form.storeHead) {
-        return toast.error("Store Head is required");
-      }
-
-      if (!form.storeIncharge) {
-        return toast.error("Store Incharge is required");
-      }
-
-      const payload = { ...form };
+      const payload = {
+        ...form,
+        surcharge: {
+          staffSalary: Number(form.surcharge.staffSalary) || 0,
+          expenses: Number(form.surcharge.expenses) || 0,
+          investment: Number(form.surcharge.investment) || 0,
+          profit: Number(form.surcharge.profit) || 0,
+        },
+      };
 
       if (isEdit) {
         await axios.put(`/api/v1/store/${editId}`, payload);
-        toast.success("Store updated successfully");
+        toast.success("Store updated");
       } else {
         await axios.post("/api/v1/store", payload);
-        toast.success("Store created successfully");
+        toast.success("Store created");
       }
 
       onClose();
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to save store");
+      toast.error(err.response?.data?.error || "Error saving store");
     }
   };
 
-  /* =========================
-     UI
-  ========================== */
   return (
-    <div className="max-w-xl mx-auto space-y-4">
-      <h2 className="text-lg font-semibold">
-        {isEdit ? "Edit Store" : "Create Store"}
-      </h2>
+    <div className="mx-auto space-y-6">
 
-      {/* Business Unit */}
-      <Select
-        options={businessUnits}
-        value={businessUnits.find((b) => b.value === form.businessUnitId)}
-        onChange={(v) => setForm((p) => ({ ...p, businessUnitId: v.value }))}
-        isDisabled={isEdit}
-        placeholder="Select Business Unit"
-      />
 
-      {/* Store Roles */}
-      <div className="space-y-2">
+      {/* BASIC INFO */}
+      <Section title="Basic Information">
+        <Input name="name" value={form.name} onChange={handleChange} placeholder="Store Name" />
+        <Input name="code" value={form.code} onChange={handleChange} placeholder="Store Code" />
+
+        <Select
+          options={businessUnits}
+          value={businessUnits.find((b) => b.value === form.businessUnitId)}
+          onChange={(v) => setForm((p) => ({ ...p, businessUnitId: v.value }))}
+          isDisabled={isEdit}
+          placeholder="Business Unit"
+        />
+
+        <select
+          name="type"
+          value={form.type}
+          onChange={handleChange}
+          className="input"
+          disabled={isEdit}
+        >
+          <option value="STORE">Store / Warehouse</option>
+          <option value="SITE">Site</option>
+        </select>
+
+        <Checkbox
+          name="isCentralStore"
+          label="Central Store"
+          checked={form.isCentralStore}
+          onChange={handleChange}
+        />
+      </Section>
+
+      {/* ROLES */}
+      <Section title="People Responsible">
         <Select
           options={employees}
           value={employees.find((e) => e.value === form.storeHead)}
           onChange={(v) => setForm((p) => ({ ...p, storeHead: v.value }))}
-          placeholder="Select Store Head (Accounts / Owner)"
+          placeholder="Store Head"
         />
 
         <Select
           options={employees}
           value={employees.find((e) => e.value === form.storeIncharge)}
           onChange={(v) => setForm((p) => ({ ...p, storeIncharge: v.value }))}
-          placeholder="Select Store Incharge"
+          placeholder="Store Incharge"
         />
+      </Section>
 
-        <Select
-          options={employees}
-          value={employees.find((e) => e.value === form.helper)}
-          onChange={(v) => setForm((p) => ({ ...p, helper: v?.value || "" }))}
-          placeholder="Select Helper (Optional)"
-          isClearable
-        />
+      {/* INVENTORY */}
+      <Section title="Inventory Settings">
+        <select
+          name="stockValuationMethod"
+          value={form.stockValuationMethod}
+          onChange={handleChange}
+          className="input"
+        >
+          <option value="WeightedAverage">Weighted Average</option>
+          <option value="FIFO">FIFO</option>
+        </select>
+      </Section>
+
+      {/* SURCHARGE */}
+      <Section title="Cost Overheads (%)">
+        <Input name="surcharge.staffSalary" value={form.surcharge.staffSalary} onChange={handleChange} placeholder="Staff Salary %" />
+        <Input name="surcharge.expenses" value={form.surcharge.expenses} onChange={handleChange} placeholder="Expenses %" />
+        <Input name="surcharge.investment" value={form.surcharge.investment} onChange={handleChange} placeholder="Investment %" />
+        <Input name="surcharge.profit" value={form.surcharge.profit} onChange={handleChange} placeholder="Profit %" />
+      </Section>
+
+      {/* ADDRESS */}
+      <Section title="Address (Optional)">
+        <Input name="address.line1" value={form.address.line1} onChange={handleChange} placeholder="Address Line" />
+        <Input name="address.city" value={form.address.city} onChange={handleChange} placeholder="City" />
+        <Input name="address.state" value={form.address.state} onChange={handleChange} placeholder="State" />
+        <Input name="address.pincode" value={form.address.pincode} onChange={handleChange} placeholder="Pincode" />
+      </Section>
+
+      <div className="flex justify-end gap-2">
+        <button onClick={onClose} className="px-4 py-2 border rounded">Cancel</button>
+        <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded">
+          {isEdit ? "Update Store" : "Create Store"}
+        </button>
       </div>
 
-      {/* Address */}
-      <input
-        name="address.line1"
-        placeholder="Address Line 1"
-        className="border p-2 w-full"
-        value={form.address.line1}
-        onChange={handleChange}
-      />
-      <input
-        name="address.city"
-        placeholder="City"
-        className="border p-2 w-full"
-        value={form.address.city}
-        onChange={handleChange}
-      />
-      <input
-        name="address.state"
-        placeholder="State"
-        className="border p-2 w-full"
-        value={form.address.state}
-        onChange={handleChange}
-      />
-      <input
-        name="address.pincode"
-        placeholder="Pincode"
-        className="border p-2 w-full"
-        value={form.address.pincode}
-        onChange={handleChange}
-      />
-
-      {/* Toggles */}
-      {[
-        "managesConsumables",
-        "managesAssets",
-        "allowDirectSalesToClients",
-        "allowInternalSalesToSites",
-        "allowOfficeItemIssue",
-        "assetTrackingEnabled",
-      ].map((f) => (
-        <label key={f} className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            name={f}
-            checked={form[f]}
-            onChange={handleChange}
-          />
-          {f.replace(/([A-Z])/g, " $1")}
-        </label>
-      ))}
-
-      {/* Inventory Rules */}
-      <select
-        name="stockValuationMethod"
-        value={form.stockValuationMethod}
-        onChange={handleChange}
-        className="border p-2 w-full"
-      >
-        <option value="FIFO">FIFO</option>
-        <option value="LIFO">LIFO</option>
-        <option value="WeightedAverage">Weighted Average</option>
-      </select>
-
-      <select
-        name="defaultConsumableRateSource"
-        value={form.defaultConsumableRateSource}
-        onChange={handleChange}
-        className="border p-2 w-full"
-      >
-        <option value="StoreRate">Store Rate</option>
-        <option value="MRP">MRP</option>
-        <option value="PurchaseRate">Purchase Rate</option>
-      </select>
-
-      <input
-        type="number"
-        name="gstRate"
-        value={form.gstRate}
-        onChange={handleChange}
-        className="border p-2 w-full"
-        placeholder="GST Rate %"
-      />
-
-      {/* Expense Categories */}
-      <div>
-        <div className="flex gap-2">
-          <input
-            value={expenseName}
-            onChange={(e) => setExpenseName(e.target.value)}
-            className="border p-2 flex-1"
-            placeholder="Expense category"
-          />
-          <button
-            onClick={addExpenseCategory}
-            className="bg-blue-600 text-white px-3 rounded"
-          >
-            Add
-          </button>
-        </div>
-
-        {form.expenseCategories.map((c, i) => (
-          <div key={i} className="flex justify-between text-sm border p-2 mt-1">
-            {c.name}
-            <button
-              onClick={() => removeExpenseCategory(i)}
-              className="text-red-500"
-            >
-              Remove
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <button
-        onClick={handleSubmit}
-        className="bg-green-600 text-white w-full py-2 rounded"
-      >
-        {isEdit ? "Update Store" : "Create Store"}
-      </button>
       <Toaster position="top-right" />
     </div>
   );
 };
 
 export default CreateStore;
+
+/* UI Helpers */
+
+const Section = ({ title, children }) => (
+  <div className="border rounded p-4 space-y-3 bg-white">
+    <p className="text-sm font-medium">{title}</p>
+    {children}
+  </div>
+);
+
+const Input = ({ ...props }) => (
+  <input {...props} className="border p-2 w-full rounded" />
+);
+
+const Checkbox = ({ label, ...props }) => (
+  <label className="flex items-center gap-2 text-sm">
+    <input type="checkbox" {...props} /> {label}
+  </label>
+);

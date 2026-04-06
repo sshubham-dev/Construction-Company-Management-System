@@ -34,14 +34,14 @@ const createLead = async (req, res) => {
         employee._id,
         "Lead Alert",
         `We got a new Lead from ${
-          newLead?.contactAgent ? newLead?.contactAgent : newLead?.source
+          newLead?.contactAgent ? newLead?.contactAgent?.name : newLead?.source
         }`,
         "/"
       );
       employee.notification.push({
         title: "Lead Alert",
         message: `We got a new Lead from ${
-          newLead?.contactAgent ? newLead?.contactAgent : newLead?.source
+          newLead?.contactAgent ? newLead?.contactAgent?.name : newLead?.source
         }`,
         createdAt: newLead.createdAt ? newLead.createdAt : new Date(),
         link: `/crm/lead`,
@@ -53,7 +53,7 @@ const createLead = async (req, res) => {
     // }
     res.status(201).json({
       message: `We got a new Lead from ${
-        lead?.contactAgent ? lead?.contactAgent : lead?.source
+        lead?.contactAgent ? lead?.contactAgent?.name : lead?.source
       }`,
       lead,
     });
@@ -96,7 +96,6 @@ const getLeadById = async (req, res) => {
 const updateLead = async (req, res) => {
   try {
     const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
       runValidators: true,
     });
     if (!lead) {
@@ -146,17 +145,37 @@ const changeLeadStatus = async (req, res) => {
 // Add follow-up
 const addFollowUp = async (req, res) => {
   try {
-    const { date, message } = req.body; // Expecting { followUpNo: '1', date: '2023-10-01', message: 'Follow up message' }
-    const lead = await Lead.findById(req.params.id);
+    const { id } = req.query;
+
+    const { note, type, nextFollowUp } = req.body;
+
+    const lead = await Lead.findById(id);
+
     if (!lead) {
-      return res.status(404).send("Lead not found");
+      return res.status(404).json({ message: "Lead not found" });
     }
-    const followUpNo = lead.followUps.length + 1;
-    lead.followUps.push({ followUpNo, date, message });
+
+    const followUp = {
+      date: new Date(),
+      type,
+      note,
+      nextFollowUp,
+    };
+
+    lead.followUps.push(followUp);
+
+    lead.nextFollowUpDate = nextFollowUp;
+    lead.lastContactedAt = new Date();
+
     await lead.save();
-    res.json(lead);
+
+    res.json({
+      message: "Follow up added",
+      followUp,
+    });
+
   } catch (error) {
-    res.status(500).send("Server error");
+    res.status(500).json(error);
   }
 };
 

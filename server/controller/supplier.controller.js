@@ -33,7 +33,7 @@ const getSupplier = async (req, res) => {
 
 const createSupplier = async (req, res) => {
     try {
-        const { name, email, phone, whatsapp, address, gstNo, bank, isUser } = req.body;
+        const { name, email, phone, whatsapp, address, gstNo, bank, isUser, companyId } = req.body;
         console.log(req.body)
         const newSupplier = new Supplier({
             name,
@@ -43,6 +43,7 @@ const createSupplier = async (req, res) => {
             address,
             gstNo,
             isUser,
+            companyId
         });
         console.log(newSupplier)
         const savedSupplier = await newSupplier.save();
@@ -71,6 +72,7 @@ const updateSupplier = async (req, res) => {
             gstNo,
             bank,
             isUser,
+            companyId
         } = req.body;
 
         const supplier = await Supplier.findById(id);
@@ -86,6 +88,7 @@ const updateSupplier = async (req, res) => {
         supplier.address = address || supplier.address;
         supplier.gstNo = gstNo?.trim() || supplier.gstNo;
         supplier.bank = bank || supplier.bank;
+        supplier.companyId = companyId || supplier.companyId;
         supplier.isUser = isUser === true || isUser === 'true';
 
         const updatedSupplier = await supplier.save(); // 💥 Triggers hooks
@@ -110,14 +113,18 @@ const updateSupplier = async (req, res) => {
 const deleteSupplier = async (req, res) => {
     try {
         const id = req.params.id;
-        const existingSupplier = await Supplier.findByIdAndDelete(id);
+        const existingSupplier = await Supplier.findById(id);
         if (!existingSupplier) {
             return res.status(404).json({ error: 'Supplier not found' });
         }
-        const existingUser = await User.findByIdAndDelete(existingSupplier.userId);
+        existingSupplier.status = 'Inactive';
+        await existingSupplier.save();
+        const existingUser = await User.findById(existingSupplier.userId);
         if (!existingUser) {
             return res.status(404).json({ error: 'User not found' });
         }
+        existingUser.status = 'Inactive';
+        await existingUser.save();
         res.status(204).json({ message: 'Supplier Deleted Successfully' }); // No content after successful deletion
     } catch (error) {
         console.log(error);

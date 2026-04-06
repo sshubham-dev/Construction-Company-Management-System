@@ -84,7 +84,7 @@ const billSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-billSchema.pre('save', function (next) {
+billSchema.pre('save', function () {
     const amount = parseFloat(this.toPay) || 0;
     const paid = parseFloat(this.paid) || 0;
     // console.log('billamount:', amount)
@@ -97,7 +97,7 @@ billSchema.pre('save', function (next) {
         this.due = null;
     }
 
-    next();
+    return
 });
 
 

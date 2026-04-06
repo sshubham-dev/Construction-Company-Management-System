@@ -1,93 +1,203 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import toast, { Toaster } from 'react-hot-toast';
-import Header from '../../components/Header';
+import toast, { Toaster } from "react-hot-toast";
+import Header from "../../components/Header";
 import { IoIosAddCircle } from "react-icons/io";
 import CreateContra from "../../components/CreateContra";
 import Modal from "../../components/Modal";
 
-
 const Contra = () => {
-    const [contraVouchers, setContraVouchers] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+  const [vouchers, setVouchers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
-        const fetchContraVouchers = async () => {
-            setLoading(true);
-            try {
-                const response = await axios.get("/api/v1/contra");
-                console.log(response.data)
-                setContraVouchers(response.data);
-            } catch (error) {
-                console.error("Error fetching Contra vouchers:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+  /* ======================
+     FETCH
+  ====================== */
+  const fetchVouchers = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get("/api/v1/contra");
+      setVouchers(res.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch vouchers");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        fetchContraVouchers();
-    }, []);
+  useEffect(() => {
+    fetchVouchers();
+  }, []);
 
-    return (
-        <div>
-            <section className="overflow-x-auto">
-                <Header category="Page" title="Contra Voucher" />
-                <div className="w-full mx-auto mb-6 text-gray-700 p-1 flex flex-row justify-end items-center">
-                    <button
-                        className="bg-blue-500 text-white py-2 px-2 rounded-4xl shadow-lg "
-                        onClick={() => setIsModalOpen(true)}>
-                        <IoIosAddCircle size={24} />
-                    </button>
-                </div>
-                {loading ? (
-                    <div className="text-center py-4">Loading...</div>
-                ) : (
-                    <div className="overflow-x-auto scrollbar-hide">
-                    <table className="w-full whitespace-nowrap overflow-x-auto scrollbar-hide">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="px-4 py-2 text-left border-b">Voucher No</th>
-                                <th className="px-4 py-2 text-left border-b">Date</th>
-                                <th className="px-4 py-2 text-left border-b">From Account</th>
-                                <th className="px-4 py-2 text-left border-b">To Account</th>
-                                <th className="px-4 py-2 text-left border-b">Amount</th>
-                                <th className="px-4 py-2 text-left border-b">Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {contraVouchers.length === 0 ? (
-                                <tr>
-                                    <td colSpan="6" className="px-4 py-2 text-center">No vouchers available.</td>
-                                </tr>
-                            ) : (
-                                contraVouchers.map((voucher) => (
-                                    <tr key={voucher._id} className="border-b bg-white">
-                                        <td className="px-4 py-2">{voucher.voucherNo}</td>
-                                        <td className="px-4 py-2">{new Date(voucher.date).toLocaleDateString()}</td>
-                                        <td className="px-4 py-2">{voucher.from.name}</td>
-                                        <td className="px-4 py-2">{voucher.to.name}</td>
-                                        <td className="px-4 py-2">{voucher.amount}</td>
-                                        <td className="px-4 py-2">{voucher.description || "N/A"}</td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                    </div>
-                )}
-                {/* Add/Edit Modal */}
-                <Modal onClose={() => setIsModalOpen(false)} isOpen={isModalOpen} head='Record Contra'>
-                    <CreateContra onClose={() => setIsModalOpen(false)} isOpen={isModalOpen} />
-                </Modal>
-                <Toaster
-                    position="top-right"
-                    reverseOrder={false}
-                />
-            </section>
+  /* ======================
+     EXTRACT FROM/TO
+  ====================== */
+  const getFromTo = (entries = []) => {
+    const debit = entries.find((e) => e.type === "DEBIT");
+    const credit = entries.find((e) => e.type === "CREDIT");
+
+    return {
+      from: credit?.ledgerId?.name || "-",
+      to: debit?.ledgerId?.name || "-",
+      amount: debit?.amount || 0,
+    };
+  };
+
+  /* ======================
+     POST
+  ====================== */
+  const handlePost = async (id) => {
+    try {
+      await axios.post(`/api/v1/contra/${id}/post`);
+      toast.success("Posted successfully");
+      fetchVouchers();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Post failed");
+    }
+  };
+
+  /* ======================
+     CANCEL
+  ====================== */
+  const handleCancel = async (id) => {
+    try {
+      await axios.post(`/api/v1/contra/${id}/cancel`);
+      toast.success("Cancelled successfully");
+      fetchVouchers();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Cancel failed");
+    }
+  };
+
+  /* ======================
+     STATUS BADGE
+  ====================== */
+  const statusColor = {
+    DRAFT: "bg-yellow-100 text-yellow-700",
+    POSTED: "bg-green-100 text-green-700",
+    CANCELLED: "bg-red-100 text-red-700",
+  };
+
+  /* ======================
+     UI
+  ====================== */
+  return (
+    <section>
+      <Header category="Page" title="Contra Voucher" />
+
+      {/* ADD BUTTON */}
+      <div className="flex justify-end mb-4">
+        <button
+          className="bg-blue-500 text-white p-2 rounded-full"
+          onClick={() => setIsModalOpen(true)}
+        >
+          <IoIosAddCircle size={24} />
+        </button>
+      </div>
+
+      {/* TABLE */}
+      {loading ? (
+        <div className="text-center py-4">Loading...</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th>Voucher No</th>
+                <th>Date</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {vouchers.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="text-center py-4">
+                    No vouchers found
+                  </td>
+                </tr>
+              ) : (
+                vouchers.map((v) => {
+                  const { from, to, amount } = getFromTo(v.entries);
+
+                  return (
+                    <tr key={v._id} className="border-b">
+                      <td>{v.voucherNo}</td>
+                      <td>{new Date(v.date).toLocaleDateString()}</td>
+                      <td>{from}</td>
+                      <td>{to}</td>
+                      <td>{amount}</td>
+
+                      {/* STATUS */}
+                      <td>
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${statusColor[v.status]}`}
+                        >
+                          {v.status}
+                        </span>
+                      </td>
+
+                      {/* ACTION */}
+                      <td className="space-x-2">
+                        {v.status === "DRAFT" && (
+                          <>
+                            <button
+                              onClick={() => handlePost(v._id)}
+                              className="text-green-600 text-xs"
+                            >
+                              Post
+                            </button>
+
+                            <button
+                              onClick={() => handleCancel(v._id)}
+                              className="text-red-600 text-xs"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+
+                        {v.status === "POSTED" && (
+                          <button
+                            onClick={() => handleCancel(v._id)}
+                            className="text-red-600 text-xs"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
-    );
+      )}
+
+      {/* MODAL */}
+      <Modal
+        onClose={() => setIsModalOpen(false)}
+        isOpen={isModalOpen}
+        head="Create Contra"
+      >
+        <CreateContra
+          onClose={() => {
+            setIsModalOpen(false);
+            fetchVouchers();
+          }}
+        />
+      </Modal>
+
+      <Toaster position="top-right" />
+    </section>
+  );
 };
 
-
-export default Contra
+export default Contra;

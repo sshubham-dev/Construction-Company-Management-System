@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import Modal from "../../components/Modal";
 import ExpenseForm from "../../components/CreateExpenses";
+import { useSelector } from "react-redux";
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
@@ -9,24 +10,30 @@ const Expenses = () => {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [editFrom, setEditForm] = useState(false);
   const [editId, setEditId] = useState(null);
+  const { user } = useSelector((state) => state.auth);
   // Filters
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
     fetchExpenses();
-  }, []);
+  }, [selectedMonth]);
   const fetchExpenses = async () => {
     try {
-      const response = await axios.get("/api/v1/expenses");
-      setExpenses(response.data);
-      console.log("Fetched Expenses:", response.data);
+      const response = await axios.get("/api/v1/expenses/", {
+        params: {
+          userId: user._id,
+          month: selectedMonth,
+        },
+      });
+      setExpenses(response.data.expenses);
+      console.log("Fetched Expenses:", response.data.expenses);
     } catch (error) {
       console.error("Error fetching expenses:", error);
     }
   };
 
-  const filteredExpenses = expenses.filter((expense) => {
+  const filteredExpenses = expenses?.filter((expense) => {
     const expDate = new Date(expense.date);
     return (
       expDate.getMonth() + 1 === Number(selectedMonth) &&
@@ -68,15 +75,6 @@ const Expenses = () => {
     return "FOR APPROVAL";
   };
 
-  const handlePostExpense = async (id) => {
-    try {
-      await axios.put(`/api/v1/expenses/post/${id}`);
-      fetchExpenses();
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to post expense");
-    }
-  };
-
   const handleCancelExpense = async (id) => {
     if (!window.confirm("Cancel this expense?")) return;
 
@@ -87,6 +85,19 @@ const Expenses = () => {
       alert(err.response?.data?.message || "Failed to cancel expense");
     }
   };
+
+  const totalAmount = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalPosted = filteredExpenses
+    .filter((e) => e.status === "Posted")
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  const totalPending = filteredExpenses
+    .filter((e) => e.isApproved === "For Approval")
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  const totalApproved = filteredExpenses
+    .filter((e) => e.isApproved === "Approved")
+    .reduce((sum, e) => sum + e.amount, 0);
 
   return (
     <div className="max-w-4xl mx-auto px-2 py-4 space-y-4 ">
@@ -138,6 +149,7 @@ const Expenses = () => {
         </Modal>
       )}
 
+      {/* Filter */}
       <div className="flex gap-2">
         {/* Month Filter */}
         <select
@@ -169,6 +181,37 @@ const Expenses = () => {
         </select>
       </div>
 
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white border rounded p-4">
+          <p className="text-gray-500 text-sm">Total Expenses</p>
+          <p className="text-lg font-semibold">
+            ₹{totalAmount.toLocaleString("en-IN")}
+          </p>
+        </div>
+
+        <div className="bg-white border rounded p-4">
+          <p className="text-gray-500 text-sm">Approved</p>
+          <p className="text-lg font-semibold text-blue-600">
+            ₹{totalApproved.toLocaleString("en-IN")}
+          </p>
+        </div>
+
+        <div className="bg-white border rounded p-4">
+          <p className="text-gray-500 text-sm">Pending Approval</p>
+          <p className="text-lg font-semibold text-yellow-600">
+            ₹{totalPending.toLocaleString("en-IN")}
+          </p>
+        </div>
+
+        <div className="bg-white border rounded p-4">
+          <p className="text-gray-500 text-sm">Posted</p>
+          <p className="text-lg font-semibold text-green-600">
+            ₹{totalPosted.toLocaleString("en-IN")}
+          </p>
+        </div>
+      </div>
+
       {/* Expense List */}
       {filteredExpenses.length === 0 ? (
         <div className="bg-white border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-500">
@@ -197,7 +240,7 @@ const Expenses = () => {
                 </p>
                 <span
                   className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${getStatusBadge(
-                    expense
+                    expense,
                   )}`}
                 >
                   {getStatusLabel(expense)}
@@ -252,17 +295,6 @@ const Expenses = () => {
                     className="text-sm text-red-600 hover:text-red-800"
                   >
                     Delete
-                  </button>
-                )}
-
-              {/* Post */}
-              {expense.status !== "Posted" &&
-                expense.isApproved === "Approved" && (
-                  <button
-                    onClick={() => handlePostExpense(expense._id)}
-                    className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 rounded"
-                  >
-                    Post
                   </button>
                 )}
 

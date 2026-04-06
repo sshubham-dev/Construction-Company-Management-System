@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import moment from 'moment';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchNotifications } from '../features/notification/notificationSlice';
 
@@ -131,10 +131,6 @@ const CreateLeave = ({ onClose, isEdit }) => {
                     </button>
                 </div>
             </form>
-            <Toaster
-                position="top-right"
-                reverseOrder={false}
-            />
         </div>
     );
 };

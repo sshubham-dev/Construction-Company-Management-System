@@ -61,7 +61,7 @@ const qualityScheduleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-qualityScheduleSchema.pre("save", async function (next) {
+qualityScheduleSchema.pre("save", async function () {
   try {
     const schedule = this.workDetails;
     schedule.flatMap((work) => {
@@ -70,10 +70,9 @@ qualityScheduleSchema.pre("save", async function (next) {
       work.difference = Math.ceil((actual - planned) / (1000 * 60 * 60 * 24));
       work.reason = "Delay in work completion"
     });
-    next();
   } catch (err) {
     console.error("Error in quality schedule:", err);
-    next(err);
+   return err
   }
 });
 

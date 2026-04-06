@@ -11,6 +11,13 @@ const clientSchema = new mongoose.Schema(
 
     whatsapp: { type: Number },
 
+    // companyId: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Company",
+    //   // required: true,
+    //   index: true,
+    // },
+
     address: {
       street: String,
       city: String,
@@ -36,6 +43,11 @@ const clientSchema = new mongoose.Schema(
     businessUnitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessUnit",
+    },
+
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
     },
 
     extraWork: [
@@ -72,7 +84,7 @@ const clientSchema = new mongoose.Schema(
       enum: ["Active", "Inactive", "Blacklisted"],
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // ============================================================
@@ -84,51 +96,48 @@ async function recalcFinance(client) {
   //   (client.financials.scheduleValue || 0) +
   //   (client.financials.extraWorkValue || 0);
 
-  client.totalDue =
-    client.totalBilled - (client.totalPaid || 0);
+  client.totalDue = client.totalBilled - (client.totalPaid || 0);
 }
 
 // ============================================================
 // 🔄 PRE-SAVE MIDDLEWARE
 // ============================================================
-clientSchema.pre("save", async function (next) {
+clientSchema.pre("save", async function () {
   try {
     await recalcFinance(this);
 
-    const ledgerId = await syncLedger({
-      doc: this,
-      type: `${this.service} Client`,
-      under: "Sundry Debtors",
+    // const ledgerId = await syncLedger({
+    //   doc: this,
+    //   type: `${this.service}-Client`,
+    //   under: "Sundry Debtors",
 
-      getAddress: (doc) => ({
-        name: doc.name,
-        address: [doc.address?.street, doc.address?.city, doc.address?.district]
-          .filter(Boolean)
-          .join(", "),
-        state: doc.address?.state || "",
-      }),
+    //   getAddress: (doc) => ({
+    //     name: doc.name,
+    //     address: [doc.address?.street, doc.address?.city, doc.address?.district]
+    //       .filter(Boolean)
+    //       .join(", "),
+    //     state: doc.address?.state || "",
+    //   }),
 
-      getTaxDetails: (doc) => ({
-        gstNo: doc.gstNo || "",
-      }),
-    });
+    //   getTaxDetails: (doc) => ({
+    //     gstNo: doc.gstNo || "",
+    //   }),
+    // });
 
-    if (ledgerId) this.ledger = ledgerId;
-
-    next();
+    // if (ledgerId) this.ledger = ledgerId;
   } catch (err) {
     console.error("Error in client pre-save:", err);
-    next(err);
+    return err;
   }
 });
 
 // ============================================================
 // 🔄 PRE FIND-AND-UPDATE MIDDLEWARE
 // ============================================================
-clientSchema.pre("findOneAndUpdate", async function (next) {
+clientSchema.pre("findOneAndUpdate", async function () {
   try {
     const client = await this.model.findOne(this.getQuery());
-    if (!client) return next();
+    if (!client) return;
 
     const update = this.getUpdate();
 
@@ -142,7 +151,7 @@ clientSchema.pre("findOneAndUpdate", async function (next) {
 
     const ledgerId = await syncLedger({
       doc: client,
-      type: "Client",
+      type: `${this.service}-Client`,
       under: "Sundry Debtors",
 
       getAddress: (doc) => ({
@@ -165,10 +174,8 @@ clientSchema.pre("findOneAndUpdate", async function (next) {
     update.$set["financials.totalDue"] = client.financials.totalDue;
 
     this.setUpdate(update);
-
-    next();
   } catch (err) {
-    next(err);
+    return err;
   }
 });
 

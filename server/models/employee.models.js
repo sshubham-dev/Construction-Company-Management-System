@@ -24,6 +24,11 @@ const employeeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessUnit",
     },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
+
     joinDate: { type: Date, default: Date.now },
     status: {
       type: String,
@@ -186,33 +191,31 @@ const employeeSchema = new mongoose.Schema(
    Ledger sync middleware
    Employees are placed under "Salaries Payable"
    ----------------------------- */
-employeeSchema.pre("save", async function (next) {
+employeeSchema.pre("save", async function () {
   try {
     // recalc finances
     // await recalcEmployeeFinance(this);
 
     // sync ledger
-    const ledgerId = await syncLedger({
-      doc: this,
-      type: "Employee",
-      under: "Salaries Payable",
-      getAddress: (doc) => ({ name: doc.name, address: doc.address || "" }),
-      getTaxDetails: (doc) => ({ panNo: doc.panNo || "" }),
-    });
+    // const ledgerId = await syncLedger({
+    //   doc: this,
+    //   type: "Employee",
+    //   under: "Salaries Payable",
+    //   getAddress: (doc) => ({ name: doc.name, address: doc.address || "" }),
+    //   getTaxDetails: (doc) => ({ panNo: doc.panNo || "" }),
+    // });
 
-    if (ledgerId) this.ledger = ledgerId;
-
-    next();
+    // if (ledgerId) this.ledger = ledgerId;
   } catch (err) {
     console.error("Error in employee pre-save:", err);
-    next(err);
+    return err;
   }
 });
 
-employeeSchema.pre("findOneAndUpdate", async function (next) {
+employeeSchema.pre("findOneAndUpdate", async function () {
   try {
     const employee = await this.model.findOne(this.getQuery());
-    if (!employee) return next();
+    if (!employee) return;
 
     // apply update locally for accurate recalc
     const update = this.getUpdate() || {};
@@ -222,16 +225,16 @@ employeeSchema.pre("findOneAndUpdate", async function (next) {
     // await recalcEmployeeFinance(employee);
 
     // sync ledger
-    const ledgerId = await syncLedger({
-      doc: employee,
-      type: "Employee",
-      under: "Salaries Payable",
-      getAddress: (doc) => ({ name: doc.name, address: doc.address || "" }),
-      getTaxDetails: (doc) => ({ panNo: doc.panNo || "" }),
-    });
+    // const ledgerId = await syncLedger({
+    //   doc: employee,
+    //   type: "Employee",
+    //   under: "Salaries Payable",
+    //   getAddress: (doc) => ({ name: doc.name, address: doc.address || "" }),
+    //   getTaxDetails: (doc) => ({ panNo: doc.panNo || "" }),
+    // });
 
     if (!update.$set) update.$set = {};
-    update.$set.ledger = ledgerId;
+    // update.$set.ledger = ledgerId;
 
     // push recalculated financial fields into update
     update.$set["financials.totalSalaryBilled"] =
@@ -262,11 +265,9 @@ employeeSchema.pre("findOneAndUpdate", async function (next) {
     update.$set.totalDue = employee.totalDue;
 
     this.setUpdate(update);
-
-    next();
   } catch (err) {
     console.error("Error in employee pre-findOneAndUpdate:", err);
-    next(err);
+    return err;
   }
 });
 

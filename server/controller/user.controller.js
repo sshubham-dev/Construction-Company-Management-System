@@ -84,7 +84,7 @@ const register = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { userName, userMail, password, phone, role, department } = req.body;
+    const { userName, userMail, password, phone, role, department, companyId } = req.body;
     const userExist = await User.findOne({
       $and: [{ userName }, { department }],
     });
@@ -96,6 +96,7 @@ const createUser = async (req, res) => {
       phone,
       role,
       department,
+      companyId
     });
     await newUser.save();
     res.status(201).json({ message: "User created successfully" });
@@ -129,16 +130,18 @@ const convertToUser = async (id, role, password, status) => {
               employee.department || employeeUser.department),
             (employeeUser.role = role || employeeUser.role),
             (employeeUser.password = password || employeeUser.password));
+            (employeeUser.companyId = employee.companyId || employeeUser.companyId);
           await employeeUser.save();
         } else if (status === "Create") {
           const newEmployeeUser = new User({
-            userName: employee.name,
+            userName: employee?.name,
             userMail: employee.email,
             password,
             phone: employee.phone,
             whatsapp: employee.whatsapp,
             role,
             department: employee.department,
+            companyId: employee.companyId,
           });
           // console.log('newEmployeeUser', newEmployeeUser)
           const savedEmployeeUser = await newEmployeeUser.save();
@@ -163,6 +166,7 @@ const convertToUser = async (id, role, password, status) => {
           whatsapp: client.whatsapp,
           role,
           department: "Client",
+          companyId: client.companyId,
         });
         const savedClientUser = await newClientUser.save();
         client.userId = savedClientUser._id;
@@ -184,6 +188,7 @@ const convertToUser = async (id, role, password, status) => {
           whatsapp: contractor.whatsapp,
           role,
           department: "Contractor",
+          companyId: contractor.companyId,
         });
         const savedContractorUser = await newContractorUser.save();
         contractor.userId = savedContractorUser._id;
@@ -207,6 +212,7 @@ const convertToUser = async (id, role, password, status) => {
           whatsapp: supplier.whatsapp,
           role,
           department: "Supplier",
+          companyId: supplier.companyId,
         });
         const savedSupplierUser = await newSupplierUser.save();
         supplier.userId = savedSupplierUser._id;
@@ -217,7 +223,7 @@ const convertToUser = async (id, role, password, status) => {
         break;
     }
   } catch (error) {
-    console.log("error.message", error.message);
+    console.log("error.message: ", error);
   }
 };
 
@@ -356,7 +362,7 @@ const updateUser = async (req, res) => {
   try {
     const id = req.params.id;
     // console.log(id)
-    const { userName, userMail, phone, role, department, whatsapp } = req.body;
+    const { userName, userMail, phone, role, department, whatsapp, companyId } = req.body;
     // console.log(req.body)
     const avatarLocalPath = req.file?.path;
     const upload = await uploadOnCloudinary(avatarLocalPath, {
@@ -380,6 +386,7 @@ const updateUser = async (req, res) => {
     // existingUser.password = password || existingUser.password;
     existingUser.role = role || existingUser.role;
     existingUser.department = department || existingUser.department;
+    existingUser.companyId = companyId || existingUser.companyId;
     // existingUser.avatar = upload.secure_url || existingUser.avatar;
     await existingUser.save();
 
@@ -396,8 +403,11 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   try {
     const id = req.params.id;
-    const deletedUser = await User.findByIdAndDelete(id);
-    if (!deletedUser) return res.status(404).json({ error: "User not found" });
+    const user = await User.findById(id)      .select("-refreshToken")
+      .exec();
+    if (!user) return res.status(404).json({ error: "User not found" });
+    user.status = "Inactive";
+    await user.save();
     res.status(201).json({ message: "User deleted successfully" });
   } catch (error) {
     console.log(error);

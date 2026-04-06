@@ -7,495 +7,278 @@ import Select from "react-select";
 
 axios.defaults.withCredentials = true;
 
-const ReturnFormModal = ({
-  onClose,
-  onSave,
-  returnData,
-  editId,
-  editIndex,
-}) => {
-  const [formData, setFormData] = useState({
-    site: "",
+const ReturnFormModal = ({ onClose, editId = null }) => {
+  const isEdit = Boolean(editId);
+
+  const [loading, setLoading] = useState(false);
+
+  const [sites, setSites] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+  const [form, setForm] = useState({
+    site: null,
     materialType: "New",
     date: "",
-    returnable: [{ item: "", quantity: 0, unit: "" }],
+    returnDate: "",
+    items: [],
   });
-  const [sites, setSite] = useState([]);
-  const { user } = useSelector((state) => state.auth);
-  const [returnable, setReturnable] = useState([
-    {
-      item: "",
-      quantity: 0,
-      unit: "",
-      receivedQuantity: 0,
-      remarks: "",
-      rate: 0,
-    },
-  ]);
-  const [requestIdToEdit, setRequestIdToEdit] = useState(null);
-  const [ItemToEdit, setItemToEdit] = useState({ id: "", index: "" });
-  const dispatch = useDispatch();
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    if (editId && editIndex !== undefined) {
-      fetchReturnDetail(editId, editIndex);
-      setItemToEdit({ id: editId, index: editIndex });
-    } else if (editId) {
-      setRequestIdToEdit(editId);
-      fetchReturnRequest(editId);
-    }
-  }, [editId]);
-  const fetchReturnRequest = async (id) => {
-    try {
-      const response = await axios.get(`/api/v1/return/${id}`);
-      console.log(response.data);
-      setFormData({
-        site: response.data.site?.id._id || "",
-        materialType: response.data.materialType || "New",
-        date: response.data.date
-          ? new Date(response.data.date).toISOString().split("T")[0]
-          : "",
-        returnable: [{ item: "", quantity: 0, unit: "" }],
-      });
-      setRequestIdToEdit(id);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  const fetchReturnDetail = async (id, index) => {
-    try {
-      const response = await axios.get(`/api/v1/return/${id}/item`);
-      console.log(response.data);
-      const returnableItem = response.data[index];
-      setReturnable({
-        item: returnableItem.item || "",
-        quantity: returnableItem.quantity || 0,
-        unit: returnableItem.unit || "",
-        receivedQuantity: returnableItem.receivedQuantity || 0,
-        remarks: returnableItem.remarks || "",
-        rate: returnableItem.rate || 0,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
+  /* ======================
+     LOAD MASTER
+  ====================== */
   useEffect(() => {
-    if (user && user?.department === "Site Incharge") {
-      console.log(user._id);
-      getUserSites(user._id);
-    } else if (user && user?.department === "Site Supervisor") {
-      console.log(user);
-      getUserSites(user._id);
-    } else if (user && user?.department === "Client") {
-      console.log(user);
-      getUserSites(user._id);
-    } else {
-      const getSites = async () => {
-        try {
-          const siteData = await axios.get("/api/v1/site");
-          setSite(siteData.data);
-          console.log(siteData.data);
-        } catch (error) {
-          console.error(error);
-          setError(error.message);
-        }
-      };
-      getSites();
-    }
+    loadSites();
+    if (isEdit) loadReturn();
   }, []);
 
-  useEffect(() => {
-    if (!formData.salesInvoiceId) return;
+  const loadSites = async () => {
+    const res = await axios.get("/api/v1/site");
+    setSites(res.data);
+  };
 
-    const loadInvoiceItems = async () => {
-      const { data } = await axios.get(
-        `/api/v1/sales-invoice/${formData.salesInvoiceId}`
-      );
+  /* ======================
+     LOAD INVOICES
+  ====================== */
+  const loadInvoices = async (siteId) => {
+    const res = await axios.get(
+      `/api/v1/sales-invoice?site=${siteId}`
+    );
+    setInvoices(res.data);
+  };
 
-      setFormData((prev) => ({
-        ...prev,
-        returnable: data.items.map((item) => ({
-          item: item.item, // locked
-          unit: item.unit, // locked
-          quantity: 0, // user editable
+  /* ======================
+     LOAD RETURN (EDIT)
+  ====================== */
+  const loadReturn = async () => {
+    const { data } = await axios.get(`/api/v1/return/${editId}`);
+
+    setForm({
+      site: {
+        value: data.site.id,
+        label: data.site.name,
+      },
+      materialType: data.materialType,
+      date: data.date?.split("T")[0],
+      returnDate: data.returnDate?.split("T")[0],
+      items: data.returnable,
+    });
+
+    setSelectedInvoice({
+      value: data.salesInvoice.id,
+      label: data.salesInvoice.invoiceNo,
+    });
+  };
+
+  /* ======================
+     SELECT INVOICE
+  ====================== */
+  const handleInvoiceSelect = async (selected) => {
+    setSelectedInvoice(selected);
+
+    const { data } = await axios.get(
+      `/api/v1/sales-invoice/${selected.value}`
+    );
+
+    const items = data.items.map((i) => ({
+      item: i.item,
+      unit: i.unit,
+      quantity: 0,
+      receivedQuantity: 0,
+      remarks: "",
+      rate: i.rate || 0,
+      amount: 0,
+    }));
+
+    setForm({
+      ...form,
+      items,
+    });
+  };
+
+  /* ======================
+     UPDATE ITEM
+  ====================== */
+  const updateItem = (i, field, value) => {
+    const items = [...form.items];
+    items[i][field] = value;
+
+    const qty = Number(items[i].quantity || 0);
+    const rate = Number(items[i].rate || 0);
+
+    items[i].amount = qty * rate;
+
+    setForm({ ...form, items });
+  };
+
+  /* ======================
+     VALIDATION
+  ====================== */
+  const validate = () => {
+    if (!form.site || !selectedInvoice) {
+      toast.error("Select site & invoice");
+      return false;
+    }
+
+    const valid = form.items.some((i) => i.quantity > 0);
+
+    if (!valid) {
+      toast.error("Enter return quantity");
+      return false;
+    }
+
+    return true;
+  };
+
+  /* ======================
+     SUBMIT
+  ====================== */
+  const submit = async () => {
+    if (!validate()) return;
+
+    const payload = {
+      site: {
+        id: form.site.value,
+        name: form.site.label,
+      },
+
+      salesInvoice: {
+        id: selectedInvoice.value,
+        invoiceNo: selectedInvoice.label,
+      },
+
+      materialType: form.materialType,
+      date: form.date,
+      returnDate: form.returnDate,
+
+      returnable: form.items
+        .filter((i) => i.quantity > 0)
+        .map((i) => ({
+          item: i.item,
+          quantity: Number(i.quantity),
+          unit: i.unit,
+          rate: i.rate,
+          amount: i.amount,
+          remarks: i.remarks,
         })),
-      }));
     };
 
-    loadInvoiceItems();
-  }, [formData.salesInvoiceId]);
-
-  const getUserSites = async (id) => {
     try {
-      const siteData = await axios.get(`/api/v1/site/user/${id}`);
-      console.log(siteData.data);
-      setSite(siteData.data);
-    } catch (error) {
-      console.error(error);
-      setError(error.message);
-    }
-  };
-  console.log(sites);
+      setLoading(true);
 
-  useEffect(() => {
-    if (returnData) {
-      setFormData({
-        site: returnData.site?.name || "",
-        materialType: returnData.materialType || "New",
-        date: returnData.date
-          ? new Date(returnData.date).toISOString().split("T")[0]
-          : "",
-        returnable: returnData.returnable || [
-          { item: "", quantity: 0, unit: "" },
-        ],
-      });
-    }
-  }, [returnData]);
-
-  const handleChange = (e, index = null, field = null) => {
-    const { name, value } = e.target;
-
-    setFormData((prevState) => {
-      if (index !== null) {
-        // Updating a specific returnable item
-        const updatedReturnables = [...prevState.returnable];
-        updatedReturnables[index] = {
-          ...updatedReturnables[index],
-          [field]: value, // Ensure deep update
-        };
-        return { ...prevState, returnable: updatedReturnables };
+      if (isEdit) {
+        await axios.put(`/api/v1/return/${editId}`, payload);
+        toast.success("Return updated");
       } else {
-        // Updating top-level fields
-        return { ...prevState, [name]: value };
+        await axios.post("/api/v1/return", payload);
+        toast.success("Return created");
       }
-    });
-  };
-  const handleReturnableChange = (field, value) => {
-    setReturnable((prevState) => ({
-      ...prevState,
-      [field]: value, // Ensure deep update
-    }));
-  };
 
-  const handleAddItem = () => {
-    setFormData({
-      ...formData,
-      returnable: [...formData.returnable, { item: "", quantity: 0, unit: "" }],
-    });
-  };
-
-  const handleRemoveItem = (index) => {
-    const newReturnables = formData.returnable.filter((_, i) => i !== index);
-    setFormData({ ...formData, returnable: newReturnables });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      console.log(formData);
-      if (ItemToEdit.id && ItemToEdit.index !== undefined) {
-        const response = await axios.put(
-          `/api/v1/return/${ItemToEdit.id}/item/${ItemToEdit.index}`,
-          returnable
-        );
-        console.log(response);
-        onClose();
-        dispatch(fetchNotifications(user._id));
-      } else if (requestIdToEdit) {
-        console.log(formData);
-        const response = await axios.put(
-          `/api/v1/return/${requestIdToEdit}`,
-          formData
-        );
-        console.log(response.data);
-        onClose();
-        dispatch(fetchNotifications(user._id));
-        // onSave(formData);
-      } else {
-        const response = await axios.post("/api/v1/return", formData);
-        console.log(response);
-        onClose();
-        onSave(formData);
-        dispatch(fetchNotifications(user._id));
-      }
-    } catch (error) {
-      console.log(error);
+      onClose && onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Error");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleReset = () => {
-    setFormData({
-      site: "",
-      materialType: "New",
-      date: "",
-      returnable: [{ item: "", quantity: 0, unit: "" }],
-    });
-    setReturnable([
-      {
-        item: "",
-        quantity: 0,
-        unit: "",
-      },
-    ]);
-    setItemToEdit({ id: "", index: "" });
-  };
-
+  /* ======================
+     UI
+  ====================== */
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        {ItemToEdit.id && ItemToEdit.index !== undefined ? (
-          <div className="">
-            <div className="mb-2">
-              <label
-                htmlFor="item"
-                className="block text-sm font-semibold text-gray-600"
-              >
-                Item
-              </label>
-              <input
-                type="text"
-                name="item"
-                id="item"
-                placeholder="Item Name"
-                disabled={true}
-                className="w-full border p-2 mb-2 rounded"
-                value={returnable.item}
-                onChange={(e) => handleReturnableChange("item", e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-              <div className="mb-2">
-                <label
-                  htmlFor="quantity"
-                  className="block text-sm font-semibold text-gray-600"
-                >
-                  Quantity:
-                </label>
-                <input
-                  type="number"
-                  name="quantity"
-                  placeholder="Qty"
-                  className="border p-2 rounded"
-                  value={returnable.quantity}
-                  onChange={(e) =>
-                    handleReturnableChange("quantity", e.target.value)
-                  }
-                />
-              </div>
-              <div className="mb-2">
-                <label
-                  htmlFor="unit"
-                  className="block text-sm font-semibold text-gray-600"
-                >
-                  Unit:
-                </label>
-                <input
-                  type="text"
-                  name="unit"
-                  placeholder="Unit"
-                  className="border p-2 rounded"
-                  value={returnable.unit}
-                  onChange={(e) =>
-                    handleReturnableChange("unit", e.target.value)
-                  }
-                />
-              </div>
-            </div>
-            <div>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600"
-              >
-                Reset
-              </button>
-              <button
-                type="submit"
-                className="bg-blue-500 hover:bg-blue-700 ml-6 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                disabled={loading}
-              >
-                {loading ? "Submitting..." : "Submit"}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-3">
-              <div className="mb-4">
-                <label
-                  htmlFor="site"
-                  className="block text-sm font-semibold text-gray-600"
-                >
-                  Site
-                </label>
-                <select
-                  name="site"
-                  value={formData.site}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  onChange={handleChange}
-                >
-                  <option>Select Site</option>
-                  {sites.map((site, index) => (
-                    <option key={index} value={site._id}>
-                      {site.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+    <div className="max-w-xl mx-auto space-y-4">
 
-              {/* <div className="mb-4">
-                <label
-                  htmlFor="materialType"
-                  className="block text-sm font-semibold text-gray-600"
-                >
-                  Material Type
-                </label>
-<select
-  name="salesInvoiceId"
-  value={formData.salesInvoiceId}
-  onChange={handleChange}
-  className="input"
-  required
->
-  <option value="">Select Sales Invoice</option>
-  {salesInvoices.map(inv => (
-    <option key={inv._id} value={inv._id}>
-      {inv.invoiceNo}
-    </option>
-  ))}
-</select>
+      {/* SITE */}
+      <Select
+        placeholder="Select Site"
+        value={form.site}
+        onChange={(v) => {
+          setForm({ ...form, site: v });
+          loadInvoices(v.value);
+        }}
+        options={sites.map((s) => ({
+          value: s._id,
+          label: s.name,
+        }))}
+      />
 
-              </div> */}
-              <div className="mb-4">
-                <label
-                  htmlFor="materialType"
-                  className="block text-sm font-semibold text-gray-600"
-                >
-                  Material Type
-                </label>
-                <select
-                  name="materialType"
-                  className="w-full border p-2 rounded"
-                  value={formData.materialType}
-                  onChange={handleChange}
-                >
-                  <option value="New">New</option>
-                  <option value="Used">Used</option>
-                  <option value="Scrap">Scrap</option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label
-                  htmlFor="date"
-                  className="block text-sm font-semibold text-gray-600"
-                >
-                  Date: {moment(formData.date).format("DD-MM-YYYY")}
-                </label>
-                <input
-                  type="date"
-                  name="date"
-                  className="w-full border p-2 rounded"
-                  value={formData.date}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
+      {/* INVOICE */}
+      <Select
+        placeholder="Select Sales Invoice"
+        value={selectedInvoice}
+        onChange={handleInvoiceSelect}
+        options={invoices.map((inv) => ({
+          value: inv._id,
+          label: inv.invoiceNo,
+        }))}
+      />
 
-            <h3 className="text-lg font-semibold mt-6 mb-2">
-              Returnable Items
-            </h3>
-            {formData.returnable.map((item, index) => (
-              <div
-                key={index}
-                className="mb-3 p-2 relative flex flex-col gap-1"
-              >
-                {formData.returnable.length > 1 && (
-                  <button
-                    type="button"
-                    className=" text-red-500 text-sm self-end"
-                    onClick={() => handleRemoveItem(index)}
-                  >
-                    ✖ Remove
-                  </button>
-                )}
-                <div className="mb-2">
-                  <label
-                    htmlFor="item"
-                    className="block text-sm font-semibold text-gray-600"
-                  >
-                    Item
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Item Name"
-                    className="w-full border p-2 mb-2 rounded"
-                    value={item.item}
-                    disabled={true}
-                    onChange={(e) => handleChange(e, index, "item")}
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <label
-                    htmlFor="quantity"
-                    className="block text-sm font-semibold text-gray-600"
-                  >
-                    Quantity:
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="Qty"
-                    className="border p-2 rounded"
-                    value={item.quantity}
-                    onChange={(e) => handleChange(e, index, "quantity")}
-                  />
-                  <label
-                    htmlFor="unit"
-                    className="block text-sm font-semibold text-gray-600"
-                  >
-                    Unit:
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Unit"
-                    className="border p-2 rounded"
-                    value={item.unit}
-                    onChange={(e) => handleChange(e, index, "unit")}
-                  />
-                </div>
-              </div>
-            ))}
+      {/* TYPE */}
+      <select
+        value={form.materialType}
+        onChange={(e) =>
+          setForm({ ...form, materialType: e.target.value })
+        }
+        className="border p-2 w-full"
+      >
+        <option value="New">New</option>
+        <option value="Used">Used</option>
+        <option value="Scrap">Scrap</option>
+      </select>
 
-            <button
-              type="button"
-              className=" bg-blue-600 text-white py-2 px-3 rounded mt-2 hover:bg-blue-700"
-              onClick={handleAddItem}
-            >
-              + Add More Item
-            </button>
+      {/* DATES */}
+      <input
+        type="date"
+        value={form.date}
+        onChange={(e) =>
+          setForm({ ...form, date: e.target.value })
+        }
+      />
 
-            <div className="flex justify-end space-x-2 mt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                disabled={loading}
-              >
-                {loading ? "Submitting..." : "Submit"}
-              </button>
-            </div>
-          </>
-        )}
-      </form>
+      <input
+        type="date"
+        value={form.returnDate}
+        onChange={(e) =>
+          setForm({ ...form, returnDate: e.target.value })
+        }
+      />
+
+      {/* ITEMS */}
+      {form.items.map((item, i) => (
+        <div key={i} className="border p-3">
+          <p>{item.item}</p>
+          <p className="text-xs">{item.unit}</p>
+
+          <input
+            type="number"
+            placeholder="Return Qty"
+            value={item.quantity}
+            onChange={(e) =>
+              updateItem(i, "quantity", e.target.value)
+            }
+          />
+
+          <input
+            placeholder="Remarks"
+            value={item.remarks}
+            onChange={(e) =>
+              updateItem(i, "remarks", e.target.value)
+            }
+          />
+        </div>
+      ))}
+
+      <button
+        onClick={submit}
+        disabled={loading}
+        className="bg-blue-600 text-white w-full py-2"
+      >
+        {loading ? "Saving..." : "Submit Return"}
+      </button>
     </div>
   );
 };
+
 
 export default ReturnFormModal;

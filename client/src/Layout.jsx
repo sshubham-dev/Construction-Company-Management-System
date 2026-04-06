@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "./index.css";
+import { Toaster } from "react-hot-toast";
 import Sidebar from "./components/Sidebar.jsx";
 import Navbar from "./components/Navbar.jsx";
 import { BrowserRouter } from "react-router-dom";
@@ -61,6 +62,7 @@ const Layout = ({ children }) => {
           </div>
         </div>
       </BrowserRouter>
+            <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };

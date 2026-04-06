@@ -9,7 +9,6 @@ const ProjectSchedule = require("../models/projectschedule.models");
 const PurchaseOrder = require("../models/purchaseOrder.models.js");
 const ExtraWork = require("../models/extrawork.models.js");
 const { uploadOnCloudinary } = require("../utils/cloudinary.js");
-const { addLedgerAndCostCenterForSite } = require("./ledger.controller.js");
 const {
   sendPushNotification,
   notifyRole,
@@ -242,6 +241,7 @@ const updateSite = async (req, res) => {
     existingSite.address = address || existingSite.address;
     existingSite.floors = parsedFloors;
     existingSite.projectType = projectType || existingSite.projectType;
+    existingSite.companyId = existingSite.companyId || req.user.companyId;
 
     if (existingClient) {
       existingSite.client = {

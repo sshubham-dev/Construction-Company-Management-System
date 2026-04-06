@@ -110,7 +110,7 @@ const extraWorkSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-extraWorkSchema.pre("save", function (next) {
+extraWorkSchema.pre("save", function () {
   const doc = this;
 
   let totalAmount = 0;
@@ -168,7 +168,6 @@ extraWorkSchema.pre("save", function (next) {
     doc.paymentStatus = "Completed";
   }
 
-  next();
 });
 
 

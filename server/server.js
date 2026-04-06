@@ -1,10 +1,8 @@
 // Import dependencies
-const dotenv = require('dotenv');
 const connectDB = require('./db/dbConnection');
 const app = require('./app');
 
-// Load environment variables
-dotenv.config();
+
 
 // Set up the port
 const port = process.env.PORT || 4000;

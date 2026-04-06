@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import toast, { Toaster } from 'react-hot-toast';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchNotifications } from '../features/notification/notificationSlice';
-import Select from 'react-select';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchNotifications } from "../features/notification/notificationSlice";
+import Select from "react-select";
 
 axios.defaults.withCredentials = true;
 
@@ -13,14 +13,20 @@ const CreatePurchaseOrder = ({ onClose, editId }) => {
   const isEdit = Boolean(editId);
 
   const [loading, setLoading] = useState(false);
+
   const [suppliers, setSuppliers] = useState([]);
   const [stores, setStores] = useState([]);
+  const [sites, setSites] = useState([]);
   const [stocks, setStocks] = useState([]);
+  const [prs, setPRs] = useState([]);
+
+  const [selectedPR, setSelectedPR] = useState(null);
 
   const [form, setForm] = useState({
     supplier: null,
     deliveryTo: "Store",
     deliveryFor: null,
+    category: null,
     items: [],
     remarks: "",
   });
@@ -34,33 +40,99 @@ const CreatePurchaseOrder = ({ onClose, editId }) => {
   }, [editId]);
 
   const loadMasters = async () => {
-    const [sup, store, stock] = await Promise.all([
-      axios.get("/api/v1/supplier"),
-      axios.get("/api/v1/store"),
-      axios.get("/api/v1/stock"),
-    ]);
+    try {
+      const [sup, store, stock, site] = await Promise.all([
+        axios.get("/api/v1/supplier"),
+        axios.get("/api/v1/store"),
+        axios.get("/api/v1/stock"),
+        axios.get("/api/v1/site"),
+      ]);
 
-    setSuppliers(sup.data);
-    setStores(store.data);
-    setStocks(stock.data);
+      setSuppliers(sup.data);
+      setStores(store.data);
+      setStocks(stock.data);
+      setSites(site.data);
+    } catch {
+      toast.error("Failed to load master data");
+    }
   };
 
   const loadPO = async () => {
-    const { data } = await axios.get(`/api/v1/purchase-order/${editId}`);
+    try {
+      const { data } = await axios.get(`/api/v1/purchase-order/${editId}`);
+
+      setForm({
+        supplier: {
+          value: data.supplier.id,
+          label: data.supplier.name,
+        },
+        deliveryTo: data.deliveryTo,
+        deliveryFor: {
+          value: data.deliveryFor.id,
+          label: data.deliveryFor.name,
+        },
+        category: null,
+        items: data.items,
+        remarks: data.remarks || "",
+      });
+    } catch {
+      toast.error("Failed to load PO");
+    }
+  };
+
+  /* =====================
+     CATEGORY FILTER
+  ===================== */
+  const filteredStocks = form.category
+    ? stocks.filter((s) => s.category === form.category.value)
+    : stocks;
+
+  /* =====================
+     LOAD PR WHEN SITE SELECTED
+  ===================== */
+  useEffect(() => {
+    if (form.deliveryTo === "Site" && form.deliveryFor) {
+      loadPRs(form.deliveryFor.value);
+    }
+  }, [form.deliveryFor]);
+
+  const loadPRs = async (siteId) => {
+    try {
+      const { data } = await axios.get(
+        `/api/v1/purchase-request/site/${siteId}`,
+      );
+      setPRs(data);
+    } catch {
+      toast.error("Failed to load PR");
+    }
+  };
+
+  /* =====================
+     PR SELECT
+  ===================== */
+  const handlePRSelect = (selected) => {
+    const pr = prs.find((p) => p._id === selected.value);
+
+    setSelectedPR(selected);
+
+    const items = pr.items.map((i) => ({
+      itemId: i.itemId,
+      item: i.item,
+      unit: i.unit,
+      requestedQty: i.requestedQty,
+      rate: 0,
+      gstRate: 0,
+      amount: 0,
+    }));
+
     setForm({
-      supplier: {
-        value: data.supplier.id,
-        label: data.supplier.name,
-      },
-      deliveryTo: data.deliveryTo,
-      deliveryFor: {
-        value: data.deliveryFor.id,
-        label: data.deliveryFor.name,
-      },
-      items: data.items,
-      remarks: data.remarks || "",
+      ...form,
+      items,
+      purchaseRequestId: pr._id,
     });
   };
+
+  const isPRMode = form.deliveryTo === "Site" && selectedPR;
 
   /* =====================
      ITEM HANDLING
@@ -75,25 +147,12 @@ const CreatePurchaseOrder = ({ onClose, editId }) => {
           item: "",
           unit: "",
           requestedQty: 0,
-          rate: 0,
-          gstRate: 18,
-          amount: 0,
+          // rate: 0,
+          // gstRate: 0,
+          // amount: 0,
         },
       ],
     });
-  };
-
-  const updateItem = (i, field, value) => {
-    const items = [...form.items];
-    items[i][field] = value;
-
-    if (["requestedQty", "rate"].includes(field)) {
-      items[i].amount =
-        Number(items[i].requestedQty || 0) *
-        Number(items[i].rate || 0);
-    }
-
-    setForm({ ...form, items });
   };
 
   const removeItem = (i) => {
@@ -101,6 +160,45 @@ const CreatePurchaseOrder = ({ onClose, editId }) => {
     items.splice(i, 1);
     setForm({ ...form, items });
   };
+
+  const updateItem = (i, field, value) => {
+    const items = [...form.items];
+    items[i][field] = value;
+
+    const qty = Number(items[i].requestedQty || 0);
+    // const rate = Number(items[i].rate || 0);
+    // const gst = Number(items[i].gstRate || 0);
+
+    // const amount = qty * rate;
+    // const gstAmount = (amount * gst) / 100;
+
+    // items[i].amount = amount;
+    // items[i].total = amount + gstAmount;
+
+    setForm({ ...form, items });
+  };
+
+  const handleItemSelect = (i, selected) => {
+    const stock = stocks.find((s) => s._id === selected.value);
+
+    updateItem(i, "itemId", stock._id);
+    updateItem(i, "item", stock.name);
+    updateItem(i, "unit", stock.unit);
+    // updateItem(i, "rate", stock.purchasePrice || 0);
+    // updateItem(i, "gstRate", stock.gstRate || 0);
+  };
+
+  /* =====================
+     TOTAL
+  ===================== */
+  const totalBeforeTax = form.items.reduce((s, i) => s + (i.amount || 0), 0);
+
+  const totalTax = form.items.reduce(
+    (s, i) => s + ((i.amount || 0) * (i.gstRate || 0)) / 100,
+    0,
+  );
+
+  const total = totalBeforeTax + totalTax;
 
   /* =====================
      SUBMIT
@@ -111,38 +209,47 @@ const CreatePurchaseOrder = ({ onClose, editId }) => {
     }
 
     const payload = {
+      purchaseRequestId: form.purchaseRequestId || null,
+
       supplier: {
         id: form.supplier.value,
         name: form.supplier.label,
       },
-      deliveryTo: form.deliveryTo,
+
       deliveryFor: {
         id: form.deliveryFor.value,
+        deliveryForModel: form.deliveryTo,
         name: form.deliveryFor.label,
       },
+
       items: form.items.map((i) => ({
         itemId: i.itemId,
         item: i.item,
         unit: i.unit,
         requestedQty: Number(i.requestedQty),
-        rate: Number(i.rate),
-        gstRate: Number(i.gstRate),
-        amount: Number(i.amount),
+        // rate: Number(i.rate),
+        // gstRate: Number(i.gstRate),
+        // amount: Number(i.amount),
       })),
+
       remarks: form.remarks,
     };
 
-    setLoading(true);
     try {
-      if (isEdit) {
+      setLoading(true);
+
+      if (editId !== undefined) {
         await axios.put(`/api/v1/purchase-order/${editId}`, payload);
-        toast.success("Purchase Order updated");
+        toast.success("PO updated");
       } else {
+        console.log(payload);
         await axios.post("/api/v1/purchase-order", payload);
-        toast.success("Purchase Order created");
+        toast.success("PO created");
       }
-      onClose();
+
+      onClose && onClose();
     } catch (err) {
+      console.log(err);
       toast.error(err.response?.data?.message || "Failed");
     } finally {
       setLoading(false);
@@ -154,13 +261,21 @@ const CreatePurchaseOrder = ({ onClose, editId }) => {
   ===================== */
   return (
     <div className="max-w-xl mx-auto space-y-4">
-      <h2 className="text-lg font-semibold">
-        {isEdit ? "Edit Purchase Order" : "Create Purchase Order"}
-      </h2>
-
-      {/* Supplier */}
+      {/* CATEGORY */}
       <Select
-        placeholder="Select Supplier"
+        placeholder="Material Category"
+        value={form.category}
+        onChange={(v) => setForm({ ...form, category: v })}
+        options={[
+          { value: "raw", label: "Raw" },
+          { value: "cement", label: "Cement" },
+          { value: "electrical", label: "Electrical" },
+          { value: "plumbing", label: "Plumbing" },
+        ]}
+      />
+
+      <Select
+        placeholder="Supplier"
         value={form.supplier}
         onChange={(v) => setForm({ ...form, supplier: v })}
         options={suppliers.map((s) => ({
@@ -169,117 +284,113 @@ const CreatePurchaseOrder = ({ onClose, editId }) => {
         }))}
       />
 
-      {/* Delivery For */}
+      <select
+        value={form.deliveryTo}
+        onChange={(e) =>
+          setForm({
+            ...form,
+            deliveryTo: e.target.value,
+            deliveryFor: null,
+            items: [],
+            purchaseRequestId: null,
+          })
+        }
+        className="border p-2 w-full"
+      >
+        <option value="Store">Store</option>
+        <option value="Site">Site</option>
+      </select>
+
       <Select
-        placeholder="Deliver To Store"
+        placeholder="Destination"
         value={form.deliveryFor}
-        onChange={(v) => setForm({ ...form, deliveryFor: v })}
-        options={stores.map((s) => ({
-          value: s._id,
-          label: s.name,
-        }))}
+        onChange={(v) => setForm({ ...form, deliveryFor: v, items: [] })}
+        options={
+          form.deliveryTo === "Store"
+            ? stores.map((s) => ({
+                value: s._id,
+                label: s.name,
+              }))
+            : sites.map((s) => ({
+                value: s._id,
+                label: s.name,
+              }))
+        }
       />
+
+      {/* PR SELECT */}
+      {form.deliveryTo === "Site" && (
+        <Select
+          placeholder="Select PR"
+          value={selectedPR}
+          onChange={handlePRSelect}
+          options={prs.map((p) => ({
+            value: p._id,
+            label: p.prNumber,
+          }))}
+        />
+      )}
 
       {/* ITEMS */}
       <div>
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="font-medium">Items</h3>
-          <button
-            onClick={addItem}
-            className="bg-blue-600 text-white px-3 py-1 rounded"
-          >
-            + Add Item
-          </button>
-        </div>
+        <button onClick={addItem}>+ Add Item</button>
 
         {form.items.map((item, i) => (
-          <div key={i} className="border p-2 rounded mb-2">
-            <Select
-              placeholder="Select Item"
-              value={
-                item.itemId
-                  ? { value: item.itemId, label: item.item }
-                  : null
-              }
-              onChange={(v) =>
-                updateItem(i, "itemId", v.value) ||
-                updateItem(i, "item", v.label)
-              }
-              options={stocks.map((s) => ({
-                value: s._id,
-                label: s.name,
-              }))}
+          <div key={i} className="border p-2 mt-2">
+            {!isPRMode && (
+              <Select
+                placeholder="Item"
+                onChange={(v) => handleItemSelect(i, v)}
+                options={filteredStocks.map((s) => ({
+                  value: s._id,
+                  label: s.name,
+                }))}
+              />
+            )}
+
+            <input
+              type="number"
+              value={item.requestedQty}
+              disabled={isPRMode}
+              onChange={(e) => updateItem(i, "requestedQty", e.target.value)}
             />
 
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <input
-                type="number"
-                placeholder="Qty"
-                value={item.requestedQty}
-                onChange={(e) =>
-                  updateItem(i, "requestedQty", e.target.value)
-                }
-                className="border p-1"
-              />
+            {/* <input
+              type="number"
+              value={item.rate}
+              onChange={(e) => updateItem(i, "rate", e.target.value)}
+            />
 
-              <input
-                type="number"
-                placeholder="Rate"
-                value={item.rate}
-                onChange={(e) =>
-                  updateItem(i, "rate", e.target.value)
-                }
-                className="border p-1"
-              />
+            <input
+              type="number"
+              value={item.gstRate}
+              onChange={(e) => updateItem(i, "gstRate", e.target.value)}
+            /> */}
 
-              <select
-                value={item.unit}
-                onChange={(e) =>
-                  updateItem(i, "unit", e.target.value)
-                }
-                className="border p-1"
-              >
-                <option value="">Unit</option>
-                {units.map((u) => (
-                  <option key={u}>{u}</option>
-                ))}
-              </select>
+            <input value={item.unit} readOnly />
+            {/* <input value={item.amount || 0} readOnly /> */}
 
-              <input
-                disabled
-                value={item.amount || 0}
-                className="border p-1 bg-gray-100"
-              />
-            </div>
-
-            <button
-              onClick={() => removeItem(i)}
-              className="text-red-500 text-xs mt-1"
-            >
-              Remove
-            </button>
+            <button onClick={() => removeItem(i)}>Remove</button>
           </div>
         ))}
       </div>
 
-      {/* Remarks */}
+      {/* <div>
+        <p>Total: {totalBeforeTax}</p>
+        <p>GST: {totalTax}</p>
+        <h3>Grand Total: {total}</h3>
+      </div> */}
+
       <textarea
-        placeholder="Remarks"
         value={form.remarks}
-        onChange={(e) =>
-          setForm({ ...form, remarks: e.target.value })
-        }
-        className="border p-2 w-full"
+        onChange={(e) => setForm({ ...form, remarks: e.target.value })}
       />
 
-      <button
-        onClick={submit}
-        disabled={loading}
-        className="bg-green-600 text-white w-full py-2 rounded"
-      >
-        {loading ? "Saving..." : "Save Purchase Order"}
+      <button onClick={submit} disabled={loading}>
+        {loading ? "Saving..." : "Save PO"}
       </button>
-      <Toaster/>
+
+
     </div>
   );
 };
