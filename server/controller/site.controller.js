@@ -13,6 +13,9 @@ const {
   sendPushNotification,
   notifyRole,
 } = require("../utils/pushNotification.js");
+const {
+  syncCostCenterForSite,
+} = require("../services/ERP/costcenter.service.js");
 
 const getSites = async (req, res) => {
   try {
@@ -149,6 +152,7 @@ const createSite = async (req, res) => {
         ? { id: existingClient._id, name: existingClient.name }
         : null,
       siteId,
+      companyId: user.companyId,
       structureType,
       floors: parsedFloors,
       incharge: existingIncharge
@@ -170,6 +174,9 @@ const createSite = async (req, res) => {
 
     const savedSite = await newSite.save();
     await assignSiteToUsers(savedSite, existingIncharge, existingSupervisor);
+
+    savedSite.costcenter = syncCostCenterForSite(savedSite, "SITE")._id;
+    await savedSite.save();
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
@@ -234,6 +241,8 @@ const updateSite = async (req, res) => {
       parsedFloors = typeof floors === "string" ? JSON.parse(floors) : floors;
     }
 
+   const costCenter = await syncCostCenterForSite(existingSite, "SITE");
+
     // ✅ Update fields safely
     existingSite.name = name || existingSite.name;
     existingSite.siteId = siteId || existingSite.siteId || "";
@@ -242,6 +251,9 @@ const updateSite = async (req, res) => {
     existingSite.floors = parsedFloors;
     existingSite.projectType = projectType || existingSite.projectType;
     existingSite.companyId = existingSite.companyId || req.user.companyId;
+    existingSite.costcenter =
+      costCenter?._id ||
+      existingSite.costcenter;
 
     if (existingClient) {
       existingSite.client = {

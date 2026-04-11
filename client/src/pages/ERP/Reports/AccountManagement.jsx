@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { useDispatch, useSelector } from "react-redux";
 
 // Register the necessary components for Chart.js
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -35,7 +36,7 @@ const AccountManagement = () => {
   const payable = data.reduce((acc, curr) => acc + curr.payable, 0);
   const loans = data.reduce((acc, curr) => acc + curr.loans, 0);
   const profit = revenue - expenses;
-
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   const chartData = {
     labels: data.map((item) => item.name),
     datasets: [

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import Modal from "../../../components/Modal";
 import Select from "react-select";
+import { useDispatch, useSelector } from "react-redux";
 
 const ExpenseReports = () => {
   const [expenses, setExpenses] = useState([]);
@@ -14,13 +15,17 @@ const ExpenseReports = () => {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
   const [expenseLedgers, setExpenseLedgers] = useState([]);
-
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   useEffect(() => {
     const loadLedgers = async () => {
-      const { data } = await axios.get("/api/v1/ledger");
+      const { data } = await axios.get(
+        `/api/v1/ledger?comapnyId=${user.companyId}`,
+      );
 
       // Expense ledgers (Expenses group)
-      setExpenseLedgers(data.filter((l) => l.under.includes("Expenses")));
+      setExpenseLedgers(
+        data.filter((l) => l.groupId?.name.includes("Expenses")),
+      );
     };
 
     loadLedgers();
@@ -40,7 +45,9 @@ const ExpenseReports = () => {
 
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get("/api/v1/employee");
+      const res = await axios.get("/api/v1/employee", {
+        params: { companyId: user.companyId },
+      });
       setEmployees(res.data);
     } catch (err) {
       console.error(err);

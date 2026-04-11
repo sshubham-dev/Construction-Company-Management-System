@@ -20,9 +20,12 @@ const expenseSchema = new mongoose.Schema(
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
+      required: true,
+    },
+    costcenterId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CostCenter",
       default: null,
-      // required: true,
-      index: true,
     },
 
     /* ======================
@@ -54,7 +57,6 @@ const expenseSchema = new mongoose.Schema(
       id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Ledger",
-        // ref: "CostCenter",
         required: true,
       },
       name: String,

@@ -27,6 +27,7 @@ const defaultGroups = [
   { name: "Indirect Income", nature: "INCOME" },
 ];
 
+// ✅
 const createDefaultCOA = async (companyId) => {
   const groupMap = {};
 

@@ -10,6 +10,7 @@ const {   createReceipt,
  } = require('../controller/receipt.controller');  // Adjust path as needed
 const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
+
 Receipt.post('/', userAuth, createReceipt);
 Receipt.put('/post/:id', userAuth, postReceipt);
 Receipt.put('/cancel/:id', userAuth, cancelReceipt);

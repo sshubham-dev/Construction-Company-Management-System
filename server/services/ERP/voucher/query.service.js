@@ -83,13 +83,5 @@ async function getVouchers(type, query) {
   };
 }
 
-exports.getLedgerReport = async (ledgerId) => {
-  const vouchers = await Voucher.find({
-    "entries.ledgerId": ledgerId,
-    status: "POSTED"
-  });
-
-  return vouchers;
-};
 
 module.exports = { getVouchers };

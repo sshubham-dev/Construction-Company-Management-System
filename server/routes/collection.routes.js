@@ -1,33 +1,39 @@
 const express = require("express");
 const CollectionRoute = express.Router();
-const {createCollection,
+const {
+  createCollection,
   getCollections,
-  approveCollection,
-  rejectCollection,} = require("../controller/collection.controller");
-const upload = require('../middlewares/Upload');
-const { userAuth } = require('../middlewares/auth.middleware');
+  postCollection,
+  cancelCollection,
+  rejectCollection,
+  updateCollection,
+  deleteCollection,
+} = require("../controller/collection.controller");
+const upload = require("../middlewares/Upload");
+const { userAuth, adminAuth } = require("../middlewares/auth.middleware");
 // create entry (employee)
 CollectionRoute.post(
   "/",
   upload.single("proofImage"),
   userAuth,
-  createCollection
+  createCollection,
 );
 
 // list (accounts)
-CollectionRoute.get("/", getCollections);
+CollectionRoute.get("/", userAuth, getCollections);
 
 // approve
-CollectionRoute.post(
-  "/:id/approve",
-  userAuth,
-  approveCollection
-);
+CollectionRoute.put("/approve/:id", adminAuth, postCollection);
 
 // reject
-CollectionRoute.post(
-  "/:id/reject",
-  rejectCollection
-);
+CollectionRoute.put("/reject/:id", adminAuth, rejectCollection);
+
+// cancel
+CollectionRoute.put("/cancel/:id", adminAuth, cancelCollection);
+
+// update & delete
+CollectionRoute.put("/:id", userAuth, updateCollection);
+CollectionRoute.delete("/:id", userAuth, deleteCollection);
+
 
 module.exports = CollectionRoute;

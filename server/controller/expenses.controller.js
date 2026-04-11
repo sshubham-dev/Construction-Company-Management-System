@@ -18,6 +18,7 @@ const {
   updateVoucher,
 } = require("../services/ERP/voucher/voucher.service.js");
 
+
 const resolvePaidByLedger = async (userId) => {
   const employee = await Employee.findOne({ userId });
   if (!employee) throw new Error("Employee not found");
@@ -78,7 +79,7 @@ const createExpense = async (req, res) => {
       date,
       amount: Number(amount),
       narration,
-      // companyId: user.companyId,
+      companyId: user.companyId,
       expenseLedger: {
         id: expenseLedger._id,
         name: expenseLedger.name,

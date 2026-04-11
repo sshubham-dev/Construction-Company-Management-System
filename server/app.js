@@ -56,6 +56,7 @@ const Payroll = require("./routes/payroll.routes");
 const PayChallan = require("./routes/paychallan.routes");
 const Projects = require("./routes/project.routes");
 const Company = require("./routes/company.routes");
+const Reports = require("./routes/report.routes");
 // midellware
 
 const allowedOrigins = process.env.CORS_ORIGIN.split(",");
@@ -152,6 +153,7 @@ app.use("/api/v1/payroll", Payroll);
 app.use("/api/v1/payment-challans", PayChallan);
 app.use("/api/v1/projects", Projects);
 app.use("/api/v1/company", Company);
+app.use("/api/v1/report", Reports)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   console.log(err);

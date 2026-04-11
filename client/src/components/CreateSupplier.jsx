@@ -31,6 +31,7 @@ const CreateSupplier = ({ onClose, isEdit }) => {
     try {
       const response = await axios.get(`/api/v1/supplier/${id}`);
       const supplier = response.data;
+      console.log(supplier)
       setSupplier({
         name: supplier.name,
         email: supplier?.email,
@@ -117,6 +118,7 @@ setLoading(true);
           <input
             type="text"
             name="name"
+            value={supplier.name}
             onChange={handleChange}
             className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
           />
@@ -148,6 +150,7 @@ setLoading(true);
             className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
             type='text'
             name='phone'
+             value={supplier.phone}
             placeholder='Enter Your Contact Number'
             onChange={handleChange}
           />
@@ -162,6 +165,7 @@ setLoading(true);
             className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
             type='text'
             name='whatsapp'
+             value={supplier.whatsapp}
             placeholder='Enter Your Whatsapp Number'
             onChange={handleChange}
           />
@@ -174,6 +178,7 @@ setLoading(true);
           <input
             type="text"
             name="address"
+             value={supplier.address}
             onChange={handleChange}
             placeholder="Address"
             className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
@@ -187,6 +192,7 @@ setLoading(true);
           <input
             type="text"
             name="gstNo"
+             value={supplier.gstNo}
             onChange={handleChange}
             placeholder="GST No."
             className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
@@ -200,6 +206,8 @@ setLoading(true);
           <input
             type="text"
             name="pan"
+            placeholder='Pan'
+             value={supplier.pan}
             onChange={handleChange}
             className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
           />
@@ -223,7 +231,7 @@ setLoading(true);
             name="isUser"
             className="border-none rounded-lg focus:outline-none mr-2"
             onChange={handleChange}
-            value='true' />
+            value={supplier.isUser || 'true'} />
           <label htmlFor="isUser" className="block text-md font-medium text-gray-600">Is a User</label>
         </div>
 

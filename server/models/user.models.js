@@ -146,6 +146,10 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
     },
+    ledger: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger",
+    },
   },
 
   { timestamps: true },
@@ -153,14 +157,14 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre("save", async function () {
   const user = this;
-  if (!user.isModified("password")) return ;
+  if (!user.isModified("password")) return;
   try {
     console.log("NewPasswd", user.password);
     const hash_password = await bcrypt.hash(user.password, 12);
     user.password = hash_password;
     console.log("hash_password", hash_password);
   } catch (error) {
-    return error
+    return error;
   }
 });
 

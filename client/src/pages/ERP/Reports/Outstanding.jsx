@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
-const Outstanding = ({ companyId }) => {
+const Outstanding = () => {
   const [type, setType] = useState("CLIENT");
   const [data, setData] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   /* ======================
      FETCH DATA
   ====================== */
@@ -18,7 +19,7 @@ const Outstanding = ({ companyId }) => {
       setError("");
 
       const res = await fetch(
-        `/api/v1/report/outstanding?companyId=${companyId}&type=${type}`
+        `/api/v1/report/outstanding?companyId=${user.companyId}&type=${type}`
       );
 
       if (!res.ok) throw new Error("Failed to fetch");

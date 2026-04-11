@@ -30,11 +30,6 @@ const ERPSettings = () => {
               <div className="flex flex-col gap-2 justify-center items-center">
                 <button
                   className=" "
-                  onClick={() => setGroupModalOpen(true)}>
-                  Accounting Group
-                </button>
-                <button
-                  className=" "
                   onClick={() => setLedgerMapModalOpen(true)}>
                   Ledger Maping
                 </button>
@@ -126,9 +121,6 @@ const ERPSettings = () => {
         {/* Add/Edit Modal */}
         <Modal isOpen={isLedgerMapModalOpen} onClose={() => setLedgerMapModalOpen(false)} head='Map Leadger'>
           <LedgerMaping onClose={() => setLedgerMapModalOpen(false)} />
-        </Modal>
-        <Modal isOpen={isGroupModalOpen} onClose={() => setGroupModalOpen(false)} head='Create Group'>
-          <GroupModal onClose={() => setGroupModalOpen(false)} />
         </Modal>
         <Modal onClose={() => setStockGroupModalOpen(false)} isOpen={isStockGroupModalOpen} head='Create Stock Group'>
           <CreateStockGroup

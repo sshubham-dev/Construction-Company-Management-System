@@ -33,8 +33,9 @@ const getSupplier = async (req, res) => {
 
 const createSupplier = async (req, res) => {
     try {
-        const { name, email, phone, whatsapp, address, gstNo, bank, isUser, companyId } = req.body;
+        const { name, email, phone, whatsapp, address, gstNo, bank, isUser } = req.body;
         console.log(req.body)
+           const user = req.user;
         const newSupplier = new Supplier({
             name,
             email,
@@ -43,7 +44,7 @@ const createSupplier = async (req, res) => {
             address,
             gstNo,
             isUser,
-            companyId
+            companyId: user.companyId,
         });
         console.log(newSupplier)
         const savedSupplier = await newSupplier.save();
@@ -72,8 +73,8 @@ const updateSupplier = async (req, res) => {
             gstNo,
             bank,
             isUser,
-            companyId
         } = req.body;
+        const user = req.user;
 
         const supplier = await Supplier.findById(id);
         if (!supplier) {
@@ -88,7 +89,7 @@ const updateSupplier = async (req, res) => {
         supplier.address = address || supplier.address;
         supplier.gstNo = gstNo?.trim() || supplier.gstNo;
         supplier.bank = bank || supplier.bank;
-        supplier.companyId = companyId || supplier.companyId;
+        supplier.companyId = user.companyId || supplier.companyId;
         supplier.isUser = isUser === true || isUser === 'true';
 
         const updatedSupplier = await supplier.save(); // 💥 Triggers hooks

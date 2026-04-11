@@ -163,3 +163,11 @@ body {
   border: none !important;
   box-shadow: none !important;
 }
+
+.input {
+  @apply border p-2 rounded-lg w-full focus:ring-2 focus:ring-blue-500;
+}
+
+.textarea {
+  @apply border p-2 rounded-lg w-full h-32 focus:ring-2 focus:ring-blue-500;
+}

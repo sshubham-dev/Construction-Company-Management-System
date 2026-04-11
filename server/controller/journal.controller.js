@@ -1,5 +1,9 @@
 const journalService = require("../services/ERP/journal.service");
-const { postVoucher, cancelVoucher } = require("../services/ERP/posting.service");
+// const { postVoucher, cancelVoucher } = require("../services/ERP/posting.service");
+const {
+  postVoucher,
+  cancelVoucher,
+} = require("../services/ERP/voucher/voucher.service.js");
 
 /* ======================
    CREATE
@@ -9,6 +13,7 @@ const createJournal = async (req, res) => {
     const voucher = await journalService.createJournalVoucher(req.body, req.user);
     res.status(201).json(voucher);
   } catch (error) {
+    console.log(error)
     res.status(400).json({ error: error.message });
   }
 };
@@ -33,6 +38,7 @@ const deleteJournal = async (req, res) => {
     await journalService.deleteJournalVoucher(req.params.id);
     res.json({ message: "Journal deleted successfully" });
   } catch (error) {
+    console.log(error)
     res.status(400).json({ error: error.message });
   }
 };
@@ -94,6 +100,7 @@ const cancelJournal = async (req, res) => {
     const voucher = await cancelVoucher(req.params.id, req.user);
     res.json({ message: "Journal cancelled successfully", voucher });
   } catch (error) {
+    console.log(error)
     res.status(400).json({ error: error.message });
   }
 };

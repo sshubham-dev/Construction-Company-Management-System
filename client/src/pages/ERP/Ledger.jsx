@@ -14,7 +14,7 @@ const LedgerList = () => {
     const { user } = useSelector((state) => state.auth);
 
   const fetchLedgers = async () => {
-    const res = await axios.get("/api/v1/ledger",{ params: { companyId: user.companyId } });
+    const res = await axios.get("/api/v1/ledger", { params: { companyId: user.companyId } });
     console.log(res.data)
     setLedgers(res.data);
     setFiltered(res.data);

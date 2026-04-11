@@ -45,11 +45,21 @@ const Journal = () => {
 
   const handleCancel = async (id) => {
     try {
-      await axios.post(`/api/v1/journal/${id}/cancel`);
+      await axios.put(`/api/v1/journal/cancel/${id}`);
       toast.success("Cancelled");
       fetchJournals();
     } catch (err) {
       toast.error("Cancel failed");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`/api/v1/journal/${id}`);
+      toast.success("Deleted");
+      fetchJournals();
+    } catch (err) {
+      toast.error("Delete failed");
     }
   };
 
@@ -180,7 +190,7 @@ const Journal = () => {
                         </button>
 
                         <button
-                          onClick={() => handleCancel(j._id)}
+                          onClick={() => handleDelete(j._id)}
                           className="text-red-600"
                         >
                           Delete

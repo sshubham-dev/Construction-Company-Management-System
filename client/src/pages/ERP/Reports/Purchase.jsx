@@ -5,6 +5,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import Header from '../../../components/Header';
 import { MdDeleteForever } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
 import { GrLinkNext, GrLinkPrevious } from "react-icons/gr";
 import { IoIosAddCircle } from "react-icons/io";
 
@@ -72,7 +73,7 @@ const Purchase = () => {
   const [currentItem, setCurrentItem] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; // Set the number of items per page
-
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   // Calculate the total number of pages
   const totalPages = Math.ceil(salesData.length / itemsPerPage);
 

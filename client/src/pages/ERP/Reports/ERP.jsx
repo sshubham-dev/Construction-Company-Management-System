@@ -10,13 +10,14 @@ import {
   CartesianGrid,
 } from "recharts";
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function ERP({ companyId }) {
   const [summary, setSummary] = useState({});
   const [revenueData, setRevenueData] = useState([]);
   const [expenseData, setExpenseData] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   /* ======================
      FETCH DATA
   ====================== */
@@ -26,9 +27,9 @@ export default function ERP({ companyId }) {
       setLoading(true);
 
       const [summaryRes, clientRes, supplierRes] = await Promise.all([
-        fetch(`/api/v1/report/summary?companyId=${companyId}`),
-        fetch(`/api/v1/report/outstanding?companyId=${companyId}&type=CLIENT`),
-        fetch(`/api/v1/report/outstanding?companyId=${companyId}&type=SUPPLIER`),
+        fetch(`/api/v1/report/summary?companyId=${user.companyId}`),
+        fetch(`/api/v1/report/outstanding?companyId=${user.companyId}&type=CLIENT`),
+        fetch(`/api/v1/report/outstanding?companyId=${user.companyId}&type=SUPPLIER`),
       ]);
 
       const summaryData = await summaryRes.json();

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Select from "react-select";
+import { useDispatch, useSelector } from "react-redux";
 
 const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
   const isPayment = type === "Payment";
@@ -10,7 +11,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
   const [documents, setDocuments] = useState([]);
   const [purpose, setPurpose] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     costCenterId: "",
@@ -30,47 +31,51 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
   /* ---------------- LOAD LEDGERS ---------------- */
   useEffect(() => {
     const loadLedgers = async () => {
-      const res = await axios.get("/api/v1/ledger");
+      const res = await axios.get("/api/v1/ledger", {
+        params: { companyId: user.companyId },
+      });
       setLedgers(res.data || []);
     };
     loadLedgers();
-        axios.get("/api/v1/cost-center").then((res) => {
-      setCostCenters(res.data || []);
-    });
+    axios
+      .get("/api/v1/cost-center", {
+        params: { companyId: user.companyId },
+      })
+      .then((res) => {
+        setCostCenters(res.data || []);
+      });
   }, []);
 
   const mapOptions = (arr) =>
-    arr.map((l) => ({ value: l._id, label: `${l.name} (${l.under})` }));
+    arr.map((l) => ({ value: l._id, label: `${l.name} (${l?.groupId?.name})` }));
 
   const cashBankLedgers = useMemo(
     () =>
       ledgers.filter((l) =>
-        CASH_BANK_UNDER.map((u) => u.toLowerCase()).includes(
-          l.under.toLowerCase()
-        )
+        CASH_BANK_UNDER.map((u) => u?.toLowerCase()).includes(
+          l?.groupId?.name.toLowerCase(),
+        ),
       ),
-    [ledgers]
+    [ledgers],
   );
 
   const partyLedgers = useMemo(
     () =>
       ledgers.filter((l) =>
-        PARTY_UNDER.map((u) => u.toLowerCase()).includes(
-          l.under.toLowerCase()
-        )
+        PARTY_UNDER.map((u) => u?.toLowerCase()).includes(l?.groupId?.name.toLowerCase()),
       ),
-    [ledgers]
+    [ledgers],
   );
 
   const nonCashBankLedgers = useMemo(
     () =>
       ledgers.filter(
         (l) =>
-          !CASH_BANK_UNDER.map((u) => u.toLowerCase()).includes(
-            l.under.toLowerCase()
-          )
+          !CASH_BANK_UNDER.map((u) => u?.toLowerCase()).includes(
+            l?.groupId?.name.toLowerCase(),
+          ),
       ),
-    [ledgers]
+    [ledgers],
   );
 
   const fromOptions = isPayment
@@ -103,9 +108,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
     const amount = Number(value) || 0;
 
     setForm((prev) => {
-      const existing = prev.invoices.filter(
-        (i) => i.invoiceId !== invoiceId
-      );
+      const existing = prev.invoices.filter((i) => i.invoiceId !== invoiceId);
 
       if (amount > 0) {
         existing.push({ invoiceId, amount });
@@ -117,7 +120,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
 
   const totalAllocated = useMemo(
     () => form.invoices.reduce((s, i) => s + (i.amount || 0), 0),
-    [form.invoices]
+    [form.invoices],
   );
 
   const remaining = Number(form.amount || 0) - totalAllocated;
@@ -147,8 +150,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.fromLedgerId || !form.toLedgerId)
-      return alert("Select ledgers");
+    if (!form.fromLedgerId || !form.toLedgerId) return alert("Select ledgers");
 
     if (form.fromLedgerId === form.toLedgerId)
       return alert("From and To cannot be same");
@@ -159,31 +161,28 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
     setLoading(true);
 
     try {
-      await axios.post(
-        isPayment ? "/api/v1/payment" : "/api/v1/receipt",
-        {
-          date: form.date,
-          costCenterId: form.costCenterId,
-          from: form.fromLedgerId,
-          to: form.toLedgerId,
-          amount: Number(form.amount),
-          narration: form.description,
-          referenceNo: form.referenceNo,
-          invoices: form.invoices,
-        }
-      );
+      await axios.post(isPayment ? "/api/v1/payment" : "/api/v1/receipt", {
+        date: form.date,
+        costCenterId: form.costCenterId,
+        from: form.fromLedgerId,
+        to: form.toLedgerId,
+        amount: Number(form.amount),
+        narration: form.description,
+        referenceNo: form.referenceNo,
+        // invoices: form.invoices,
+      });
 
       if (refresh) refresh();
       onClose();
     } catch (err) {
-      console.log(err)
+      console.log(err);
       alert(err.response?.data?.error || "Error saving voucher");
     } finally {
       setLoading(false);
     }
   };
 
-    const costCenterOptions = costCenters.map((c) => ({
+  const costCenterOptions = costCenters.map((c) => ({
     value: c._id,
     label: c.name,
   }));
@@ -191,7 +190,6 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
   /* ---------------- UI ---------------- */
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-
       {/* DATE */}
       <input
         type="date"
@@ -201,7 +199,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
         required
       />
 
-            {/* COST CENTER */}
+      {/* COST CENTER */}
       <Select
         options={costCenterOptions}
         value={costCenterOptions.find((o) => o.value === form.costCenterId)}
@@ -237,7 +235,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
       />
 
       {/* PURPOSE */}
-      <select
+      {/* <select
         value={purpose}
         onChange={(e) => setPurpose(e.target.value)}
         className="border p-2 rounded w-full"
@@ -259,12 +257,11 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
             <option value="return">Sales Return</option>
           </>
         )}
-      </select>
+      </select> */}
 
       {/* DOCUMENT LIST */}
-      {documents.length > 0 && (
+      {/* {documents.length > 0 && (
         <div className="border rounded p-3 space-y-2 text-sm">
-          
           <div className="flex justify-between items-center">
             <span className="font-medium">Invoice Allocation</span>
             <button
@@ -287,9 +284,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
               <input
                 type="number"
                 max={doc.balance}
-                onChange={(e) =>
-                  handleInvoiceAmount(doc._id, e.target.value)
-                }
+                onChange={(e) => handleInvoiceAmount(doc._id, e.target.value)}
                 className="border p-1 rounded"
               />
             </div>
@@ -299,7 +294,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
             Allocated: {totalAllocated} | Remaining: {remaining}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* REF */}
       <input

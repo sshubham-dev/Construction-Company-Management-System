@@ -1,7 +1,12 @@
 const receiptService = require("../services/ERP/receipt.service");
-const { postVoucher, cancelVoucher } = require("../services/ERP/posting.service");
+// const { postVoucher, cancelVoucher } = require("../services/ERP/posting.service");
+const {
+  postVoucher,
+  cancelVoucher,
+} = require("../services/ERP/voucher/voucher.service.js");
 
 /* CREATE */
+// ✅
 const createReceipt = async (req, res) => {
   try {
     const voucher = await receiptService.createReceiptVoucher(req.body, req.user);
@@ -23,6 +28,7 @@ const updateReceipt = async (req, res) => {
 };
 
 /* GET ALL */
+// ✅
 const getAllReceipts = async (req, res) => {
   try {
     const data = await receiptService.getAllReceipts(req.query);
@@ -43,6 +49,7 @@ const getReceiptById = async (req, res) => {
 };
 
 /* DELETE */
+// ✅
 const deleteReceipt = async (req, res) => {
   try {
     await receiptService.deleteReceiptVoucher(req.params.id);

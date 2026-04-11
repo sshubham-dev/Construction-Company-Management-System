@@ -4,18 +4,19 @@ const InvoiceAllocation = require("../../models/invoiceAllocation.models");
 const { getVouchers } = require("./voucher/query.service");
 const { generateVoucherNo } = require("../../utils/voucherNoGenerator");
 
+
 /* ======================
    CREATE
 ====================== */
+// ✅
 async function createReceiptVoucher(data, user) {
   const {
     date,
+    costCenterId,
     from, // client
     to, // bank/cash
     amount,
     narration,
-    costCenterId,
-    companyId,
   } = data;
 
   if (!from || !to || !amount) {
@@ -43,7 +44,7 @@ async function createReceiptVoucher(data, user) {
   ];
 
   const voucherNo = await generateVoucherNo({
-    companyId: data.companyId,
+    companyId: user.companyId,
     type: "RECEIPT",
   });
 
@@ -55,23 +56,24 @@ async function createReceiptVoucher(data, user) {
     narration,
     costCenterId,
     status: "DRAFT",
-    companyId,
+    companyId: user.companyId,
+    createdBy: user._id,
   });
 
   /* ======================
      SAVE INVOICE ALLOCATION
   ====================== */
 
-  if (invoices.length > 0) {
-    const allocations = invoices.map((inv) => ({
-      voucherId: voucher._id,
-      invoiceId: inv.invoiceId,
-      amount: inv.amount,
-      type: "RECEIPT",
-    }));
+  // if (invoices.length > 0) {
+  //   const allocations = invoices.map((inv) => ({
+  //     voucherId: voucher._id,
+  //     invoiceId: inv.invoiceId,
+  //     amount: inv.amount,
+  //     type: "RECEIPT",
+  //   }));
 
-    await InvoiceAllocation.insertMany(allocations);
-  }
+  //   await InvoiceAllocation.insertMany(allocations);
+  // }
 
   return voucher;
 }
@@ -123,6 +125,7 @@ async function updateReceiptVoucher(id, data) {
   return voucher;
 }
 
+// ✅
 async function getAllReceipts(query) {
   const result = await getVouchers("RECEIPT", query);
   return result;
@@ -136,6 +139,7 @@ async function getReceiptById(id) {
   return { voucher, allocations };
 }
 
+// ✅
 async function deleteReceiptVoucher(id) {
   const voucher = await Voucher.findById(id);
 

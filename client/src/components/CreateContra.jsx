@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Select from "react-select";
+import { useDispatch, useSelector } from "react-redux";
 
 const CreateContra = ({ onClose, refresh }) => {
   const [loading, setLoading] = useState(false);
@@ -14,6 +15,7 @@ const CreateContra = ({ onClose, refresh }) => {
     narration: "",
     costCenterId: "",
   });
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
 
   /* ======================
      FETCH LEDGERS
@@ -21,14 +23,17 @@ const CreateContra = ({ onClose, refresh }) => {
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const res = await axios.get("/api/v1/ledger");
+        const res = await axios.get("/api/v1/ledger", {
+          params: { companyId: user.companyId },
+        });
         const data = Array.isArray(res.data) ? res.data : [];
+        console.log(data)
 
         // Only cash/bank accounts
         const filtered = data.filter(
           (l) =>
-            l?.under?.toLowerCase().includes("bank") ||
-            l?.under?.toLowerCase().includes("cash"),
+            l?.groupId?.name?.toLowerCase().includes("bank") ||
+            l?.groupId?.name?.toLowerCase().includes("cash"),
         );
 
         setAccounts(filtered);
@@ -38,9 +43,11 @@ const CreateContra = ({ onClose, refresh }) => {
     };
 
     fetchAccounts();
-    axios.get("/api/v1/cost-center").then((res) => {
-      setCostCenters(res.data || []);
-    });
+    axios
+      .get("/api/v1/cost-center", { params: { companyId: user.companyId } })
+      .then((res) => {
+        setCostCenters(res.data || []);
+      });
   }, []);
 
   /* ======================
@@ -107,7 +114,9 @@ const CreateContra = ({ onClose, refresh }) => {
       <Select
         options={costCenterOptions}
         value={costCenterOptions.find((o) => o.value === form.costCenterId)}
-        onChange={(opt) => setForm((prev) => ({ ...prev, costCenterId: opt?.value || "" }))}
+        onChange={(opt) =>
+          setForm((prev) => ({ ...prev, costCenterId: opt?.value || "" }))
+        }
         // onChange={(e) => updateForm("costCenterId", e?.value || "")}
         placeholder="Select Cost Center (Optional)"
         isClearable

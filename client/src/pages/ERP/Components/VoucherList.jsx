@@ -84,9 +84,20 @@ const VoucherList = ({ type, onCreate }) => {
   };
 
   const handleCancel = async (id) => {
-    await axios.post(`${endpoint}/cancel/${id}`);
+    await axios.put(`${endpoint}/cancel/${id}`);
     toast.success("Cancelled");
     fetchData();
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${endpoint}/${id}`);
+      toast.success("Deleted");
+      fetchData();
+    } catch (err) {
+      console.log(err)
+      toast.error("Delete failed");
+    }
   };
 
   /* STATUS STYLE */
@@ -260,7 +271,7 @@ const VoucherList = ({ type, onCreate }) => {
                         Post
                       </button>
                       <button
-                        onClick={() => handleCancel(v._id)}
+                        onClick={() => handleDelete(v._id)}
                         className="text-red-500 font-medium"
                       >
                         Delete

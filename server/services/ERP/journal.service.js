@@ -6,8 +6,9 @@ const { generateVoucherNo } = require("../../utils/voucherNoGenerator");
 /* ======================
    CREATE
 ====================== */
+// ✅
 async function createJournalVoucher(data, user) {
-  const { date, narration, entries, costCenterId, companyId } = data;
+  const { date, narration, entries, costCenterId} = data;
 
   if (!entries || entries.length < 2) {
     throw new Error("Minimum two entries required");
@@ -37,7 +38,7 @@ async function createJournalVoucher(data, user) {
   }
 
     const voucherNo = await generateVoucherNo({
-    companyId: data.companyId,
+    companyId: user.companyId,
     type: "JOURNAL",
   });
 
@@ -54,8 +55,9 @@ async function createJournalVoucher(data, user) {
     totalDebit: debit,
     totalCredit: credit,
     costCenterId,
-    companyId,
+    companyId: user.companyId,
     status: "DRAFT",
+    createdBy: user._id,
   });
 
   return voucher;
@@ -114,6 +116,7 @@ async function updateJournalVoucher(id, data) {
 /* ======================
    DELETE (ONLY DRAFT)
 ====================== */
+// ✅
 async function deleteJournalVoucher(id) {
   const voucher = await Voucher.findById(id);
 
@@ -131,6 +134,7 @@ async function deleteJournalVoucher(id) {
 /* ======================
    GET ALL
 ====================== */
+// ✅
 async function getAllJournals(query) {
 const result = await getVouchers("JOURNAL", query);
   return result;

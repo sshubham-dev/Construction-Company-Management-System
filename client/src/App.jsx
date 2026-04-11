@@ -5,7 +5,6 @@ import { logout } from "./features/auth/authSlice.js";
 import "./index.css";
 import "jodit/es2021/jodit.min.css";
 
-
 // Components
 import Profile from "./components/Profile.jsx";
 import Login from "./components/Login.jsx";
@@ -22,7 +21,6 @@ import UserProfile from "./components/ProfileCard.jsx";
 import RecordInventory from "./components/RecordInventory.jsx";
 import CreateJournal from "./components/CreateJournal.jsx";
 import CreateQuotation from "./components/CreateQuotation.jsx";
-
 
 // Dashboard Pages
 import Admin from "./pages/Dashboard/Admin.jsx";
@@ -44,8 +42,6 @@ import CEO from "./pages/Dashboard/CEO.jsx";
 import HR from "./pages/Dashboard/HR.jsx";
 import StoreHelper from "./pages/Dashboard/StoreHelper.jsx";
 import Notification from "./pages/Dashboard/Notification.jsx";
-
-
 
 // Screens
 import SiteScreen from "./screen/SiteScreen.jsx";
@@ -75,8 +71,6 @@ import PurchaseRequestScreen from "./screen/PurchaseRequestScreen.jsx";
 import WOTemplateScreen from "./screen/WOTemplateScreen.jsx";
 import LabourAttendanceScreen from "./screen/LabourAttendanceScreen.jsx";
 
-
-
 // Sites
 import ExtraWork from "./pages/Site/ExtraWork.jsx";
 import QualitySchedules from "./pages/Site/QualitySchedules.jsx";
@@ -85,9 +79,6 @@ import SitesDashboard from "./pages/Site/SitesDashboard.jsx";
 import PurchaseRequest from "./pages/Site/PurchaseRequest.jsx";
 import Report from "./pages/Site/Report.jsx";
 import ReturnRequest from "./pages/Site/Return.jsx";
-
-
-
 
 // CRM
 import LeadDetail from "./pages/CRM/LeadDetail.jsx";
@@ -98,19 +89,14 @@ import Invoice from "./pages/CRM/Invoice.jsx";
 import Clients from "./pages/CRM/Clients.jsx";
 import Quotations from "./pages/CRM/Quotation.jsx";
 
-
-
 import Setting from "./pages/Setting.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import { initPushNotifications } from "./helper/notificationService.js";
-
 
 // Design
 import ProjectReport from "./pages/Design/ProjectReport.jsx";
 import CollectionEntry from "./pages/Design/CollectionEntry.jsx";
 import Collections from "./pages/Design/Collections.jsx";
-
-
 
 // HRMS
 import AttendanceReport from "./pages/HRMS/AttendanceReport.jsx";
@@ -120,7 +106,6 @@ import TrafficLightSystem from "./pages/HRMS/TrafficLightSystem.jsx";
 import Employee from "./pages/HRMS/Employee.jsx";
 import MonthlyPerformance from "./pages/HRMS/MonthlyPerformance.jsx";
 
-
 // CMS
 import BlogPreviewer from "./pages/CMS/Blog/BlogPreviewer.jsx";
 import FAQs from "./pages/CMS/FAQs.jsx";
@@ -129,7 +114,6 @@ import ProjectDetail from "./pages/CMS/ProjectDetail.jsx";
 import Blogs from "./pages/CMS/Blogs.jsx";
 import BlogEdit from "./pages/CMS/Blog/BlogEdit.jsx";
 import CreateBlog from "./pages/CMS/Blog/CreateBlog.jsx";
-
 
 // ERP
 import Voucher from "./pages/ERP/Voucher.jsx";
@@ -144,7 +128,6 @@ import ERPSettings from "./pages/ERP/ERPSettings.jsx";
 import Suppliers from "./pages/ERP/Suppliers.jsx";
 import InvoiceForm from "./pages/ERP/Components/InvoiceForm.jsx";
 
-
 // ERP/Inventory
 import Inventory from "./pages/ERP/Inventory.jsx";
 import Store from "./pages/ERP/Store.jsx";
@@ -155,14 +138,13 @@ import GRN from "./pages/ERP/GRN.jsx";
 import ReturnOrders from "./pages/ERP/ReturnOrders.jsx";
 import StockAudit from "./pages/ERP/Stock/StockAudit.jsx";
 
-
 // ERP/Reports
-import AccountManagement from "./pages/ERP/Reports/AccountManagement.jsx"; // 
+import AccountManagement from "./pages/ERP/Reports/AccountManagement.jsx"; //
 import BalanceSheet from "./pages/ERP/Reports/BalanceSheet.jsx"; //
 import CashFlow from "./pages/ERP/Reports/CashFlow.jsx"; //
 import ERP from "./pages/ERP/Reports/ERP.jsx"; //
 import ExpenseReports from "./pages/ERP/Reports/ExpenseReports.jsx"; //
-import LedgerReport from "./pages/ERP/Reports/LedgerReport.jsx" //
+import LedgerReport from "./pages/ERP/Reports/LedgerReport.jsx"; //
 import Outstanding from "./pages/ERP/Reports/Outstanding.jsx"; //
 import ProfitLoss from "./pages/ERP/Reports/ProfitLoss.jsx";
 import Purchase from "./pages/ERP/Reports/Purchase.jsx"; //
@@ -172,10 +154,8 @@ import TrialBalance from "./pages/ERP/Reports/TrialBalance.jsx"; //
 
 import Order from "./pages/ERP/Order.jsx";
 import LedgerGroup from "./pages/ERP/LedgerGroup.jsx";
-
-
-
-
+import MultiLevelReport from "./pages/ERP/Reports/MultiLevelReport.jsx";
+import ProjectEditor from "./components/CreateProject.jsx";
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -374,6 +354,7 @@ const App = () => {
         <Route path="/erp/p&l" element={<ProfitLoss />} />
         <Route path="/erp/site-profit" element={<SiteProfit />} />
         <Route path="/erp/trial-balance" element={<TrialBalance />} />
+        <Route path="/erp/multi-level" element={<MultiLevelReport />} />
 
         <Route path="/erp/inventory" element={<Store />} />
         <Route path="/erp/inventory/grn" element={<GRN />} />
@@ -403,7 +384,7 @@ const App = () => {
         <Route path="/erp/inventory/order" element={<Order />} />
         <Route path="/erp/business_unit" element={<BusinessUnit />} />
         <Route path="/erp/business_unit/:id" element={<BusinessUnitScreen />} />
-        <Route path='/erp/:voucher' element={<Voucher />} />
+        <Route path="/erp/:voucher" element={<Voucher />} />
         <Route path="/erp/ledger" element={<LedgerList />} />
         <Route path="/erp/cost-center" element={<CostCenter />} />
         <Route path="/erp/invoice/create" element={<InvoiceForm />} />
@@ -454,8 +435,9 @@ const App = () => {
         <Route path="/cms/faqs" element={<FAQs />} />
 
         <Route path="/cms/projects" element={<Projects />} />
+        <Route path="/cms/project/create" element={<ProjectEditor />} />
+        <Route path="/cms/project/edit/:id" element={<ProjectEditor />} />
         <Route path="/cms/project/:id" element={<ProjectDetail />} />
-
 
         <Route path="/work-details" element={<WorkDetails />} />
 

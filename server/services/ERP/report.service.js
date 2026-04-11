@@ -86,7 +86,6 @@ exports.getBalanceSheet = async (companyId) => {
   };
 };
 
-
 exports.getProfitAndLoss = async (companyId, fromDate, toDate) => {
   const match = {
     companyId,
@@ -144,7 +143,6 @@ exports.getProfitAndLoss = async (companyId, fromDate, toDate) => {
     profit: totalIncome - totalExpense,
   };
 };
-
 
 exports.getTrialBalance = async (companyId, fromDate, toDate) => {
   const match = {
@@ -301,4 +299,91 @@ exports.getLedgerReport = async ({
   }
 
   return transactions;
+};
+
+exports.getBusinessUnitReport = async (companyId) => {
+  const vouchers = await Voucher.find({
+    companyId,
+    status: "POSTED",
+  });
+
+  const result = {};
+
+  for (let v of vouchers) {
+    const bu = v.businessUnitId?.toString();
+    if (!bu) continue;
+
+    if (!result[bu]) {
+      result[bu] = {
+        revenue: 0,
+        expense: 0,
+      };
+    }
+
+    for (let e of v.entries) {
+      if (e.type === "DEBIT") result[bu].expense += e.amount;
+      else result[bu].revenue += e.amount;
+    }
+  }
+
+  return result;
+};
+
+exports.getCostCenterReport = async (companyId) => {
+  const vouchers = await Voucher.find({
+    companyId,
+    status: "POSTED",
+  });
+
+  const result = {};
+
+  for (let v of vouchers) {
+    const cc = v.costCenterId?.toString();
+    if (!cc) continue;
+
+    if (!result[cc]) {
+      result[cc] = {
+        revenue: 0,
+        expense: 0,
+      };
+    }
+
+    for (let e of v.entries) {
+      if (e.type === "DEBIT") result[cc].expense += e.amount;
+      else result[cc].revenue += e.amount;
+    }
+  }
+
+  return result;
+};
+
+exports.getCombinedReport = async (companyId) => {
+  const vouchers = await Voucher.find({
+    companyId,
+    status: "POSTED",
+  });
+
+  const result = {};
+
+  for (let v of vouchers) {
+    const bu = v.businessUnitId?.toString();
+    const cc = v.costCenterId?.toString();
+
+    if (!bu || !cc) continue;
+
+    if (!result[bu]) result[bu] = {};
+    if (!result[bu][cc]) {
+      result[bu][cc] = {
+        revenue: 0,
+        expense: 0,
+      };
+    }
+
+    for (let e of v.entries) {
+      if (e.type === "DEBIT") result[bu][cc].expense += e.amount;
+      else result[bu][cc].revenue += e.amount;
+    }
+  }
+
+  return result;
 };

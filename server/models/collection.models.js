@@ -6,23 +6,28 @@ const collectionSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
-      default: null,
-      // required: true,
+      required: true,
+    },
+    businessUnitId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BusinessUnit",
+      required: true,
     },
     costCenterId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CostCenter",
       default: null,
     },
+
     clientLedgerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ledger",
       required: true,
     },
-
     receivedInto: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ledger",
@@ -34,10 +39,12 @@ const collectionSchema = new mongoose.Schema(
       required: true,
     },
 
-    purpose: String,
     medium: String,
     referenceNo: String,
-    narration: String,
+    narration: {
+      type: String,
+      required: true,
+    },
 
     proofImage: {
       secure_url: String,

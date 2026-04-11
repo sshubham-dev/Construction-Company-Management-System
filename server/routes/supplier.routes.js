@@ -13,7 +13,7 @@ Supplier.get('/', userAuth, getSuppliers);
 Supplier.post('/', userAuth, createSupplier);
 Supplier.route('/:id')
     .get(getSupplier)
-    .put(userAuth,updateSupplier)
+    .put(userAuth, updateSupplier)
     .delete(deleteSupplier);
 
 module.exports = Supplier;

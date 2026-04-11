@@ -1,14 +1,14 @@
 import { FaMoneyBillWave, FaFileInvoiceDollar, FaChartLine, FaBoxOpen } from 'react-icons/fa';
 import { useState } from 'react';
 import { Pie } from 'react-chartjs-2';
+import { useDispatch, useSelector } from "react-redux";
 import Chart from 'chart.js/auto'; // Automatically registers all necessary components
-
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 
 export default function BalanceSheet() {
   const [showAssets, setShowAssets] = useState(true);
   const [showLiabilities, setShowLiabilities] = useState(true);
-
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   const assets = [
     { name: "Cash", amount: 5000, details: [], icon: <FaMoneyBillWave /> },
     { name: "Accounts Receivable", amount: 3000, details: [

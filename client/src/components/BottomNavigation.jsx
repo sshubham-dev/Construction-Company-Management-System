@@ -82,7 +82,7 @@ const BottomNavigation = () => {
       to: "/hrms/employee/dashboard",
       name: "HRMS",
       icon: <FcManager size={22} />,
-      role: ["H.R", "Marketing", "Account Head",  "Ceo",],
+      role: ["H.R", "Accountant", "Account Head",  "Ceo",],
     },
     {
       to: "/setting",

@@ -21,8 +21,8 @@ const {
 
 const { adminAuth, userAuth } = require("../middlewares/auth.middleware");
 
-Ledger.route("/").get(getAll).post(create);
-Ledger.route("/:id").get(getOne).put(update).delete(remove);
+Ledger.route("/").get(userAuth, getAll).post(userAuth, create);
+Ledger.route("/:id").get(userAuth, getOne).put(userAuth, update).delete(userAuth, remove);
 // Ledger.route("/map/:id").put(mapLedger);
 
 Group.route("/").get(userAuth,getGroups).post(userAuth,createGroup);

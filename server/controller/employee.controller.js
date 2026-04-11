@@ -226,7 +226,8 @@ const updateEmployeeData = async (req, res) => {
     }
 
     /* ===== GENERATE EMPLOYEE ID ===== */
-    const employeeID = employee.employeeID || (await generateSerialNo(department));
+    const employeeID =
+      employee.employeeID || (await generateSerialNo(department));
 
     // 🔁 Update basic + company fields safely
     Object.assign(employee, {

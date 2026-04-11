@@ -25,6 +25,7 @@ const Clients = () => {
     const getClients = async () => {
       try {
         const { data } = await axios.get("/api/v1/client");
+        console.log(data)
         setClients(data);
       } catch (error) {
         console.error(error);
@@ -79,7 +80,7 @@ const Clients = () => {
 
       {/* Mobile: Card view */}
       <div className="p-2 space-y-3 md:hidden">
-        {clients.map((client) => (
+        {filtered.map((client) => (
           <div
             key={client._id}
             className="bg-white rounded-lg shadow-sm p-4 flex justify-between items-center"

@@ -17,7 +17,7 @@ Journal.get('/:id', userAuth, getJournalById);
 Journal.put('/post/:id', userAuth, postJournal);
 Journal.put('/cancel/:id', userAuth, cancelJournal);
 Journal.put('/:voucherNo', userAuth, updateJournal);
-Journal.delete('/:voucherNo', userAuth, deleteJournal);
+Journal.delete('/:id', userAuth, deleteJournal);
 // Journal.get("/next-voucher", getNextJournalNo);
 // Stock Journal Routes
 // router.post('/stock-journals', stockcreateStockJournal);

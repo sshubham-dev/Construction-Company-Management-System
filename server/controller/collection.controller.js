@@ -1,15 +1,25 @@
 const Collection = require("../models/collection.models");
-const Receipt = require("../models/receipt.models"); // your existing receipt model
 const { uploadOnCloudinary } = require("../utils/cloudinary.js");
 const {
   sendPushNotification,
   notifyRole,
 } = require("../utils/pushNotification.js");
+// const {
+//   postVoucher,
+//   cancelVoucher,
+// } = require("../services/ERP/posting.service.js");
+const {
+  createVoucher,
+  postVoucher,
+  cancelVoucher,
+} = require("../services/ERP/voucher/voucher.service.js");
+
 /* ---------------- CREATE COLLECTION ENTRY ---------------- */
 
 const createCollection = async (req, res) => {
   try {
     const data = req.body;
+    const user = req.user;
     const proofImage = req.file?.path;
     let upload = await uploadOnCloudinary(proofImage, {
       folder: "collections/proofs",
@@ -18,10 +28,13 @@ const createCollection = async (req, res) => {
 
     const collection = await Collection.create({
       date: data.date,
+      companyId: user.companyId,
+      businessUnitId: data.businessUnitId,
+      costCenterId: data.costCenterId,
       clientLedgerId: data.clientLedgerId,
       receivedInto: data.receivedInto,
       amount: data.amount,
-      purpose: data.purpose,
+
       medium: data.medium,
       referenceNo: data.referenceNo,
       narration: data.narration,
@@ -29,7 +42,8 @@ const createCollection = async (req, res) => {
         secure_url: upload?.secure_url || null,
         public_id: upload?.public_id || null,
       },
-      submittedBy: req.user?._id, // if auth middleware exists
+      submittedBy: user?._id, // if auth middleware exists
+      status: "pending",
     });
     notifyRole(
       "Employee",
@@ -46,93 +60,79 @@ const createCollection = async (req, res) => {
 /* ---------------- GET ALL (ACCOUNT SIDE) ---------------- */
 
 const getCollections = async (req, res) => {
-  const list = await Collection.find()
-    .populate("clientLedgerId")
-    .populate("receivedInto")
-    .sort({ createdAt: -1 });
+  try {
+    const list = await Collection.find({
+      companyId: req.query.companyId,
+    })
+      .populate("clientLedgerId")
+      .populate("receivedInto")
+      .populate("companyId")
+      .populate("businessUnitId")
+      .populate("costCenterId")
+      .sort({ createdAt: -1 });
 
-  res.json(list);
+    res.json(list);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: err.message });
+  }
 };
 
 /* ---------------- APPROVE & AUTO CREATE RECEIPT ---------------- */
 
-const approveCollection = async (req, res) => {
+const postCollection = async (req, res) => {
   try {
     const { id } = req.params;
 
     const collection = await Collection.findById(id);
 
-    if (!collection) return res.status(404).json({ message: "Not found" });
+    if (!collection) throw new Error("Collection not found");
 
-    if (collection.status !== "pending")
-      return res.status(400).json({ message: "Already processed" });
+    if (collection.status !== "pending") {
+      throw new Error("Already processed");
+    }
 
-    /* --- CREATE REAL RECEIPT VOUCHER --- */
-    const receipt = await Receipt.create({
+    // 🔥 CREATE VOUCHER
+    const voucher = await createVoucher({
+      companyId: collection.companyId,
+      type: "RECEIPT",
       date: collection.date,
-      fromLedgerId: collection.clientLedgerId,
-      toLedgerId: collection.receivedInto,
-      amount: collection.amount,
-      referenceNo: collection.referenceNo,
-      description: collection.narration,
-      purpose: collection.purpose,
+      narration: collection.narration,
+
+      // businessUnitId: collection.businessUnitId,
+      costCenterId: collection.costCenterId,
+
+      reference: "Collection",
+      referenceId: collection._id,
+
+      entries: [
+        {
+          ledgerId: collection.receivedInto,
+          type: "DEBIT",
+          amount: collection.amount,
+        },
+        {
+          ledgerId: collection.clientLedgerId,
+          type: "CREDIT",
+          amount: collection.amount,
+        },
+      ],
+
+      createdBy: req.user._id,
     });
 
+    await postVoucher(voucher._id);
+
+    collection.voucherId = voucher._id;
     collection.status = "approved";
+
     await collection.save();
 
-    res.json({ message: "Approved", receipt });
+    res.json(collection);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
-
-const postCollection = async (collectionId, user) => {
-  const collection = await Collection.findById(collectionId);
-
-  if (!collection) throw new Error("Collection not found");
-
-  if (collection.status !== "pending") {
-    throw new Error("Already processed");
-  }
-
-  // 🔥 CREATE VOUCHER
-  const voucher = await createVoucher({
-    companyId: collection.companyId, // ⚠️ make sure exists
-    type: "RECEIPT",
-    date: collection.date,
-    narration: collection.narration,
-
-    reference: "Collection",
-    referenceId: collection._id,
-
-    entries: [
-      {
-        ledgerId: collection.receivedInto,
-        type: "DEBIT", // Bank/Cash increases
-        amount: collection.amount,
-      },
-      {
-        ledgerId: collection.clientLedgerId,
-        type: "CREDIT", // Client decreases
-        amount: collection.amount,
-      },
-    ],
-
-    createdBy: user._id,
-  });
-
-  await postVoucher(voucher._id);
-
-  // 🔗 link back
-  collection.voucherId = voucher._id;
-  collection.status = "approved";
-
-  await collection.save();
-
-  return collection;
-};
-
 /* ---------------- REJECT ---------------- */
 
 const rejectCollection = async (req, res) => {
@@ -146,20 +146,112 @@ const rejectCollection = async (req, res) => {
 };
 
 const cancelCollection = async (req, res) => {
-  const { id } = req.params;
+  const collection = await Collection.findById(req.params.id);
 
-  await Collection.findByIdAndUpdate(id, {
-    status: "rejected",
-  });
+  if (!collection || !collection.voucherId) {
+    throw new Error("Invalid collection");
+  }
 
-  res.json({ message: "Rejected" });
+  await cancelVoucher(collection.voucherId);
+
+  collection.status = "rejected";
+  await collection.save();
+
+  res.json({ message: "Cancelled" });
+};
+
+const updateCollection = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const collection = await Collection.findById(id);
+
+    if (!collection) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
+    if (collection.status !== "pending") {
+      return res.status(400).json({
+        error: "Cannot edit approved/rejected collection",
+      });
+    }
+
+    const data = req.body;
+
+    // optional file update
+    let upload = null;
+    if (req.file?.path) {
+      upload = await uploadOnCloudinary(req.file.path, {
+        folder: "collections/proofs",
+        public_id: `${collection.clientLedgerId}-${Date.now()}`,
+      });
+    }
+
+    Object.assign(collection, data);
+
+    if (upload) {
+      collection.proofImage = {
+        secure_url: upload.secure_url,
+        public_id: upload.public_id,
+      };
+    }
+
+    await collection.save();
+
+    res.json(collection);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const deleteCollection = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const collection = await Collection.findById(id);
+
+    if (!collection) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
+    // ✅ CASE 1: Draft → delete directly
+    if (collection.status === "pending") {
+      await collection.deleteOne();
+      return res.json({ message: "Deleted successfully" });
+    }
+
+    // ❗ CASE 2: Approved → cancel voucher first
+    if (collection.status === "approved") {
+      if (!collection.voucherId) {
+        return res.status(400).json({
+          error: "Voucher missing, cannot delete",
+        });
+      }
+
+      await cancelVoucher(collection.voucherId);
+
+      await collection.deleteOne();
+
+      return res.json({
+        message: "Deleted with voucher cancellation",
+      });
+    }
+
+    // ❌ rejected (safe to delete)
+    await collection.deleteOne();
+
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 module.exports = {
   createCollection,
   getCollections,
-  approveCollection,
   postCollection,
   cancelCollection,
   rejectCollection,
+  updateCollection,
+  deleteCollection
 };

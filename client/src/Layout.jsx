@@ -37,10 +37,10 @@ const Layout = ({ children }) => {
           {/* Sidebar */}
           {isLoggedIn && (
             <Sidebar
-            isOpen={sidebarOpen}
-            expanded={sidebarExpanded}
-            onClose={() => setSidebarOpen(false)}
-            onToggleExpand={handleSidebarToggle}
+              isOpen={sidebarOpen}
+              expanded={sidebarExpanded}
+              onClose={() => setSidebarOpen(false)}
+              onToggleExpand={handleSidebarToggle}
             />
           )}
 
@@ -53,7 +53,7 @@ const Layout = ({ children }) => {
             <main
               className={`flex-1 w-full mt-14 ${isLoggedIn ? "mb-14" : "mb-0"} lg:mb-0 p-4 overflow-y-auto min-w-0 bg-gradient-to-br from-[#eeffda] to-white`}
             >
-          {isLoggedIn && <NewYearExperience user={user} />}
+              {isLoggedIn && <NewYearExperience user={user} />}
               {children}
             </main>
 
@@ -62,7 +62,18 @@ const Layout = ({ children }) => {
           </div>
         </div>
       </BrowserRouter>
-            <Toaster position="top-right" reverseOrder={false} />
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          success: {
+            duration: 3400,
+          },
+          error: {
+            duration: 4400,
+          },
+        }}
+      />
     </div>
   );
 };

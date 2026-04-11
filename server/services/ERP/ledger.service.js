@@ -5,6 +5,7 @@ const Contractor = require("../../models/contractor.models");
 const Supplier = require("../../models/supplier.models");
 const Employee = require("../../models/employee.models");
 
+// ✅
 async function getLedgerReport({ ledgerId, fromDate, toDate }) {
   if (!ledgerId) throw new Error("LedgerId is required");
 
@@ -49,6 +50,7 @@ async function getLedgerReport({ ledgerId, fromDate, toDate }) {
 
 // services/ledger.service.js
 
+// ✅
 const createLedger = async (data) => {
   const {
     name,
@@ -73,10 +75,8 @@ const createLedger = async (data) => {
     alias,
     groupId,
     companyId,
-    reference: {
-      id: referenceId,
-      referenceType,
-    },
+    referenceType: referenceType || null,
+    referenceId: referenceId || null,
     openingBalance,
     statutoryDetails,
     mailingDetails,
@@ -87,13 +87,15 @@ const createLedger = async (data) => {
   return ledger;
 };
 
+// ✅
 const getLedgers = async (companyId) => {
-  return await Ledger.find({ companyId, isActive: true })
+  return await Ledger.find({ companyId })
     .populate("groupId")
     .populate("referenceId")
     .populate("companyId")
     .sort({ name: 1 });
 };
+
 
 const getLedgerById = async (id) => {
   return await Ledger.findById(id)
@@ -103,6 +105,7 @@ const getLedgerById = async (id) => {
     .exec();
 };
 
+// ✅
 const updateLedger = async (id, data) => {
   const allowedFields = [
     "name",
@@ -127,6 +130,7 @@ const updateLedger = async (id, data) => {
   return await Ledger.findByIdAndUpdate(id, updates);
 };
 
+
 const deleteLedger = async (id) => {
   return await Ledger.findByIdAndUpdate(id, { isActive: false });
 };
@@ -150,49 +154,6 @@ const mapLedger = async (ledger, referenceType, referenceId) => {
   await Model.findByIdAndUpdate(referenceId, {
     ledger: ledger._id,
   });
-};
-
-const groupMap = {
-  CLIENT: "Sundry Debtors",
-  SUPPLIER: "Sundry Creditors",
-  CONTRACTOR: "Sundry Creditors",
-  EMPLOYEE: "Employee",
-};
-
-const syncLedgerForEntity = async ({
-  name,
-  companyId,
-  category,
-  referenceType,
-  referenceId,
-}) => {
-  let ledger = await Ledger.findOne({
-    referenceType,
-    referenceId,
-  });
-
-  const group = await Group.findOne({
-    name: groupMap[category],
-    companyId,
-  });
-
-  if (!group) throw new Error("Group not found");
-
-  if (!ledger) {
-    ledger = await Ledger.create({
-      name,
-      groupId: group._id,
-      companyId,
-      category,
-      referenceType,
-      referenceId,
-    });
-  } else {
-    ledger.name = name;
-    await ledger.save();
-  }
-
-  return ledger;
 };
 
 module.exports = {

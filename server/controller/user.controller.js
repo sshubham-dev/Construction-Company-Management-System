@@ -84,7 +84,8 @@ const register = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { userName, userMail, password, phone, role, department, companyId } = req.body;
+    const { userName, userMail, password, phone, role, department, companyId } =
+      req.body;
     const userExist = await User.findOne({
       $and: [{ userName }, { department }],
     });
@@ -96,7 +97,7 @@ const createUser = async (req, res) => {
       phone,
       role,
       department,
-      companyId
+      companyId,
     });
     await newUser.save();
     res.status(201).json({ message: "User created successfully" });
@@ -110,27 +111,33 @@ const convertToUser = async (id, role, password, status) => {
   try {
     switch (role) {
       case "Employee":
+        console.log("Finding Employee");
         const employee = await Employee.findById(id);
         // console.log('employee', employee)
         if (!employee) return "Employee not Found";
+        console.log("Found Employee");
+        console.log("Finding User");
         const employeeUser = await User.findOne({
           $and: [
             { userName: employee.name },
             { department: employee.department },
+            // { companyId: employee.companyId },
           ],
         });
-        if (employeeUser) return "Validation Error";
+        if (!employeeUser) return "Validation Error";
+        console.log("Found User");
         if (status === "Update") {
-          ((employeeUser.userName = employee.name || employeeUser.userName),
-            (employeeUser.userMail = employee.email || employeeUser.userMail),
-            (employeeUser.phone = employee.phone || employeeUser.phone),
-            (employeeUser.whatsapp =
-              employee.whatsapp || employeeUser.whatsapp),
-            (employeeUser.department =
-              employee.department || employeeUser.department),
-            (employeeUser.role = role || employeeUser.role),
-            (employeeUser.password = password || employeeUser.password));
-            (employeeUser.companyId = employee.companyId || employeeUser.companyId);
+          employeeUser.userName = employee.name || employeeUser.userName;
+          employeeUser.userMail = employee.email || employeeUser.userMail;
+          employeeUser.phone = employee.phone || employeeUser.phone;
+          employeeUser.whatsapp = employee.whatsapp || employeeUser.whatsapp;
+          employeeUser.department =
+            employee.department || employeeUser.department;
+          employeeUser.role = role || employeeUser.role;
+          employeeUser.password = password || employeeUser.password;
+          employeeUser.companyId = employee.companyId || employeeUser.companyId;
+          employeeUser.ledger = employee.ledger || employeeUser.ledger;
+          console.log(employee.companyId);
           await employeeUser.save();
         } else if (status === "Create") {
           const newEmployeeUser = new User({
@@ -362,7 +369,8 @@ const updateUser = async (req, res) => {
   try {
     const id = req.params.id;
     // console.log(id)
-    const { userName, userMail, phone, role, department, whatsapp, companyId } = req.body;
+    const { userName, userMail, phone, role, department, whatsapp, companyId } =
+      req.body;
     // console.log(req.body)
     const avatarLocalPath = req.file?.path;
     const upload = await uploadOnCloudinary(avatarLocalPath, {
@@ -403,8 +411,7 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   try {
     const id = req.params.id;
-    const user = await User.findById(id)      .select("-refreshToken")
-      .exec();
+    const user = await User.findById(id).select("-refreshToken").exec();
     if (!user) return res.status(404).json({ error: "User not found" });
     user.status = "Inactive";
     await user.save();

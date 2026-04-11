@@ -70,15 +70,16 @@ const voucherSchema = new mongoose.Schema(
     costCenterId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CostCenter",
+      default: null,
     },
 
     /* ======================
        REFERENCE LINKING
     ====================== */
 
+    reference: String,
     referenceId: {
-      id: { type: mongoose.Schema.Types.ObjectId, refPath: "reference" },
-      reference: String,
+      type: mongoose.Schema.Types.ObjectId, refPath: "reference",
     },
 
     /* ======================
@@ -102,6 +103,7 @@ const voucherSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
 
 voucherSchema.index({ voucherNo: 1, companyId: 1 }, { unique: true });
 

@@ -6,8 +6,9 @@ const { generateVoucherNo } = require("../../utils/voucherNoGenerator");
 /* ======================
    CREATE
 ====================== */
+// ✅
 async function createContraVoucher(data, user) {
-  const { date, from, to, amount, narration, costCenterId, companyId } = data;
+  const { date, from, to, amount, narration, costCenterId } = data;
 
   if (!from || !to || !amount) {
     throw new Error("Missing required fields");
@@ -38,7 +39,7 @@ async function createContraVoucher(data, user) {
   ];
 
   const voucherNo = await generateVoucherNo({
-    companyId: data.companyId,
+    companyId: user.companyId,
     type: "CONTRA",
   });
 
@@ -48,9 +49,10 @@ async function createContraVoucher(data, user) {
     date,
     entries,
     narration,
-    costCenterId,
+    costCenterId: costCenterId || null,
     status: "DRAFT",
-        companyId,
+    companyId: user.companyId,
+    createdBy: user._id
   });
 
   return voucher;
@@ -88,7 +90,7 @@ async function updateContraVoucher(id, data) {
 
   voucher.narration = narration;
   voucher.date = date;
-  voucher.costCenterId = costCenterId;
+  voucher.costCenterId = costCenterId || null;
 
   await voucher.save();
 
@@ -98,6 +100,7 @@ async function updateContraVoucher(id, data) {
 /* ======================
    DELETE (ONLY DRAFT)
 ====================== */
+// ✅
 async function deleteContraVoucher(id) {
   const voucher = await Voucher.findById(id);
 
@@ -115,6 +118,7 @@ async function deleteContraVoucher(id) {
 /* ======================
    GET ALL
 ====================== */
+// ✅
 async function getAllContras(query) {
   const result = await getVouchers("CONTRA", query);
   return result;

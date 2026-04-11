@@ -107,6 +107,8 @@ import { FaEdit } from "react-icons/fa";
 import { GrLinkNext, GrLinkPrevious } from "react-icons/gr";
 import { IoIosAddCircle } from "react-icons/io";
 
+import { useDispatch, useSelector } from "react-redux";
+
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, BarElement);
 // import Charts from "./components/Charts";
 
@@ -171,7 +173,7 @@ const Sales = () => {
   const [currentItem, setCurrentItem] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; // Set the number of items per page
-
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   // Calculate the total number of pages
   const totalPages = Math.ceil(salesData.length / itemsPerPage);
 

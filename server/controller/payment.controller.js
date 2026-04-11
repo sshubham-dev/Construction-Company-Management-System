@@ -1,5 +1,9 @@
 const paymentService = require("../services/ERP/payment.service");
-const { postVoucher, cancelVoucher } = require("../services/ERP/posting.service");
+// const { postVoucher, cancelVoucher } = require("../services/ERP/posting.service");
+const {
+  postVoucher,
+  cancelVoucher,
+} = require("../services/ERP/voucher/voucher.service.js");
 
 /* CREATE */
 const createPayment = async (req, res) => {

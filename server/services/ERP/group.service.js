@@ -3,6 +3,7 @@
 const { Group } = require("../../models/ledger.models");
 
 
+// ✅
 const createGroup = async (data, user) => {
   const { name, nature, parentId } = data;
   console.log(user.companyId)
@@ -19,6 +20,7 @@ const createGroup = async (data, user) => {
   });
 };
 
+// ✅
 const getGroups = async (companyId) => {
   return await Group.find({ companyId }).sort({ name: 1 }).populate("companyId").populate("parentId");
 };

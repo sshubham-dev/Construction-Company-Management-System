@@ -8,6 +8,7 @@ const { generateVoucherNo } = require("../../utils/voucherNoGenerator");
 /* ======================
    CREATE PAYMENT VOUCHER
 ====================== */
+// ✅
 async function createPaymentVoucher(data, user) {
   const {
     date,
@@ -15,7 +16,6 @@ async function createPaymentVoucher(data, user) {
     to,   // vendor
     amount,
     narration,
-        companyId,
     costCenterId,
     invoices = [],
   } = data;
@@ -45,7 +45,7 @@ async function createPaymentVoucher(data, user) {
   ];
 
       const voucherNo = await generateVoucherNo({
-      companyId: data.companyId,
+      companyId: user.companyId,
       type: "PAYMENT",
     });
 
@@ -57,23 +57,24 @@ async function createPaymentVoucher(data, user) {
     narration,
     costCenterId,
     status: "DRAFT",
-       companyId,
+      companyId: user.companyId,
+      createdBy: user._id,
   });
 
   /* ======================
      SAVE INVOICE ALLOCATION (DRAFT)
   ====================== */
 
-  if (invoices.length > 0) {
-    const allocations = invoices.map((inv) => ({
-      voucherId: voucher._id,
-      invoiceId: inv.invoiceId,
-      amount: inv.amount,
-      type: "PAYMENT",
-    }));
+  // if (invoices.length > 0) {
+  //   const allocations = invoices.map((inv) => ({
+  //     voucherId: voucher._id,
+  //     invoiceId: inv.invoiceId,
+  //     amount: inv.amount,
+  //     type: "PAYMENT",
+  //   }));
 
-    await InvoiceAllocation.insertMany(allocations);
-  }
+  //   await InvoiceAllocation.insertMany(allocations);
+  // }
 
   return voucher;
 }
@@ -93,6 +94,7 @@ async function getPaymentById(id) {
   return { voucher, allocations };
 }
 
+// ✅
 async function deletePaymentVoucher(id) {
   const voucher = await Voucher.findById(id);
 

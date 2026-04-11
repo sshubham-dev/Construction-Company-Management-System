@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Select from "react-select";
+import { useDispatch, useSelector } from "react-redux";
 
 const CreateJournal = ({ onClose, refresh, editData }) => {
   const isEdit = Boolean(editData?._id);
@@ -11,17 +12,26 @@ const CreateJournal = ({ onClose, refresh, editData }) => {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [narration, setNarration] = useState("");
   const [loading, setLoading] = useState(false);
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
 
   /* ======================
      FETCH LEDGERS
   ====================== */
   useEffect(() => {
-    axios.get("/api/v1/ledger").then((res) => {
-      setLedgers(res.data || []);
-    });
-    axios.get("/api/v1/cost-center").then((res) => {
-      setCostCenters(res.data || []);
-    });
+    axios
+      .get("/api/v1/ledger", {
+        params: { companyId: user.companyId },
+      })
+      .then((res) => {
+        setLedgers(res.data || []);
+      });
+    axios
+      .get("/api/v1/cost-center", {
+        params: { companyId: user.companyId },
+      })
+      .then((res) => {
+        setCostCenters(res.data || []);
+      });
   }, []);
 
   /* ======================
@@ -98,7 +108,7 @@ const CreateJournal = ({ onClose, refresh, editData }) => {
         })),
       };
 
-      if (isEdit) {
+      if (editData !== undefined) {
         await axios.put(`/api/v1/journal/${editData._id}`, payload);
       } else {
         await axios.post("/api/v1/journal", payload);

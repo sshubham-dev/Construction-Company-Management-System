@@ -52,7 +52,6 @@ const ledgerSchema = new mongoose.Schema(
       received: { type: Number, default: 0 },
       due: { type: Number, default: 0 },
     },
-    isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
@@ -116,7 +115,10 @@ const costCenterSchema = new mongoose.Schema(
 
 costCenterSchema.index({ name: 1, companyId: 1 }, { unique: true });
 
-ledgerSchema.index({ name: 1, companyId: 1 }, { unique: true });
+ledgerSchema.index(
+  { referenceType: 1, referenceId: 1, companyId: 1 },
+  { unique: true },
+);
 
 groupSchema.index({ name: 1, companyId: 1 }, { unique: true });
 

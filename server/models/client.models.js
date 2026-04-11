@@ -11,12 +11,12 @@ const clientSchema = new mongoose.Schema(
 
     whatsapp: { type: Number },
 
-    // companyId: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Company",
-    //   // required: true,
-    //   index: true,
-    // },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      // required: true,
+      index: true,
+    },
 
     address: {
       street: String,
@@ -43,11 +43,7 @@ const clientSchema = new mongoose.Schema(
     businessUnitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessUnit",
-    },
-
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
+      default: null,
     },
 
     extraWork: [
@@ -106,25 +102,27 @@ clientSchema.pre("save", async function () {
   try {
     await recalcFinance(this);
 
-    // const ledgerId = await syncLedger({
-    //   doc: this,
-    //   type: `${this.service}-Client`,
-    //   under: "Sundry Debtors",
+    const ledgerId = await syncLedger({
+      doc: this,
+      category: `Client`,
 
-    //   getAddress: (doc) => ({
-    //     name: doc.name,
-    //     address: [doc.address?.street, doc.address?.city, doc.address?.district]
-    //       .filter(Boolean)
-    //       .join(", "),
-    //     state: doc.address?.state || "",
-    //   }),
+      getAddress: (doc) => ({
+        name: doc.name,
+        phoneNo: doc.phone,
+        email: doc.email,
+        address: [doc.address?.street, doc.address?.city, doc.address?.district]
+          .filter(Boolean)
+          .join(", "),
+        state: doc.address?.state || "",
+      }),
 
-    //   getTaxDetails: (doc) => ({
-    //     gstNo: doc.gstNo || "",
-    //   }),
-    // });
+      getTaxDetails: (doc) => ({
+        gstNo: doc.gstNo || "",
+      }),
+    });
 
-    // if (ledgerId) this.ledger = ledgerId;
+    if (ledgerId) this.ledger = ledgerId;
+  
   } catch (err) {
     console.error("Error in client pre-save:", err);
     return err;
@@ -150,12 +148,13 @@ clientSchema.pre("findOneAndUpdate", async function () {
     await recalcFinance(client);
 
     const ledgerId = await syncLedger({
-      doc: client,
-      type: `${this.service}-Client`,
-      under: "Sundry Debtors",
+      doc: this,
+      category: `Client`,
 
       getAddress: (doc) => ({
         name: doc.name,
+        phoneNo: doc.phone,
+        email: doc.email,
         address: [doc.address?.street, doc.address?.city, doc.address?.district]
           .filter(Boolean)
           .join(", "),

@@ -1,3 +1,5 @@
+// utils/cloudinary.js
+
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
 
@@ -7,17 +9,24 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const uploadOnCloudinary = async (localFilePath, options = {}) => {
+const safeUnlink = (filePath) => {
   try {
-    if (!localFilePath) return null;
-    const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto",
-      folder: options.folder || "general",
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  } catch (err) {
+    console.log("File delete error:", err.message);
+  }
+};
 
-      // 👇 optional SEO naming
+const uploadOnCloudinary = async (filePath, options = {}) => {
+  try {
+
+    const result = await cloudinary.uploader.upload(filePath, {
+      resource_type: "auto",
+      folder: options.folder || "projects",
       public_id: options.public_id,
 
-      // 👇 optimize images automatically
       transformation: [
         {
           width: 1600,
@@ -27,24 +36,21 @@ const uploadOnCloudinary = async (localFilePath, options = {}) => {
         },
       ],
     });
-    if (response) {
-      console.log("response:", response);
-      fs.unlinkSync(localFilePath);
-      return response;
-    }
+
+    safeUnlink(filePath);
+
+    return result;
+
   } catch (error) {
-    console.log(error);
-    fs.unlinkSync(localFilePath);
+    safeUnlink(filePath);
+    throw error;
   }
 };
 
 const deleteFromCloudinary = async (publicId) => {
   try {
     if (!publicId) return;
-
     await cloudinary.uploader.destroy(publicId);
-
-    console.log("Deleted:", publicId);
   } catch (err) {
     console.log(err);
   }

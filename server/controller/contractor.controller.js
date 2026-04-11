@@ -137,7 +137,7 @@ const updateContractor = async (req, res) => {
     contractor.jobWork = jobWork || '';
     contractor.gstNo = gstNo?.trim() || '';
     contractor.isUser = isUser === true || isUser === 'true';
-    contractor.companyId = req.user.companyId; // Ensure companyId is set to the user's companyId
+    contractor.companyId = req.user.companyId || contractor.companyId; // Ensure companyId is set to the user's companyId
 
     // 💾 Save (triggers ledger sync)
     const updatedContractor = await contractor.save();

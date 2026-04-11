@@ -197,17 +197,23 @@ employeeSchema.pre("save", async function () {
     // await recalcEmployeeFinance(this);
 
     // sync ledger
-    // const ledgerId = await syncLedger({
-    //   doc: this,
-    //   type: "Employee",
-    //   under: "Salaries Payable",
-    //   getAddress: (doc) => ({ name: doc.name, address: doc.address || "" }),
-    //   getTaxDetails: (doc) => ({ panNo: doc.panNo || "" }),
-    // });
+    const ledgerId = await syncLedger({
+      doc: this,
+      category: "Employee",
+      getAddress: (doc) => ({
+        name: doc.name,
+        phoneNo: doc.phone,
+        email: doc.email,
+        address: doc.address || "",
+      }),
+      getTaxDetails: (doc) => ({ panNo: doc.panNo || "" }),
+    });
 
-    // if (ledgerId) this.ledger = ledgerId;
+    if (this.ledger?.toString() !== ledgerId.toString()) {
+      this.ledger = ledgerId;
+    }
   } catch (err) {
-    console.error("Error in employee pre-save:", err);
+    console.log("Error in employee pre-save:", err);
     return err;
   }
 });
@@ -217,49 +223,54 @@ employeeSchema.pre("findOneAndUpdate", async function () {
     const employee = await this.model.findOne(this.getQuery());
     if (!employee) return;
 
-    // apply update locally for accurate recalc
     const update = this.getUpdate() || {};
+
+    // Apply updates locally
     if (update.$set) Object.assign(employee, update.$set);
     Object.assign(employee, update);
 
-    // await recalcEmployeeFinance(employee);
-
-    // sync ledger
-    // const ledgerId = await syncLedger({
-    //   doc: employee,
-    //   type: "Employee",
-    //   under: "Salaries Payable",
-    //   getAddress: (doc) => ({ name: doc.name, address: doc.address || "" }),
-    //   getTaxDetails: (doc) => ({ panNo: doc.panNo || "" }),
-    // });
+    // ✅ sync ledger with REAL document
+    const ledgerId = await syncLedger({
+      doc: employee,
+      category: "Employee",
+      getAddress: (doc) => ({
+        name: doc.name,
+        phoneNo: doc.phone,
+        email: doc.email,
+        address: doc.address || "",
+      }),
+      getTaxDetails: (doc) => ({ panNo: doc.panNo || "" }),
+    });
 
     if (!update.$set) update.$set = {};
-    // update.$set.ledger = ledgerId;
+    if (ledgerId) update.$set.ledger = ledgerId;
 
-    // push recalculated financial fields into update
-    update.$set["financials.totalSalaryBilled"] =
-      employee.financials.totalSalaryBilled;
-    update.$set["financials.totalSalaryPaid"] =
-      employee.financials.totalSalaryPaid;
-    update.$set["financials.totalSalaryDue"] =
-      employee.financials.totalSalaryDue;
+    // ✅ Financials sync (safe access)
+    if (employee.financials) {
+      update.$set["financials.totalSalaryBilled"] =
+        employee.financials.totalSalaryBilled;
+      update.$set["financials.totalSalaryPaid"] =
+        employee.financials.totalSalaryPaid;
+      update.$set["financials.totalSalaryDue"] =
+        employee.financials.totalSalaryDue;
 
-    update.$set["financials.totalExpenseClaimed"] =
-      employee.financials.totalExpenseClaimed;
-    update.$set["financials.totalExpensePaid"] =
-      employee.financials.totalExpensePaid;
-    update.$set["financials.totalExpenseDue"] =
-      employee.financials.totalExpenseDue;
+      update.$set["financials.totalExpenseClaimed"] =
+        employee.financials.totalExpenseClaimed;
+      update.$set["financials.totalExpensePaid"] =
+        employee.financials.totalExpensePaid;
+      update.$set["financials.totalExpenseDue"] =
+        employee.financials.totalExpenseDue;
 
-    update.$set["financials.totalAdvanceTaken"] =
-      employee.financials.totalAdvanceTaken;
-    update.$set["financials.totalAdvanceSettled"] =
-      employee.financials.totalAdvanceSettled;
-    update.$set["financials.totalAdvanceBalance"] =
-      employee.financials.totalAdvanceBalance;
+      update.$set["financials.totalAdvanceTaken"] =
+        employee.financials.totalAdvanceTaken;
+      update.$set["financials.totalAdvanceSettled"] =
+        employee.financials.totalAdvanceSettled;
+      update.$set["financials.totalAdvanceBalance"] =
+        employee.financials.totalAdvanceBalance;
 
-    update.$set["financials.netPayableToEmployee"] =
-      employee.financials.netPayableToEmployee;
+      update.$set["financials.netPayableToEmployee"] =
+        employee.financials.netPayableToEmployee;
+    }
 
     update.$set.totalPaid = employee.totalPaid;
     update.$set.totalDue = employee.totalDue;
@@ -267,7 +278,6 @@ employeeSchema.pre("findOneAndUpdate", async function () {
     this.setUpdate(update);
   } catch (err) {
     console.error("Error in employee pre-findOneAndUpdate:", err);
-    return err;
   }
 });
 

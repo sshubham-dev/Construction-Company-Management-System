@@ -147,21 +147,23 @@ contractorSchema.pre("save", async function () {
   try {
     await recalcContractorFinance(this);
 
-    // const ledgerId = await syncLedger({
-    //   doc: this,
-    //   type: "Contractor",
-    //   under: "Sundry Creditors",
-    //   getAddress: (doc) => ({
-    //     name: doc.name,
-    //     address: doc.address || "",
-    //   }),
-    //   getTaxDetails: (doc) => ({
-    //     gstNo: doc.gstNo || "",
-    //     panNo: doc.panNo || "",
-    //   }),
-    // });
+    const ledgerId = await syncLedger({
+      doc: this,
+      category: `Contractor`,
 
-    // if (ledgerId) this.ledger = ledgerId;
+      getAddress: (doc) => ({
+        name: doc.name,
+        phoneNo: doc.phone,
+        email: doc.email,
+        address: doc?.address,
+      }),
+
+      getTaxDetails: (doc) => ({
+        gstNo: doc.gstNo || "",
+        panNo: doc.panNo || "",
+      }),
+    });
+    if (ledgerId) this.ledger = ledgerId;
   } catch (err) {
     console.error("Error in contractor pre-save:", err);
     return err;
@@ -188,23 +190,26 @@ contractorSchema.pre("findOneAndUpdate", async function (next) {
     await recalcContractorFinance(contractor);
 
     // Sync ledger
-    // const ledgerId = await syncLedger({
-    //   doc: contractor,
-    //   type: "Contractor",
-    //   under: "Sundry Creditors",
-    //   getAddress: (doc) => ({
-    //     name: doc.name,
-    //     address: doc.address || "",
-    //   }),
-    //   getTaxDetails: (doc) => ({
-    //     gstNo: doc.gstNo || "",
-    //     panNo: doc.panNo || "",
-    //   }),
-    // });
+    const ledgerId = await syncLedger({
+      doc: this,
+      category: `Contractor`,
 
-    // if (!update.$set) update.$set = {};
+      getAddress: (doc) => ({
+        name: doc.name,
+        phoneNo: doc.phone,
+        email: doc.email,
+        address: doc?.address,
+      }),
 
-    // update.$set.ledger = ledgerId;
+      getTaxDetails: (doc) => ({
+        gstNo: doc.gstNo || "",
+        panNo: doc.panNo || "",
+      }),
+    });
+
+    if (!update.$set) update.$set = {};
+
+    update.$set.ledger = ledgerId;
 
     // FIXED: remove optional chaining
     update.$set.totalDue = contractor.totalDue || 0;

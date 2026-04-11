@@ -1,25 +1,27 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Select from "react-select";
+import { useDispatch, useSelector } from "react-redux";
 
 const LedgerReport = () => {
   const [ledgers, setLedgers] = useState([]);
   const [ledgerId, setLedgerId] = useState("");
-
+  const [company, setCompany] = useState("")
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [data, setData] = useState([]);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
   const fetchLedgers = async () => {
-    const res = await axios.get("/api/v1/ledger");
+    const res = await axios.get("/api/v1/ledger", {params:{companyId: user.companyId}});
     setLedgers(res.data || []);
   };
 
   const fetchReport = async () => {
     if (!ledgerId) return;
 
-    const res = await axios.get("/api/v1/ledger-report", {
-      params: { ledgerId, fromDate, toDate },
+    const res = await axios.get("/api/v1/report/ledger", {
+      params: { ledgerId, fromDate, toDate, companyId: company || user.companyId },
     });
 
     setData(res.data.data || []);

@@ -3,10 +3,12 @@ import axios from "axios";
 import Modal from "../../components/Modal";
 import ProjectEditor from "../../components/CreateProject";
 import { MdDelete, MdAdd } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [addProject, setAddProject] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch all projects when page loads
@@ -68,18 +70,11 @@ const Projects = () => {
       </div>
       {/* Floating Add button */}
       <button
-        onClick={() => setAddProject(true)}
+        onClick={() => navigate("/cms/project/create")}
         className="fixed bottom-20 right-4 bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition"
       >
         <MdAdd className="text-2xl" />
       </button>
-      <Modal
-        isOpen={addProject}
-        onClose={() => setAddProject(false)}
-        head="Post a New Project"
-      >
-        <ProjectEditor onClose={() => setAddProject(false)} />
-      </Modal>
     </div>
   );
 };

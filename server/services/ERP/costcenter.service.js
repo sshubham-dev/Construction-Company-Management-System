@@ -2,10 +2,12 @@
 
 const { CostCenter } = require("../../models/ledger.models");
 
+// ✅
 const createCostCenter = async (data) => {
   return await CostCenter.create(data);
 };
 
+// ✅
 const getCostCenters = async (companyId) => {
   return await CostCenter.find({ companyId }).sort({ createdAt: -1 }).populate("companyId").exec();
 };
@@ -18,37 +20,31 @@ const deleteCostCenter = async (id) => {
   return await CostCenter.findByIdAndUpdate(id, { isActive: false });
 };
 
+// ✅
 const syncCostCenterForSite = async (site, type) => {
+  console.log("Finding cost center for", type);
+
   let costCenter = await CostCenter.findOne({
     companyId: site.companyId,
-    name: site.name,
+    reference: site._id, // 🔥 IMPORTANT (not name)
+    type,
   });
 
   if (!costCenter) {
-    switch (type) {
-      case "SITE":
-        costCenter = await CostCenter.create({
-          name: site.name,
-          companyId: site.companyId,
-          type: "SITE",
-          reference: site._id,
-        });
-        break;
-      case "STORE":
-        costCenter = await CostCenter.create({
-          name: site.name,
-          companyId: site.companyId,
-          type: "STORE",
-          reference: site._id,
-        });
-        break;
+    console.log("Creating cost center for", type);
 
-      default:
-        break;
-    }
+    costCenter = await CostCenter.create({
+      name: site.name,
+      companyId: site.companyId,
+      type,
+      reference: site._id,
+    });
   } else {
-    costCenter.name = site.name;
-    await costCenter.save();
+    // update name if changed
+    if (costCenter.name !== site.name) {
+      costCenter.name = site.name;
+      await costCenter.save();
+    }
   }
 
   return costCenter;

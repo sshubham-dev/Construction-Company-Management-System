@@ -1,7 +1,6 @@
-const { getOutstanding } = require("../services/ERP/outstanding.service");
-const { getLedgerReport } = require("../services/ERP/ledgerReport.service");
+const { getOutstanding, getLedgerReport, getBalanceSheet, getCombinedReport, getProfitAndLoss, getSummary, getTrialBalance, getBusinessUnitReport, getCostCenterReport } = require("../services/ERP/report.service");
 
-const getOutstanding = async (req, res) => {
+const Outstanding = async (req, res) => {
   try {
     const { companyId, type } = req.query;
 
@@ -13,7 +12,7 @@ const getOutstanding = async (req, res) => {
   }
 };
 
-const getLedgerReport = async (req, res) => {
+const LedgerReport = async (req, res) => {
   try {
     const data = await getLedgerReport({
       ledgerId: req.params.id,
@@ -27,3 +26,73 @@ const getLedgerReport = async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 };
+
+const MultiReport = async (req, res) => {
+  const { companyId } = req.query;
+
+  const data = await getCombinedReport(companyId);
+
+  res.json(data);
+};
+
+const BalanceSheet = async (req, res) => {
+  try {
+    
+  } catch (error) {
+    console.log(error)
+    res.status(404).json(error)
+  }
+}
+const ProfitAndLoss = async (req, res) => {
+  try {
+    
+  } catch (error) {
+    console.log(error)
+    res.status(404).json(error)
+  }
+}
+const Summary = async (req, res) => {
+  try {
+    
+  } catch (error) {
+    console.log(error)
+    res.status(404).json(error)
+  }
+}
+const TrialBalance = async (req, res) => {
+  try {
+    
+  } catch (error) {
+    console.log(error)
+    res.status(404).json(error)
+  }
+}
+const CostCenterReport = async (req, res) => {
+  try {
+    
+  } catch (error) {
+    console.log(error)
+    res.status(404).json(error)
+  }
+}
+const BusinessUnitReport = async (req, res) => {
+  try {
+    
+  } catch (error) {
+    console.log(error)
+    res.status(404).json(error)
+  }
+}
+
+
+module.exports ={
+  Outstanding,
+  LedgerReport,
+  MultiReport,
+  BusinessUnitReport,
+  BalanceSheet,
+  ProfitAndLoss,
+  Summary,
+  TrialBalance,
+  CostCenterReport,
+}

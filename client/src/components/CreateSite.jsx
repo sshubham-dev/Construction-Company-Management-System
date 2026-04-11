@@ -11,7 +11,6 @@ const CreateSite = ({ onClose, isEdit }) => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [siteIdToEdit, setSiteIdToEdit] = useState(null);
-
   const [site, setSite] = useState({
     name: "",
     client: "",
@@ -81,6 +80,7 @@ const CreateSite = ({ onClose, isEdit }) => {
     try {
       const response = await axios.get(`/api/v1/site/${id}`);
       const s = response.data;
+      console.log(s)
 
       setData({
         client: s.client?.name,

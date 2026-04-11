@@ -68,7 +68,7 @@ const SiteScreen = () => {
   const fetchQualitySchedules = async (id) => {
     try {
       const qualitySchedulesData = await axios.get(
-        `/api/v1/quality-schedule/site/${id}`
+        `/api/v1/quality-schedule/site/${id}`,
       );
       setQualitySchedule(...qualitySchedulesData.data);
       console.log("qualitySchedulesData", qualitySchedulesData.data);
@@ -87,7 +87,7 @@ const SiteScreen = () => {
   const fetchPaymentSchedules = async (id) => {
     try {
       const paymentSchedulesData = await axios.get(
-        `/api/v1/payment-schedule/site/${id}`
+        `/api/v1/payment-schedule/site/${id}`,
       );
       // console.log(paymentSchedulesData.data)
       setpaymentSchedules(paymentSchedulesData.data);
@@ -126,13 +126,13 @@ const SiteScreen = () => {
       const extraWork = await axios.get(`/api/v1/extra-work/site/${id}`);
       setContractorExtra(
         extraWork.data?.filter(
-          (extrawork) => extrawork.extraFor === "Contractor"
-        )
+          (extrawork) => extrawork.extraFor === "Contractor",
+        ),
       );
       setClientExtra(
         extraWork?.data.filter(
-          (extrawork) => extrawork.extraFor === "Client"
-        )[0]
+          (extrawork) => extrawork.extraFor === "Client",
+        )[0],
       );
       // console.log(extraWork.data);
     } catch (error) {
@@ -150,7 +150,7 @@ const SiteScreen = () => {
   const deletePaymentDetail = async (id, index) => {
     try {
       const response = await axios.delete(
-        `/api/v1/payment-schedule/${id}/paymentDetails/${index}`
+        `/api/v1/payment-schedule/${id}/paymentDetails/${index}`,
       );
       if (paymentSchedules?._id === id) {
         console.log(response.data?.existingPaymentSchedule);
@@ -165,7 +165,7 @@ const SiteScreen = () => {
   const deleteProjectDetail = async (id, index) => {
     try {
       const response = await axios.delete(
-        `/api/v1/project-schedule/${id}/projectDetails/${index}`
+        `/api/v1/project-schedule/${id}/projectDetails/${index}`,
       );
       setProjectDetail(response.data);
       console.table(response.data);
@@ -178,7 +178,7 @@ const SiteScreen = () => {
     try {
       const response = await axios.delete(`/api/v1/purchase-order/${id}`);
       setPurchaseOrder(
-        purchaseOrders.filter((purchaseOrder) => purchaseOrder._id !== id)
+        purchaseOrders.filter((purchaseOrder) => purchaseOrder._id !== id),
       );
       toast.success(response.data);
     } catch (error) {
@@ -199,7 +199,7 @@ const SiteScreen = () => {
     try {
       await axios.delete(`/api/v1/extra-work/${id}`);
       setContractorExtra(
-        contractorExtra.filter((contractorExtra) => contractorExtra._id !== id)
+        contractorExtra.filter((contractorExtra) => contractorExtra._id !== id),
       );
     } catch (error) {
       toast.error(error.message);
@@ -209,7 +209,7 @@ const SiteScreen = () => {
   const deleteExtraWorkDetail = async (id, index) => {
     try {
       const deletedWork = await axios.delete(
-        `/api/v1/extra-work/${id}/work/${index}`
+        `/api/v1/extra-work/${id}/work/${index}`,
       );
       setClientExtra(deletedWork.data?.extraWork);
       toast.success(deletedWork.data?.message);
@@ -227,6 +227,7 @@ const SiteScreen = () => {
           ["Client", site.client?.name],
           ["Address", site.address],
           ["Project Type", site.projectType],
+          ["Cost Center", site?.costcenter],
           ["Incharge", site.incharge?.name],
           ["Quality Engineer", site.qualityEngineer?.name],
           ["Supervisor", site.supervisor?.name],
@@ -350,7 +351,7 @@ const SiteScreen = () => {
                           <td className="px-6 py-4 text-center">
                             {paymentDetail?.paymentDate
                               ? moment(paymentDetail?.paymentDate).format(
-                                  "DD-MM-YYYY"
+                                  "DD-MM-YYYY",
                                 )
                               : "-"}
                           </td>
@@ -372,7 +373,7 @@ const SiteScreen = () => {
                                 onClick={() =>
                                   deletePaymentDetail(
                                     paymentSchedules._id,
-                                    index
+                                    index,
                                   )
                                 }
                               >
@@ -381,7 +382,7 @@ const SiteScreen = () => {
                             </td>
                           )}
                         </tr>
-                      )
+                      ),
                     )}
                   </tbody>
                 </table>
@@ -441,7 +442,7 @@ const SiteScreen = () => {
                         <td className="px-6 py-4 text-center">
                           {work.startingStatus?.toStart
                             ? moment(work.startingStatus?.toStart).format(
-                                "DD-MM-YYYY"
+                                "DD-MM-YYYY",
                               )
                             : "-"}
                         </td>
@@ -449,7 +450,7 @@ const SiteScreen = () => {
                         <td className="px-6 py-4 text-center">
                           {work.startingStatus?.startedAt
                             ? moment(work.startingStatus?.startedAt).format(
-                                "DD-MM-YYYY"
+                                "DD-MM-YYYY",
                               )
                             : "-"}
                         </td>
@@ -468,7 +469,7 @@ const SiteScreen = () => {
                               onClick={() =>
                                 deleteProjectDetail(
                                   site?.projectSchedule._id,
-                                  index
+                                  index,
                                 )
                               }
                               className="mr-2"
@@ -548,7 +549,7 @@ const SiteScreen = () => {
                         <td className="px-6 py-4 ">{qualitySchedule.work}</td>
                         <td className="px-6 py-4 text-center">
                           {moment(qualitySchedule.checkingDate).format(
-                            "DD-MM-YYYY"
+                            "DD-MM-YYYY",
                           )}
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -645,7 +646,7 @@ const SiteScreen = () => {
                             <td className="px-6 py-4 text-center ">
                               {workorder.duration
                                 ? moment(workorder.duration).format(
-                                    "DD-MM-YYYY"
+                                    "DD-MM-YYYY",
                                   )
                                 : "-"}
                             </td>
@@ -762,7 +763,7 @@ const SiteScreen = () => {
                             <td className="px-6 py-4 text-center">
                               {bill?.dateOfPayment
                                 ? moment(bill?.dateOfPayment).format(
-                                    "DD-MM-YYYY"
+                                    "DD-MM-YYYY",
                                   )
                                 : "-"}
                             </td>
@@ -860,7 +861,7 @@ const SiteScreen = () => {
                             </td>
                             <td className="px-6 py-4 text-center">
                               {moment(purchaseRequest.reqDate).format(
-                                "DD MMMM YYYY"
+                                "DD MMMM YYYY",
                               )}
                             </td>
                             <td className="px-6 py-4 text-center">
@@ -873,7 +874,7 @@ const SiteScreen = () => {
                               <button
                                 onClick={() =>
                                   navigate(
-                                    `/purchase-request/${purchaseRequest?._id}`
+                                    `/purchase-request/${purchaseRequest?._id}`,
                                   )
                                 }
                                 className="mr-2"
@@ -991,7 +992,7 @@ const SiteScreen = () => {
                                   onClick={() =>
                                     deleteExtraWorkDetail(
                                       clientExtra._id,
-                                      index
+                                      index,
                                     )
                                   }
                                 >

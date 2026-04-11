@@ -31,13 +31,12 @@ const createVoucher = async (data) => {
   const {
     companyId,
     type,
-    entries,
     date,
     narration,
     costCenterId,
-    storeId,
     reference,
     referenceId,
+    entries,
     createdBy,
   } = data;
 
@@ -63,7 +62,6 @@ const createVoucher = async (data) => {
     totalDebit: debit,
     totalCredit: credit,
     costCenterId,
-    storeId,
     reference,
     referenceId,
     createdBy,

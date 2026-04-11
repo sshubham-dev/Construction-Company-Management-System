@@ -1,6 +1,7 @@
 const Company = require("../../models/company.models");
 const { createDefaultCOA } = require("./coa.service");
 
+// ✅
 const createCompany = async (data) => {
   const company = await Company.create(data);
 
@@ -10,6 +11,7 @@ const createCompany = async (data) => {
   return company;
 };
 
+// ✅
 const getCompanies = async () => {
   return await Company.find().sort({ createdAt: -1 });
 };
@@ -18,6 +20,7 @@ const getCompanyById = async (id) => {
   return await Company.findById(id);
 };
 
+// ✅
 const updateCompany = async (id, data) => {
   return await Company.findByIdAndUpdate(id, data,);
 };

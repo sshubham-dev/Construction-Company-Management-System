@@ -138,23 +138,21 @@ supplierSchema.pre("save", async function () {
 
     this.totalDue = payable < 0 ? 0 : payable;
 
-    // const ledgerId = await syncLedger({
-    //   doc: this,
-    //   type: "Supplier",
-    //   under: "Sundry Creditors",
-    //   getAddress: (doc) => ({
-    //     name: doc.name,
-    //     address: doc.address || "",
-    //     email: doc.email || "",
-    //     phone: doc.phone || "",
-    //     whatsapp: doc.whatsapp || "",
-    //   }),
-    //   getTaxDetails: (doc) => ({
-    //     gstNo: doc.gstNo || "",
-    //   }),
-    // });
+    const ledgerId = await syncLedger({
+      doc: this,
+      category: "Supplier",
+      getAddress: (doc) => ({
+        name: doc.name,
+        address: doc.address || "",
+        email: doc.email || "",
+        phone: doc.phone || "",
+      }),
+      getTaxDetails: (doc) => ({
+        gstNo: doc.gstNo || "",
+      }),
+    });
 
-    // if (ledgerId) this.ledger = ledgerId;
+    if (ledgerId) this.ledger = ledgerId;
   } catch (err) {
     console.error("Error in supplier ledger sync:", err);
     return err;
@@ -181,23 +179,21 @@ supplierSchema.pre("findOneAndUpdate", async function (next) {
     if (!update.$set) update.$set = {};
     update.$set.totalDue = payable < 0 ? 0 : payable;
 
-    // const ledgerId = await syncLedger({
-    //   doc: merged,
-    //   type: "Supplier",
-    //   under: "Sundry Creditors",
-    //   getAddress: (doc) => ({
-    //     name: doc.name,
-    //     address: doc.address || "",
-    //     email: doc.email || "",
-    //     phone: doc.phone || "",
-    //     whatsapp: doc.whatsapp || "",
-    //   }),
-    //   getTaxDetails: (doc) => ({
-    //     gstNo: doc.gstNo || "",
-    //   }),
-    // });
+    const ledgerId = await syncLedger({
+      doc: merged,
+      category: "Supplier",
+      getAddress: (doc) => ({
+        name: doc.name,
+        email: doc.email || "",
+        phone: doc.phone || "",
+        address: doc.address || "",
+      }),
+      getTaxDetails: (doc) => ({
+        gstNo: doc.gstNo || "",
+      }),
+    });
 
-    // if (ledgerId) update.$set.ledger = ledgerId;
+    if (ledgerId) update.$set.ledger = ledgerId;
 
     this.setUpdate(update);
     next();
