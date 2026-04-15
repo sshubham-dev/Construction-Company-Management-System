@@ -25,7 +25,7 @@ const CollectionEntry = ({ onClose, editId }) => {
 
   const PARTY_UNDER = ["Sundry Debtors"];
   const CASH_BANK_UNDER = ["Cash-in-Hand", "Bank Accounts"];
-  const COST_CENTER = ["Department"];
+  const COST_CENTER = ["Department","SITE"];
 
   useEffect(() => {
     axios
