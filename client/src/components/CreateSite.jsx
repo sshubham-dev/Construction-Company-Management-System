@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchNotifications } from "../features/notification/notificationSlice";
@@ -44,6 +44,7 @@ const CreateSite = ({ onClose, isEdit }) => {
     "Commercial",
     "Institutional",
     "Government",
+    "Interior",
   ];
   const unitOptions = ["SQFT", "SQMT", "RFT", "CUM", "NOS", "LUMSUM", "CFT"];
 
@@ -579,7 +580,6 @@ const handleFloorChange = (index, field, value) => {
       <form onSubmit={handleSubmit}>
         {step === 1 ? renderBasicDetails() : renderFloorDetails()}
       </form>
-      <Toaster position="top-right" />
     </div>
   );
 };

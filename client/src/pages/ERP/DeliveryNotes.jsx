@@ -5,6 +5,8 @@ import Modal from "../../components/Modal";
 import CreateDeliveryNote from "../../components/CreateDeliveryNote";
 import ConfirmDeliveryNote from "../../components/ConfirmDeliveryNote";
 import { useSelector } from "react-redux";
+import { GrEdit } from "react-icons/gr";
+import { MdDelete, MdAdd } from "react-icons/md";
 
 const DeliveryNotes = () => {
   const [notes, setNotes] = useState([]);

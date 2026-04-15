@@ -80,7 +80,7 @@ const groupSchema = new mongoose.Schema(
     // Nature of Group (Accounting classification)
     nature: {
       type: String,
-      enum: ["ASSET", "LIABILITY", "INCOME", "EXPENSE"],
+      enum: ["ASSET", "LIABILITY", "INCOME", "EXPENSES"],
       required: true,
     },
 

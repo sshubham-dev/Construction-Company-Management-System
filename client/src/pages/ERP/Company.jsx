@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate }  from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Modal from "../../components/Modal";
 import CreateCompany from "../../components/CreateCompany";
+import { GrEdit } from "react-icons/gr";
+import { MdDelete, MdAdd } from "react-icons/md";
 
 const Company = () => {
   const [units, setUnits] = useState([]);
@@ -19,7 +21,7 @@ const Company = () => {
 
   const fetchUnits = async () => {
     const res = await axios.get("/api/v1/company");
-    console.log(res.data)
+    console.log(res.data);
     setUnits(res.data);
     setFilteredUnits(res.data);
   };
@@ -28,7 +30,7 @@ const Company = () => {
     const keyword = e.target.value.toLowerCase();
     setSearch(keyword);
     const filtered = units.filter((u) =>
-      u.name.toLowerCase().includes(keyword)
+      u.name.toLowerCase().includes(keyword),
     );
     setFilteredUnits(filtered);
   };
@@ -87,7 +89,10 @@ const Company = () => {
                 View
               </button> */}
               <button onClick={() => editBU(bu._id)} className="text-green-600">
-                Edit
+                <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+              </button>
+              <button onClick={() => deleteBU(bu._id)}>
+                <MdDelete className="text-red-500 hover:text-red-600 text-lg" />
               </button>
             </div>
           </div>
@@ -108,7 +113,7 @@ const Company = () => {
               <th className="border p-2 text-left">GST</th>
               <th className="border p-2 text-left">Pan</th>
               <th className="border p-2 text-center">Status</th>
-              <th className="border p-2 text-center"></th>
+              <th className="border p-2 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -116,14 +121,12 @@ const Company = () => {
               <tr key={index}>
                 <td className="border p-2">{bu.name}</td>
                 <td className="border p-2 flex flex-col gap-1">
-                  {bu.phone} 
-                  <p>
-                  {bu.email}
-                  </p>
-                  </td>
+                  {bu.phone}
+                  <p>{bu.email}</p>
+                </td>
                 <td className="border p-2">{bu.gstNo}</td>
                 <td className="border p-2">{bu.panNo}</td>
-                <td className="border p-2">
+                <td className="border p-2 text-center">
                   {bu.isActive ? "Active" : "Inactive"}
                 </td>
                 <td className="border p-2 text-center space-x-2">
@@ -137,7 +140,10 @@ const Company = () => {
                     onClick={() => editBU(bu._id)}
                     className="text-green-600"
                   >
-                    Edit
+                    <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                  </button>
+                  <button onClick={() => deleteBU(bu._id)}>
+                    <MdDelete className="text-red-500 hover:text-red-600 text-lg" />
                   </button>
                 </td>
               </tr>
@@ -152,7 +158,7 @@ const Company = () => {
           onClick={() => setModalOpen(true)}
           className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-full shadow-lg text-2xl"
         >
-          +
+          <MdAdd />
         </button>
       </div>
 
@@ -162,7 +168,7 @@ const Company = () => {
           onClick={() => setModalOpen(true)}
           className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow"
         >
-          + Add Company
+          <MdAdd /> Company
         </button>
       </div>
       <Modal isOpen={createModal} onClose={() => setModalOpen(false)}>

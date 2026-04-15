@@ -9,43 +9,72 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const safeUnlink = (filePath) => {
-  try {
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  } catch (err) {
-    console.log("File delete error:", err.message);
-  }
+// const safeUnlink = (filePath) => {
+//   try {
+//     if (fs.existsSync(filePath)) {
+//       fs.unlinkSync(filePath);
+//     }
+//   } catch (err) {
+//     console.log("File delete error:", err.message);
+//   }
+// };
+
+// const uploadOnCloudinary = async (filePath, options = {}) => {
+//   try {
+
+//     const result = await cloudinary.uploader.upload(filePath, {
+//       resource_type: "auto",
+//       folder: options.folder || "projects",
+//       public_id: options.public_id,
+
+//       transformation: [
+//         {
+//           width: 1600,
+//           crop: "limit",
+//           quality: "auto",
+//           fetch_format: "auto",
+//         },
+//       ],
+//     });
+
+//     safeUnlink(filePath);
+
+//     return result;
+
+//   } catch (error) {
+//     safeUnlink(filePath);
+//     throw error;
+//   }
+// };
+
+
+
+const uploadOnCloudinary = (fileBuffer, options = {}) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: options.folder || "projects",
+        public_id: options.public_id,
+        resource_type: "auto",
+        transformation: [
+          {
+            width: 1200,
+            crop: "limit",
+            quality: "auto",
+            fetch_format: "auto",
+          },
+        ],
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+
+    stream.end(fileBuffer); // ✅ direct stream
+  });
 };
 
-const uploadOnCloudinary = async (filePath, options = {}) => {
-  try {
-
-    const result = await cloudinary.uploader.upload(filePath, {
-      resource_type: "auto",
-      folder: options.folder || "projects",
-      public_id: options.public_id,
-
-      transformation: [
-        {
-          width: 1600,
-          crop: "limit",
-          quality: "auto",
-          fetch_format: "auto",
-        },
-      ],
-    });
-
-    safeUnlink(filePath);
-
-    return result;
-
-  } catch (error) {
-    safeUnlink(filePath);
-    throw error;
-  }
-};
 
 const deleteFromCloudinary = async (publicId) => {
   try {

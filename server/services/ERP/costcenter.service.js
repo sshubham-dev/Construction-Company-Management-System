@@ -9,7 +9,7 @@ const createCostCenter = async (data) => {
 
 // ✅
 const getCostCenters = async (companyId) => {
-  return await CostCenter.find({ companyId }).sort({ createdAt: -1 }).populate("companyId").exec();
+  return await CostCenter.find().sort({ createdAt: -1 }).populate("companyId").exec();
 };
 
 const updateCostCenter = async (id, data) => {

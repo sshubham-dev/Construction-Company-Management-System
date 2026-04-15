@@ -53,7 +53,7 @@ const CreateBusinessUnit = ({ onClose, editId }) => {
         code: data.code || "",
         phone: data.phone || "",
         email: data.email || "",
-        manager: data.manager,
+        manager: data.manager._id || data.manager,
         isActive: data.isActive ?? true,
         address: data.address || {
           city: "",

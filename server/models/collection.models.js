@@ -15,7 +15,8 @@ const collectionSchema = new mongoose.Schema(
     businessUnitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessUnit",
-      required: true,
+      // required: true,
+      default: null,
     },
     costCenterId: {
       type: mongoose.Schema.Types.ObjectId,

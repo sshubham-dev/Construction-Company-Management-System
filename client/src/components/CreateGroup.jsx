@@ -1,149 +1,173 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 
-axios.defaults.withCredentials = true;
-
-const GroupModal = ({ onClose, editId }) => {
+const GroupModal = ({ onClose, editId, onSave }) => {
   const [group, setGroup] = useState({
     name: "",
-    parentId: "",
+    parentId: null,
     nature: "",
+    companyId: "",
   });
-  const { user, isLoggedIn } = useSelector((state) => state.auth);
-  const [ledgerGroups, setLedgerGroup] = useState([]);
+
+  const [ledgerGroups, setLedgerGroups] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [companies, setCompany] = useState([]);
+
+  const { user } = useSelector((state) => state.auth);
+
   useEffect(() => {
-    const fetchGroup = async () => {
-      const response = await axios.get("/api/v1/ledger-group", {
-        params: { companyId: user.companyId },
-      });
-      console.log(response.data);
-      setLedgerGroup(response.data);
-    };
-    const fetchCompany = async () => {
-      const res = await axios.get("/api/v1/company");
-      console.log(res.data);
-      setCompany(res.data);
-    };
-    fetchCompany();
-    fetchGroup();
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const [groupRes, companyRes] = await Promise.all([
+        axios.get("/api/v1/ledger-group", {
+          params: { companyId: user.companyId },
+        }),
+        axios.get("/api/v1/company"),
+      ]);
+
+      setLedgerGroups(groupRes.data);
+      setCompanies(companyRes.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // ✅ Prefill for edit
+  useEffect(() => {
+    if (editId) {
+      const fetchGroup = async () => {
+        const res = await axios.get(`/api/v1/ledger-group/${editId}`);
+        setGroup({
+          name: res.data.name || "",
+          companyId: res.data.companyId?._id || null,
+          parentId: res.data.parentId?._id || null,
+          nature: res.data.nature || "",
+        });
+      };
+      fetchGroup();
+    }
+  }, [editId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setGroup((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setGroup((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    console.log(group);
+
     try {
-      const response = await axios.post("/api/v1/ledger-group", group);
-      console.log("Group Data:", group);
-      console.log(response);
-      setLoading(false);
+      let res;
+
+      if (editId) {
+        res = await axios.put(`/api/v1/ledger-group/${editId}`, group);
+      } else {
+        res = await axios.post("/api/v1/ledger-group", group);
+      }
+
+      onSave(res.data);
       onClose();
     } catch (error) {
       console.log(error);
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name & Alias */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium">Name</label>
-            <input
-              type="text"
-              name="name"
-              value={group.name}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-              required
-            />
-          </div>
-
-          {/* Company */}
-          <div>
-            <label className="block text-sm font-medium">Company</label>
-            <select
-              name="companyId"
-              value={group.companyId}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-            >
-              <option value="">Select Company</option>
-              {companies.map((c, index) => (
-                <option key={index} value={c._id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Name + Company */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label>Name</label>
+          <input
+            name="name"
+            value={group.name}
+            onChange={handleChange}
+            className="w-full border px-3 py-2 rounded"
+            required
+          />
         </div>
 
-        {/* Under Group */}
         <div>
-          <label className="block text-sm font-medium">Under</label>
+          <label>Company</label>
           <select
-            name="parentId"
-            value={group.parentId}
+            name="companyId"
+            value={group.companyId}
             onChange={handleChange}
-            className="w-full border px-3 py-2 rounded-md"
+            className="w-full border px-3 py-2 rounded"
           >
-            <option value="">Select Under Group</option>
-            {ledgerGroups.map((ledgerGroup, index) => (
-              <option key={index} value={ledgerGroup._id}>
-                {ledgerGroup.name}
+            <option value="">Select</option>
+            {companies.map((c) => (
+              <option key={c._id} value={c._id}>
+                {c.name}
               </option>
             ))}
           </select>
         </div>
+      </div>
 
-        <div>
-          <label className="block text-sm font-medium">Nature</label>
-          <select
-            name="nature"
-            value={group.nature}
-            onChange={handleChange}
-            className="w-full border px-3 py-2 rounded-md"
-          >
-            <option value="">Nature of Group</option>
-            <option value="ASSET">ASSET</option>
-            <option value="LIABILITY">LIABILITY</option>
-            <option value="INCOME">INCOME</option>
-            <option value="EXPENSES">EXPENSES</option>
-          </select>
-        </div>
+      {/* Parent */}
+      <div>
+        <label>Under</label>
+        <select
+          name="parentId"
+          value={group.parentId}
+          onChange={handleChange}
+          className="w-full border px-3 py-2 rounded"
+        >
+          <option value="null">Primary</option>
+          {ledgerGroups
+            .filter((g) => g._id !== editId)
+            .map((g) => (
+              <option key={g._id} value={g._id}>
+                {g.name}
+              </option>
+            ))}
+        </select>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 mt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-400 text-white rounded-md"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md"
-            disabled={loading}
-          >
-            {loading ? "Submitting..." : "Submit"}
-          </button>
-        </div>
-      </form>
-    </div>
+      {/* Nature */}
+      <div>
+        <label>Nature</label>
+        <select
+          name="nature"
+          value={group.nature}
+          onChange={handleChange}
+          className="w-full border px-3 py-2 rounded"
+        >
+          <option value="">Select</option>
+          <option value="ASSET">ASSET</option>
+          <option value="LIABILITY">LIABILITY</option>
+          <option value="INCOME">INCOME</option>
+          <option value="EXPENSES">EXPENSE</option>
+        </select>
+      </div>
+
+      {/* Actions */}
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 bg-gray-400 text-white rounded"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
+          {loading ? "Saving..." : editId ? "Update Group" : "Create Group"}
+        </button>
+      </div>
+    </form>
   );
 };
 

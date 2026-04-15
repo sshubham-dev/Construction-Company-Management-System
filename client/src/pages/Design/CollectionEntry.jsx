@@ -1,44 +1,102 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Select from "react-select";
+import { useSelector, useDispatch } from "react-redux";
+import toast from "react-hot-toast";
 
-const CollectionEntry = ({ onClose }) => {
+const CollectionEntry = ({ onClose, editId }) => {
   const [ledgers, setLedgers] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const { isLoggedIn, user } = useSelector((state) => {
+    return state.auth;
+  });
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
+    costCenterId: "",
     clientLedgerId: "",
     receivedInto: "",
     amount: "",
-    purpose: "",
     medium: "",
     referenceNo: "",
     narration: "",
     proofImage: null,
   });
+  const [costCenters, setCostCenter] = useState([]);
 
-  const PARTY_UNDER = ["Sundry Debtors", "Sundry Creditors"];
-  const CASH_BANK_UNDER = ["Cash-in-Hand", "Bank Accounts", "Cash", "Bank"];
+  const PARTY_UNDER = ["Sundry Debtors"];
+  const CASH_BANK_UNDER = ["Cash-in-Hand", "Bank Accounts"];
+  const COST_CENTER = ["Department"];
 
   useEffect(() => {
-    axios.get("/api/v1/ledger").then((res) => setLedgers(res.data));
+    axios
+      .get("/api/v1/ledger", {
+        params: {
+          companyId: user.companyId,
+        },
+      })
+      .then((res) => setLedgers(res.data));
+    const fetchCostCenter = async () => {
+      try {
+        const res = await axios.get("/api/v1/cost-center", {
+          params: {
+            companyId: user.companyId,
+          },
+        });
+        setCostCenter(res.data.filter((cc) => COST_CENTER.includes(cc?.type)));
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchCostCenter();
   }, []);
 
+  useEffect(() => {
+    if (!editId) return;
+
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`/api/v1/collection/${editId}`);
+        const data = res.data;
+        console.log(data);
+
+        setForm({
+          date: data.date?.slice(0, 10),
+          costCenterId: data.costCenterId?._id || null,
+          clientLedgerId: data.clientLedgerId?._id || "",
+          receivedInto: data.receivedInto?._id || "",
+          amount: data.amount || "",
+          medium: data.medium || "",
+          referenceNo: data.referenceNo || "",
+          narration: data.narration || data.purpose || "",
+          proofImage: null, // don't prefill file
+        });
+      } catch (err) {
+        console.error(err);
+        alert("Failed to load data");
+      }
+    };
+
+    fetchData();
+  }, [editId]);
+
   const partyLedgers = useMemo(
-    () => ledgers.filter((l) => PARTY_UNDER.includes(l.under)),
+    () => ledgers.filter((l) => PARTY_UNDER.includes(l?.groupId?.name)),
     [ledgers],
   );
 
   const cashBankLedgers = useMemo(
-    () => ledgers.filter((l) => CASH_BANK_UNDER.includes(l.under)),
+    () => ledgers.filter((l) => CASH_BANK_UNDER.includes(l?.groupId?.name)),
     [ledgers],
   );
+
+  console.log(cashBankLedgers);
+
+  const findOption = (options, value) => options.find((o) => o.value === value);
 
   const mapOptions = (arr) =>
     arr.map((l) => ({
       value: l._id,
-      label: `${l.name} (${l.referenceType || l.under})`,
+      label: `${l.name} (${l.referenceType || l?.groupId?.name || l.type})`,
     }));
 
   const updateForm = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -47,16 +105,22 @@ const CollectionEntry = ({ onClose }) => {
     e.preventDefault();
     setLoading(true);
 
-    const fd = new FormData();
-    Object.keys(form).forEach((k) => {
-      fd.append(k, form[k]);
-    });
-
+    let toastId;
     try {
-      await axios.post("/api/v1/collection", fd);
+      toastId = toast.loading("Processing...");
+      if (editId !== undefined) {
+        await axios.put(`/api/v1/collection/${editId}`, form);
+        toast.success("Updated successfully", { id: toastId });
+      } else {
+        console.log(form);
+        await axios.post("/api/v1/collection", form);
+        toast.success("Created successfully", { id: toastId });
+      }
       onClose();
     } catch (err) {
-      alert(err.response?.data?.message || "Error");
+      // ❌ error toast (replaces loading)
+      toast.error("Failed. Try again.", { id: toastId });
+      console.log(err);
     }
 
     setLoading(false);
@@ -77,6 +141,7 @@ const CollectionEntry = ({ onClose }) => {
       {/* CLIENT */}
       <Select
         options={mapOptions(partyLedgers)}
+        value={findOption(mapOptions(partyLedgers), form.clientLedgerId)}
         placeholder="Select Client"
         onChange={(v) => updateForm("clientLedgerId", v?.value || "")}
       />
@@ -84,8 +149,16 @@ const CollectionEntry = ({ onClose }) => {
       {/* RECEIVED INTO */}
       <Select
         options={mapOptions(cashBankLedgers)}
-        placeholder="Received Into (Company Cash/Bank)"
+        value={findOption(mapOptions(cashBankLedgers), form.receivedInto)}
+        placeholder="Select Bank"
         onChange={(v) => updateForm("receivedInto", v?.value || "")}
+      />
+
+      <Select
+        options={mapOptions(costCenters)}
+        value={findOption(mapOptions(costCenters), form.costCenterId)}
+        placeholder="Payment For"
+        onChange={(v) => updateForm("costCenterId", v?.value || "")}
       />
 
       {/* AMOUNT */}
@@ -98,13 +171,13 @@ const CollectionEntry = ({ onClose }) => {
       />
 
       {/* PURPOSE */}
-      <input
+      {/* <input
         type="text"
         placeholder="Purpose"
         value={form.purpose}
         onChange={(e) => updateForm("purpose", e.target.value)}
         className="border p-2 rounded w-full"
-      />
+      /> */}
 
       {/* MEDIUM */}
       <select
@@ -136,7 +209,7 @@ const CollectionEntry = ({ onClose }) => {
 
       {/* NARRATION */}
       <textarea
-        placeholder="Notes"
+        placeholder="Narration.."
         value={form.narration}
         onChange={(e) => updateForm("narration", e.target.value)}
         className="border p-2 rounded w-full"
@@ -155,7 +228,7 @@ const CollectionEntry = ({ onClose }) => {
           disabled={loading}
           className="px-4 py-2 bg-green-600 text-white rounded"
         >
-          {loading ? "Saving..." : "Submit"}
+          {loading ? "Saving..." : editId ? "Update" : "Submit"}
         </button>
       </div>
     </form>

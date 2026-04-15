@@ -227,7 +227,6 @@ employeeSchema.pre("findOneAndUpdate", async function () {
 
     // Apply updates locally
     if (update.$set) Object.assign(employee, update.$set);
-    Object.assign(employee, update);
 
     // ✅ sync ledger with REAL document
     const ledgerId = await syncLedger({

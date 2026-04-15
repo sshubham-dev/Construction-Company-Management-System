@@ -69,6 +69,7 @@ const CreateLedger = ({ onClose, editData }) => {
     fetchCompany();
   }, []);
 
+
   /* =========================
      EDIT MODE
   ========================== */
@@ -301,35 +302,35 @@ const CreateLedger = ({ onClose, editData }) => {
         <div className="space-y-2 border px-4 py-6 rounded">
           <input
             name="bankingDetails.accountHolder"
-            value={ledger.bankingDetails.accountHolder}
+            value={ledger.bankingDetails?.accountHolder}
             onChange={handleChange}
             placeholder="Account Holder"
             className="border p-2 w-full rounded"
           />
           <input
             name="bankingDetails.bankName"
-            value={ledger.bankingDetails.bankName}
+            value={ledger.bankingDetails?.bankName}
             onChange={handleChange}
             placeholder="Bank Name"
             className="border p-2 w-full rounded"
           />
           <input
             name="bankingDetails.accountNumber"
-            value={ledger.bankingDetails.accountNumber}
+            value={ledger.bankingDetails?.accountNumber}
             onChange={handleChange}
             placeholder="Account Number"
             className="border p-2 w-full rounded"
           />
           <input
             name="bankingDetails.ifscCode"
-            value={ledger.bankingDetails.ifscCode}
+            value={ledger.bankingDetails?.ifscCode}
             onChange={handleChange}
             placeholder="IFSC Code"
             className="border p-2 w-full rounded"
           />
           <input
             name="bankingDetails.branch"
-            value={ledger.bankingDetails.branch}
+            value={ledger.bankingDetails?.branch}
             onChange={handleChange}
             placeholder="Branch"
             className="border p-2 w-full rounded"
@@ -378,7 +379,7 @@ const CreateLedger = ({ onClose, editData }) => {
           Cancel
         </button>
 
-        <button disabled={loading} className="btn-primary">
+        <button disabled={loading} className="btn-primary" >
           {loading ? "Saving..." : isEdit ? "Update" : "Create"}
         </button>
       </div>

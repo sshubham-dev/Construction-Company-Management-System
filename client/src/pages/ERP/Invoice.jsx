@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { Plus, FileText, IndianRupee, Clock, TrendingUp } from "lucide-react";
+import { GrEdit } from "react-icons/gr";
+import { MdDelete, MdAdd } from "react-icons/md";
 
 // Mock data (replace with API)
 const invoices = [];

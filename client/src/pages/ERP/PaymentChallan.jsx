@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { GrEdit } from "react-icons/gr";
+import { MdDelete, MdAdd } from "react-icons/md";
 
 const PaymentChallan = () => {
   const [challans, setChallans] = useState([]);

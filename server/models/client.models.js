@@ -122,7 +122,6 @@ clientSchema.pre("save", async function () {
     });
 
     if (ledgerId) this.ledger = ledgerId;
-  
   } catch (err) {
     console.error("Error in client pre-save:", err);
     return err;
@@ -137,19 +136,22 @@ clientSchema.pre("findOneAndUpdate", async function () {
     const client = await this.model.findOne(this.getQuery());
     if (!client) return;
 
-    const update = this.getUpdate();
+    const update = this.getUpdate() || {};
 
+    // ✅ Apply only $set
     if (update.$set) {
       Object.assign(client, update.$set);
     }
 
-    Object.assign(client, update);
+    // ❌ REMOVE THIS
+    // Object.assign(client, update);
 
     await recalcFinance(client);
 
+    // ✅ FIX: use client, not this
     const ledgerId = await syncLedger({
-      doc: this,
-      category: `Client`,
+      doc: client,
+      category: "Client",
 
       getAddress: (doc) => ({
         name: doc.name,
@@ -168,13 +170,14 @@ clientSchema.pre("findOneAndUpdate", async function () {
 
     if (!update.$set) update.$set = {};
 
-    update.$set.ledger = ledgerId;
+    if (ledgerId) update.$set.ledger = ledgerId;
+
     update.$set["financials.totalPayable"] = client.financials.totalPayable;
     update.$set["financials.totalDue"] = client.financials.totalDue;
 
     this.setUpdate(update);
   } catch (err) {
-    return err;
+    console.error("Error in client pre-findOneAndUpdate:", err);
   }
 });
 

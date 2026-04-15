@@ -175,10 +175,12 @@ const uploadBlogImage = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
     const slug = req.body.slug || "blog";
-    const upload = await uploadOnCloudinary(req.file.path, {
+    const upload = await uploadOnCloudinary(req.file.buffer, {
       folder: "blogs/content",
       public_id: `${slug}-${Date.now()}`,
     });
+    if(!upload) return res.status(404).json({message:"Some thing went wrong!" })
+    console.log(upload)
     res.status(200).json({
       url: upload?.secure_url, // Cloudinary CDN URL
       public_id: upload?.public_id,

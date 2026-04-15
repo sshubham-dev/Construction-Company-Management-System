@@ -5,6 +5,8 @@ import { IoIosAddCircle } from "react-icons/io";
 import CreateJournal from "../../components/CreateJournal";
 import Modal from "../../components/Modal";
 import toast, { Toaster } from "react-hot-toast";
+import { GrEdit } from "react-icons/gr";
+import { MdDelete, MdAdd } from "react-icons/md";
 
 const Journal = () => {
   const [journals, setJournals] = useState([]);

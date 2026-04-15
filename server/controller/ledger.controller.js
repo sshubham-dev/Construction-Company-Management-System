@@ -27,8 +27,7 @@ const getAll = async (req, res) => {
   try {
     const { companyId } = req.query;
 
-    const data = await getLedgers(companyId)
-
+    const data = await getLedgers(companyId);
 
     res.json(data);
   } catch (err) {
@@ -38,7 +37,7 @@ const getAll = async (req, res) => {
 };
 
 const getOne = async (req, res) => {
-  const data = await getLedgerById(req.params.id)
+  const data = await getLedgerById(req.params.id);
 
   res.json(data);
 };
@@ -157,7 +156,7 @@ const createGroup = async (req, res) => {
     const data = await GroupService.createGroup(req.body, req.user);
     res.status(201).json(data);
   } catch (e) {
-    console.log(e)
+    console.log(e);
     res.status(500).json({ error: e.message });
   }
 };
@@ -168,6 +167,16 @@ const getGroups = async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error("Get Groups Error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const getGroup = async (req, res) => {
+  try {
+    const data = await GroupService.getGroup(req.params.id);
+    res.json(data);
+  } catch (error) {
+    console.error("Get Group Error:", error);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -234,6 +243,7 @@ module.exports = {
 
   createGroup,
   getGroups,
+  getGroup,
   updateGroup,
   // getGroupById,
   // deleteGroup,

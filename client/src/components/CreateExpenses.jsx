@@ -3,6 +3,7 @@ import axios from "axios";
 import Select from "react-select";
 import AsyncSelect from "react-select/async";
 import { useMemo } from "react";
+import { useSelector, useDispatch } from "react-redux";
 
 const ExpenseForm = ({ onClose, editId }) => {
   const [loading, setLoading] = useState(false);
@@ -18,39 +19,44 @@ const ExpenseForm = ({ onClose, editId }) => {
     attachments: [],
     expenseCategory: "",
   });
-
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [preview, setPreview] = useState([]); // array of { url, type }
 
   /* ---------------------------------- LOAD LEDGERS ---------------------------------- */
   useEffect(() => {
     const loadLedgers = async () => {
-      const { data } = await axios.get("/api/v1/ledger");
-
+      const { data } = await axios.get("/api/v1/ledger", {
+        params: { companyId: user.companyId },
+      });
+      console.log(data);
       // Site / Store / Office ledgers
       setLedgers(data);
     };
-
-    loadLedgers();
-
     const fetchCostCenter = async () => {
       try {
-        const data = await axios.get("/api/v1/cost-center");
-        setCostCenters(data.data);
+        const { data } = await axios.get("/api/v1/cost-center", {
+          params: { companyId: user.companyId },
+        });
+        console.log(data);
+        setCostCenters(data);
       } catch (error) {
         console.log(error);
       }
     };
+    loadLedgers();
     fetchCostCenter();
   }, []);
 
   useEffect(() => {
-    console.log(form.expenseCategory)
+    console.log(form.expenseCategory);
     // Expense ledgers (Expenses group)
     setExpenseLedgers(
       ledgers.filter((l) => l?.costCenter?._id === form.expenseCategory),
     );
-    console.log(ledgers)
-    console.log(ledgers.filter((l) => l?.costCenter?._id === form.expenseCategory),)
+    console.log(ledgers);
+    console.log(
+      ledgers.filter((l) => l?.costCenter?._id === form.expenseCategory),
+    );
   }, [form.expenseCategory]);
 
   /* ---------------------------------- EDIT MODE ---------------------------------- */

@@ -8,6 +8,7 @@ const {
   rejectCollection,
   updateCollection,
   deleteCollection,
+  getCollection,
 } = require("../controller/collection.controller");
 const upload = require("../middlewares/Upload");
 const { userAuth, adminAuth } = require("../middlewares/auth.middleware");
@@ -32,8 +33,8 @@ CollectionRoute.put("/reject/:id", adminAuth, rejectCollection);
 CollectionRoute.put("/cancel/:id", adminAuth, cancelCollection);
 
 // update & delete
+CollectionRoute.get("/:id", userAuth, getCollection);
 CollectionRoute.put("/:id", userAuth, updateCollection);
 CollectionRoute.delete("/:id", userAuth, deleteCollection);
-
 
 module.exports = CollectionRoute;

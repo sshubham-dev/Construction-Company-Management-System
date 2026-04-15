@@ -3,45 +3,76 @@
 const { Group, Ledger } = require("../../models/ledger.models");
 
 const defaultGroups = [
-  { name: "Assets", nature: "ASSET" },
-  { name: "Liabilities", nature: "LIABILITY" },
-  { name: "Income", nature: "INCOME" },
-  { name: "Expenses", nature: "EXPENSE" },
-
-  { name: "Cash-in-Hand", nature: "ASSET" },
-  { name: "Bank Accounts", nature: "ASSET" },
-  { name: "Sundry Debtors", nature: "ASSET" },
+  // 1. ASSET
+  { name: "Current Assets", nature: "ASSET" },
   { name: "Fixed Assets", nature: "ASSET" },
   { name: "Investments", nature: "ASSET" },
+  { name: "Loans & Advances (Assets)", nature: "ASSET" },
 
-  { name: "Sundry Creditors", nature: "LIABILITY" },
-  { name: "Duties & Taxes", nature: "LIABILITY" },
+  // 2. LIABILITY
   { name: "Capital Account", nature: "LIABILITY" },
+  { name: "Current Liabilities", nature: "LIABILITY" },
+  { name: "Loans (Liability)", nature: "LIABILITY" },
+  { name: "Suspense A/c", nature: "LIABILITY" },
 
-  { name: "Direct Expenses", nature: "EXPENSE" },
-  { name: "Indirect Expenses", nature: "EXPENSE" },
-  { name: "Purchase Account", nature: "EXPENSE" },
+  // 3. EXPENSES
+  { name: "Direct Expenses", nature: "EXPENSES" },
+  { name: "Indirect Expenses", nature: "EXPENSES" },
+  { name: "Purchase Account", nature: "EXPENSES" },
 
+  // 4. INCOME
   { name: "Direct Income", nature: "INCOME" },
-  { name: "Sales Account", nature: "INCOME" },
   { name: "Indirect Income", nature: "INCOME" },
+  { name: "Sales Account", nature: "INCOME" },
+
+  { name: "Cash-in-Hand", nature: "ASSET", under: "Current Assets" },
+  { name: "Bank Accounts", nature: "ASSET", under: "Current Assets" },
+  { name: "Sundry Debtors", nature: "ASSET", under: "Current Assets" },
+  {
+    name: "Sundry Creditors",
+    nature: "LIABILITY",
+    under: "Current Liabilities",
+  },
+  { name: "Duties & Taxes", nature: "LIABILITY", under: "Current Liabilities" },
 ];
 
 // ✅
 const createDefaultCOA = async (companyId) => {
   const groupMap = {};
 
-  for (let g of defaultGroups) {
+  // 🟢 1. Create PRIMARY groups (no 'under')
+  for (let g of defaultGroups.filter((g) => !g.under)) {
     const group = await Group.create({
-      ...g,
+      name: g.name,
+      nature: g.nature,
       companyId,
       isReserved: true,
+      parentId: null, // ✅ primary
     });
 
     groupMap[g.name] = group._id;
   }
 
-  // Create basic ledgers
+  // 🟡 2. Create SUB groups (with 'under')
+  for (let g of defaultGroups.filter((g) => g.under)) {
+    const parentId = groupMap[g.under];
+
+    if (!parentId) {
+      throw new Error(`Parent group not found for ${g.name}`);
+    }
+
+    const group = await Group.create({
+      name: g.name,
+      nature: g.nature,
+      companyId,
+      isReserved: true,
+      parentId, // ✅ link to parent
+    });
+
+    groupMap[g.name] = group._id;
+  }
+
+  // 🔵 3. Create Ledgers
   await Ledger.create([
     {
       name: "Cash",
@@ -49,12 +80,6 @@ const createDefaultCOA = async (companyId) => {
       companyId,
       category: "CASH",
     },
-    // {
-    //   name: "Bank",
-    //   groupId: groupMap["Bank Accounts"],
-    //   companyId,
-    //   category: "BANK",
-    // },
   ]);
 };
 

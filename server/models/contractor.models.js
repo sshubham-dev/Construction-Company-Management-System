@@ -184,7 +184,6 @@ contractorSchema.pre("findOneAndUpdate", async function (next) {
     if (update.$set) {
       Object.assign(contractor, update.$set);
     }
-    Object.assign(contractor, update);
 
     // Recalculate finance totals
     await recalcContractorFinance(contractor);

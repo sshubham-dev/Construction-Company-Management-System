@@ -121,7 +121,7 @@ const convertToUser = async (id, role, password, status) => {
           $and: [
             { userName: employee.name },
             { department: employee.department },
-            // { companyId: employee.companyId },
+            { companyId: employee.companyId },
           ],
         });
         if (!employeeUser) return "Validation Error";
@@ -137,6 +137,8 @@ const convertToUser = async (id, role, password, status) => {
           employeeUser.password = password || employeeUser.password;
           employeeUser.companyId = employee.companyId || employeeUser.companyId;
           employeeUser.ledger = employee.ledger || employeeUser.ledger;
+          employeeUser.businessUnitId =
+            employee.businessUnitId || employeeUser.businessUnitId;
           console.log(employee.companyId);
           await employeeUser.save();
         } else if (status === "Create") {
@@ -149,10 +151,10 @@ const convertToUser = async (id, role, password, status) => {
             role,
             department: employee.department,
             companyId: employee.companyId,
+            businessUnitId: employee.businessUnitId,
+            ledger: employee.ledger,
           });
-          // console.log('newEmployeeUser', newEmployeeUser)
           const savedEmployeeUser = await newEmployeeUser.save();
-          // console.log('savedEmployeeUser', savedEmployeeUser)
           employee.userId = savedEmployeeUser._id;
           await employee.save({ validateBeforeSave: false });
         }
@@ -162,68 +164,135 @@ const convertToUser = async (id, role, password, status) => {
         const client = await Client.findById(id);
         if (!client) return "Client not Found";
         const clientUser = await User.findOne({
-          $and: [{ userName: client.name }, { department: "Client" }],
+          $and: [
+            { userName: client.name },
+            { companyId: client.companyId },
+            { department: "Client" },
+          ],
         });
         if (clientUser) return "Validation Error";
-        const newClientUser = new User({
-          userName: client.name,
-          userMail: client.email,
-          password,
-          phone: client.phone,
-          whatsapp: client.whatsapp,
-          role,
-          department: "Client",
-          companyId: client.companyId,
-        });
-        const savedClientUser = await newClientUser.save();
-        client.userId = savedClientUser._id;
-        await client.save({ validateBeforeSave: false });
+        if (status === "Update") {
+          clientUser.userName = client.name || clientUser.userName;
+          clientUser.userMail = client.email || clientUser.userMail;
+          clientUser.phone = client.phone || clientUser.phone;
+          clientUser.whatsapp = client.whatsapp || clientUser.whatsapp;
+          clientUser.department = client.department || clientUser.department;
+          clientUser.role = role || clientUser.role;
+          clientUser.password = password || clientUser.password;
+          clientUser.companyId = client.companyId || clientUser.companyId;
+          clientUser.ledger = client.ledger || clientUser.ledger;
+          clientUser.businessUnitId =
+            client.businessUnitId || clientUser.businessUnitId;
+          await clientUser.save();
+        } else if (status === "Create") {
+          const newClientUser = new User({
+            userName: client.name,
+            userMail: client.email,
+            password,
+            phone: client.phone,
+            whatsapp: client.whatsapp,
+            role,
+            department: "Client",
+            companyId: client.companyId,
+            businessUnitId: employee.businessUnitId,
+            ledger: employee.ledger,
+          });
+          const savedClientUser = await newClientUser.save();
+          client.userId = savedClientUser._id;
+          await client.save({ validateBeforeSave: false });
+        }
         break;
 
       case "Contractor":
         const contractor = await Contractor.findById(id);
         if (!contractor) return "Contractor not found";
         const contractorUser = await User.findOne({
-          $and: [{ userName: contractor.name }, { department: "Contractor" }],
+          $and: [
+            { userName: contractor.name },
+            { companyId: contractor.companyId },
+            { department: "Contractor" },
+          ],
         });
         if (contractorUser) return "Validation Error";
-        const newContractorUser = new User({
-          userName: contractor.name,
-          userMail: contractor.email,
-          password,
-          phone: contractor.phone,
-          whatsapp: contractor.whatsapp,
-          role,
-          department: "Contractor",
-          companyId: contractor.companyId,
-        });
-        const savedContractorUser = await newContractorUser.save();
-        contractor.userId = savedContractorUser._id;
-        await contractor.save({ validateBeforeSave: false });
+        if (status === "Update") {
+          contractorUser.userName = contractor.name || contractorUser.userName;
+          contractorUser.userMail = contractor.email || contractorUser.userMail;
+          contractorUser.phone = contractor.phone || contractorUser.phone;
+          contractorUser.whatsapp =
+            contractor.whatsapp || contractorUser.whatsapp;
+          contractorUser.department =
+            contractor.department || contractorUser.department;
+          contractorUser.role = role || contractorUser.role;
+          contractorUser.password = password || contractorUser.password;
+          contractorUser.companyId =
+            contractor.companyId || contractorUser.companyId;
+          contractorUser.ledger = contractor.ledger || contractorUser.ledger;
+          contractorUser.businessUnitId =
+            contractor.businessUnitId || contractorUser.businessUnitId;
+          await contractorUser.save();
+        } else if (status === "Create") {
+          const newContractorUser = new User({
+            userName: contractor.name,
+            userMail: contractor.email,
+            password,
+            phone: contractor.phone,
+            whatsapp: contractor.whatsapp,
+            role,
+            department: "Contractor",
+            companyId: contractor.companyId,
+            businessUnitId: contractor.businessUnitId,
+            ledger: contractor.ledger,
+          });
+          const savedContractorUser = await newContractorUser.save();
+          contractor.userId = savedContractorUser._id;
+          await contractor.save({ validateBeforeSave: false });
+        }
         break;
 
       case "Supplier":
-        const supplier = await Supplier.findById(id);
+        supplier = await Supplier.findById(id);
         if (!supplier) {
           return "Supplier not found";
         }
         const supplierUser = await User.findOne({
-          $and: [{ userName: supplier.name }, { department: "Supplier" }],
+          $and: [
+            { userName: supplier.name },
+            { companyId: supplier.companyId },
+            { department: "Supplier" },
+          ],
         });
         if (supplierUser) return "Validation Error";
-        const newSupplierUser = new User({
-          userName: supplier.name,
-          userMail: supplier.email,
-          password,
-          phone: supplier.phone,
-          whatsapp: supplier.whatsapp,
-          role,
-          department: "Supplier",
-          companyId: supplier.companyId,
-        });
-        const savedSupplierUser = await newSupplierUser.save();
-        supplier.userId = savedSupplierUser._id;
-        await supplier.save({ validateBeforeSave: false });
+        if (status === "Update") {
+          supplierUser.userName = supplier.name || supplierUser.userName;
+          supplierUser.userMail = supplier.email || supplierUser.userMail;
+          supplierUser.phone = supplier.phone || supplierUser.phone;
+          supplierUser.whatsapp = supplier.whatsapp || supplierUser.whatsapp;
+          supplierUser.department =
+            supplier.department || supplierUser.department;
+          supplierUser.role = role || supplierUser.role;
+          supplierUser.password = password || supplierUser.password;
+          supplierUser.companyId = supplier.companyId || supplierUser.companyId;
+          supplierUser.ledger = supplier.ledger || supplierUser.ledger;
+          supplierUser.businessUnitId =
+            supplier.businessUnitId || supplierUser.businessUnitId;
+          await supplierUser.save();
+        } else if (status === "Create") {
+          const newSupplierUser = new User({
+            userName: supplier.name,
+            userMail: supplier.email,
+            password,
+            phone: supplier.phone,
+            whatsapp: supplier.whatsapp,
+            role,
+            department: "Supplier",
+            companyId: supplier.companyId,
+            businessUnitId: supplier.businessUnitId,
+            ledger: supplier.ledger,
+          });
+          const savedSupplierUser = await newSupplierUser.save();
+          supplier.userId = savedSupplierUser._id;
+          await supplier.save({ validateBeforeSave: false });
+        }
         break;
 
       default:
@@ -315,7 +384,7 @@ const logout = async (req, res) => {
 
 const users = async (req, res) => {
   try {
-    const users = await User.find()
+    const users = await User.find({ status: "Active" })
       .select("-password -refreshToken")
       .populate("site")
       .sort({ userName: 1 })

@@ -54,6 +54,8 @@ const userSchema = new mongoose.Schema(
         "Quality Engineer",
         "Store Incharge",
         "Store Helper",
+        "Driver",
+        "Developer"
       ],
       default: null,
     },
@@ -151,7 +153,6 @@ const userSchema = new mongoose.Schema(
       ref: "Ledger",
     },
   },
-
   { timestamps: true },
 );
 

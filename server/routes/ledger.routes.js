@@ -17,6 +17,7 @@ const {
   getCostCenters,
   updateCostCenter,
   deleteCostCenter,
+  getGroup,
 } = require("../controller/ledger.controller"); // Adjust the path as necessary
 
 const { adminAuth, userAuth } = require("../middlewares/auth.middleware");
@@ -26,7 +27,7 @@ Ledger.route("/:id").get(userAuth, getOne).put(userAuth, update).delete(userAuth
 // Ledger.route("/map/:id").put(mapLedger);
 
 Group.route("/").get(userAuth,getGroups).post(userAuth,createGroup);
-Group.route("/:id").put(userAuth,updateGroup);
+Group.route("/:id").get(getGroup).put(userAuth,updateGroup);
 
 CostCenter.route("/").get(userAuth,getCostCenters).post(userAuth,createCostCenter);
 CostCenter.route("/:id").put(userAuth,updateCostCenter).delete(userAuth,deleteCostCenter);

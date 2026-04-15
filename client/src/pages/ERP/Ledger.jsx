@@ -3,6 +3,8 @@ import axios from "axios";
 import CreateLedger from "../../components/CreateLedger";
 import Modal from "../../components/Modal";
 import { useSelector } from "react-redux";
+import { GrEdit } from "react-icons/gr";
+import { MdDelete, MdAdd } from "react-icons/md";
 
 const LedgerList = () => {
   const [ledgers, setLedgers] = useState([]);
@@ -11,11 +13,13 @@ const LedgerList = () => {
   const [selectedLedger, setSelectedLedger] = useState(null);
   const [editLedger, setEditLedger] = useState(null);
   const [showForm, setShowForm] = useState(false);
-    const { user } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
 
   const fetchLedgers = async () => {
-    const res = await axios.get("/api/v1/ledger", { params: { companyId: user.companyId } });
-    console.log(res.data)
+    const res = await axios.get("/api/v1/ledger", {
+      params: { companyId: user.companyId },
+    });
+    console.log(res.data);
     setLedgers(res.data);
     setFiltered(res.data);
   };
@@ -29,6 +33,8 @@ const LedgerList = () => {
     setSearch(keyword);
     setFiltered(ledgers.filter((l) => l.name.toLowerCase().includes(keyword)));
   };
+
+  const handleDelete = (id) => {};
 
   return (
     <div className="p-6">
@@ -59,15 +65,19 @@ const LedgerList = () => {
                 {ledger.name}
               </h2>
 
-              <button
-                onClick={() => {
-                  setEditLedger(ledger);
-                  setShowForm(true);
-                }}
-                className="text-blue-600 text-sm"
-              >
-                Edit
-              </button>
+              <div className="space-x-4">
+                <button
+                  onClick={() => {
+                    setEditLedger(ledger);
+                    setShowForm(true);
+                  }}
+                >
+                  <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                </button>
+                <button onClick={() => handleDelete(row._id)}>
+                  <MdDelete className="text-red-500 hover:text-red-600 text-lg" />
+                </button>
+              </div>
             </div>
 
             <div className="text-sm space-y-1">
@@ -111,7 +121,8 @@ const LedgerList = () => {
                 <strong>Group:</strong> {selectedLedger.groupId?.name || "-"}
               </p>
               <p>
-                <strong>Company:</strong> {selectedLedger.companyId?.name || "-"}
+                <strong>Company:</strong>{" "}
+                {selectedLedger.companyId?.name || "-"}
               </p>
               <p>
                 <strong>Opening Balance:</strong> ₹
@@ -162,7 +173,7 @@ const LedgerList = () => {
           }}
           className="bg-green-600 text-white px-4 py-2 rounded-full shadow text-xl"
         >
-          +
+          <MdAdd />
         </button>
       </div>
 

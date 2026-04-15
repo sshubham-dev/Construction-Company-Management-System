@@ -19,17 +19,21 @@ const {
 const createCollection = async (req, res) => {
   try {
     const data = req.body;
+    console.log(data);
     const user = req.user;
     const proofImage = req.file?.path;
-    let upload = await uploadOnCloudinary(proofImage, {
-      folder: "collections/proofs",
-      public_id: `${data.clientLedgerId}-${Date.now()}`,
-    });
+    let upload;
+    if (proofImage) {
+      upload = await uploadOnCloudinary(proofImage, {
+        folder: "collections/proofs",
+        public_id: `${data.clientLedgerId}-${Date.now()}`,
+      });
+    }
 
-    const collection = await Collection.create({
+    const collection = await Collection({
       date: data.date,
       companyId: user.companyId,
-      businessUnitId: data.businessUnitId,
+      businessUnitId: user.businessUnitId,
       costCenterId: data.costCenterId,
       clientLedgerId: data.clientLedgerId,
       receivedInto: data.receivedInto,
@@ -45,14 +49,18 @@ const createCollection = async (req, res) => {
       submittedBy: user?._id, // if auth middleware exists
       status: "pending",
     });
+
+    const newCollection = await collection.save();
+
     notifyRole(
       "Employee",
       "Payment Alert",
       `₹ ${data.amount} received for ${data.purpose}`,
       "/",
     );
-    res.status(201).json(collection);
+    res.status(201).json(newCollection);
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -61,15 +69,135 @@ const createCollection = async (req, res) => {
 
 const getCollections = async (req, res) => {
   try {
-    const list = await Collection.find({
-      companyId: req.query.companyId,
-    })
+    const {
+      companyId,
+      page = 1,
+      limit = 10,
+      search = "",
+      status,
+      date,
+
+      // ✅ advanced filters
+      fromDate,
+      toDate,
+      bank,
+      costCenter,
+      businessUnit,
+    } = req.query;
+
+    const skip = (page - 1) * limit;
+
+    /* ---------------- BASE FILTER ---------------- */
+    // const filter = {
+    //   companyId,
+    // };
+    const filter = {};
+
+    /* ---------------- STATUS ---------------- */
+    if (status) {
+      filter.status = status;
+    }
+
+    /* ---------------- QUICK DATE FILTER ---------------- */
+    if (date && !fromDate && !toDate) {
+      const now = new Date();
+
+      if (date === "today") {
+        filter.date = {
+          $gte: new Date(now.setHours(0, 0, 0, 0)),
+        };
+      }
+
+      if (date === "week") {
+        const firstDay = new Date();
+        firstDay.setDate(now.getDate() - 7);
+
+        filter.date = { $gte: firstDay };
+      }
+
+      if (date === "month") {
+        const firstDay = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          1
+        );
+
+        filter.date = { $gte: firstDay };
+      }
+    }
+
+    /* ---------------- CUSTOM DATE RANGE ---------------- */
+    if (fromDate || toDate) {
+      filter.date = {};
+
+      if (fromDate) {
+        filter.date.$gte = new Date(fromDate);
+      }
+
+      if (toDate) {
+        const end = new Date(toDate);
+        end.setHours(23, 59, 59, 999); // full day
+        filter.date.$lte = end;
+      }
+    }
+
+    /* ---------------- ADVANCED FILTERS ---------------- */
+    // if (bank) {
+    //   filter.receivedInto = bank;
+    // }
+
+    // if (costCenter) {
+    //   filter.costCenterId = costCenter;
+    // }
+
+    // if (businessUnit) {
+    //   filter.businessUnitId = businessUnit;
+    // }
+
+    /* ---------------- SEARCH ---------------- */
+    if (search) {
+      filter.$or = [
+        { purpose: { $regex: search, $options: "i" } },
+        { narration: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    /* ---------------- QUERY ---------------- */
+    const [data, total] = await Promise.all([
+      Collection.find(filter)
+        .populate("clientLedgerId", "name")
+        .populate("receivedInto", "name")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(), // ✅ performance boost
+
+      Collection.countDocuments(filter),
+    ]);
+
+    /* ---------------- RESPONSE ---------------- */
+    res.json({
+      data,
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const getCollection = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(id);
+    const list = await Collection.findById(id)
       .populate("clientLedgerId")
       .populate("receivedInto")
       .populate("companyId")
       .populate("businessUnitId")
-      .populate("costCenterId")
-      .sort({ createdAt: -1 });
+      .populate("costCenterId");
 
     res.json(list);
   } catch (err) {
@@ -163,6 +291,7 @@ const cancelCollection = async (req, res) => {
 const updateCollection = async (req, res) => {
   try {
     const { id } = req.params;
+    const user = req.user;
 
     const collection = await Collection.findById(id);
 
@@ -188,6 +317,9 @@ const updateCollection = async (req, res) => {
     }
 
     Object.assign(collection, data);
+    collection.receivedInto = data.receivedInto;
+    collection.companyId = user.companyId;
+    collection.businessUnitId = user.businessUnitId
 
     if (upload) {
       collection.proofImage = {
@@ -200,6 +332,7 @@ const updateCollection = async (req, res) => {
 
     res.json(collection);
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -253,5 +386,6 @@ module.exports = {
   cancelCollection,
   rejectCollection,
   updateCollection,
-  deleteCollection
+  deleteCollection,
+  getCollection,
 };

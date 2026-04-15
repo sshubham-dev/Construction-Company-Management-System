@@ -2,8 +2,39 @@ const mongoose = require("mongoose");
 
 const stockSchema = new mongoose.Schema(
   {
-    itemCode: { type: String, unique: true, index: true },
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+      index: true,
+    },
+    itemId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Item",
+      required: true,
+      index: true,
+    },
 
+    quantity: { type: Number, default: 0 },
+
+    avgRate: { type: Number, default: 0 },
+
+    reservedQuantity: { type: Number, default: 0 },
+
+    lastPurchaseRate: { type: Number, default: 0 },
+  },
+  { timestamps: true },
+);
+
+// unique index
+stockSchema.index({ storeId: 1, itemId: 1 }, { unique: true });
+// auto calculation
+stockSchema.pre("save", function () {
+  this.stockValue = (this.quantity || 0) * (this.averageRate || 0);
+});
+
+const stockItemSchema = new mongoose.Schema(
+  {
     name: { type: String, required: true, trim: true, index: true },
 
     category: { type: String, required: true, index: true },
@@ -16,7 +47,7 @@ const stockSchema = new mongoose.Schema(
       index: true,
     },
 
-    hsnCode: String,
+    code: { type: String, unique: true, index: true },
     gstRate: { type: Number, default: 0 },
 
     purchasePrice: { type: Number, default: 0 },
@@ -29,7 +60,13 @@ const stockSchema = new mongoose.Schema(
 
 const stockGroupSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, unique: true, trim: true, index: true },
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      index: true,
+    },
     code: { type: String, trim: true },
 
     unit: [String],
@@ -133,6 +170,7 @@ const stockAuditSchema = new mongoose.Schema(
 
 const stockTransferSchema = new mongoose.Schema(
   {
+    date: Date,
     fromStoreId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
     toStoreId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
 
@@ -156,8 +194,9 @@ const stockTransferSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const Stock_Transfer = mongoose.model("Stock_Transfer", stockTransferSchema);
 const Stock = mongoose.model("Stock", stockSchema);
-const Stock_Audit = mongoose.model("Stock_Audit", stockAuditSchema);
 const Stock_Group = mongoose.model("Stock_Group", stockGroupSchema);
-module.exports = { Stock, Stock_Group, Stock_Audit, Stock_Transfer };
+const Item = mongoose.model("Item", stockItemSchema);
+const Stock_Audit = mongoose.model("Stock_Audit", stockAuditSchema);
+const Stock_Transfer = mongoose.model("Stock_Transfer", stockTransferSchema);
+module.exports = { Stock, Item, Stock_Group, Stock_Audit, Stock_Transfer };

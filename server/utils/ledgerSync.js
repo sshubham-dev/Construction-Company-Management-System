@@ -14,6 +14,10 @@ const syncLedger = async ({
   getAddress = () => ({}),
   getTaxDetails = () => ({}),
 }) => {
+  if (!doc || !doc._id) {
+    throw new Error("Invalid document passed to syncLedger");
+  }
+
   // 1. Resolve group
   const groupName = groupMap[category.toUpperCase()];
   if (!groupName) {
@@ -29,11 +33,11 @@ const syncLedger = async ({
     throw new Error(`Group not found: ${groupName}`);
   }
 
-  // 2. Prepare ledger data
+  // 2. Prepare ledger data (ALWAYS FULL STATE)
   const ledgerData = {
     name: doc.name,
     alias: doc.name,
-    groupId: group._id,
+    groupId: group._id, // ✅ always updated
     companyId: doc.companyId,
     referenceType: category,
     referenceId: doc._id,
@@ -42,51 +46,29 @@ const syncLedger = async ({
     updatedAt: new Date(),
   };
 
-  if (doc.ledger && !mongoose.Types.ObjectId.isValid(doc.ledger)) {
-    doc.ledger = null;
-  }
-
-  // ✅ CASE 1: Try updating existing linked ledger
-  if (doc.ledger) {
-    console.log("Updating existing linked ledger");
-
-    const updatedLedger = await Ledger.findByIdAndUpdate(
-      doc.ledger,
-      { $set: ledgerData },
-      { returnDocument: "after" },
-    );
-
-    if (updatedLedger) {
-      return updatedLedger._id;
+  // 3. 🔥 SINGLE SOURCE OF TRUTH (UPSERT)
+  const ledger = await Ledger.findOneAndUpdate(
+    {
+      referenceType: category,
+      referenceId: doc._id,
+      companyId: doc.companyId,
+    },
+    {
+      $set: ledgerData,
+      $setOnInsert: {
+        openingBalance: 0,
+        currentBalance: 0,
+      },
+    },
+    {
+      upsert: true,
+      returnDocument: "after",
     }
+  );
 
-    // ❗ Broken reference fallback
-    console.log("Ledger not found, will recreate");
-  }
-
-  // ✅ CASE 2: Find existing ledger (fallback)
-  let ledger = await Ledger.findOne({
-    referenceType: category,
-    referenceId: doc._id,
-  });
-
-  // ✅ CASE 3: Create if not exists
-  if (!ledger) {
-    console.log("Creating new ledger");
-
-    ledger = await Ledger.create({
-      ...ledgerData,
-      openingBalance: 0,
-      currentBalance: 0,
-    });
-  } else {
-    console.log("Updating found ledger");
-
-    await Ledger.findByIdAndUpdate(
-      ledger._id,
-      { $set: ledgerData },
-      { returnDocument: "after" },
-    );
+  // 4. Sync back reference (self-healing)
+  if (!doc.ledger || doc.ledger.toString() !== ledger._id.toString()) {
+    doc.ledger = ledger._id;
   }
 
   return ledger._id;

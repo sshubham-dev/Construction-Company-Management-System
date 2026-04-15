@@ -162,15 +162,23 @@ supplierSchema.pre("save", async function () {
 // =====================================================================
 // PRE-UPDATE: RECALCULATE totalDue + UPDATE LEDGER ON EVERY MODIFICATION
 // =====================================================================
-supplierSchema.pre("findOneAndUpdate", async function (next) {
+supplierSchema.pre("findOneAndUpdate", async function () {
   try {
+    const supplier = await this.model.findOne(this.getQuery());
+    if (!supplier) return;
+
     const update = this.getUpdate() || {};
-    const originalDoc = await this.model.findOne(this.getQuery());
 
-    if (!originalDoc) return next();
+    const merged = supplier.toObject();
 
-    const merged = { ...originalDoc.toObject(), ...(update.$set || {}) };
+    // ✅ safe merge
+    if (update.$set) {
+      Object.assign(merged, update.$set);
+    } else {
+      Object.assign(merged, update);
+    }
 
+    // ✅ recalc payable
     const payable =
       (merged.totalBilled || 0) -
       (merged.totalPaid || 0) -
@@ -179,6 +187,7 @@ supplierSchema.pre("findOneAndUpdate", async function (next) {
     if (!update.$set) update.$set = {};
     update.$set.totalDue = payable < 0 ? 0 : payable;
 
+    // ✅ ledger sync (safe now)
     const ledgerId = await syncLedger({
       doc: merged,
       category: "Supplier",
@@ -196,10 +205,9 @@ supplierSchema.pre("findOneAndUpdate", async function (next) {
     if (ledgerId) update.$set.ledger = ledgerId;
 
     this.setUpdate(update);
-    next();
   } catch (err) {
     console.error("Error updating supplier ledger sync:", err);
-    next(err);
+    throw err;
   }
 });
 

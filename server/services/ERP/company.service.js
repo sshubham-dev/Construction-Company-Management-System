@@ -22,11 +22,21 @@ const getCompanyById = async (id) => {
 
 // ✅
 const updateCompany = async (id, data) => {
-  return await Company.findByIdAndUpdate(id, data,);
+  const company = await Company.findByIdAndUpdate(id, data);
+  // 🔥 auto create COA
+  await createDefaultCOA(company._id);
+
+  return company;
 };
 
 const deleteCompany = async (id) => {
   return await Company.findByIdAndUpdate(id, { isActive: false });
 };
 
-module.exports = { createCompany, getCompanies, getCompanyById, updateCompany, deleteCompany };
+module.exports = {
+  createCompany,
+  getCompanies,
+  getCompanyById,
+  updateCompany,
+  deleteCompany,
+};

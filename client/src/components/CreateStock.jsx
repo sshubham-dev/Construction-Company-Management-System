@@ -7,13 +7,12 @@ const CreateStock = ({ onClose, editId }) => {
   const isEdit = Boolean(editId);
   const [groups, setGroups] = useState([]);
   const [form, setForm] = useState({
-    itemCode: "",
     name: "",
+    code: "",
     category: "",
     unit: "",
     itemType: "CONSUMABLE",
 
-    hsnCode: "",
     gstRate: 0,
 
     purchasePrice: 0,
@@ -33,7 +32,7 @@ const CreateStock = ({ onClose, editId }) => {
     if (!isEdit) return;
 
     const loadStock = async () => {
-      const res = await axios.get(`/api/v1/stock/${editId}`);
+      const res = await axios.get(`/api/v1/stock/item/${editId}`);
       const data = res.data;
 
       setForm({
@@ -63,7 +62,7 @@ const CreateStock = ({ onClose, editId }) => {
         mrp: Number(form.mrp) || 0,
       };
 
-      console.log(payload)
+      console.log(payload);
 
       if (editId !== undefined) {
         await axios.put(`/api/v1/stock/${editId}`, payload);
@@ -81,7 +80,6 @@ const CreateStock = ({ onClose, editId }) => {
 
   return (
     <div className="mx-auto space-y-4">
-
       {/* BASIC INFO */}
       <Section title="Basic Information">
         <Input
@@ -89,12 +87,6 @@ const CreateStock = ({ onClose, editId }) => {
           value={form.name}
           onChange={handleChange}
           placeholder="Item Name"
-        />
-        <Input
-          name="itemCode"
-          value={form.itemCode}
-          onChange={handleChange}
-          placeholder="Item Code"
         />
         <Input
           name="unit"
@@ -127,10 +119,10 @@ const CreateStock = ({ onClose, editId }) => {
       {/* TAX */}
       <Section title="Tax Details">
         <Input
-          name="hsnCode"
-          value={form.hsnCode}
+          name="code"
+          value={form.code}
           onChange={handleChange}
-          placeholder="HSN Code"
+          placeholder="Item Code"
         />
         <Input
           type="number"

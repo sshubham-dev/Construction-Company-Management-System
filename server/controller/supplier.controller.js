@@ -84,8 +84,8 @@ const updateSupplier = async (req, res) => {
         // 🛠 Update fields
         supplier.name = name?.trim() || supplier.name;
         supplier.email = email?.trim() || supplier.email;
-        supplier.phone = phone?.trim() || supplier.phone;
-        supplier.whatsapp = whatsapp?.trim() || supplier.whatsapp;
+        supplier.phone = phone || supplier.phone;
+        supplier.whatsapp = whatsapp || supplier.whatsapp;
         supplier.address = address || supplier.address;
         supplier.gstNo = gstNo?.trim() || supplier.gstNo;
         supplier.bank = bank || supplier.bank;

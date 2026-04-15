@@ -23,6 +23,11 @@ const storeSchema = new mongoose.Schema(
       ref: "Company",
     },
 
+    costCenterId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CostCenter",
+    },
+
     address: {
       line1: String,
       city: String,
@@ -31,11 +36,6 @@ const storeSchema = new mongoose.Schema(
     },
 
     isCentralStore: { type: Boolean, default: false },
-
-    stockValuationMethod: {
-      type: String,
-      default: "WeightedAverage",
-    },
 
     storeHead: {
       type: mongoose.Schema.Types.ObjectId,
@@ -60,39 +60,6 @@ const storeSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
-
-const storeInventorySchema = new mongoose.Schema(
-  {
-    storeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Store",
-      required: true,
-      index: true,
-    },
-    stockId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Stock",
-      required: true,
-      index: true,
-    },
-
-    quantity: { type: Number, default: 0 },
-
-    averageRate: { type: Number, default: 0 },
-    stockValue: { type: Number, default: 0 },
-
-    reservedQuantity: { type: Number, default: 0 },
-
-    lastPurchaseRate: { type: Number, default: 0 },
-  },
-  { timestamps: true },
-);
-// unique index
-storeInventorySchema.index({ storeId: 1, stockId: 1 }, { unique: true });
-// auto calculation
-storeInventorySchema.pre("save", function () {
-  this.stockValue = (this.quantity || 0) * (this.averageRate || 0);
-});
 
 const inventoryTransactionSchema = new mongoose.Schema(
   {
@@ -133,8 +100,6 @@ const inventoryTransactionSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const StoreInventory = mongoose.model("StoreInventory", storeInventorySchema);
-
 const InventoryTransaction = mongoose.model(
   "InventoryTransaction",
   inventoryTransactionSchema,
@@ -143,6 +108,5 @@ const Store = mongoose.model("Store", storeSchema);
 
 module.exports = {
   Store,
-  StoreInventory,
   InventoryTransaction,
 };

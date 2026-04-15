@@ -3,8 +3,10 @@ import Modal from "../../components/Modal";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useSelector, useDispatch } from "react-redux";
+import { GrEdit } from "react-icons/gr";
+import { MdDelete, MdAdd } from "react-icons/md";
 
-const CostCenterModal = ({ isOpen, onClose, costCenters, onSave }) => {
+const CostCenterModal = ({ isOpen, onClose, costCenters, onSave, editId }) => {
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [company, setCompany] = useState([]);
   const [costCenter, setCostCenter] = useState({
@@ -24,6 +26,22 @@ const CostCenterModal = ({ isOpen, onClose, costCenters, onSave }) => {
     fetchCompany();
   }, []);
 
+  useEffect(() => {
+    if (editId) {
+      const selected = costCenters.find((c) => c._id === editId);
+      if (selected) {
+        setCostCenter({
+          name: selected.name || "",
+          companyId: selected.companyId?._id || "",
+          type: selected.type || "",
+          parentId: selected.parentId || "",
+          isActive: selected.isActive ?? true,
+          reference: selected.reference || "",
+        });
+      }
+    }
+  }, [editId, costCenters]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setCostCenter({
@@ -36,20 +54,23 @@ const CostCenterModal = ({ isOpen, onClose, costCenters, onSave }) => {
     e.preventDefault();
 
     try {
-      const res = await axios.post("/api/v1/cost-center", costCenter);
-      toast.success("Cost Center created");
+      let res;
+
+      if (editId !== undefined) {
+        // ✅ UPDATE
+        res = await axios.put(`/api/v1/cost-center/${editId}`, costCenter);
+        toast.success("Cost Center updated");
+      } else {
+        // ✅ CREATE
+        res = await axios.post("/api/v1/cost-center", costCenter);
+        toast.success("Cost Center created");
+      }
+
       onSave(res.data);
       onClose();
-      setCostCenter({
-        name: "",
-        companyId: null,
-        type: "",
-        parentId: null,
-        isActive: true,
-        referenceId: "",
-      });
     } catch (error) {
       console.log(error);
+      toast.error("Something went wrong");
     }
   };
 
@@ -170,6 +191,8 @@ const CostCenter = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [costCenters, setCostCenters] = useState([]);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState("");
 
   useEffect(() => {
     const fetchCostCenter = async () => {
@@ -185,32 +208,68 @@ const CostCenter = () => {
     fetchCostCenter();
   }, []);
 
-  const handleSave = (newCenter) => {
-    setCostCenters([
-      ...costCenters,
-      { id: costCenters.length + 1, ...newCenter },
-    ]);
-    setIsModalOpen(false);
+  const handleSave = (data) => {
+    setCostCenters((prev) => {
+      const exists = prev.find((c) => c._id === data._id);
+
+      if (exists) {
+        // update
+        return prev.map((c) => (c._id === data._id ? data : c));
+      } else {
+        // create
+        return [...prev, data];
+      }
+    });
+  };
+
+  const handleEdit = (id) => {
+    setEditModal(true);
+    setEditId(id);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete?")) return;
+
+    try {
+      await axios.delete(`/api/v1/cost-center/${id}`);
+
+      setCostCenters((prev) => prev.filter((c) => c._id !== id));
+
+      toast.success("Deleted successfully");
+    } catch (error) {
+      console.log(error);
+      toast.error("Delete failed");
+    }
   };
 
   return (
-    <div className="p-3">
+    <div className="p-2">
       <h1 className="text-2xl font-bold mb-4">Cost Centers</h1>
 
       {/* Add Cost Center Button */}
       <button
         onClick={() => setIsModalOpen(true)}
-        className="mb-4 px-4 py-2 bg-green-600 text-white rounded-md"
+        className="mb-4 px-4 py-2 flex flex-row gap-3 items-center bg-green-600 text-white rounded-md"
       >
-        + Add Cost Center
+        <MdAdd /> Cost Center
       </button>
 
       {/* Cost Centers List */}
-      <ul className="border rounded-md p-4 bg-white shadow-md">
+      <ul className="border rounded-md px-3 py-3 bg-white shadow-md">
         {costCenters.map((center) => (
           <li key={center.id} className="border-b py-3 last:border-0">
-            <div className="font-semibold text-lg text-gray-800">
-              {center.name} ({center.companyId?.name})
+            <div className="flex flex-nowrap justify-between items-center mb-2">
+              <h2 className="text-lg font-semibold cursor-pointer text-wrap">
+                {center.name} ({center.companyId?.name})
+              </h2>
+              <div className="space-x-2">
+                <button onClick={() => handleEdit(center._id)}>
+                  <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                </button>
+                <button onClick={() => handleDelete(center._id)}>
+                  <MdDelete className="text-red-500 hover:text-red-600 text-lg" />
+                </button>
+              </div>
             </div>
             <div className="text-sm text-gray-600">Under: {center.under}</div>
             <div className="text-sm text-gray-600">
@@ -224,9 +283,6 @@ const CostCenter = () => {
               <span className="font-medium">
                 {/* ${center.budget.toLocaleString()} */}
               </span>
-            </div>
-            <div className="text-sm text-gray-500 italic">
-              {/* {center.description} */}
             </div>
           </li>
         ))}
@@ -243,6 +299,20 @@ const CostCenter = () => {
           onClose={() => setIsModalOpen(false)}
           costCenters={costCenters}
           onSave={handleSave}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={editModal}
+        onClose={() => setEditModal(false)}
+        head="Update Cost Center"
+      >
+        <CostCenterModal
+          isOpen={editModal}
+          onClose={() => setEditModal(false)}
+          costCenters={costCenters}
+          onSave={handleSave}
+          editId={editId}
         />
       </Modal>
     </div>

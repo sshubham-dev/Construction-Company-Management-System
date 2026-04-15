@@ -75,7 +75,7 @@ const siteSchema = new mongoose.Schema(
     },
 
     // Ledger (ERP Link)
-    costcenter: { type: mongoose.Schema.Types.ObjectId, ref: "CostCenter", required: true },
+    costcenter: { type: mongoose.Schema.Types.ObjectId, ref: "CostCenter" },
     store: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
 
     // Project contractual data

@@ -11,7 +11,6 @@ const CreateStore = ({ onClose, editId }) => {
 
   const [form, setForm] = useState({
     name: "",
-    code: "",
     type: "STORE",
     businessUnitId: "",
 
@@ -19,8 +18,6 @@ const CreateStore = ({ onClose, editId }) => {
 
     storeHead: "",
     storeIncharge: "",
-
-    stockValuationMethod: "WeightedAverage",
 
     surcharge: {
       staffSalary: "",
@@ -134,7 +131,6 @@ const CreateStore = ({ onClose, editId }) => {
       {/* BASIC INFO */}
       <Section title="Basic Information">
         <Input name="name" value={form.name} onChange={handleChange} placeholder="Store Name" />
-        <Input name="code" value={form.code} onChange={handleChange} placeholder="Store Code" />
 
         <Select
           options={businessUnits}
@@ -151,8 +147,8 @@ const CreateStore = ({ onClose, editId }) => {
           className="input"
           disabled={isEdit}
         >
-          <option value="STORE">Store / Warehouse</option>
-          <option value="SITE">Site</option>
+          <option value="STORE">Store Warehouse</option>
+          <option value="SITE">Site Warehouse</option>
         </select>
 
         <Checkbox
@@ -178,19 +174,6 @@ const CreateStore = ({ onClose, editId }) => {
           onChange={(v) => setForm((p) => ({ ...p, storeIncharge: v.value }))}
           placeholder="Store Incharge"
         />
-      </Section>
-
-      {/* INVENTORY */}
-      <Section title="Inventory Settings">
-        <select
-          name="stockValuationMethod"
-          value={form.stockValuationMethod}
-          onChange={handleChange}
-          className="input"
-        >
-          <option value="WeightedAverage">Weighted Average</option>
-          <option value="FIFO">FIFO</option>
-        </select>
       </Section>
 
       {/* SURCHARGE */}

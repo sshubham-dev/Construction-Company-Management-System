@@ -57,6 +57,7 @@ grnItemSchema.pre("save", function () {
 
 const grnSchema = new mongoose.Schema(
   {
+    date: Date,
     /* =========================
        BASIC
     ========================== */

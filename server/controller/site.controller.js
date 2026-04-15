@@ -241,8 +241,6 @@ const updateSite = async (req, res) => {
       parsedFloors = typeof floors === "string" ? JSON.parse(floors) : floors;
     }
 
-   const costCenter = await syncCostCenterForSite(existingSite, "SITE");
-
     // ✅ Update fields safely
     existingSite.name = name || existingSite.name;
     existingSite.siteId = siteId || existingSite.siteId || "";
@@ -251,9 +249,9 @@ const updateSite = async (req, res) => {
     existingSite.floors = parsedFloors;
     existingSite.projectType = projectType || existingSite.projectType;
     existingSite.companyId = existingSite.companyId || req.user.companyId;
-    existingSite.costcenter =
-      costCenter?._id ||
-      existingSite.costcenter;
+
+    const costCenter = await syncCostCenterForSite(existingSite, "SITE");
+    existingSite.costcenter = costCenter?._id || existingSite.costcenter;
 
     if (existingClient) {
       existingSite.client = {

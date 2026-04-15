@@ -1,10 +1,16 @@
 const mongoose = require("mongoose");
-const { Stock, Stock_Group } = require("../models/stock.models");
-const {StoreInventory, StoreStockMovement }= require("../models/store.models");
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
+const { Stock, Stock_Group, Item } = require("../models/stock.models");
+const {
+  StoreInventory,
+  StoreStockMovement,
+} = require("../models/store.models");
+const {
+  sendPushNotification,
+  notifyRole,
+} = require("../utils/pushNotification.js");
+
 // const StoreInventory = mongoose.model("StoreInventory");
 // const StoreStockMovement = mongoose.model("StoreStockMovement");
-
 
 /* =====================================
    UTILITY: CALCULATE SALE PRICE
@@ -33,42 +39,24 @@ function calcSalePrice(stock) {
 ===================================== */
 const createStock = async (req, res) => {
   try {
-    const data = req.body;
+    const { storeId, itemId, quantity, reservedQuantity } = req.body;
 
     if (!data.name || !data.category || !data.unit) {
       throw new Error("Name, category, unit required");
     }
 
-    // Prevent duplicate
-    const exists = await Stock.findOne({
-      name: data.name,
-      unit: data.unit,
-    });
-
-    if (exists) {
-      throw new Error("Stock already exists");
-    }
-
     const stock = new Stock({
-      name: data.name,
-      category: data.category,
-      unit: data.unit,
-      itemType: data.itemType || "CONSUMABLE",
-
-      purchasePrice: Number(data.purchasePrice || 0),
-      gstRate: Number(data.gstRate || 0),
-
-      surchargePercentage: data.surchargePercentage || {},
-      description: data.description || "",
+      storeId,
+      itemId,
+      quantity,
+      reservedQuantity,
     });
-
-    stock.salePrice = calcSalePrice(stock);
 
     await stock.save();
 
     res.status(201).json(stock);
   } catch (err) {
-    console.log(err)
+    console.log(err);
     res.status(400).json({ error: err.message });
   }
 };
@@ -157,6 +145,132 @@ const deleteStock = async (req, res) => {
 };
 
 /* =====================================
+   CREATE STOCK ITEM (MASTER)
+===================================== */
+const createStockItem = async (req, res) => {
+  try {
+    const data = req.body;
+
+    if (!data.name || !data.category || !data.unit) {
+      throw new Error("Name, category, unit required");
+    }
+
+    // Prevent duplicate
+    const exists = await Item.findOne({
+      name: data.name,
+      unit: data.unit,
+    });
+
+    if (exists) {
+      throw new Error("Item already exists");
+    }
+
+    const item = new Item({
+      name: data.name,
+      category: data.category,
+      unit: data.unit,
+      itemType: data.itemType || "CONSUMABLE",
+
+      code: data.code,
+      gstRate: Number(data.gstRate || 0),
+
+      purchasePrice: Number(data.purchasePrice || 0),
+      mrp: Number(data.mrp),
+    });
+
+    await item.save();
+
+    res.status(201).json(item);
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ error: err.message });
+  }
+};
+
+/* =====================================
+   GET ALL STOCK ITEM
+===================================== */
+const getStockItems = async (req, res) => {
+  try {
+    const items = await Item.find().sort({ createdAt: -1 });
+
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/* =====================================
+   GET STOCK ITEM BY ID
+===================================== */
+const getStockItemById = async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.id);
+
+    if (!item) throw new Error("Item not found");
+
+    res.json(item);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+/* =====================================
+   UPDATE STOCK (MASTER ONLY)
+===================================== */
+const updateStockItem = async (req, res) => {
+  try {
+    const stock = await Stock.findById(req.params.id);
+
+    if (!stock) throw new Error("Stock not found");
+
+    const allowedFields = [
+      "name",
+      "category",
+      "unit",
+      "purchasePrice",
+      "gstRate",
+      "surchargePercentage",
+      "description",
+    ];
+
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        stock[field] = req.body[field];
+      }
+    });
+
+    stock.salePrice = calcSalePrice(stock);
+
+    await stock.save();
+
+    res.json(stock);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+/* =====================================
+   DELETE STOCK
+===================================== */
+const deleteStockItem = async (req, res) => {
+  try {
+    const stock = await Stock.findById(req.params.id);
+
+    if (!stock) throw new Error("Stock not found");
+
+    // Optional: prevent delete if used
+    // const used = await StoreInventory.findOne({ stockId: stock._id });
+
+    await stock.deleteOne();
+
+    res.json({ message: "Deleted successfully" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+/* =====================================
    CREATE STOCK GROUP
 ===================================== */
 const createStockGroup = async (req, res) => {
@@ -224,7 +338,6 @@ const deleteStockGroup = async (req, res) => {
   }
 };
 
-
 const applyStoreStockMovement = async ({
   storeId,
   stockId,
@@ -265,10 +378,8 @@ const applyStoreStockMovement = async ({
     inventory.averageRate =
       newQty === 0
         ? 0
-        : (
-            inventory.quantity * inventory.averageRate +
-            quantity * rate
-          ) / newQty;
+        : (inventory.quantity * inventory.averageRate + quantity * rate) /
+          newQty;
 
     inventory.quantity = newQty;
     inventory.lastPurchaseRate = rate;
@@ -305,7 +416,7 @@ const applyStoreStockMovement = async ({
         createdBy,
       },
     ],
-    { session }
+    { session },
   );
 
   return inventory;
@@ -316,14 +427,7 @@ const adjustStock = async (req, res) => {
   session.startTransaction();
 
   try {
-    const {
-      storeId,
-      stockId,
-      quantity,
-      direction,
-      rate,
-      narration,
-    } = req.body;
+    const { storeId, stockId, quantity, direction, rate, narration } = req.body;
 
     await applyStoreStockMovement({
       storeId,
@@ -400,6 +504,11 @@ module.exports = {
   getStocks,
   updateStock,
   deleteStock,
+  createStockItem,
+  getStockItems,
+  getStockItemById,
+  updateStockItem,
+  deleteStockItem,
   createStockGroup,
   getStockGroups,
   updateStockGroup,
@@ -408,5 +517,5 @@ module.exports = {
   getItemStock,
   getStockSummary,
   getStoreStock,
-  adjustStock
+  adjustStock,
 };

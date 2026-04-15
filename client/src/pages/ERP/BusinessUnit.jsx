@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate }  from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Modal from "../../components/Modal";
 import CreateBusinessUnit from "../../components/CreateBusinessUnit";
+import { GrEdit } from "react-icons/gr";
+import { MdDelete, MdAdd } from "react-icons/md";
 
 const BusinessUnit = () => {
   const [units, setUnits] = useState([]);
@@ -19,7 +21,7 @@ const BusinessUnit = () => {
 
   const fetchUnits = async () => {
     const res = await axios.get("/api/v1/business-unit");
-    console.log(res.data)
+    console.log(res.data);
     setUnits(res.data);
     setFilteredUnits(res.data);
   };
@@ -28,7 +30,7 @@ const BusinessUnit = () => {
     const keyword = e.target.value.toLowerCase();
     setSearch(keyword);
     const filtered = units.filter((u) =>
-      u.name.toLowerCase().includes(keyword)
+      u.name.toLowerCase().includes(keyword),
     );
     setFilteredUnits(filtered);
   };
@@ -82,11 +84,17 @@ const BusinessUnit = () => {
             <p className="text-sm mt-2">Manager: {bu.manager?.name || "-"}</p>
 
             <div className="flex gap-4 mt-3 text-sm">
-              <button onClick={() => navigate(`/erp/business_unit/${bu._id}`)} className="text-blue-600">
+              <button
+                onClick={() => navigate(`/erp/business_unit/${bu._id}`)}
+                className="text-blue-600"
+              >
                 View
               </button>
               <button onClick={() => editBU(bu._id)} className="text-green-600">
-                Edit
+                <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+              </button>
+              <button onClick={() => deleteBU(bu._id)}>
+                <MdDelete className="text-red-500 hover:text-red-600 text-lg" />
               </button>
             </div>
           </div>
@@ -131,7 +139,10 @@ const BusinessUnit = () => {
                     onClick={() => editBU(bu._id)}
                     className="text-green-600"
                   >
-                    Edit
+                    <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
+                  </button>
+                  <button onClick={() => deleteBU(bu._id)}>
+                    <MdDelete className="text-red-500 hover:text-red-600 text-lg" />
                   </button>
                 </td>
               </tr>
@@ -146,7 +157,7 @@ const BusinessUnit = () => {
           onClick={() => setModalOpen(true)}
           className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-full shadow-lg text-2xl"
         >
-          +
+          <MdAdd />
         </button>
       </div>
 
@@ -156,7 +167,7 @@ const BusinessUnit = () => {
           onClick={() => setModalOpen(true)}
           className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow"
         >
-          + Add Business Unit
+          <MdAdd /> Business Unit
         </button>
       </div>
       <Modal isOpen={createModal} onClose={() => setModalOpen(false)}>

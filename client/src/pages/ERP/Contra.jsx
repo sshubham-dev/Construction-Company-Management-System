@@ -5,6 +5,8 @@ import Header from "../../components/Header";
 import { IoIosAddCircle } from "react-icons/io";
 import CreateContra from "../../components/CreateContra";
 import Modal from "../../components/Modal";
+import { GrEdit } from "react-icons/gr";
+import { MdDelete, MdAdd } from "react-icons/md";
 
 const Contra = () => {
   const [vouchers, setVouchers] = useState([]);
