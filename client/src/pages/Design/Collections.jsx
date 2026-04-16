@@ -121,7 +121,6 @@ const Collections = () => {
 
   return (
     <div className="p-3 space-y-4">
-
       {/* HEADER */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center">
@@ -265,7 +264,6 @@ const Collections = () => {
       {filterOpen && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl p-4 space-y-4">
-
             <div className="flex justify-between">
               <h3 className="font-semibold">Filters</h3>
               <button onClick={() => setFilterOpen(false)}>✕</button>
@@ -306,6 +304,111 @@ const Collections = () => {
             >
               Apply Filters
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* View */}
+      {selected && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full max-w-lg mx-2 rounded-t-2xl sm:rounded-2xl p-4 sm:p-6 space-y-4">
+            {/* HEADER */}
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Collection Details</h3>
+
+              <span
+                className={`px-3 py-1 text-xs border rounded-full ${statusColor[selected.status]}`}
+              >
+                {selected.status}
+              </span>
+            </div>
+
+            {/* DETAILS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div>
+                <b>Date:</b> {new Date(selected.date).toLocaleDateString()}
+              </div>
+
+              <div>
+                <b>Amount:</b> ₹ {selected.amount}
+              </div>
+
+              <div>
+                <b>Client:</b> {selected.clientLedgerId?.name}
+              </div>
+
+              <div>
+                <b>Bank:</b> {selected.receivedInto?.name}
+              </div>
+
+              <div>
+                <b>Purpose:</b> {selected.purpose || selected.narration}
+              </div>
+
+              <div>
+                <b>Medium:</b> {selected.medium}
+              </div>
+
+              <div>
+                <b>Reference:</b> {selected.referenceNo || "-"}
+              </div>
+
+              {selected.costCenterId && (
+                <div>
+                  <b>Cost Center:</b> {selected.costCenterId?.name}
+                </div>
+              )}
+
+              {selected.businessUnitId && (
+                <div>
+                  <b>Business Unit:</b> {selected.businessUnitId?.name}
+                </div>
+              )}
+            </div>
+
+            {/* NARRATION */}
+            {selected.narration && (
+              <div className="bg-gray-50 p-3 rounded text-sm">
+                {selected.narration}
+              </div>
+            )}
+
+            {/* IMAGE */}
+            {selected.proofImage && (
+              <img
+                src={selected.proofImage}
+                alt="proof"
+                className="w-full max-h-64 object-contain rounded-lg border"
+              />
+            )}
+
+            {/* ACTIONS */}
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              {selected.status === "pending" && (
+                <>
+                  <button
+                    onClick={() => reject(selected._id)}
+                    className="flex-1 bg-red-500 text-white py-2 rounded-lg"
+                  >
+                    Reject
+                  </button>
+
+                  <button
+                    onClick={() => approve(selected._id)}
+                    className="flex-1 bg-green-600 text-white py-2 rounded-lg"
+                  >
+                    Post
+                  </button>
+                </>
+              )}
+
+              <button
+                onClick={() => setSelected(null)}
+                className="flex-1 bg-gray-300 py-2 rounded-lg"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
