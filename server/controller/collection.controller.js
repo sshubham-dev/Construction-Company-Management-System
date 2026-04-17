@@ -55,7 +55,7 @@ const createCollection = async (req, res) => {
     notifyRole(
       "Employee",
       "Payment Alert",
-      `₹ ${data.amount} received for ${data.purpose}`,
+      `₹ ${data.amount} received for ${data.narration}`,
       "/",
     );
     res.status(201).json(newCollection);

@@ -34,7 +34,17 @@ const LedgerList = () => {
     setFiltered(ledgers.filter((l) => l.name.toLowerCase().includes(keyword)));
   };
 
-  const handleDelete = (id) => {};
+  const handleDelete = async (id) => {
+    try {
+      console.log("Deleting ledger with id:", id);
+      const res = await axios.delete(`/api/v1/ledger/${id}`);
+      if (res.status === 200) {
+        fetchLedgers();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="p-6">
@@ -74,7 +84,7 @@ const LedgerList = () => {
                 >
                   <GrEdit className="text-blue-500 hover:text-blue-800 text-lg" />
                 </button>
-                <button onClick={() => handleDelete(row._id)}>
+                <button onClick={() => handleDelete(ledger._id)}>
                   <MdDelete className="text-red-500 hover:text-red-600 text-lg" />
                 </button>
               </div>

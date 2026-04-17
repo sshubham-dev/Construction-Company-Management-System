@@ -42,7 +42,7 @@ const Collections = () => {
   // Modals
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
-  const [editId, setEditId] = useState("");
+  const [editId, setEditId] = useState(null);
 
   /* ---------------- LOAD DATA ---------------- */
 
@@ -96,6 +96,11 @@ const Collections = () => {
     await axios.post(`/api/v1/collection/${id}/reject`);
     loadData();
     setSelected(null);
+  };
+
+  const handleEdit = async (id) => {
+    setEditId(id);
+    setEditModal(true);
   };
 
   const handleDelete = async (id) => {
@@ -223,7 +228,7 @@ const Collections = () => {
 
                 {row.status === "pending" && (
                   <div className="flex gap-4">
-                    <button onClick={() => setEditModal(true)}>
+                    <button onClick={() => handleEdit(row._id)}>
                       <GrEdit className="text-blue-500" />
                     </button>
                     <button onClick={() => handleDelete(row._id)}>
@@ -384,23 +389,25 @@ const Collections = () => {
 
             {/* ACTIONS */}
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
-              {selected.status === "pending" && (
-                <>
-                  <button
-                    onClick={() => reject(selected._id)}
-                    className="flex-1 bg-red-500 text-white py-2 rounded-lg"
-                  >
-                    Reject
-                  </button>
+              {selected.status === "pending" &&
+                (user?.department === "Accountant" ||
+                  user?.department === "Account head") && (
+                  <>
+                    <button
+                      onClick={() => reject(selected._id)}
+                      className="flex-1 bg-red-500 text-white py-2 rounded-lg"
+                    >
+                      Reject
+                    </button>
 
-                  <button
-                    onClick={() => approve(selected._id)}
-                    className="flex-1 bg-green-600 text-white py-2 rounded-lg"
-                  >
-                    Post
-                  </button>
-                </>
-              )}
+                    <button
+                      onClick={() => approve(selected._id)}
+                      className="flex-1 bg-green-600 text-white py-2 rounded-lg"
+                    >
+                      Post
+                    </button>
+                  </>
+                )}
 
               <button
                 onClick={() => setSelected(null)}

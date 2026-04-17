@@ -234,7 +234,7 @@ const CreateLedger = ({ onClose, editData }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <input
             name="mailingDetails.name"
-            value={ledger.mailingDetails.name}
+            value={ledger.name || ledger.mailingDetails.name}
             onChange={handleChange}
             placeholder="Mailing Name"
             className="border p-2 rounded"

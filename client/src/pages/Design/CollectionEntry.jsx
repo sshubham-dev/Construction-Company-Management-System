@@ -25,7 +25,7 @@ const CollectionEntry = ({ onClose, editId }) => {
 
   const PARTY_UNDER = ["Sundry Debtors"];
   const CASH_BANK_UNDER = ["Cash-in-Hand", "Bank Accounts"];
-  const COST_CENTER = ["Department","SITE"];
+  const COST_CENTER = ["Department", "SITE"];
 
   useEffect(() => {
     axios
@@ -48,36 +48,35 @@ const CollectionEntry = ({ onClose, editId }) => {
       }
     };
     fetchCostCenter();
+
+    if (editId) {
+      console.log("Edit ID found on mount:", editId);
+      fetchData(editId);
+    }
   }, []);
 
-  useEffect(() => {
-    if (!editId) return;
+  const fetchData = async (id) => {
+    try {
+      const res = await axios.get(`/api/v1/collection/${id}`);
+      const data = res.data;
+      console.log(data);
 
-    const fetchData = async () => {
-      try {
-        const res = await axios.get(`/api/v1/collection/${editId}`);
-        const data = res.data;
-        console.log(data);
-
-        setForm({
-          date: data.date?.slice(0, 10),
-          costCenterId: data.costCenterId?._id || null,
-          clientLedgerId: data.clientLedgerId?._id || "",
-          receivedInto: data.receivedInto?._id || "",
-          amount: data.amount || "",
-          medium: data.medium || "",
-          referenceNo: data.referenceNo || "",
-          narration: data.narration || data.purpose || "",
-          proofImage: null, // don't prefill file
-        });
-      } catch (err) {
-        console.error(err);
-        alert("Failed to load data");
-      }
-    };
-
-    fetchData();
-  }, [editId]);
+      setForm({
+        date: data.date?.slice(0, 10),
+        costCenterId: data.costCenterId?._id || null,
+        clientLedgerId: data.clientLedgerId?._id || "",
+        receivedInto: data.receivedInto?._id || "",
+        amount: data.amount || "",
+        medium: data.medium || "",
+        referenceNo: data.referenceNo || "",
+        narration: data.narration || data.purpose || "",
+        proofImage: null, // don't prefill file
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load data");
+    }
+  };
 
   const partyLedgers = useMemo(
     () => ledgers.filter((l) => PARTY_UNDER.includes(l?.groupId?.name)),

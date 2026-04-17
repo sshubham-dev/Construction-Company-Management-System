@@ -132,7 +132,7 @@ const updateLedger = async (id, data) => {
 
 
 const deleteLedger = async (id) => {
-  return await Ledger.findByIdAndUpdate(id, { isActive: false });
+  return await Ledger.findByIdAndDelete(id);
 };
 
 // services/ledgerMapping.service.js
