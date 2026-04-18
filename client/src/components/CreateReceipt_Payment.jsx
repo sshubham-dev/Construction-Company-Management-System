@@ -26,7 +26,6 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
 
   /* ---------------- GROUP LOGIC ---------------- */
   const CASH_BANK_UNDER = ["Cash-in-Hand", "Bank Accounts", "Cash", "Bank"];
-  const PARTY_UNDER = ["Sundry Debtors", "Sundry Creditors"];
 
   /* ---------------- LOAD LEDGERS ---------------- */
   useEffect(() => {
@@ -47,7 +46,10 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
   }, []);
 
   const mapOptions = (arr) =>
-    arr.map((l) => ({ value: l._id, label: `${l.name} (${l?.groupId?.name})` }));
+    arr.map((l) => ({
+      value: l._id,
+      label: `${l.name} (${l?.groupId?.name})`,
+    }));
 
   const cashBankLedgers = useMemo(
     () =>
@@ -55,14 +57,6 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
         CASH_BANK_UNDER.map((u) => u?.toLowerCase()).includes(
           l?.groupId?.name.toLowerCase(),
         ),
-      ),
-    [ledgers],
-  );
-
-  const partyLedgers = useMemo(
-    () =>
-      ledgers.filter((l) =>
-        PARTY_UNDER.map((u) => u?.toLowerCase()).includes(l?.groupId?.name.toLowerCase()),
       ),
     [ledgers],
   );
@@ -80,7 +74,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
 
   const fromOptions = isPayment
     ? mapOptions(cashBankLedgers)
-    : mapOptions(partyLedgers);
+    : mapOptions(nonCashBankLedgers);
 
   const toOptions = isPayment
     ? mapOptions(nonCashBankLedgers)

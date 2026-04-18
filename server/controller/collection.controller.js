@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Collection = require("../models/collection.models");
 const { uploadOnCloudinary } = require("../utils/cloudinary.js");
 const {
@@ -67,6 +68,128 @@ const createCollection = async (req, res) => {
 
 /* ---------------- GET ALL (ACCOUNT SIDE) ---------------- */
 
+// const getCollections = async (req, res) => {
+//   try {
+//     const {
+//       companyId,
+//       page = 1,
+//       limit = 10,
+//       search = "",
+//       status,
+//       date,
+
+//       // ✅ advanced filters
+//       fromDate,
+//       toDate,
+//       bank,
+//       costCenter,
+//       businessUnit,
+//     } = req.query;
+
+//     const skip = (page - 1) * limit;
+
+//     /* ---------------- BASE FILTER ---------------- */
+//     // const filter = {
+//     //   companyId,
+//     // };
+//     const filter = {};
+
+//     /* ---------------- STATUS ---------------- */
+//     if (status) {
+//       filter.status = status;
+//     }
+
+//     /* ---------------- QUICK DATE FILTER ---------------- */
+//     if (date && !fromDate && !toDate) {
+//       const now = new Date();
+
+//       if (date === "today") {
+//         filter.date = {
+//           $gte: new Date(now.setHours(0, 0, 0, 0)),
+//         };
+//       }
+
+//       if (date === "week") {
+//         const firstDay = new Date();
+//         firstDay.setDate(now.getDate() - 7);
+
+//         filter.date = { $gte: firstDay };
+//       }
+
+//       if (date === "month") {
+//         const firstDay = new Date(
+//           now.getFullYear(),
+//           now.getMonth(),
+//           1
+//         );
+
+//         filter.date = { $gte: firstDay };
+//       }
+//     }
+
+//     /* ---------------- CUSTOM DATE RANGE ---------------- */
+//     if (fromDate || toDate) {
+//       filter.date = {};
+
+//       if (fromDate) {
+//         filter.date.$gte = new Date(fromDate);
+//       }
+
+//       if (toDate) {
+//         const end = new Date(toDate);
+//         end.setHours(23, 59, 59, 999); // full day
+//         filter.date.$lte = end;
+//       }
+//     }
+
+//     /* ---------------- ADVANCED FILTERS ---------------- */
+//     // if (bank) {
+//     //   filter.receivedInto = bank;
+//     // }
+
+//     // if (costCenter) {
+//     //   filter.costCenterId = costCenter;
+//     // }
+
+//     // if (businessUnit) {
+//     //   filter.businessUnitId = businessUnit;
+//     // }
+
+//     /* ---------------- SEARCH ---------------- */
+//     if (search) {
+//       filter.$or = [
+//         { purpose: { $regex: search, $options: "i" } },
+//         { narration: { $regex: search, $options: "i" } },
+//       ];
+//     }
+
+//     /* ---------------- QUERY ---------------- */
+//     const [data, total] = await Promise.all([
+//       Collection.find(filter)
+//         .populate("clientLedgerId", "name")
+//         .populate("receivedInto", "name")
+//         .sort({ createdAt: -1 })
+//         .skip(skip)
+//         .limit(Number(limit))
+//         .lean(), // ✅ performance boost
+
+//       Collection.countDocuments(filter),
+//     ]);
+
+//     /* ---------------- RESPONSE ---------------- */
+//     res.json({
+//       data,
+//       total,
+//       page: Number(page),
+//       totalPages: Math.ceil(total / limit),
+//     });
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+
 const getCollections = async (req, res) => {
   try {
     const {
@@ -77,33 +200,30 @@ const getCollections = async (req, res) => {
       status,
       date,
 
-      // ✅ advanced filters
       fromDate,
       toDate,
       bank,
       costCenter,
       businessUnit,
+      minAmount,
+      maxAmount,
     } = req.query;
 
     const skip = (page - 1) * limit;
 
-    /* ---------------- BASE FILTER ---------------- */
-    // const filter = {
-    //   companyId,
-    // };
-    const filter = {};
+    const matchStage = {
+      companyId: new mongoose.Types.ObjectId(companyId),
+    };
 
     /* ---------------- STATUS ---------------- */
-    if (status) {
-      filter.status = status;
-    }
+    if (status) matchStage.status = status;
 
-    /* ---------------- QUICK DATE FILTER ---------------- */
+    /* ---------------- DATE FILTER ---------------- */
     if (date && !fromDate && !toDate) {
       const now = new Date();
 
       if (date === "today") {
-        filter.date = {
+        matchStage.date = {
           $gte: new Date(now.setHours(0, 0, 0, 0)),
         };
       }
@@ -111,71 +231,113 @@ const getCollections = async (req, res) => {
       if (date === "week") {
         const firstDay = new Date();
         firstDay.setDate(now.getDate() - 7);
-
-        filter.date = { $gte: firstDay };
+        matchStage.date = { $gte: firstDay };
       }
 
       if (date === "month") {
-        const firstDay = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          1
-        );
-
-        filter.date = { $gte: firstDay };
+        matchStage.date = {
+          $gte: new Date(now.getFullYear(), now.getMonth(), 1),
+        };
       }
     }
 
-    /* ---------------- CUSTOM DATE RANGE ---------------- */
     if (fromDate || toDate) {
-      filter.date = {};
+      matchStage.date = {};
 
-      if (fromDate) {
-        filter.date.$gte = new Date(fromDate);
-      }
+      if (fromDate) matchStage.date.$gte = new Date(fromDate);
 
       if (toDate) {
         const end = new Date(toDate);
-        end.setHours(23, 59, 59, 999); // full day
-        filter.date.$lte = end;
+        end.setHours(23, 59, 59, 999);
+        matchStage.date.$lte = end;
       }
     }
 
-    /* ---------------- ADVANCED FILTERS ---------------- */
-    // if (bank) {
-    //   filter.receivedInto = bank;
-    // }
+    /* ---------------- EXACT FILTERS ---------------- */
+    if (bank) matchStage.receivedInto = new mongoose.Types.ObjectId(bank);
+    if (costCenter)
+      matchStage.costCenterId = new mongoose.Types.ObjectId(costCenter);
+    if (businessUnit)
+      matchStage.businessUnitId = new mongoose.Types.ObjectId(businessUnit);
 
-    // if (costCenter) {
-    //   filter.costCenterId = costCenter;
-    // }
+    /* ---------------- PIPELINE ---------------- */
+    const pipeline = [
+      { $match: matchStage },
 
-    // if (businessUnit) {
-    //   filter.businessUnitId = businessUnit;
-    // }
+      /* ---- JOIN CLIENT ---- */
+      {
+        $lookup: {
+          from: "ledgers",
+          localField: "clientLedgerId",
+          foreignField: "_id",
+          as: "client",
+        },
+      },
+      { $unwind: "$client" },
+
+      /* ---- JOIN COST CENTER ---- */
+      {
+        $lookup: {
+          from: "costcenters",
+          localField: "costCenterId",
+          foreignField: "_id",
+          as: "costCenter",
+        },
+      },
+      {
+        $unwind: {
+          path: "$costCenter",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
 
     /* ---------------- SEARCH ---------------- */
     if (search) {
-      filter.$or = [
-        { purpose: { $regex: search, $options: "i" } },
-        { narration: { $regex: search, $options: "i" } },
-      ];
+      const isNumber = !isNaN(Number(search));
+
+      pipeline.push({
+        $match: {
+          $or: [
+            { "client.name": { $regex: search, $options: "i" } },
+            { "costCenter.name": { $regex: search, $options: "i" } },
+            { purpose: { $regex: search, $options: "i" } },
+            { narration: { $regex: search, $options: "i" } },
+            ...(isNumber ? [{ amount: Number(search) }] : []),
+          ],
+        },
+      });
     }
 
-    /* ---------------- QUERY ---------------- */
-    const [data, total] = await Promise.all([
-      Collection.find(filter)
-        .populate("clientLedgerId", "name")
-        .populate("receivedInto", "name")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(), // ✅ performance boost
+    /* ---------------- AMOUNT RANGE ---------------- */
+    if (minAmount || maxAmount) {
+      pipeline.push({
+        $match: {
+          amount: {
+            ...(minAmount && { $gte: Number(minAmount) }),
+            ...(maxAmount && { $lte: Number(maxAmount) }),
+          },
+        },
+      });
+    }
 
-      Collection.countDocuments(filter),
+    /* ---------------- PAGINATION ---------------- */
+    const dataPipeline = [
+      ...pipeline,
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: Number(limit) },
+    ];
+
+    const countPipeline = [...pipeline, { $count: "total" }];
+
+    const [data, countResult] = await Promise.all([
+      Collection.aggregate(dataPipeline),
+      Collection.aggregate(countPipeline),
     ]);
 
-    /* ---------------- RESPONSE ---------------- */
+    const total = countResult[0]?.total || 0;
+
     res.json({
       data,
       total,
@@ -187,6 +349,7 @@ const getCollections = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 const getCollection = async (req, res) => {
   try {

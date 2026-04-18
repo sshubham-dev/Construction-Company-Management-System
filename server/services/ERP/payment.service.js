@@ -4,7 +4,6 @@ const InvoiceAllocation = require("../../models/invoiceAllocation.models");
 const { getVouchers } = require("./voucher/query.service");
 const { generateVoucherNo } = require("../../utils/voucherNoGenerator");
 
-
 /* ======================
    CREATE PAYMENT VOUCHER
 ====================== */
@@ -13,7 +12,7 @@ async function createPaymentVoucher(data, user) {
   const {
     date,
     from, // bank/cash
-    to,   // vendor
+    to, // vendor
     amount,
     narration,
     costCenterId,
@@ -44,10 +43,10 @@ async function createPaymentVoucher(data, user) {
     { ledgerId: fromLedger._id, type: "CREDIT", amount },
   ];
 
-      const voucherNo = await generateVoucherNo({
-      companyId: user.companyId,
-      type: "PAYMENT",
-    });
+  const voucherNo = await generateVoucherNo({
+    companyId: user.companyId,
+    type: "PAYMENT",
+  });
 
   const voucher = await Voucher.create({
     voucherNo,
@@ -55,10 +54,10 @@ async function createPaymentVoucher(data, user) {
     date,
     entries,
     narration,
-    costCenterId,
+    costCenterId: costCenterId || null,
     status: "DRAFT",
-      companyId: user.companyId,
-      createdBy: user._id,
+    companyId: user.companyId,
+    createdBy: user._id,
   });
 
   /* ======================
@@ -80,14 +79,12 @@ async function createPaymentVoucher(data, user) {
 }
 
 async function getAllPayments(query) {
-const result = await getVouchers("PAYMENT", query);
+  const result = await getVouchers("PAYMENT", query);
   return result;
-
 }
 
 async function getPaymentById(id) {
-  const voucher = await Voucher.findById(id)
-    .populate("entries.ledgerId");
+  const voucher = await Voucher.findById(id).populate("entries.ledgerId");
 
   const allocations = await InvoiceAllocation.find({ voucherId: id });
 

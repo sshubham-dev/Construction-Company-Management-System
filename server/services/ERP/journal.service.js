@@ -54,7 +54,7 @@ async function createJournalVoucher(data, user) {
     entries: formattedEntries,
     totalDebit: debit,
     totalCredit: credit,
-    costCenterId,
+    costCenterId: costCenterId || null,
     companyId: user.companyId,
     status: "DRAFT",
     createdBy: user._id,
@@ -104,7 +104,7 @@ async function updateJournalVoucher(id, data) {
   voucher.entries = formattedEntries;
   voucher.narration = narration;
   voucher.date = date;
-  voucher.costCenterId = costCenterId;
+  voucher.costCenterId = costCenterId || null;
   voucher.totalDebit = debit;
   voucher.totalCredit = credit;
 

@@ -23,7 +23,7 @@ const CollectionEntry = ({ onClose, editId }) => {
   });
   const [costCenters, setCostCenter] = useState([]);
 
-  const PARTY_UNDER = ["Sundry Debtors"];
+  const PARTY_UNDER = ["Sundry Debtors","Direct Income", "Indirect Income"];
   const CASH_BANK_UNDER = ["Cash-in-Hand", "Bank Accounts"];
   const COST_CENTER = ["Department", "SITE"];
 

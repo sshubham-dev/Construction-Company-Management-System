@@ -54,7 +54,7 @@ async function createReceiptVoucher(data, user) {
     date,
     entries,
     narration,
-    costCenterId,
+    costCenterId: costCenterId || null,
     status: "DRAFT",
     companyId: user.companyId,
     createdBy: user._id,

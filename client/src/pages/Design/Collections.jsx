@@ -38,6 +38,8 @@ const Collections = () => {
   const [page, setPage] = useState(1);
   const limit = 10;
   const [total, setTotal] = useState(0);
+  const [minAmount, setMinAmount] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
 
   // Modals
   const [createModal, setCreateModal] = useState(false);
@@ -58,7 +60,15 @@ const Collections = () => {
           search,
           status: statusFilter,
           date: dateFilter,
-          ...advancedFilters,
+
+          fromDate: advancedFilters.fromDate,
+          toDate: advancedFilters.toDate,
+          bank: advancedFilters.bank,
+          costCenter: advancedFilters.costCenter,
+          businessUnit: advancedFilters.businessUnit,
+
+          minAmount,
+          maxAmount,
         },
       });
 
@@ -81,6 +91,7 @@ const Collections = () => {
       setPage(1);
       loadData();
     }, 400);
+
     return () => clearTimeout(delay);
   }, [search]);
 
@@ -198,9 +209,7 @@ const Collections = () => {
               className="bg-white border rounded-xl p-3 shadow-sm space-y-2"
             >
               <div className="flex justify-between">
-                <div className="font-medium text-sm">
-                  {row.clientLedgerId?.name}
-                </div>
+                <div className="font-medium text-sm">{row.client?.name}</div>
 
                 <span
                   className={`px-2 py-1 text-xs border rounded-full ${statusColor[row.status]}`}
