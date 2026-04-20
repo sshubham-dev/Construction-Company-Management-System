@@ -14,7 +14,7 @@
   "dependencies": {
     "@jridgewell/sourcemap-codec": "^1.5.5",
     "@mdx-js/rollup": "^3.1.1",
-    "@react-pdf/renderer": "3.1.14",
+    "@react-pdf/renderer": "4.5.1",
     "@reduxjs/toolkit": "^2.11.2",
     "@surma/rollup-plugin-off-main-thread": "^2.2.3",
     "@tanstack/react-table": "^8.21.3",

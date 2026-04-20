@@ -65,7 +65,7 @@ const ExpenseReports = () => {
         status,
       },
     });
-
+    console.log(res.data.expenses);
     setExpenses(res.data.expenses);
   };
 
@@ -268,7 +268,9 @@ const ExpenseReports = () => {
                 <td className="p-3">{exp?.paidByLedger?.name}</td>
 
                 <td className="p-3">{exp?.expenseLedger?.name || "-"}</td>
-                <td className="p-3">{exp?.expenseForLedger?.name || "-"}</td>
+                <td className="p-3">
+                  {exp?.expenseForLedger?.name || exp?.expenseFor}
+                </td>
 
                 <td className="p-3">{exp.narration}</td>
 

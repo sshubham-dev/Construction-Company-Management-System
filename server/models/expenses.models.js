@@ -34,32 +34,23 @@ const expenseSchema = new mongoose.Schema(
 
     // WHAT kind of expense (Diesel, Cement, Travel, etc.)
     expenseLedger: {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Ledger",
-        required: true,
-      },
-      name: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger",
+      required: true,
     },
 
     // WHO paid (Employee / Cash / Bank / Advance)
     paidByLedger: {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Ledger",
-        required: true,
-      },
-      name: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger",
+      required: true,
     },
 
     // WHERE expense belongs (Site / Store / Office / Department)
-    expenseForLedger: {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Ledger",
-        required: true,
-      },
-      name: String,
+    expenseFor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CostCenter",
+      default: null,
     },
 
     /* ======================

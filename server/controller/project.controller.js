@@ -24,7 +24,7 @@ const createProject = async (req, res) => {
 
     /* COVER IMAGE */
     if (files?.coverImage) {
-      const result = await uploadOnCloudinary(files.coverImage[0].path, {
+      const result = await uploadOnCloudinary(files.coverImage[0].buffer, {
         folder: "projects/cover",
         public_id: `${data.slug}-cover`,
       });
@@ -37,7 +37,7 @@ const createProject = async (req, res) => {
 
     /* FLOOR PLAN */
     if (files?.floorPlan) {
-      const result = await uploadOnCloudinary(files.floorPlan[0].path, {
+      const result = await uploadOnCloudinary(files.floorPlan[0].buffer, {
         folder: "projects/floorplans",
         public_id: `${data.slug}-floorplan`,
       });
@@ -55,7 +55,7 @@ const createProject = async (req, res) => {
       let index = 1;
 
       for (const file of files.galleryImages) {
-        const result = await uploadOnCloudinary(file.path, {
+        const result = await uploadOnCloudinary(file.buffer, {
           folder: "projects/gallery",
           public_id: `${data.slug}-gallery-${index++}`,
         });
@@ -69,7 +69,7 @@ const createProject = async (req, res) => {
 
     /* VIDEO (optional upload) */
     if (files?.video) {
-      const result = await uploadOnCloudinary(files.video[0].path, {
+      const result = await uploadOnCloudinary(files.video[0].buffer, {
         folder: "projects/video",
         public_id: `${data.slug}-video`,
       });

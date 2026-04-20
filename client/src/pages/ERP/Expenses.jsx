@@ -230,7 +230,7 @@ const Expenses = () => {
                   {expense.narration || "Expense"}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  For: {expense.expenseForLedger?.name || "-"}
+                  For: {expense.expenseForLedger?.name || expense.expenseFor}
                 </p>
               </div>
 
@@ -275,16 +275,16 @@ const Expenses = () => {
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
               {/* Edit */}
-              {expense.status === "Draft" &&
-                (expense.isApproved === "For Approval" ||
-                  expense.isApproved === "Rejected") && (
-                  <button
-                    onClick={() => handleEditExpense(expense._id)}
-                    className="text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Edit
-                  </button>
-                )}
+              {expense.status === "Draft" && (
+                // (expense.isApproved === "For Approval" ||
+                //   expense.isApproved === "Rejected") &&
+                <button
+                  onClick={() => handleEditExpense(expense._id)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Edit
+                </button>
+              )}
 
               {/* Delete */}
               {expense.status === "Draft" &&

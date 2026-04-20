@@ -5,19 +5,18 @@ import AsyncSelect from "react-select/async";
 import { useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
-const ExpenseForm = ({ onClose, editId }) => {
+const ExpenseForm = ({ onClose, editId, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [ledgers, setLedgers] = useState([]);
-  const [expenseLedgers, setExpenseLedgers] = useState([]);
+  // const [expenseLedgers, setExpenseLedgers] = useState([]);
   const [costCenters, setCostCenters] = useState([]);
   const [form, setForm] = useState({
     date: "",
     amount: "",
     narration: "",
-    expenseLedgerId: "",
-    expenseForLedgerId: "",
+    expenseLedger: "",
+    expenseFor: "",
     attachments: [],
-    expenseCategory: "",
   });
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [preview, setPreview] = useState([]); // array of { url, type }
@@ -47,18 +46,6 @@ const ExpenseForm = ({ onClose, editId }) => {
     fetchCostCenter();
   }, []);
 
-  useEffect(() => {
-    console.log(form.expenseCategory);
-    // Expense ledgers (Expenses group)
-    setExpenseLedgers(
-      ledgers.filter((l) => l?.costCenter?._id === form.expenseCategory),
-    );
-    console.log(ledgers);
-    console.log(
-      ledgers.filter((l) => l?.costCenter?._id === form.expenseCategory),
-    );
-  }, [form.expenseCategory]);
-
   /* ---------------------------------- EDIT MODE ---------------------------------- */
   useEffect(() => {
     if (!editId) return;
@@ -70,10 +57,9 @@ const ExpenseForm = ({ onClose, editId }) => {
         date: data.date?.slice(0, 10),
         amount: data.amount,
         narration: data.narration,
-        expenseLedgerId: data.expenseLedger?.id,
-        expenseForLedgerId: data.expenseForLedger?.id,
+        expenseLedger: data.expenseLedger || data.expenseLedger?.id,
+        expenseFor: data.expenseFor,
         attachments: [null],
-        expenseCategory: data.expenseCategory,
       });
 
       if (data.attachments?.[0]?.url) {
@@ -84,12 +70,18 @@ const ExpenseForm = ({ onClose, editId }) => {
     loadExpense();
   }, [editId]);
 
+  const PARTY_UNDER = [
+    "Indirect Expenses",
+    "Sundry Creditors",
+    "Direct Expenses",
+  ];
+
   /* ---------------------------------- HANDLERS ---------------------------------- */
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const expenseCategoryOptions = useMemo(() => {
+  const expenseForOptions = useMemo(() => {
     return costCenters.map((l) => ({
       value: l._id,
       label: l.name,
@@ -97,17 +89,12 @@ const ExpenseForm = ({ onClose, editId }) => {
   }, [costCenters]);
 
   const expenseLedgerOptions = useMemo(() => {
-    return expenseLedgers.map((l) => ({
-      value: l._id,
-      label: l.name,
-    }));
-  }, [expenseLedgers]);
-
-  const ledgerOptions = useMemo(() => {
-    return ledgers.map((l) => ({
-      value: l._id,
-      label: l.name,
-    }));
+    return ledgers
+      .filter((l) => PARTY_UNDER.includes(l?.groupId?.name))
+      .map((l) => ({
+        value: l._id,
+        label: `${l.name} (${l.referenceType || l?.groupId?.name || l.type})`,
+      }));
   }, [ledgers]);
 
   const handleFile = (e) => {
@@ -139,26 +126,24 @@ const ExpenseForm = ({ onClose, editId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     const fd = new FormData();
 
-    // append normal fields
     fd.append("date", form.date);
     fd.append("amount", form.amount);
-    fd.append("narration", form.narration || "");
-    fd.append("expenseLedgerId", form.expenseLedgerId);
-    fd.append("expenseForLedgerId", form.expenseForLedgerId);
-    fd.append("expenseCategory", form.expenseCategory);
+    fd.append("narration", form.narration);
+    fd.append("expenseLedger", form.expenseLedger);
+    fd.append("expenseFor", form.expenseFor);
 
-    // append files correctly
-    if (form.attachments?.length) {
+    // ✅ VERY IMPORTANT
+    if (form.attachments && form.attachments.length > 0) {
       form.attachments.forEach((file) => {
-        fd.append("attachments", file); // MUST match multer field
+        fd.append("attachments", file); // exact same key
       });
     }
 
+    console.log(form);
     try {
-      if (editId) {
+      if (editId !== undefined) {
         await axios.put(`/api/v1/expenses/${editId}`, fd, {
           headers: { "Content-Type": "multipart/form-data" },
         });
@@ -168,6 +153,7 @@ const ExpenseForm = ({ onClose, editId }) => {
         });
       }
 
+      // onSave();
       onClose();
     } catch (err) {
       console.error(err);
@@ -198,58 +184,22 @@ const ExpenseForm = ({ onClose, editId }) => {
       {/* Expense Ledger */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Expense Category
-        </label>
-        <Select
-          options={expenseCategoryOptions}
-          value={expenseCategoryOptions.find(
-            (o) => o.value === form.expenseCategory,
-          )}
-          onChange={(opt) =>
-            setForm((prev) => ({
-              ...prev,
-              expenseCategory: opt?.value || "",
-            }))
-          }
-          placeholder="Search Expense Catergory..."
-          isClearable
-        />
-      </div>
-
-      {/* Expense Ledger */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
           Expense Type
         </label>
         <Select
           options={expenseLedgerOptions}
           value={expenseLedgerOptions.find(
-            (o) => o.value === form.expenseLedgerId,
+            (o) => o.value === form.expenseLedger,
           )}
           onChange={(opt) =>
             setForm((prev) => ({
               ...prev,
-              expenseLedgerId: opt?.value || "",
+              expenseLedger: opt?.value || "",
             }))
           }
           placeholder="Search Expense Type..."
           isClearable
         />
-        {/* <select
-          name="expenseLedgerId"
-          value={form.expenseLedgerId}
-          onChange={handleChange}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
-                   bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
-          required
-        >
-          <option value="">Select Expense Type</option>
-          {expenseLedgers.map((l) => (
-            <option key={l._id} value={l._id}>
-              {l.name}
-            </option>
-          ))}
-        </select> */}
       </div>
 
       {/* Expense For */}
@@ -258,32 +208,17 @@ const ExpenseForm = ({ onClose, editId }) => {
           Expense For
         </label>
         <Select
-          options={ledgerOptions}
-          value={ledgerOptions.find((o) => o.value === form.expenseForLedgerId)}
+          options={expenseForOptions}
+          value={expenseForOptions.find((o) => o.value === form.expenseFor)}
           onChange={(opt) =>
             setForm((prev) => ({
               ...prev,
-              expenseForLedgerId: opt?.value || "",
+              expenseFor: opt?.value || "",
             }))
           }
-          placeholder="Search Site / Store / Office..."
+          placeholder="Search..."
           isClearable
         />
-        {/* <select
-          name="expenseForLedgerId"
-          value={form.expenseForLedgerId}
-          onChange={handleChange}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
-                   bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
-          required
-        >
-          <option value="">Select Site / Store / Office</option>
-          {ledgers.map((l) => (
-            <option key={l._id} value={l._id}>
-              {l.name}
-            </option>
-          ))}
-        </select> */}
       </div>
 
       {/* Amount */}
