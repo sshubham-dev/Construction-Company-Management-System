@@ -74,6 +74,9 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
     "Indirect Expenses",
     "Sundry Creditors",
     "Direct Expenses",
+    "Marketing Expenses",
+    "Office Expenses",
+    "Purchase Account",
   ];
 
   /* ---------------------------------- HANDLERS ---------------------------------- */
