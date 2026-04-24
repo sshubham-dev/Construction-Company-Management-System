@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
 
 export default function MultiLevelReport() {
   const [data, setData] = useState({});
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   useEffect(() => {
-    fetch(`/api/v1/report/multi?companyId=${user.companyId}`)
-      .then((r) => r.json())
+    axios.get(`/api/v1/reports/multi?companyId=${user.companyId}`)
+      .then((res) => res.data())
       .then(setData);
   }, []);
 

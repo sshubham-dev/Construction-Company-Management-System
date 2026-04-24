@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
+
 export default function ProfitLoss({ companyId }) {
   const [data, setData] = useState(null);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const fetchData = async () => {
-    const res = await fetch(
-      `/api/v1/report/pnl?companyId=${user?.companyId}`
+    console.log("fetching profit loss with: ", {
+      companyId,
+    });
+    const res = await axios.get(
+      `/api/v1/reports/pnl?companyId=${user?.companyId}`
     );
-    const json = await res.json();
-    setData(json);
+    // const json = await res.json();
+    console.log("profit loss: ", res.data);
+    setData(res.data);
   };
 
   useEffect(() => {

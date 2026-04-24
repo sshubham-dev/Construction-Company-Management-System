@@ -15,7 +15,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
     amount: "",
     narration: "",
     expenseLedger: "",
-    expenseFor: "",
+    expenseFor: null,
     attachments: [],
   });
   const { user, isLoggedIn } = useSelector((state) => state.auth);
@@ -27,7 +27,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
       const { data } = await axios.get("/api/v1/ledger", {
         params: { companyId: user.companyId },
       });
-      console.log(data);
+      // console.log(data);
       // Site / Store / Office ledgers
       setLedgers(data);
     };
@@ -36,7 +36,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
         const { data } = await axios.get("/api/v1/cost-center", {
           params: { companyId: user.companyId },
         });
-        console.log(data);
+        // console.log(data);
         setCostCenters(data);
       } catch (error) {
         console.log(error);
@@ -52,14 +52,14 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
 
     const loadExpense = async () => {
       const { data } = await axios.get(`/api/v1/expenses/${editId}`);
-
+      console.log(data)
       setForm({
         date: data.date?.slice(0, 10),
         amount: data.amount,
         narration: data.narration,
         expenseLedger: data.expenseLedger || data.expenseLedger?.id,
-        expenseFor: data.expenseFor,
-        attachments: [null],
+        expenseFor: data.expenseFor || null,
+        attachments: [...data?.attachments || null],
       });
 
       if (data.attachments?.[0]?.url) {
@@ -135,7 +135,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
     fd.append("amount", form.amount);
     fd.append("narration", form.narration);
     fd.append("expenseLedger", form.expenseLedger);
-    fd.append("expenseFor", form.expenseFor);
+    fd.append("expenseFor", form.expenseFor || null);
 
     // ✅ VERY IMPORTANT
     if (form.attachments && form.attachments.length > 0) {
@@ -216,7 +216,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
           onChange={(opt) =>
             setForm((prev) => ({
               ...prev,
-              expenseFor: opt?.value || "",
+              expenseFor: opt?.value || null,
             }))
           }
           placeholder="Search..."

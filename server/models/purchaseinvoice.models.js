@@ -6,10 +6,6 @@ const purchaseInvoiceItemSchema = new mongoose.Schema({
     ref: "Stock",
     required: true,
   },
-  //   grnId: {
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref: "GRN",
-  // },
   item: String,
   unit: String,
 

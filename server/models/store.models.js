@@ -11,18 +11,16 @@ const storeSchema = new mongoose.Schema(
       default: "STORE",
     },
 
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
     businessUnitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessUnit",
       required: true,
       index: true,
     },
-
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-    },
-
     costCenterId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CostCenter",

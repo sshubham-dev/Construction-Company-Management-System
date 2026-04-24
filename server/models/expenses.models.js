@@ -22,11 +22,6 @@ const expenseSchema = new mongoose.Schema(
       ref: "Company",
       required: true,
     },
-    costcenterId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "CostCenter",
-      default: null,
-    },
 
     /* ======================
        CORE LEDGERS

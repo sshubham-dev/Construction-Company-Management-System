@@ -153,7 +153,7 @@ app.use("/api/v1/payroll", Payroll);
 app.use("/api/v1/payment-challans", PayChallan);
 app.use("/api/v1/projects", Projects);
 app.use("/api/v1/company", Company);
-app.use("/api/v1/report", Reports)
+app.use("/api/v1/reports", Reports)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   console.log(err);

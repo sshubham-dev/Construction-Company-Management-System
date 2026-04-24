@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import ReportLayout from "../Components/ReportLayout";
 import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
 
 export default function CashFlow({ companyId }) {
   const [data, setData] = useState([]);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   useEffect(() => {
-    fetch(`/api/v1/report/cash-flow?companyId=${user.companyId}`)
-      .then((r) => r.json())
+    axios.get(`/api/v1/reports/cash-flow?companyId=${user.companyId}`)
+      .then((res) => res.data())
       .then(setData);
   }, []);
 

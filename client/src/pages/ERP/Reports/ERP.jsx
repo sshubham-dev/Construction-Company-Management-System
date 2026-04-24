@@ -11,8 +11,9 @@ import {
 } from "recharts";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
 
-export default function ERP({ companyId }) {
+export default function ERP() {
   const [summary, setSummary] = useState({});
   const [revenueData, setRevenueData] = useState([]);
   const [expenseData, setExpenseData] = useState([]);
@@ -26,26 +27,41 @@ export default function ERP({ companyId }) {
     try {
       setLoading(true);
 
-      const [summaryRes, clientRes, supplierRes] = await Promise.all([
-        fetch(`/api/v1/report/summary?companyId=${user.companyId}`),
-        fetch(`/api/v1/report/outstanding?companyId=${user.companyId}&type=CLIENT`),
-        fetch(`/api/v1/report/outstanding?companyId=${user.companyId}&type=SUPPLIER`),
-      ]);
+      const [summaryRes, clientRes, supplierRes, contractorRes, employeeRes] =
+        await Promise.all([
+          axios.get(`/api/v1/reports/summary?companyId=${user.companyId}`),
+          axios.get(
+            `/api/v1/reports/outstanding?companyId=${user.companyId}&type=Client`,
+          ),
+          axios.get(
+            `/api/v1/reports/outstanding?companyId=${user.companyId}&type=Supplier`,
+          ),
+          axios.get(
+            `/api/v1/reports/outstanding?companyId=${user.companyId}&type=Contractor`,
+          ),
+          axios.get(
+            `/api/v1/reports/outstanding?companyId=${user.companyId}&type=Employee`,
+          ),
+        ]);
 
-      const summaryData = await summaryRes.json();
-      const clients = await clientRes.json();
-      const suppliers = await supplierRes.json();
+      const summaryData = summaryRes.data;
+      const clients = clientRes.data;
+      const suppliers = supplierRes.data;
+      const contractors = contractorRes.data;
+      const employees = employeeRes.data;
 
       const receivable = clients.reduce((s, c) => s + c.balance, 0);
-      const payable = suppliers.reduce((s, c) => s + c.balance, 0);
+      const payable =
+        suppliers.reduce((s, c) => s + c.balance, 0) +
+        contractors.reduce((s, c) => s + c.balance, 0) +
+        employees.reduce((s, c) => s + c.balance, 0);
 
       setSummary({
         revenue: summaryData.revenue || 0,
         expenses: summaryData.expenses || 0,
         receivable,
         payable,
-        profit:
-          (summaryData.revenue || 0) - (summaryData.expenses || 0),
+        profit: (summaryData.revenue || 0) - (summaryData.expenses || 0),
       });
 
       // 🔥 simple chart mapping
@@ -53,6 +69,7 @@ export default function ERP({ companyId }) {
       setExpenseData(summaryData.expenseBreakdown || []);
     } catch (err) {
       console.error(err);
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -60,13 +77,12 @@ export default function ERP({ companyId }) {
 
   useEffect(() => {
     fetchDashboard();
-  }, [companyId]);
+  }, [user.companyId]);
 
   if (loading) return <p>Loading dashboard...</p>;
 
   return (
     <div className="space-y-5 pb-5">
-
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 p-2">
         <KPI
@@ -87,10 +103,7 @@ export default function ERP({ companyId }) {
           title="Receivable"
           value={`₹ ${summary.receivable?.toLocaleString()}`}
         />
-        <KPI
-          title="Payable"
-          value={`₹ ${summary.payable?.toLocaleString()}`}
-        />
+        <KPI title="Payable" value={`₹ ${summary.payable?.toLocaleString()}`} />
       </div>
 
       {/* Revenue Chart */}

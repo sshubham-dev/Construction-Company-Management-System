@@ -23,11 +23,6 @@ const assetSchema = new mongoose.Schema(
 
     serialNumber: String,
 
-    assignedTo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
-    },
-
     isRentable: {
       type: Boolean,
       default: false,
@@ -97,7 +92,7 @@ const assetIssueSchema = new mongoose.Schema(
       enum: ["Good", "Damaged", "Scrap"],
     },
 
-    rentPerDay: Number,
+    rent: Number,
     totalRent: Number,
 
     status: {

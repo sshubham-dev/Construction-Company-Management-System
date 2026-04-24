@@ -3,6 +3,7 @@ import axios from "axios";
 import Modal from "../../../components/Modal";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
+import ExpenseForm from "../../../components/CreateExpenses";
 
 const ExpenseReports = () => {
   const [expenses, setExpenses] = useState([]);
@@ -16,6 +17,8 @@ const ExpenseReports = () => {
   const [selectedType, setSelectedType] = useState(null);
   const [expenseLedgers, setExpenseLedgers] = useState([]);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
+  const [editFrom, setEditForm] = useState(false);
+  const [editId, setEditId] = useState(null);
   useEffect(() => {
     const loadLedgers = async () => {
       const { data } = await axios.get(
@@ -115,6 +118,11 @@ const ExpenseReports = () => {
       console.error(err);
       toast.error("Failed to delete expense");
     }
+  };
+
+  const handleEditExpense = (id) => {
+    setEditId(id);
+    setEditForm(true);
   };
 
   return (
@@ -269,7 +277,7 @@ const ExpenseReports = () => {
 
                 <td className="p-3">{exp?.expenseLedger?.name || "-"}</td>
                 <td className="p-3">
-                  {exp?.expenseForLedger?.name || exp?.expenseFor}
+                  {exp?.expenseForLedger?.name || exp?.expenseFor?._id?.name}
                 </td>
 
                 <td className="p-3">{exp.narration}</td>
@@ -293,25 +301,33 @@ const ExpenseReports = () => {
 
                 {/*  */}
                 <td className="p-3">
-                  {exp.status !== "Posted" && exp.isApproved === "Approved" && (
+                  {/* {exp.status !== "Posted" && exp.isApproved === "Approved" && (
                     <button
                       onClick={() => postExpense(exp._id)}
                       className="bg-green-600 text-white px-2 py-1 rounded text-xs"
                     >
                       Post
                     </button>
-                  )}
+                  )} */}
                   {/* Delete */}
-                  {exp.status !== "Posted" &&
+                  {/* {exp.status !== "Posted" &&
                     (exp.isApproved === "For Approval" ||
-                      exp.isApproved === "Rejected") && (
-                      <button
-                        onClick={() => handleDeleteExpense(exp._id)}
-                        className="text-sm text-red-600 hover:text-red-800"
-                      >
-                        Delete
-                      </button>
-                    )}
+                      exp.isApproved === "Rejected") && ( */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditExpense(exp._id)}
+                          className="text-sm text-blue-600 hover:text-blue-800"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteExpense(exp._id)}
+                          className="text-sm text-red-600 hover:text-red-800"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    {/* )} */}
                 </td>
               </tr>
             ))}
@@ -350,6 +366,13 @@ const ExpenseReports = () => {
           </div>
         </Modal>
       )}
+      <Modal
+        isOpen={editFrom}
+        onClose={() => setEditForm(false)}
+        head="Edit Expenses"
+      >
+        <ExpenseForm onClose={() => setEditForm(false)} editId={editId} />
+      </Modal>
     </div>
   );
 };

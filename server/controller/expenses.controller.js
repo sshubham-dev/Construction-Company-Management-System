@@ -36,31 +36,38 @@ const resolvePaidByLedger = async (userId) => {
 ====================================================== */
 const createExpense = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
-    console.log("STEP 1: Start");
     const { date, amount, narration } = req.body;
     const user = req.user;
     const files = req.files || (req.file ? [req.file] : []);
+    console.log("BODY:", req.body);
+    console.log("FILES:", req.files);
+    console.log("STEP 1: Start");
 
-    if (!req.body.expenseLedger || !req.body.expenseForLedger) {
+    if (!req.body.expenseLedger) {
       return res.status(400).json({ message: "Required ledger missing" });
     }
     console.log("Required fields present, proceeding...");
     console.log("STEP 2: Resolve paidBy");
-    const paidByLedger = await await Ledger.findById(user.ledger);
+    const paidByLedger = await Ledger.findById(user.ledger);
     if (!paidByLedger) {
       return res.status(400).json({ message: "PaidBy ledger not found" });
     }
     console.log("STEP 3: Resolve expense ledgers");
     console.log("Expense Ledger ID:", req.body.expenseLedger);
-    console.log("Expense For Ledger ID:", req.body.expenseForLedger);
     const expenseLedger = await Ledger.findById(req.body.expenseLedger);
-    const expenseForLedger = await CostCenter.findById(
-      req.body.expenseForLedger,
-    );
+    let expenseFor = null;
+    const expenseForId =
+  req.body.expenseFor === "null" || !req.body.expenseFor
+    ? null
+    : req.body.expenseFor;
+    if (expenseForId){
+      console.log("finding expense for", req.body.expenseFor)
+      expenseFor = await CostCenter.findById(req.body.expenseFor);
+      console.log("found expense for")
+    }
+    console.log("Expense For Ledger ID:", req.body.expenseFor);
 
-    if (!expenseLedger || !expenseForLedger) {
+    if (!expenseLedger) {
       return res.status(400).json({ message: "Invalid ledger selected" });
     }
     console.log("STEP 3: Fetched ledgers");
@@ -93,24 +100,24 @@ const createExpense = async (req, res) => {
       companyId: user.companyId,
       expenseLedger: expenseLedger._id,
       paidByLedger: paidByLedger._id,
-      expenseForLedger: expenseForLedger._id,
+      expenseFor: expenseFor?._id || null,
       attachments, // ✅ keep this
       status: "Draft",
       createdBy: req.user._id,
     });
     console.log("STEP 6: Created expense");
+    res.status(201).json(expense);
     const employee = await User.find({ role: "Employee" });
     if (employee.length > 0) {
       for (let emp of employee) {
         sendPushNotification(
           emp._id,
-          `${amount} paid by ${user.userName} for ${expenseLedger.name} expense of ${expenseForLedger.name}.`,
+          `${amount} paid by ${user.userName} for ${expenseLedger.name} expense of ${narration}.`,
         );
       }
     }
     sendApproveByAdmin(expense, "Expense", user._id);
 
-    res.status(201).json(expense);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
@@ -141,16 +148,16 @@ const postExpense = async (req, res) => {
       reference: "Expense" + " " + expense.expenseNo,
       referenceId: expense._id,
 
-      costCenterId: expense.expenseForLedger.id,
+      costCenterId: expense.expenseFor._id,
 
       entries: [
         {
-          ledgerId: expense.expenseLedger.id,
+          ledgerId: expense.expenseLedger._id,
           type: "DEBIT",
           amount: expense.amount,
         },
         {
-          ledgerId: expense.paidByLedger.id,
+          ledgerId: expense.paidByLedger._id,
           type: "CREDIT",
           amount: expense.amount,
         },
@@ -292,6 +299,10 @@ const updateExpense = async (req, res) => {
       return res.status(404).json({ message: "Expense not found" });
     }
 
+    // if (expense.createdBy !== user._id){
+    //   return res.status(410).json("Permission deined");
+    // }
+
     /* ----------------------------------
        EDIT PERMISSION CHECK
     ---------------------------------- */
@@ -316,16 +327,25 @@ const updateExpense = async (req, res) => {
         return res.status(400).json({ message: "Invalid expense ledger" });
       }
 
-      expense.expenseLedger = expenseLedger._id;
+      expense.expenseLedger = expenseLedger._id || expense.expenseLedger;
     }
 
-    if (req.body.expenseFor) {
+    const isValidObjectId = (val) =>
+      val && val !== "null" && val !== "undefined";
+
+    if (isValidObjectId(req.body.expenseFor)) {
       const expenseFor = await CostCenter.findById(req.body.expenseFor);
+
       if (!expenseFor) {
-        return res.status(400).json({ message: "Invalid expense-for ledger" });
+        return res.status(400).json({ message: "Invalid expense-for" });
       }
 
       expense.expenseFor = expenseFor._id;
+    }
+
+    const paidByLedger = await Ledger.findById(user.ledger);
+    if (!paidByLedger) {
+      return res.status(400).json({ message: "PaidBy ledger not found" });
     }
 
     /* ----------------------------------
@@ -333,10 +353,11 @@ const updateExpense = async (req, res) => {
     ---------------------------------- */
     if (date) expense.date = date;
     if (amount !== undefined) expense.amount = Number(amount);
-    if (expenseCategory !== undefined)
-      expense.expenseCategory = expenseCategory;
     if (narration !== undefined) expense.narration = narration;
-    if (remarks !== undefined) expense.remarks = remarks;
+    if (remarks !== undefined) expense.remarks = remarks || expense?.remarks;
+    expense.companyId = user.companyId || expense?.companyId;
+    expense.paidByLedger = paidByLedger || expense?.paidByLedger;
+    expense.createdBy = user._id || expense?.createdBy;
 
     /* ----------------------------------
        ATTACHMENTS (APPEND ONLY)
@@ -366,7 +387,7 @@ const updateExpense = async (req, res) => {
       for (let emp of employee) {
         sendPushNotification(
           emp._id,
-          `${amount} paid by ${user.userName} for ${expense?.expenseLedger.name} expense of ${expense?.expenseForLedger.name}.`,
+          `${amount} paid by ${user.userName} for ${expense?.expenseLedger.name} expense of ${expense?.narration}.`,
         );
       }
     }

@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
+
+
 export default function TrialBalance({ companyId }) {
   const [data, setData] = useState(null);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const fetchData = async () => {
     
-    const res = await fetch(
-      `/api/v1/report/trial-balance?companyId=${user.companyId}`
+    const res = await axios.get(
+      `/api/v1/reports/trial-balance?companyId=${user.companyId}`
     );
-    const json = await res.json();
+    const json = await res.data;
     setData(json);
   };
 

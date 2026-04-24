@@ -6,34 +6,46 @@ import { useDispatch, useSelector } from "react-redux";
 const LedgerReport = () => {
   const [ledgers, setLedgers] = useState([]);
   const [ledgerId, setLedgerId] = useState("");
-  const [company, setCompany] = useState("")
+  const [company, setCompany] = useState("");
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [data, setData] = useState([]);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  const fetchLedgers = async () => {
-    const res = await axios.get("/api/v1/ledger", {params:{companyId: user.companyId}});
-    setLedgers(res.data || []);
-  };
-
-  const fetchReport = async () => {
-    if (!ledgerId) return;
-
-    const res = await axios.get("/api/v1/report/ledger", {
-      params: { ledgerId, fromDate, toDate, companyId: company || user.companyId },
-    });
-
-    setData(res.data.data || []);
-  };
-
   useEffect(() => {
     fetchLedgers();
   }, []);
 
+  const fetchLedgers = async () => {
+    const res = await axios.get("/api/v1/ledger", {
+      params: { companyId: user.companyId },
+    });
+    console.log("ledger found: ", res.data);
+    setLedgers(res.data || []);
+  };
+
   useEffect(() => {
     fetchReport();
   }, [ledgerId, fromDate, toDate]);
+  const fetchReport = async () => {
+    if (!ledgerId) return;
+    console.log("fetching report with: ", {
+      ledgerId,
+      fromDate,
+      toDate,
+    });
+
+    const res = await axios.get("/api/v1/reports/ledger", {
+      params: {
+        ledgerId,
+        companyId: user.companyId,
+        fromDate,
+        toDate,
+      },
+    });
+    console.log("ledger report: ", res.data);
+    setData(res.data || []);
+  };
 
   const ledgerOptions = ledgers.map((l) => ({
     value: l._id,
@@ -42,7 +54,6 @@ const LedgerReport = () => {
 
   return (
     <div className="p-4 space-y-4">
-
       {/* FILTER */}
       <Select
         options={ledgerOptions}
@@ -51,8 +62,16 @@ const LedgerReport = () => {
       />
 
       <div className="flex gap-2">
-        <input type="date" onChange={(e) => setFromDate(e.target.value)} className="input" />
-        <input type="date" onChange={(e) => setToDate(e.target.value)} className="input" />
+        <input
+          type="date"
+          onChange={(e) => setFromDate(e.target.value)}
+          className="input"
+        />
+        <input
+          type="date"
+          onChange={(e) => setToDate(e.target.value)}
+          className="input"
+        />
       </div>
 
       {/* TABLE */}

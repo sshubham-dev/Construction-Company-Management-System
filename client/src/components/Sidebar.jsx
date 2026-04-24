@@ -215,7 +215,22 @@ const Sidebar = ({ isOpen, onClose }) => {
       to: "/erp/expenses",
       name: "Expenses Report",
       icon: <GiExpense />,
-      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+      role: [
+        "Admin",
+        "Company",
+        "Accountant",
+        "Marketing",
+        "Ceo",
+        "Site Incharge",
+        "Site Supervisor",
+        "Design Head",
+        "Design Engineer",
+        "Quality Head",
+        "Quality Engineer",
+        "Account Head",
+        "HR",
+        "Store Incharge",
+      ],
     },
     {
       to: "/erp/balance-sheet",
@@ -229,12 +244,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: <FaBalanceScale />,
       role: ["Admin", "Company", "Ceo", "Account Head"],
     },
-    {
-      to: "/erp/cash-flow",
-      name: "Cash Flow",
-      icon: <FaBalanceScale />,
-      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
-    },
+    // {
+    //   to: "/erp/cash-flow",
+    //   name: "Cash Flow",
+    //   icon: <FaBalanceScale />,
+    //   role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    // },
     {
       to: "/erp/ledger-report",
       name: "Ledger Report",
@@ -562,7 +577,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         "Store Incharge",
       ],
     },
-
 
     /* Customer Management*/
     {

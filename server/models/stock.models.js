@@ -36,10 +36,11 @@ stockSchema.pre("save", function () {
 const stockItemSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, index: true },
-
-    category: { type: String, required: true, index: true },
+    code: { type: String, unique: true, index: true },
 
     unit: { type: String, required: true },
+
+    category: { type: String, required: true, index: true },
 
     itemType: {
       type: String,
@@ -47,7 +48,6 @@ const stockItemSchema = new mongoose.Schema(
       index: true,
     },
 
-    code: { type: String, unique: true, index: true },
     gstRate: { type: Number, default: 0 },
 
     purchasePrice: { type: Number, default: 0 },
@@ -171,8 +171,8 @@ const stockAuditSchema = new mongoose.Schema(
 const stockTransferSchema = new mongoose.Schema(
   {
     date: Date,
-    fromStoreId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
-    toStoreId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
+    fromStoreId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" }, // null for purchase
+    toStoreId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" }, // null for consumption (if ever used)
 
     items: [
       {

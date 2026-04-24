@@ -230,7 +230,7 @@ const Expenses = () => {
                   {expense.narration || "Expense"}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  For: {expense.expenseForLedger?.name || expense.expenseFor}
+                  For: {expense.expenseForLedger?.name || expense.expenseFor?.name}
                 </p>
               </div>
 

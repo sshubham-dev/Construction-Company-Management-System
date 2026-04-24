@@ -1,11 +1,10 @@
 const { Ledger, Group } = require("../../models/ledger.models");
 const Voucher = require("../../models/voucher.models");
 
-
 exports.getSummary = async (companyId) => {
   const vouchers = await Voucher.find({
     companyId,
-    status: "POSTED",
+    // status: "POSTED",
   });
 
   let revenue = 0;
@@ -26,12 +25,13 @@ exports.getSummary = async (companyId) => {
 };
 
 exports.getBalanceSheet = async (companyId) => {
-  const ledgers = await Ledger.find({ companyId, isActive: true })
-    .populate("groupId");
+  const ledgers = await Ledger.find({ companyId, isActive: true }).populate(
+    "groupId",
+  );
 
   const vouchers = await Voucher.find({
     companyId,
-    status: "POSTED",
+    // status: "POSTED",
   });
 
   const ledgerMap = {};
@@ -89,7 +89,7 @@ exports.getBalanceSheet = async (companyId) => {
 exports.getProfitAndLoss = async (companyId, fromDate, toDate) => {
   const match = {
     companyId,
-    status: "POSTED",
+    // status: "POSTED",
   };
 
   if (fromDate || toDate) {
@@ -98,7 +98,9 @@ exports.getProfitAndLoss = async (companyId, fromDate, toDate) => {
     if (toDate) match.date.$lte = new Date(toDate);
   }
 
+  console.log("P&L report finding with: ", match);
   const vouchers = await Voucher.find(match);
+  console.log("P&L report vouchers found: ", vouchers);
 
   const ledgerBalances = {};
 
@@ -147,7 +149,7 @@ exports.getProfitAndLoss = async (companyId, fromDate, toDate) => {
 exports.getTrialBalance = async (companyId, fromDate, toDate) => {
   const match = {
     companyId,
-    status: "POSTED",
+    // status: "POSTED",
   };
 
   if (fromDate || toDate) {
@@ -209,19 +211,29 @@ exports.getTrialBalance = async (companyId, fromDate, toDate) => {
   };
 };
 
-exports.getOutstanding = async (companyId, category) => {
+exports.getOutstanding = async (companyId, type) => {
+  // console.log(
+  //   "Calculating outstanding for companyId: ",
+  //   companyId,
+  //   " type: ",
+  //   type,
+  // );
   const ledgers = await Ledger.find({
     companyId,
-    category,
-    isActive: true,
+    referenceType: type,
+    // isActive: true,
   });
-
+  if (ledgers.length === 0) {
+    console.log("No ledgers found for companyId: ", companyId, " type: ", type);
+    return [];
+  }
+  
   const results = [];
 
   for (let ledger of ledgers) {
     const vouchers = await Voucher.find({
       companyId,
-      status: "POSTED",
+      // status: "POSTED",
       "entries.ledgerId": ledger._id,
     });
 
@@ -230,8 +242,7 @@ exports.getOutstanding = async (companyId, category) => {
 
     for (let v of vouchers) {
       for (let e of v.entries) {
-        if (e.ledgerId.toString() !== ledger._id.toString())
-          continue;
+        if (e.ledgerId.toString() !== ledger._id.toString()) continue;
 
         if (e.type === "DEBIT") debit += e.amount;
         else credit += e.amount;
@@ -252,15 +263,10 @@ exports.getOutstanding = async (companyId, category) => {
   return results;
 };
 
-exports.getLedgerReport = async ({
-  ledgerId,
-  companyId,
-  fromDate,
-  toDate,
-}) => {
+exports.getLedgerReport = async ({ ledgerId, companyId, fromDate, toDate }) => {
   const match = {
     companyId,
-    status: "POSTED",
+    // status: "POSTED",
     "entries.ledgerId": ledgerId,
   };
 
@@ -272,7 +278,7 @@ exports.getLedgerReport = async ({
 
   const vouchers = await Voucher.find(match)
     .populate("entries.ledgerId")
-    .sort({ date: 1 });
+    .sort({ date: -1 });
 
   let balance = 0;
 
@@ -280,8 +286,7 @@ exports.getLedgerReport = async ({
 
   for (let v of vouchers) {
     for (let e of v.entries) {
-      if (e.ledgerId._id.toString() !== ledgerId.toString())
-        continue;
+      if (e.ledgerId._id.toString() !== ledgerId.toString()) continue;
 
       if (e.type === "DEBIT") balance += e.amount;
       else balance -= e.amount;
@@ -304,7 +309,7 @@ exports.getLedgerReport = async ({
 exports.getBusinessUnitReport = async (companyId) => {
   const vouchers = await Voucher.find({
     companyId,
-    status: "POSTED",
+    // status: "POSTED",
   });
 
   const result = {};
@@ -332,7 +337,7 @@ exports.getBusinessUnitReport = async (companyId) => {
 exports.getCostCenterReport = async (companyId) => {
   const vouchers = await Voucher.find({
     companyId,
-    status: "POSTED",
+    // status: "POSTED",
   });
 
   const result = {};
@@ -360,7 +365,7 @@ exports.getCostCenterReport = async (companyId) => {
 exports.getCombinedReport = async (companyId) => {
   const vouchers = await Voucher.find({
     companyId,
-    status: "POSTED",
+    // status: "POSTED",
   });
 
   const result = {};

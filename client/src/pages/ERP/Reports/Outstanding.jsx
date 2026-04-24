@@ -1,8 +1,9 @@
+import axios from "axios";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 const Outstanding = () => {
-  const [type, setType] = useState("CLIENT");
+  const [type, setType] = useState("Client");
   const [data, setData] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
@@ -17,23 +18,28 @@ const Outstanding = () => {
     try {
       setLoading(true);
       setError("");
-
-      const res = await fetch(
-        `/api/v1/report/outstanding?companyId=${user.companyId}&type=${type}`
+      console.log("Searching outstanding with: ", {
+        companyId: user.companyId,
+        type,
+      });
+      const res = await axios.get(
+        `/api/v1/reports/outstanding?companyId=${user.companyId}&type=${type}`,
       );
 
-      if (!res.ok) throw new Error("Failed to fetch");
+      // if (!res.ok) throw new Error("Failed to fetch");
 
-      const json = await res.json();
+      const json = res.data;
+      console.log("outstanding: ", json);
 
       // 🔥 sort by highest outstanding
       const sorted = json.sort(
-        (a, b) => Math.abs(b.balance) - Math.abs(a.balance)
+        (a, b) => Math.abs(b.balance) - Math.abs(a.balance),
       );
 
       setData(sorted);
       setFiltered(sorted);
     } catch (err) {
+      console.error(err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -42,7 +48,7 @@ const Outstanding = () => {
 
   useEffect(() => {
     fetchData();
-  }, [type, companyId]);
+  }, [type, user.companyId]);
 
   /* ======================
      SEARCH FILTER
@@ -50,7 +56,7 @@ const Outstanding = () => {
 
   useEffect(() => {
     const result = data.filter((d) =>
-      d.name.toLowerCase().includes(search.toLowerCase())
+      d.name.toLowerCase().includes(search.toLowerCase()),
     );
     setFiltered(result);
   }, [search, data]);
@@ -72,21 +78,39 @@ const Outstanding = () => {
       {/* TOGGLE */}
       <div style={{ marginBottom: "10px" }}>
         <button
-          onClick={() => setType("CLIENT")}
+          onClick={() => setType("Client")}
           style={{
-            background: type === "CLIENT" ? "#ddd" : "",
+            background: type === "Client" ? "#ddd" : "",
           }}
         >
           Clients
         </button>
 
         <button
-          onClick={() => setType("SUPPLIER")}
+          onClick={() => setType("Contractor")}
           style={{
-            background: type === "SUPPLIER" ? "#ddd" : "",
+            background: type === "Contractor" ? "#ddd" : "",
+          }}
+        >
+          Contractors
+        </button>
+
+        <button
+          onClick={() => setType("Supplier")}
+          style={{
+            background: type === "Supplier" ? "#ddd" : "",
           }}
         >
           Suppliers
+        </button>
+        
+        <button
+          onClick={() => setType("Employee")}
+          style={{
+            background: type === "Employee" ? "#ddd" : "",
+          }}
+        >
+          Employees
         </button>
       </div>
 
@@ -145,8 +169,8 @@ const Outstanding = () => {
                       row.balance > 0
                         ? "green"
                         : row.balance < 0
-                        ? "red"
-                        : "black",
+                          ? "red"
+                          : "black",
                     fontWeight: "bold",
                   }}
                 >
