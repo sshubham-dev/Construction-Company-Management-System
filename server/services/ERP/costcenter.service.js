@@ -21,33 +21,52 @@ const deleteCostCenter = async (id) => {
 };
 
 // ✅
-const syncCostCenterForSite = async (site, type) => {
-  console.log("Finding cost center for", type);
+const syncCostCenter = async (store) => {
+  const filter = {
+    companyId: store.companyId,
+    reference: store._id,
+  };
 
-  let costCenter = await CostCenter.findOne({
-    companyId: site.companyId,
-    reference: site._id, // 🔥 IMPORTANT (not name)
-    type,
-  });
+  const update = {
+    $setOnInsert: {
+      companyId: store.companyId,
+      reference: store._id,
+      type: store.type,
+    },
+    $set: {
+      name: store.name,
+    },
+  };
 
-  if (!costCenter) {
-    console.log("Creating cost center for", type);
+  try {
+    const costCenter = await CostCenter.findOneAndUpdate(
+      filter,
+      update,
+      {
+        upsert: true,
+        returnDocument: "after",
+      }
+    );
 
-    costCenter = await CostCenter.create({
-      name: site.name,
-      companyId: site.companyId,
-      type,
-      reference: site._id,
-    });
-  } else {
-    // update name if changed
-    if (costCenter.name !== site.name) {
-      costCenter.name = site.name;
-      await costCenter.save();
+    if (!costCenter) {
+      // fallback (rare case)
+      const existing = await CostCenter.findOne(filter);
+      if (existing) return existing;
+
+      throw new Error("CostCenter creation failed");
     }
-  }
 
-  return costCenter;
+    return costCenter;
+
+  } catch (err) {
+    if (err.code === 11000) {
+      // duplicate race condition
+      const existing = await CostCenter.findOne(filter);
+      if (existing) return existing;
+    }
+
+    throw err;
+  }
 };
 
 module.exports = {
@@ -55,5 +74,5 @@ module.exports = {
   getCostCenters,
   updateCostCenter,
   deleteCostCenter,
-  syncCostCenterForSite,
+  syncCostCenter,
 };

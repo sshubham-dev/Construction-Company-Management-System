@@ -61,6 +61,11 @@ const projectSchema = new mongoose.Schema({
     description: String,
     keywords: [String],
   },
+  status: {
+    type: String,
+    enum: ["DRAFT", "PUBLISHED"],
+    default: "DRAFT",
+  },
 });
 
 const Project = mongoose.model("Project", projectSchema);

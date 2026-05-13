@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 
 const grnItemSchema = new mongoose.Schema({
-  stockId: {
+  itemId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Stock",
+    ref: "Item",
     required: true,
   },
 
@@ -12,131 +12,125 @@ const grnItemSchema = new mongoose.Schema({
     required: true, // link to PO item
   },
 
-  orderedQty: Number,
+  orderedQty: {
+    type: Number,
+    required: true,
+  },
 
   receivedQty: {
     type: Number,
     required: true,
-    min: 0,
-  },
-
-  acceptedQty: {
-    type: Number,
-    required: true,
-    min: 0,
   },
 
   rejectedQty: {
     type: Number,
-    required: true,
-    min: 0,
+    default: 0,
   },
 
   rate: {
     type: Number,
-    required: true,
+    required: true, // from PO
   },
 
-  gstRate: {
+  amount: {
     type: Number,
-    default: 0,
+    required: true,
   },
 
   remarks: String,
 });
 
-grnItemSchema.pre("save", function () {
-  if (this.acceptedQty + this.rejectedQty !== this.receivedQty) {
-    return new Error("Accepted + Rejected must equal Received");
+grnItemSchema.pre("validate", function (next) {
+  const acceptedQty = this.receivedQty - (this.rejectedQty || 0);
+
+  if (acceptedQty < 0) {
+    return next(new Error("Invalid quantities"));
   }
 
-  if (this.acceptedQty > this.receivedQty) {
-    return new Error("Accepted cannot exceed received");
-  }
+  next();
 });
 
 const grnSchema = new mongoose.Schema(
   {
-    date: Date,
-    /* =========================
-       BASIC
-    ========================== */
+    /* ======================
+     IDENTITY
+  ====================== */
+
     grnNo: {
       type: String,
       unique: true,
       index: true,
     },
 
-    /* =========================
-       DELIVERY DESTINATION
-    ========================== */
-    deliveryTo: {
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+
+    /* ======================
+     PO LINK (MANDATORY)
+  ====================== */
+
+    poId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Store",
+      ref: "PurchaseOrder",
       required: true,
       index: true,
     },
 
-    /* =========================
-       STORE (OWNER)
-    ========================== */
+    supplierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger",
+      required: true,
+    },
+
+    /* ======================
+     LOCATION
+  ====================== */
+
     storeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",
       required: true,
-      index: true,
     },
 
-    /* =========================
-       SUPPLIER
-    ========================== */
-    supplierId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Supplier",
+    /* ======================
+     ITEMS
+  ====================== */
+
+    items: [grnItemSchema],
+
+    totalAmount: {
+      type: Number,
       required: true,
     },
 
-    /* =========================
-       PO LINK
-    ========================== */
-    purchaseOrderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "PurchaseOrder",
-    },
+    /* ======================
+     STATUS
+  ====================== */
 
-    /* =========================
-       ITEMS
-    ========================== */
-    items: [grnItemSchema],
-
-    /* =========================
-       STATUS
-    ========================== */
     status: {
       type: String,
-      enum: ["DRAFT", "POSTED", "CANCELLED"],
+      enum: ["DRAFT", "RECEIVED", "VERIFIED", "POSTED", "CANCELLED"],
       default: "DRAFT",
+      index: true,
     },
 
-    /* =========================
-       AUDIT
-    ========================== */
-    createdBy: {
+    /* ======================
+     META
+  ====================== */
+
+    receivedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
 
-    approvedBy: {
+    verifiedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
 
-    cancelledBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-
-    cancelledAt: Date,
+    narration: String,
   },
   { timestamps: true },
 );

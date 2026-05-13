@@ -7,7 +7,7 @@ import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 axios.defaults.withCredentials = true;
 
-const CreateSalary = ({ onClose }) => {
+const CreateSalary = ({ onClose, editId }) => {
   const [employees, setEmployees] = useState([]);
   const [expenses, setExpenses] = useState([]);
 
@@ -26,6 +26,7 @@ const CreateSalary = ({ onClose }) => {
     otherAdditions: 0,
     otherDeductions: 0,
   });
+
   const [trafficlightBonus, setTrafficLightBonus] = useState(null);
 
   const [result, setResult] = useState(null);
@@ -96,7 +97,7 @@ const CreateSalary = ({ onClose }) => {
       setExpenses(res.data?.expenses);
       setForm((prev) => ({
         ...prev,
-        otherAdditions: total,
+        // otherAdditions: total,
       }));
     };
 
@@ -148,6 +149,30 @@ const CreateSalary = ({ onClose }) => {
     return workingDays;
   };
 
+  useEffect(() => {
+    const calculateBonus = (score) => {
+      if (score >= 90) {
+        setForm({
+          ...form,
+          trafficBonus: trafficlightBonus.greenBonus,
+        });
+      } else if (score < 70) {
+        setForm({
+          ...form,
+          trafficBonus: -trafficlightBonus.redPenalty,
+        });
+      } else {
+        setForm({
+          ...form,
+          trafficBonus: 0,
+        });
+      }
+    };
+    if (form.employeeId && form.trafficScore && trafficlightBonus) {
+      calculateBonus(form.trafficScore);
+    }
+  }, [form.employeeId, form.trafficScore, trafficlightBonus]);
+
   const calculateSalary = () => {
     const perDay = form.baseSalary / form.workingDays;
 
@@ -180,7 +205,9 @@ const CreateSalary = ({ onClose }) => {
     });
   };
 
-  const saveSalary = async () => {
+  const saveSalary = async (e) => {
+    e.preventDefault();
+    console.log(form, result);
     await axios.post("/api/v1/payroll", {
       ...form,
       ...result,

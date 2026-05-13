@@ -1,118 +1,90 @@
 const mongoose = require("mongoose");
 
-const assetSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true, trim: true },
-    assetCode: { type: String, unique: true },
-    stockId: { type: mongoose.Schema.Types.ObjectId, ref: "Stock" },
-    storeId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
+const assetSchema = new mongoose.Schema({
+  name: String,
+  code: String,
 
-    status: {
-      type: String,
-      enum: ["AVAILABLE", "ISSUED", "UNDER_MAINTENANCE", "SCRAPPED"],
-      default: "AVAILABLE",
-    },
-    condition: {
-      type: String,
-      enum: ["GOOD", "AVERAGE", "DAMAGED"],
-      default: "GOOD",
-    },
-
-    purchaseDate: Date,
-    purchaseCost: Number,
-
-    serialNumber: String,
-
-    isRentable: {
-      type: Boolean,
-      default: false,
-    },
-    rent: {
-      type: Number,
-      default: 0,
-    },
-
-    maintenanceIntervalDays: Number,
-
-    description: String,
-
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+  itemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Item",
   },
-  { timestamps: true },
-);
 
-const assetIssueSchema = new mongoose.Schema(
-  {
-    assetId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Asset",
-      required: true,
-      index: true,
-    },
-
-    fromStoreId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Store",
-      required: true,
-      index: true,
-    },
-
-    issuedToType: {
-      type: String,
-      enum: ["Site", "Employee"],
-      required: true,
-    },
-
-    issuedToId: {
-      type: mongoose.Schema.Types.ObjectId,
-      refpath: issuedToType,
-      required: true,
-      index: true,
-    },
-
-    issueDate: {
-      type: Date,
-      default: Date.now,
-    },
-
-    expectedReturnDate: Date,
-    actualReturnDate: Date,
-
-    issueCondition: {
-      type: String,
-      enum: ["New", "Good", "Used"],
-      default: "Good",
-    },
-
-    returnCondition: {
-      type: String,
-      enum: ["Good", "Damaged", "Scrap"],
-    },
-
-    rent: Number,
-    totalRent: Number,
-
-    status: {
-      type: String,
-      enum: ["ISSUED", "RETURNED", "OVERDUE", "LOST"],
-      default: "ISSUED",
-    },
-    receivedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-    remarks: String,
+  storeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Store",
   },
-  { timestamps: true },
-);
+
+  status: {
+    type: String,
+    enum: ["AVAILABLE", "ISSUED", "MAINTENANCE", "SCRAP"],
+    default: "AVAILABLE",
+  },
+
+  condition: String,
+
+  purchaseDate: Date,
+  purchasePrice: Number,
+
+  serialNo: String,
+
+  assignedTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+
+  isRentable: Boolean,
+  rentPerDay: Number,
+
+  maintenanceIntervalDays: Number,
+
+  isActive: { type: Boolean, default: true },
+}, { timestamps: true });
+
+const assetIssueSchema = new mongoose.Schema({
+  assetId: { type: mongoose.Schema.Types.ObjectId, ref: "Asset", required: true },
+
+  issuedTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    refPath: "issuedToModel",
+  },
+
+  issuedToModel: {
+    type: String,
+    enum: ["Store", "User"],
+    required: true,
+  },
+
+  issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+  issuedAt: { type: Date, default: Date.now },
+
+  expectedReturnDate: Date,
+
+  returnedAt: Date,
+
+  issueCondition: String,
+  returnCondition: String,
+
+  rentPerDay: Number,          // ✅ moved here
+  totalRent: Number,           // ✅ calculated
+
+  status: {
+    type: String,
+    enum: ["ISSUED", "RETURNED", "OVERDUE"],
+    default: "ISSUED",
+  },
+
+  remarks: String,
+}, { timestamps: true });
+
+assetSchema.index({ code: 1 }, { unique: true });
+
 /* 🔧 RENT CALCULATION */
 assetIssueSchema.pre("save", function () {
-  if (this.actualReturnDate && this.issueDate && this.rentPerDay) {
+  if (this.returnedAt && this.issuedAt && this.rentPerDay) {
     const days =
-      (this.actualReturnDate - this.issueDate) / (1000 * 60 * 60 * 24);
+      (this.returnedAt - this.issuedAt) / (1000 * 60 * 60 * 24);
 
     this.totalRent = Math.max(1, Math.ceil(days)) * this.rentPerDay;
   }
@@ -129,24 +101,27 @@ assetIssueSchema.virtual("overdueDays").get(function () {
 
 const assetMaintenanceSchema = new mongoose.Schema(
   {
-    assetId: { type: mongoose.Schema.Types.ObjectId, ref: "Asset" },
+    assetId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Asset",
+      required: true,
+    },
 
-    maintenanceType: {
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+
+    type: {
       type: String,
-      enum: ["REPAIR", "SERVICE", "INSPECTION"],
+      enum: ["REPAIR", "SERVICE"],
     },
 
     cost: Number,
 
     description: String,
 
-    nextDueDate: Date,
-
-    status: {
-      type: String,
-      enum: ["PENDING", "COMPLETED"],
-      default: "COMPLETED",
-    },
+    performedBy: String,
   },
   { timestamps: true },
 );

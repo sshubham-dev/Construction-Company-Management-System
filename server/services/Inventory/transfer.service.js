@@ -11,6 +11,16 @@ const  {
  * Post Transfer → OUT from source + IN to destination
  */
 
+await executeStockTransaction({
+  itemId,
+  fromStoreId,
+  toStoreId,
+  quantity,
+  rate,
+  type: "TRANSFER",
+  source: "TRANSFER",
+});
+
 const postTransfer = async (transferId, userId) => {
   return runInventoryTransaction(async (session) => {
     const transfer = await StockTransfer.findById(transferId).session(session);

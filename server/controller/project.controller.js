@@ -255,6 +255,27 @@ const getProjects = async (req, res) => {
 };
 
 /*
+GET PROJECTS
+*/
+const getPublishedProjects = async (req, res) => {
+  try {
+    const { projectType, city } = req.query;
+
+    let filter = {};
+
+    if (projectType) filter.projectType = projectType;
+    if (city) filter.city = city;
+    filter.status = "PUBLISHED";
+
+    const projects = await Project.find(filter).sort({ createdAt: -1 });
+
+    res.json({ success: true, data: projects });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/*
 GET SINGLE PROJECT BY ID
 */
 const getProject = async (req, res) => {
@@ -312,6 +333,7 @@ module.exports = {
   createProject,
   getProjects,
   getProject,
+  getPublishedProjects,
   getProjectBySlug,
   updateProject,
   deleteProject,

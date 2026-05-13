@@ -1,7 +1,7 @@
 const Lead = require("../models/lead.models"); // Adjust the path as necessary
 const User = require("../models/user.models");
 const { convertToClient } = require("./client.controller");
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
+const { sendPushNotification, notifyRole } = require("../utils/pushNotification.js");
 // Create a new lead
 const createLead = async (req, res) => {
   try {
@@ -33,16 +33,12 @@ const createLead = async (req, res) => {
       sendPushNotification(
         employee._id,
         "Lead Alert",
-        `We got a new Lead from ${
-          newLead?.contactAgent ? newLead?.contactAgent?.name : newLead?.source
-        }`,
+        `We got a new Lead from ${newLead?.source}`,
         "/"
       );
       employee.notification.push({
         title: "Lead Alert",
-        message: `We got a new Lead from ${
-          newLead?.contactAgent ? newLead?.contactAgent?.name : newLead?.source
-        }`,
+        message: `We got a new Lead from ${newLead?.source}`,
         createdAt: newLead.createdAt ? newLead.createdAt : new Date(),
         link: `/crm/lead`,
       });
@@ -52,9 +48,7 @@ const createLead = async (req, res) => {
     //   await convertToClient()
     // }
     res.status(201).json({
-      message: `We got a new Lead from ${
-        lead?.contactAgent ? lead?.contactAgent?.name : lead?.source
-      }`,
+      message: `We got a new Lead from ${lead?.source}`,
       lead,
     });
   } catch (error) {

@@ -34,7 +34,6 @@ const Journal = require("./routes/journal.routes");
 const Contra = require("./routes/contra.routes");
 const Payment = require("./routes/payment.routes");
 const Receipt = require("./routes/receipt.routes");
-const { Stock, Stock_Group } = require("./routes/stock.routes");
 const Return = require("./routes/return.routes");
 const Lead = require("./routes/lead.routes");
 const { Ledger, Group, CostCenter } = require("./routes/ledger.routes");
@@ -57,6 +56,12 @@ const PayChallan = require("./routes/paychallan.routes");
 const Projects = require("./routes/project.routes");
 const Company = require("./routes/company.routes");
 const Reports = require("./routes/report.routes");
+const Stock = require("./routes/stock.routes")
+const Stock_Group = require("./routes/stockGroup.routes");
+const Stock_Category = require("./routes/stockCategory.routes")
+const Stock_Transaction = require("./routes/stockTransaction.routes");
+const Item = require("./routes/item.routes");
+const StockAudit = require("./routes/stockaudit.routes");
 // midellware
 
 const allowedOrigins = process.env.CORS_ORIGIN.split(",");
@@ -102,6 +107,10 @@ app.use(timing);
 //   next();
 // });
 
+// app.use((req, res, next) => {
+//   console.log("REQ:", req.method, req.originalUrl);
+//   next();
+// });
 app.use("/api/v1/user", UserRouter);
 app.use("/api/v1/attendance", Attendances);
 app.use("/api/v1/leave", Leaves);
@@ -126,8 +135,12 @@ app.use("/api/v1/journal", Journal);
 app.use("/api/v1/contra", Contra);
 app.use("/api/v1/payment", Payment);
 app.use("/api/v1/receipt", Receipt);
-app.use("/api/v1/stock", Stock);
 app.use("/api/v1/stock-group", Stock_Group);
+app.use("/api/v1/stock-category", Stock_Category);
+app.use("/api/v1/stock-item", Item);
+app.use("/api/v1/stock-transaction", Stock_Transaction);
+app.use("/api/v1/stock-audit", StockAudit);
+app.use("/api/v1/stock", Stock);
 app.use("/api/v1/return", Return);
 app.use("/api/v1/lead", Lead);
 app.use("/api/v1/ledger", Ledger);

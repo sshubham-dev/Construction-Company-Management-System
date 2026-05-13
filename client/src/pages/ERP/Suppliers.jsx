@@ -67,7 +67,7 @@ const Suppliers = () => {
           <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
             Total Suppliers: {suppliers?.length}
           </h2>
-          {user.department === "Site Incharge" ||
+          {user.department === "Accountant" ||
             (user.department === "Account Head" && (
               <button
                 onClick={() => setCreateModal(true)}

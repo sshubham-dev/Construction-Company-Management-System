@@ -95,7 +95,7 @@ const groupSchema = new mongoose.Schema(
 
 const costCenterSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, unique: true, trim: true }, // Cost Center Name
+    name: { type: String, required: true, trim: true }, // Cost Center Name
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
@@ -113,7 +113,10 @@ const costCenterSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-costCenterSchema.index({ name: 1, companyId: 1 }, { unique: true });
+costCenterSchema.index(
+  { companyId: 1, type: 1, reference: 1 },
+  { unique: true }
+);
 
 ledgerSchema.index(
   { referenceType: 1, referenceId: 1, companyId: 1 },

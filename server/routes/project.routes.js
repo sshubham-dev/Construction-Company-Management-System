@@ -3,6 +3,7 @@ const {
   createProject,
   getProjects,
   getProject,
+  getPublishedProjects,
   getProjectBySlug,
   updateProject,
   deleteProject,
@@ -25,6 +26,7 @@ Projects.post(
 
 // 2. GET - Fetch projects for the website
 Projects.get("/", getProjects);
+Projects.get("/public", getPublishedProjects);
 
 Projects.put(
   "/:id",

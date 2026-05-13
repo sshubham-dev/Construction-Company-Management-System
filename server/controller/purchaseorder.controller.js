@@ -7,69 +7,85 @@ const {
 } = require("./approval.controller");
 
 const { sendPushNotification } = require("../utils/pushNotification");
+const { RFQ, Quotation } = require("../models/rfq.models");
+const { Ledger } = require("../models/ledger.models");
+const {
+  Store,
+} = require("../models/store.models");
+
+
+async function generatePONumber() {
+  const last = await PurchaseOrder.findOne().sort({ createdAt: -1 });
+
+  const year = new Date().getFullYear();
+
+  if (!last) return `PO-${year}-0001`;
+
+  const lastNumber = parseInt(last.poNo.split("-")[2]) || 0;
+
+  return `PO-${year}-${String(lastNumber + 1).padStart(4, "0")}`;
+}
+
 
 /* =====================================
    CREATE PO (DRAFT)
 ===================================== */
 const createPurchaseOrder = async (req, res) => {
   try {
-    const user = req.user;
+    const { quotationId, deliveryType, storeId, siteId, narration } = req.body;
 
-    const { supplier, deliveryFor, items, remarks } = req.body;
-
-    if (!items || !items.length) {
-      throw new Error("Items required");
+    const quotation = await Quotation.findById(quotationId);
+    if (!quotation || !quotation.isSelected) {
+      throw new Error("Invalid quotation");
     }
 
-    const existingSupplier = await Supplier.findById(supplier.id);
+    const rfq = await RFQ.findById(quotation.rfqId);
+
+    const supplier = await Ledger.findById(quotation.supplierId);
     if (!supplier) throw new Error("Invalid supplier");
 
-    /* ===== VALIDATE ITEMS ===== */
-    const processedItems = items.map((i) => {
-      if (!i.itemId || !i.requestedQty) {
-        throw new Error("Invalid item data");
-      }
+    /* DELIVERY VALIDATION */
+    if (deliveryType === "STORE" && !storeId)
+      throw new Error("Store required");
+
+    if (deliveryType === "SITE" && !siteId)
+      throw new Error("Site required");
+
+    /* ITEMS */
+    const items = quotation.items.map(i => {
+      const rfqItem = rfq.items.find(r =>
+        r.itemId.toString() === i.itemId.toString()
+      );
 
       return {
         itemId: i.itemId,
-        item: i.item,
-        unit: i.unit,
-        requestedQty: Number(i.requestedQty),
-        rate: Number(i.rate),
-        gstRate: Number(i.gstRate || 0),
-        receivedQty: 0,
-        invoicedQty: 0,
+        unit: rfqItem?.unit || "NOS",
+        quantity: i.quantity,
+        rate: i.rate,
+        amount: i.quantity * i.rate,
       };
     });
 
+    const totalAmount = items.reduce((a, i) => a + i.amount, 0);
+
     const po = await PurchaseOrder.create({
-      supplier: {
-        id: existingSupplier._id,
-        name: existingSupplier.name,
-      },
-
-      deliveryFor,
-
-      items: processedItems,
-
-      createdBy: user._id,
-      remarks,
-
-      commercialApprovalStatus: "Pending",
-      accountHeadApproval: "Pending",
-      finalApprovalStatus: "Pending",
+      poNo: await generatePONumber(),
+      supplierId: supplier._id,
+      deliveryType,
+      storeId,
+      siteId,
+      rfqId: rfq._id,
+      quotationId: quotation._id,
+      purchaseRequestId: rfq.purchaseRequestId,
+      items,
+      totalAmount,
+      createdBy: req.user._id,
+      narration,
     });
 
-    /* ===== APPROVAL FLOW ===== */
-    sendApproveByAdmin(po, "Purchase Order", user._id);
-    sendApproveByAccountHead(po, "Purchase Order", user._id);
+    res.status(201).json({ success: true, data: po });
 
-    res.status(201).json({
-      success: true,
-      data: po,
-    });
   } catch (err) {
-    console.log(err);
     res.status(400).json({ error: err.message });
   }
 };
@@ -81,27 +97,30 @@ const updatePurchaseOrder = async (req, res) => {
   try {
     const po = await PurchaseOrder.findById(req.params.id);
 
-    if (!po) throw new Error("PO not found");
-
-    if (po.finalApprovalStatus !== "Pending") {
-      throw new Error("Approved PO cannot be edited");
+    if (!po || po.status !== "DRAFT") {
+      throw new Error("Only draft editable");
     }
 
-    const { items, remarks } = req.body;
+    const { items, narration } = req.body;
 
     if (items) {
-      po.items = items.map((i) => ({
-        ...i,
-        requestedQty: Number(i.requestedQty),
+      po.items = items.map(i => ({
+        itemId: i.itemId,
+        unit: i.unit,
+        quantity: Number(i.quantity),
         rate: Number(i.rate),
+        amount: i.quantity * i.rate,
       }));
+
+      po.totalAmount = po.items.reduce((a, i) => a + i.amount, 0);
     }
 
-    if (remarks) po.remarks = remarks;
+    if (narration !== undefined) po.narration = narration;
 
     await po.save();
 
     res.json({ success: true, data: po });
+
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -110,28 +129,22 @@ const updatePurchaseOrder = async (req, res) => {
 /* =====================================
    APPROVE PO (FINAL LOCK)
 ===================================== */
-const approvePurchaseOrder = async (req, res) => {
+const orderPurchaseOrder = async (req, res) => {
   try {
     const po = await PurchaseOrder.findById(req.params.id);
 
-    if (!po) throw new Error("PO not found");
-
-    if (
-      po.commercialApprovalStatus !== "Approved" ||
-      po.accountHeadApproval !== "Approved"
-    ) {
-      throw new Error("PO not fully approved");
+    if (!po || po.status !== "DRAFT") {
+      throw new Error("Invalid state");
     }
 
-    po.finalApprovalStatus = "Approved";
+    po.status = "ORDERED";
+    po.approvedBy = req.user._id;
+    po.approvedAt = new Date();
 
     await po.save();
 
-    res.json({
-      success: true,
-      message: "PO Approved",
-      data: po,
-    });
+    res.json({ success: true, data: po });
+
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -141,11 +154,11 @@ const approvePurchaseOrder = async (req, res) => {
    GET ALL APPROVED PO
 ===================================== */
 const getPurchaseOrders = async (req, res) => {
-  const data = await PurchaseOrder.find({
-    finalApprovalStatus: "Approved",
-  }).sort({ createdAt: -1 });
+  const data = await PurchaseOrder.find()
+    .populate("supplierId storeId siteId")
+    .sort({ createdAt: -1 });
 
-  res.json(data);
+  res.json({ success: true, data });
 };
 
 /* =====================================
@@ -295,72 +308,47 @@ const deleteRequirement = async (req, res) => {
   }
 };
 
+const cancelPurchaseOrder = async (req, res) => {
+  try {
+    const po = await PurchaseOrder.findById(req.params.id);
+
+    if (!po) throw new Error("PO not found");
+    if (po.status === "COMPLETED") {
+      throw new Error("Cannot cancel completed PO");
+    }
+
+    po.status = "CANCELLED";
+    await po.save();
+
+    res.json({ success: true });
+
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
 
 const getOpenPurchaseOrders = async (req, res) => {
   try {
-    const { store, supplier } = req.query;
+    const pos = await PurchaseOrder.find({
+      status: { $in: ["ORDERED", "PARTIAL"] },
+    });
 
-    const query = {};
+    const data = pos.map(po => ({
+      ...po.toObject(),
+      items: po.items
+        .map(i => {
+          const pendingQty = i.quantity - i.receivedQty;
+          if (pendingQty <= 0) return null;
 
-    /* =========================
-       FILTER: STORE
-    ========================== */
-    if (store) {
-      query["deliveryTo"] = "Store";
-      query["deliveryFor.id"] = store;
-    }
+          return { ...i.toObject(), pendingQty };
+        })
+        .filter(Boolean),
+    }));
 
-    /* =========================
-       FILTER: SUPPLIER
-    ========================== */
-    if (supplier) {
-      query["supplier.id"] = supplier;
-    }
+    res.json({ success: true, data });
 
-    /* =========================
-       ONLY APPROVED PO
-    ========================== */
-    // query.finalApprovalStatus = "Approved";
-console.log(query)
-    /* =========================
-       FETCH
-    ========================== */
-    const pos = await PurchaseOrder.find()
-      .sort({ createdAt: -1 })
-      .lean();
-
-    /* =========================
-       FILTER OPEN ITEMS
-    ========================== */
-    const openPOs = pos
-      .map((po) => {
-        const openItems = po.items
-          .map((item) => {
-            const pendingQty =
-              (item.requestedQty || 0) - (item.receivedQty || 0);
-
-            if (pendingQty <= 0) return null;
-
-            return {
-              ...item,
-              pendingQty,
-            };
-          })
-          .filter(Boolean);
-
-        if (!openItems.length) return null;
-
-        return {
-          ...po,
-          items: openItems,
-        };
-      })
-      .filter(Boolean);
-
-    res.json(openPOs);
   } catch (err) {
-    console.error("Open PO Error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -368,14 +356,15 @@ console.log(query)
 module.exports = {
   getPurchaseOrder,
   getPurchaseOrders,
+  getOpenPurchaseOrders,
   sitePurchaseOrders,
   createPurchaseOrder,
   updatePurchaseOrder,
   deletePurchaseOrder,
+
+
   getRequirements,
   updateRequirement,
   deleteRequirement,
   draftPurchaseOrders,
-  approvePurchaseOrder,
-  getOpenPurchaseOrders,
 };

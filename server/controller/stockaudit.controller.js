@@ -1,49 +1,52 @@
 const mongoose = require("mongoose");
-const { StockAudit  } = require("../models/stock.models");
-const {StoreInventory, applyStoreStockMovement }= require("../models/store.models");
+const { StockAudit, Stock } = require("../models/stock.models");
+const { executeStockTransaction } = require("../services/Inventory/stock.service");
 
-
-
+/* =========================
+   CREATE STOCK AUDIT
+========================= */
 const createStockAudit = async (req, res) => {
   try {
     const { storeId } = req.body;
 
     if (!storeId) throw new Error("Store required");
 
-    /* =========================
-       LOAD CURRENT INVENTORY
-    ========================== */
-    const inventory = await StoreInventory.find({ storeId });
+    // 🔥 load stock instead of StoreInventory
+    const stocks = await Stock.find({ storeId });
 
-    const items = inventory.map((i) => ({
-      stockId: i.stockId,
-      systemQty: i.quantity,
-      physicalQty: i.quantity, // default same
+    const items = stocks.map((s) => ({
+      itemId: s.itemId,
+      systemQty: s.quantity,
+      physicalQty: s.quantity,
       difference: 0,
-      rate: i.averageRate,
-      valueDifference: 0,
+      rate: s.avgRate,
+      value: 0,
     }));
 
     const audit = await StockAudit.create({
       storeId,
       items,
-      createdBy: req.user._id,
+      auditedBy: req.user._id,
+      status: "DRAFT",
     });
 
-    res.status(201).json(audit);
+    res.status(201).json({ success: true, data: audit });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
+/* =========================
+   UPDATE AUDIT (COUNTING)
+========================= */
 const updateStockAudit = async (req, res) => {
   try {
     const audit = await StockAudit.findById(req.params.id);
 
     if (!audit) throw new Error("Audit not found");
 
-    if (audit.status === "Posted") {
-      throw new Error("Cannot edit posted audit");
+    if (audit.status !== "DRAFT") {
+      throw new Error("Only draft audit can be edited");
     }
 
     const { items } = req.body;
@@ -52,20 +55,59 @@ const updateStockAudit = async (req, res) => {
       const diff = (i.physicalQty || 0) - (i.systemQty || 0);
 
       return {
-        ...i,
+        itemId: i.itemId,
+        systemQty: i.systemQty,
+        physicalQty: i.physicalQty,
         difference: diff,
-        valueDifference: diff * (i.rate || 0),
+        differenceType:
+          diff === 0 ? "MATCH" : diff > 0 ? "EXCESS" : "SHORTAGE",
+        rate: i.rate || 0,
+        value: diff * (i.rate || 0),
+        remarks: i.remarks,
       };
     });
 
+    audit.status = "COUNTED";
+
     await audit.save();
 
-    res.json(audit);
+    res.json({ success: true, data: audit });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
+
+
+/* =========================
+   APPROVE AUDIT
+========================= */
+const approveStockAudit = async (req, res) => {
+  try {
+    const audit = await StockAudit.findById(req.params.id);
+
+    if (!audit) throw new Error("Audit not found");
+
+    if (audit.status !== "COUNTED") {
+      throw new Error("Only counted audit can be approved");
+    }
+
+    audit.status = "APPROVED";
+    audit.approvedBy = req.user._id;
+
+    await audit.save();
+
+    res.json({ success: true, data: audit });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+
+
+/* =========================
+   POST AUDIT (ADJUST STOCK)
+========================= */
 const postStockAudit = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -75,31 +117,27 @@ const postStockAudit = async (req, res) => {
 
     if (!audit) throw new Error("Audit not found");
 
-    if (audit.status === "Posted") {
-      throw new Error("Already posted");
+    if (audit.status !== "APPROVED") {
+      throw new Error("Audit must be approved before posting");
     }
 
     for (const item of audit.items) {
-      const diff = item.physicalQty - item.systemQty;
+      if (item.difference === 0) continue;
 
-      if (diff === 0) continue;
-
-      await applyStoreStockMovement({
-        storeId: audit.storeId,
-        stockId: item.stockId,
-        quantity: Math.abs(diff),
+      await executeStockTransaction({
+        itemId: item.itemId,
+        toStoreId: audit.storeId,
+        fromStoreId: audit.storeId,
+        quantity: Math.abs(item.difference),
         rate: item.rate,
-        direction: diff > 0 ? "IN" : "OUT",
-        type: "ADJUSTMENT",
-        referenceType: "STOCK_AUDIT",
+        type: item.difference > 0 ? "IN" : "OUT",
+        source: "ADJUSTMENT",
         referenceId: audit._id,
-        narration: "Stock Audit Adjustment",
-        createdBy: req.user._id,
-        session,
+        userId: req.user._id,
       });
     }
 
-    audit.status = "Posted";
+    audit.status = "ADJUSTED";
     audit.postedAt = new Date();
 
     await audit.save({ session });
@@ -108,51 +146,69 @@ const postStockAudit = async (req, res) => {
     session.endSession();
 
     res.json({
-      message: "Stock audit posted successfully",
+      success: true,
+      message: "Stock audit adjusted successfully",
       audit,
     });
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
 
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
+
+
+/* =========================
+   GET AUDITS
+========================= */
 const getStockAudits = async (req, res) => {
-  const data = await StockAudit.find().sort({ createdAt: -1 });
-  res.json(data);
+  const data = await StockAudit.find()
+    .populate("storeId auditedBy approvedBy")
+    .sort({ createdAt: -1 });
+
+  res.json({ success: true, data });
 };
+
 
 const getStockAuditById = async (req, res) => {
-  const audit = await StockAudit.findById(req.params.id);
+  const audit = await StockAudit.findById(req.params.id)
+    .populate("storeId auditedBy approvedBy");
 
-  if (!audit) return res.status(404).json({ error: "Not found" });
+  if (!audit) {
+    return res.status(404).json({ success: false, message: "Not found" });
+  }
 
-  res.json(audit);
+  res.json({ success: true, data: audit });
 };
 
+
+/* =========================
+   DELETE AUDIT
+========================= */
 const deleteStockAudit = async (req, res) => {
   try {
     const audit = await StockAudit.findById(req.params.id);
 
     if (!audit) throw new Error("Not found");
 
-    if (audit.status === "Posted") {
-      throw new Error("Cannot delete posted audit");
+    if (audit.status !== "DRAFT") {
+      throw new Error("Only draft audit can be deleted");
     }
 
     await audit.deleteOne();
 
-    res.json({ message: "Deleted successfully" });
+    res.json({ success: true, message: "Deleted successfully" });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
 module.exports = {
   createStockAudit,
   updateStockAudit,
+  approveStockAudit,
   postStockAudit,
   getStockAudits,
   getStockAuditById,

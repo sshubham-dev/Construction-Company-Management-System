@@ -1,5 +1,7 @@
-import React from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useParams } from "react-router-dom";
+import toast from 'react-hot-toast';
 import Header from '../../components/Header';
 import {
   Chart as ChartJS,
@@ -184,3 +186,151 @@ const Store = () => {
 };
 
 export default Store;
+
+
+
+// const StoreDashboard = () => {
+//   const { id } = useParams();
+
+//   const [summary, setSummary] = useState({});
+//   const [inventory, setInventory] = useState([]);
+//   const [lowStock, setLowStock] = useState([]);
+//   const [transactions, setTransactions] = useState([]);
+
+//   useEffect(() => {
+//     fetchAll();
+//   }, [id]);
+
+//   const fetchAll = async () => {
+//     try {
+//       const [s, i, l, t] = await Promise.all([
+//         axios.get(`/api/v1/store/${id}/summary`),
+//         axios.get(`/api/v1/store/${id}/inventory`),
+//         axios.get(`/api/v1/store/${id}/low-stock`),
+//         axios.get(`/api/v1/store/${id}/transactions`),
+//       ]);
+
+//       setSummary(s.data);
+//       setInventory(i.data);
+//       setLowStock(l.data);
+//       setTransactions(t.data);
+//     } catch {
+//       toast.error("Failed to load dashboard");
+//     }
+//   };
+
+//   return (
+//     <div className="p-4 space-y-6">
+
+//       {/* HEADER */}
+//       <h2 className="text-xl font-semibold">Store Dashboard</h2>
+
+//       {/* KPI */}
+//       <div className="grid grid-cols-4 gap-4">
+//         <Card title="Total Items" value={summary.totalItems} />
+//         <Card title="Total Qty" value={summary.totalQuantity} />
+//         <Card title="Stock Value" value={`₹ ${summary.totalValue}`} />
+//         <Card title="Low Stock" value={summary.lowStockCount} />
+//       </div>
+
+//       {/* QUICK ACTIONS */}
+//       <div className="flex gap-3">
+//         <ActionBtn label="Transfer" />
+//         <ActionBtn label="Issue (DN)" />
+//         <ActionBtn label="Stock Audit" />
+//         <ActionBtn label="Return" />
+//       </div>
+
+//       {/* LOW STOCK */}
+//       <Section title="Low Stock Items">
+//         <table className="w-full text-sm">
+//           <thead>
+//             <tr>
+//               <th>Item</th>
+//               <th>Qty</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {lowStock.map((i) => (
+//               <tr key={i._id}>
+//                 <td>{i.itemName}</td>
+//                 <td className="text-red-600">{i.quantity}</td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       </Section>
+
+//       {/* INVENTORY */}
+//       <Section title="Inventory Snapshot">
+//         <table className="w-full text-sm">
+//           <thead>
+//             <tr>
+//               <th>Item</th>
+//               <th>Qty</th>
+//               <th>Available</th>
+//               <th>Value</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {inventory.map((i, idx) => (
+//               <tr key={idx}>
+//                 <td>{i.itemName}</td>
+//                 <td>{i.quantity}</td>
+//                 <td>{i.availableQty}</td>
+//                 <td>₹ {i.value}</td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       </Section>
+
+//       {/* TRANSACTIONS */}
+//       <Section title="Recent Transactions">
+//         <table className="w-full text-sm">
+//           <thead>
+//             <tr>
+//               <th>Type</th>
+//               <th>Qty</th>
+//               <th>Date</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {transactions.map((t) => (
+//               <tr key={t._id}>
+//                 <td>{t.type}</td>
+//                 <td>{t.qtyIn || t.qtyOut}</td>
+//                 <td>{new Date(t.createdAt).toLocaleDateString()}</td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       </Section>
+
+//     </div>
+//   );
+// };
+
+// export default StoreDashboard;
+
+/* COMPONENTS */
+
+const Card = ({ title, value }) => (
+  <div className="border p-4 rounded bg-white">
+    <p className="text-xs text-gray-500">{title}</p>
+    <p className="text-lg font-semibold">{value || 0}</p>
+  </div>
+);
+
+const ActionBtn = ({ label }) => (
+  <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+    {label}
+  </button>
+);
+
+const Section = ({ title, children }) => (
+  <div className="border rounded p-4 bg-white space-y-3">
+    <p className="text-sm font-medium">{title}</p>
+    {children}
+  </div>
+);

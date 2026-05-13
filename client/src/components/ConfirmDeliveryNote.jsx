@@ -2,35 +2,33 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-const ConfirmDeliveryNote = ({ dnId, onClose }) => {
+const VerifyDeliveryNote = ({ dnId, onClose }) => {
   const [dn, setDn] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  /* ======================
-     LOAD DN
-  ====================== */
   useEffect(() => {
     if (!dnId) return;
 
     const fetchDN = async () => {
       try {
-        const res = await axios.get(`/api/v1/delivery-note/${dnId}`);
-        setDn(res.data);
+        const { data } = await axios.get(`/api/v1/delivery-note/${dnId}`);
+        setDn(data);
 
         setItems(
-          res.data.items.map((i) => ({
-            itemId: i.itemId,
-            item: i.item,
+          data.items.map((i) => ({
+            itemId: i.itemId._id || i.itemId,
+            name: i.itemId?.name,
             unit: i.unit,
-            issuedQty: i.issuedQty,
-            acceptedQty: 0,
+            issuedQty: i.quantity,
+
+            acceptedQty: i.quantity,
             rejectedQty: 0,
             rejectionReason: "",
           }))
         );
-      } catch (err) {
-        toast.error("Failed to load Delivery Note");
+      } catch {
+        toast.error("Failed to load DN");
       }
     };
 
@@ -44,7 +42,6 @@ const ConfirmDeliveryNote = ({ dnId, onClose }) => {
     const updated = [...items];
     updated[index][field] = value;
 
-    // Auto-calc rejected if accepted changes
     if (field === "acceptedQty") {
       const accepted = Number(value) || 0;
       const issued = updated[index].issuedQty;
@@ -55,22 +52,20 @@ const ConfirmDeliveryNote = ({ dnId, onClose }) => {
   };
 
   /* ======================
-     VALIDATE BEFORE SUBMIT
+     VALIDATION
   ====================== */
-  const validateItems = () => {
-    for (const item of items) {
-      const accepted = Number(item.acceptedQty) || 0;
-      const rejected = Number(item.rejectedQty) || 0;
+  const validate = () => {
+    for (const i of items) {
+      const total =
+        Number(i.acceptedQty) + Number(i.rejectedQty);
 
-      if (accepted + rejected !== item.issuedQty) {
-        toast.error(
-          `Accepted + Rejected must equal Issued for ${item.item}`
-        );
+      if (total !== i.issuedQty) {
+        toast.error(`${i.name}: mismatch qty`);
         return false;
       }
 
-      if (rejected > 0 && !item.rejectionReason) {
-        toast.error(`Rejection reason required for ${item.item}`);
+      if (i.rejectedQty > 0 && !i.rejectionReason) {
+        toast.error(`${i.name}: reason required`);
         return false;
       }
     }
@@ -78,15 +73,15 @@ const ConfirmDeliveryNote = ({ dnId, onClose }) => {
   };
 
   /* ======================
-     SUBMIT CONFIRMATION
+     SUBMIT
   ====================== */
-  const confirmDN = async () => {
-    if (!validateItems()) return;
+  const submit = async () => {
+    if (!validate()) return;
 
     try {
       setLoading(true);
 
-      await axios.put(`/api/v1/delivery-note/${dnId}`, {
+      await axios.post(`/api/v1/delivery-note/${dnId}/verify`, {
         items: items.map((i) => ({
           itemId: i.itemId,
           acceptedQty: Number(i.acceptedQty),
@@ -95,11 +90,10 @@ const ConfirmDeliveryNote = ({ dnId, onClose }) => {
         })),
       });
 
-      toast.success("Delivery Note verified successfully");
+      toast.success("Verified");
       onClose();
-    } catch (err) {
-      console.log(err)
-      toast.error("Failed to confirm delivery");
+    } catch {
+      toast.error("Failed");
     } finally {
       setLoading(false);
     }
@@ -108,72 +102,57 @@ const ConfirmDeliveryNote = ({ dnId, onClose }) => {
   if (!dn) return null;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
-      <h2 className="text-lg font-semibold">Confirm Delivery Note</h2>
+    <div className="p-3 space-y-4 pb-20">
+
+      <h2 className="text-lg font-semibold">Verify Delivery</h2>
 
       <div className="text-sm text-gray-600">
-        <p><b>DN No:</b> {dn.deliveryNoteNo}</p>
-        <p><b>Site:</b> {dn.site?.name}</p>
-        <p><b>Store:</b> {dn.store?.name}</p>
+        <p><b>DN:</b> {dn.dnNumber}</p>
+        <p>{dn.store?.name} → {dn.site?.name}</p>
       </div>
 
       {items.map((item, i) => (
-        <div key={i} className="border p-3 rounded bg-white space-y-2">
-          <p className="font-medium">{item.item}</p>
-          <p className="text-xs text-gray-500">
-            Issued Qty: {item.issuedQty} {item.unit}
-          </p>
+        <div key={i} className="border rounded p-3 bg-white">
 
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            <label htmlFor="acceptedQty">Accepted Qty:</label>
-            <input
-              type="number"
-              min="0"
-              max={item.issuedQty}
-              value={item.acceptedQty}
-              onChange={(e) =>
-                updateItem(i, "acceptedQty", e.target.value)
-              }
-              className="border p-2 w-full"
-              placeholder="Accepted Qty"
-            />
-
-            <label htmlFor="rejectedQty">Rejected Qty:</label>
-            <input
-              type="number"
-              min="0"
-              max={item.issuedQty}
-              value={item.rejectedQty}
-              onChange={(e) =>
-                updateItem(i, "rejectedQty", e.target.value)
-              }
-              className="border p-2 w-full"
-              placeholder="Rejected Qty"
-            />
+          <div className="flex justify-between">
+            <span className="font-medium">{item.name}</span>
+            <span className="text-xs">{item.unit}</span>
           </div>
+
+          <div className="text-xs text-gray-500">
+            Issued: {item.issuedQty}
+          </div>
+
+          <input
+            type="number"
+            value={item.acceptedQty}
+            onChange={(e) =>
+              updateItem(i, "acceptedQty", e.target.value)
+            }
+            className="border p-2 w-full mt-2 rounded"
+          />
 
           {item.rejectedQty > 0 && (
             <textarea
+              placeholder="Reason"
               value={item.rejectionReason}
               onChange={(e) =>
                 updateItem(i, "rejectionReason", e.target.value)
               }
-              className="border p-2 w-full"
-              placeholder="Rejection reason"
+              className="border p-2 w-full mt-2 rounded"
             />
           )}
         </div>
       ))}
 
       <button
-        onClick={confirmDN}
-        disabled={loading}
-        className="bg-green-600 text-white w-full py-2 rounded"
+        onClick={submit}
+        className="fixed bottom-4 left-4 right-4 bg-green-600 text-white py-3 rounded"
       >
-        {loading ? "Confirming..." : "Confirm Delivery"}
+        Confirm Delivery
       </button>
     </div>
   );
 };
 
-export default ConfirmDeliveryNote;
+export default VerifyDeliveryNote;

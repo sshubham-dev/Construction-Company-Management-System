@@ -7,123 +7,113 @@ import ConfirmDeliveryNote from "../../components/ConfirmDeliveryNote";
 import { useSelector } from "react-redux";
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
+import toast from "react-hot-toast";
 
-const DeliveryNotes = () => {
-  const [notes, setNotes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [ismodalOpen, setIsModalOpen] = useState(false);
+const DeliveryNote = () => {
   const navigate = useNavigate();
-  const [confirmDnId, setConfirmDnId] = useState(null);
-  const [isconfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const { user } = useSelector((state) => state.auth);
+
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+
   useEffect(() => {
-    fetchNotes();
+    fetchDN();
   }, []);
 
-  const fetchNotes = async () => {
+  const fetchDN = async () => {
     try {
       const res = await axios.get("/api/v1/delivery-note");
-      setNotes(res.data);
-    } catch (err) {
-      console.error(err);
+      setData(res.data || []);
+    } catch {
+      toast.error("Failed to load DN");
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  const filtered = data.filter((d) => {
+    return (
+      d.dnNumber?.toLowerCase().includes(search.toLowerCase()) &&
+      (status ? d.status === status : true)
+    );
+  });
+
+  const statusColor = (s) => {
+    switch (s) {
+      case "DRAFT":
+        return "bg-gray-100 text-gray-700";
+      case "ISSUED":
+        return "bg-blue-100 text-blue-700";
+      case "CANCELLED":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Delivery Notes</h2>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-blue-600 text-white px-3 py-1 rounded"
+    <div className="p-3 space-y-4 pb-24">
+
+      {/* FILTER */}
+      <div className="flex gap-2">
+        <input
+          placeholder="Search DN..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+
+        <select
+          onChange={(e) => setStatus(e.target.value)}
+          className="border p-2 rounded"
         >
-          + New
-        </button>
+          <option value="">All</option>
+          <option value="ISSUED">Issued</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
       </div>
 
-      <div className="space-y-3">
-        {notes.map((dn) => (
-          <div key={dn._id} className="border rounded p-3 bg-white shadow-sm">
-            <div
-              onClick={() => navigate(`/erp/inventory/delivery-note/${dn._id}`)}
-              className="cursor-pointer"
-            >
-              <div className="flex justify-between">
-                <p className="font-medium">{dn.deliveryNoteNo}</p>
-                <span
-                  className={`text-xs px-2 py-1 rounded ${
-                    dn.status === "Verified"
-                      ? "bg-green-200"
-                      : dn.status === "Issued"
-                      ? "bg-yellow-200"
-                      : dn.status === "Mismatch"
-                      ? "bg-red-200"
-                      : "bg-gray-200"
-                  }`}
-                >
-                  {dn.status}
-                </span>
-              </div>
+      {/* LIST */}
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        filtered.map((d) => (
+          <div
+            key={d._id}
+            onClick={() => navigate(`/erp/dn/${d._id}`)}
+            className="border rounded-lg p-3 bg-white shadow-sm space-y-2 cursor-pointer"
+          >
+            <div className="flex justify-between">
+              <span className="font-medium">{d.dnNumber}</span>
 
-              <p className="text-xs text-gray-500 mt-1">
-                Store: {dn.store?.name}
-              </p>
-              <p className="text-xs text-gray-500">Site: {dn.site?.name}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {new Date(dn.issueDate).toLocaleDateString()}
-              </p>
+              <span className={`text-xs px-2 py-1 rounded ${statusColor(d.status)}`}>
+                {d.status}
+              </span>
             </div>
 
-            {/* CONFIRM BUTTON */}
-            {dn.status === "Issued" &&
-              (user?.department === "Site Supervisor" ||
-                user?.department === "Site Incharge") && (
-                <div className="mt-2 flex justify-end">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation(); // ⛔ prevent navigation
-                      setConfirmDnId(dn._id);
-                      setIsConfirmModalOpen(true);
-                    }}
-                    className="bg-green-600 text-white px-3 py-1 text-xs rounded"
-                  >
-                    Confirm Delivery
-                  </button>
-                </div>
-              )}
+            <div className="text-sm text-gray-600">
+              {d.store?.name} → {d.site?.name}
+            </div>
+
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>{moment(d.date).format("DD MMM")}</span>
+              <span>{d.items?.length} items</span>
+            </div>
           </div>
-        ))}
-      </div>
+        ))
+      )}
 
-      {/* CREATE DN MODAL */}
-      <Modal isOpen={ismodalOpen} onClose={() => setIsModalOpen(false)}>
-        <CreateDeliveryNote
-          onClose={() => {
-            setIsModalOpen(false);
-            fetchNotes();
-          }}
-        />
-      </Modal>
-
-      {/* CONFIRM DN MODAL */}
-      <Modal
-        isOpen={isconfirmModalOpen}
-        onClose={() => setIsConfirmModalOpen(false)}
+      {/* FLOAT BTN */}
+      <button
+        onClick={() => navigate("/erp/dn/create")}
+        className="fixed bottom-5 right-5 bg-green-600 text-white w-14 h-14 rounded-full text-xl shadow-lg"
       >
-        <ConfirmDeliveryNote
-          dnId={confirmDnId}
-          onClose={() => {
-            setIsConfirmModalOpen(false);
-            fetchNotes();
-          }}
-        />
-      </Modal>
+        +
+      </button>
     </div>
   );
 };
 
-export default DeliveryNotes;
+export default DeliveryNote;

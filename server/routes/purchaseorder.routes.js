@@ -11,7 +11,7 @@ const {
     updateRequirement,
     deleteRequirement,
     draftPurchaseOrders,
-    approvePurchaseOrder,
+    // approvePurchaseOrder,
     getOpenPurchaseOrders
 } = require('../controller/purchaseorder.controller.js');
 const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
@@ -22,7 +22,7 @@ PurchaseOrder.get('/open', getOpenPurchaseOrders);
 PurchaseOrder.get('/:id/requirement', getRequirements);
 PurchaseOrder.get('/site/:id', sitePurchaseOrders,);
 PurchaseOrder.put('/:id/requirement/:index', userAuth, updateRequirement);
-PurchaseOrder.put('/save/:id', userAuth, approvePurchaseOrder);
+// PurchaseOrder.put('/save/:id', userAuth, approvePurchaseOrder);
 PurchaseOrder.delete('/:id/requirement/:index', userAuth, deleteRequirement);
 PurchaseOrder.post('/', userAuth, createPurchaseOrder);
 PurchaseOrder.route('/:id')

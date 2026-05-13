@@ -119,13 +119,13 @@ const convertToUser = async (id, role, password, status) => {
         console.log("Finding User");
         const employeeUser = await User.findOne({
           $and: [
-            { _id: employee?.userId },
+            // { _id: employee?.userId },
             { userName: employee.name },
             // { department: employee.department },
             // { companyId: employee.companyId },
           ],
         });
-        if (!employeeUser) return "Validation Error";
+        if (employeeUser)
         console.log("Found User");
         if (status === "Update") {
           employeeUser.userName = employee.name || employeeUser.userName;
@@ -135,7 +135,7 @@ const convertToUser = async (id, role, password, status) => {
           employeeUser.department =
             employee.department || employeeUser.department;
           employeeUser.role = role || employeeUser.role;
-          employeeUser.password = password || employeeUser.password;
+          // employeeUser.password = password || employeeUser.password;
           employeeUser.companyId = employee.companyId || employeeUser.companyId;
           employeeUser.ledger = employee.ledger || employeeUser.ledger;
           employeeUser.businessUnitId =
@@ -166,13 +166,13 @@ const convertToUser = async (id, role, password, status) => {
         if (!client) return "Client not Found";
         const clientUser = await User.findOne({
           $and: [
-            { _id: client?.userId },
+            // { _id: client?.userId },
             { userName: client.name },
             // { companyId: client.companyId },
             { department: "Client" },
           ],
         });
-        if (clientUser) return "Validation Error";
+        if (clientUser)
         if (status === "Update") {
           clientUser.userName = client.name || clientUser.userName;
           clientUser.userMail = client.email || clientUser.userMail;
@@ -210,13 +210,13 @@ const convertToUser = async (id, role, password, status) => {
         if (!contractor) return "Contractor not found";
         const contractorUser = await User.findOne({
           $and: [
-            { _id: contractor.userId },
+            // { _id: contractor.userId },
             { userName: contractor.name },
             // { companyId: contractor.companyId },
             { department: "Contractor" },
           ],
         });
-        if (contractorUser) return "Validation Error";
+        if (contractorUser)
         if (status === "Update") {
           contractorUser.userName = contractor.name || contractorUser.userName;
           contractorUser.userMail = contractor.email || contractorUser.userMail;
@@ -259,13 +259,13 @@ const convertToUser = async (id, role, password, status) => {
         }
         const supplierUser = await User.findOne({
           $and: [
-            { _id: supplier.userId },
+            // { _id: supplier.userId },
             { userName: supplier.name },
             // { companyId: supplier.companyId },
             { department: "Supplier" },
           ],
         });
-        if (supplierUser) return "Validation Error";
+        if (supplierUser) 
         if (status === "Update") {
           supplierUser.userName = supplier.name || supplierUser.userName;
           supplierUser.userMail = supplier.email || supplierUser.userMail;

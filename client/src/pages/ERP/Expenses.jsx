@@ -20,7 +20,7 @@ const Expenses = () => {
   }, [selectedMonth]);
   const fetchExpenses = async () => {
     try {
-      const response = await axios.get("/api/v1/expenses", {
+      const response = await axios.get("/api/v1/expenses/v2", {
         params: {
           userId: user._id,
           month: selectedMonth,

@@ -399,9 +399,51 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
 
     // Stock / Assets Management
+    // {
+    //   to: "/erp/inventory/stock",
+    //   name: "Stock",
+    //   icon: <MdInventory />,
+    //   role: [
+    //     "Admin",
+    //     "Company",
+    //     "Ceo",
+    //     "Accountant",
+    //     "Account Head",
+    //     "Store Helper",
+    //     "Store Incharge",
+    //   ],
+    // },
     {
-      to: "/erp/inventory/stock",
-      name: "Stock",
+      to: "/erp/inventory/stock/group",
+      name: "Stock Group",
+      icon: <MdInventory />,
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Accountant",
+        "Account Head",
+        "Store Helper",
+        "Store Incharge",
+      ],
+    },
+    {
+      to: "/erp/inventory/stock/category",
+      name: "Stock Category",
+      icon: <MdInventory />,
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Accountant",
+        "Account Head",
+        "Store Helper",
+        "Store Incharge",
+      ],
+    },
+    {
+      to: "/erp/inventory/stock/item",
+      name: "Stock Item",
       icon: <MdInventory />,
       role: [
         "Admin",
@@ -458,8 +500,8 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     // Sales / Purchase Request
     {
-      to: "/erp/inventory/sales-request",
-      name: "Sales Order",
+      to: "/purchase-request/ERP",
+      name: "Purchase Request",
       icon: <BiSolidPurchaseTag />,
       role: [
         "Admin",
@@ -780,7 +822,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       ],
     },
     {
-      to: "/site/purchase-request",
+      to: "/purchase-request/SITE",
       name: "Material Request",
       icon: <BiSolidPurchaseTag />,
       role: [
@@ -791,8 +833,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         "Ceo",
         "Site Incharge",
         "Site Supervisor",
-        "Quality Head",
-        "Quality Engineer",
         "Account Head",
       ],
     },

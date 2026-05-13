@@ -1,130 +1,113 @@
-// =====================================================
-// RETURN SERVICE (PRODUCTION READY)
-// =====================================================
+const mongoose = require("mongoose");
+const Return = require("../../models/return.models");
+const PurchaseOrder = require("../../models/purchaseOrder.models");
+const { executeStockTransaction } = require("./stock.service");
 
-const Return = require("../models/return.models");
-const { Stock } = require("../models/stock.models");
-const { Asset } = require("../models/asset.models");
-const {
-  applyInventoryTransaction,
-  runInventoryTransaction,
-} = require("./inventory.service");
+async function postReturn(returnId, userId) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-/**
- * Post Return
- * Handles:
- * 1. Site Return (IN)
- * 2. Purchase Return (OUT)
- */
-
-const postReturn = async (returnId, userId) => {
-  return runInventoryTransaction(async (session) => {
+  try {
     const ret = await Return.findById(returnId).session(session);
 
     if (!ret) throw new Error("Return not found");
+    if (ret.status !== "VERIFIED") {
+      throw new Error("Return must be verified");
+    }
 
-    if (ret.status === "POSTED") {
-      throw new Error("Return already posted");
+    let po;
+
+    if (ret.type === "PURCHASE_RETURN" && ret.referenceId) {
+      po = await PurchaseOrder.findById(ret.referenceId).session(session);
     }
 
     for (const item of ret.items) {
-      const stock = await Stock.findById(item.stockId).session(session);
-      if (!stock) throw new Error("Invalid stock item");
+      if (item.quantity <= 0) continue;
 
-      if (!item.qty || item.qty <= 0) {
-        throw new Error("Invalid quantity in return");
+      /* =========================
+         SITE RETURN
+      ========================== */
+      if (ret.type === "SITE_RETURN") {
+        await executeStockTransaction({
+          itemId: item.itemId,
+          fromStoreId: ret.fromStoreId,
+          toStoreId: ret.toStoreId,
+          quantity: item.quantity,
+          rate: 0,
+          type: "TRANSFER",
+          source: "SITE_RETURN",
+          referenceId: ret._id,
+          userId,
+        });
       }
 
-      // =====================================================
-      // SITE RETURN → STOCK IN
-      // =====================================================
-      if (ret.returnType === "SITE_RETURN") {
-        await applyInventoryTransaction({
-          type: "RETURN_IN",
-          storeId: ret.storeId,
-          stockId: item.stockId,
-          qty: item.qty,
-          rate: item.rate || 0, // original cost ideally
-          referenceType: "RETURN",
+      /* =========================
+         PURCHASE RETURN
+      ========================== */
+      else if (ret.type === "PURCHASE_RETURN") {
+        await executeStockTransaction({
+          itemId: item.itemId,
+          fromStoreId: ret.fromStoreId,
+          quantity: item.quantity,
+          rate: 0,
+          type: "OUT",
+          source: "PURCHASE_RETURN",
           referenceId: ret._id,
-          createdBy: userId,
-          narration: `Site Return (${ret.returnNumber || ""})`,
-          session,
+          userId,
         });
-        // Asset back to store
-        if (stock.itemType === "ASSET") {
-          const assets = await Asset.find({
-            stockId: stock._id,
-            status: "ISSUED",
-          })
-            .limit(item.qty)
-            .session(session);
 
-          if (assets.length < item.qty) {
-            throw new Error("Not enough issued assets to return");
-          }
+        /* UPDATE PO */
+        if (po) {
+          const poItem = po.items.find(
+            i => i.itemId.toString() === item.itemId.toString()
+          );
 
-          for (const asset of assets) {
-            asset.status = "AVAILABLE";
-            asset.storeId = ret.storeId;
-            asset.lastReturnRef = ret._id;
-            await asset.save({ session });
+          if (poItem) {
+            poItem.receivedQty -= item.quantity;
           }
         }
       }
-      // =====================================================
-      // PURCHASE RETURN → STOCK OUT
-      // =====================================================
-      else if (ret.returnType === "PURCHASE_RETURN") {
-        await applyInventoryTransaction({
-          type: "RETURN_OUT",
-          storeId: ret.storeId,
-          stockId: item.stockId,
-          qty: item.qty,
-          rate: item.rate || 0,
-          referenceType: "RETURN",
+
+      /* =========================
+         ADJUSTMENT
+      ========================== */
+      else if (ret.type === "ADJUSTMENT") {
+        await executeStockTransaction({
+          itemId: item.itemId,
+          fromStoreId: ret.fromStoreId,
+          quantity: item.quantity,
+          rate: 0,
+          type: "OUT",
+          source: "ADJUSTMENT",
           referenceId: ret._id,
-          createdBy: userId,
-          narration: `Purchase Return (${ret.returnNumber || ""})`,
-          session,
+          userId,
         });
-
-        // Asset removal (if needed)
-        if (stock.itemType === "ASSET") {
-          const assets = await Asset.find({
-            stockId: stock._id,
-            storeId: ret.storeId,
-            status: "AVAILABLE",
-          })
-            .limit(item.qty)
-            .session(session);
-
-          if (assets.length < item.qty) {
-            throw new Error("Not enough assets to return to supplier");
-          }
-
-          for (const asset of assets) {
-            asset.status = "DISPOSED";
-            asset.lastReturnRef = ret._id;
-            await asset.save({ session });
-          }
-        }
-      } else {
-        throw new Error("Invalid return type");
       }
     }
 
-    // =====================================================
-    // FINALIZE RETURN
-    // =====================================================
+    /* =========================
+       UPDATE PO STATUS
+    ========================== */
+    if (po) {
+      po.updateStatus();
+      await po.save({ session });
+    }
 
     ret.status = "POSTED";
     ret.postedAt = new Date();
 
     await ret.save({ session });
 
+    await session.commitTransaction();
+    session.endSession();
+
     return ret;
-  });
-};
+
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    throw err;
+  }
+}
 
 module.exports = { postReturn };

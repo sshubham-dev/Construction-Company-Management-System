@@ -9,5 +9,6 @@ const {
 const { adminAuth, userAuth } = require("../middlewares/auth.middleware");
 
 DN.route("/").get(getDeliveryNotes).post(userAuth, createDeliveryNote);
-DN.route("/:id").get(getDeliveryNoteById).put(userAuth, confirmDeliveryNote); // Confirm DN
+DN.route("/:id").get(getDeliveryNoteById)
+// .put(userAuth, confirmDeliveryNote); // Confirm DN
 module.exports = DN;

@@ -1,521 +1,677 @@
-const mongoose = require("mongoose");
-const { Stock, Stock_Group, Item } = require("../models/stock.models");
 const {
-  StoreInventory,
-  StoreStockMovement,
+  Stock,
+  Item,
+  Stock_Group,
+  Stock_Transaction,
+  Stock_Category,
+} = require("../models/stock.models");
+const { Ledger } = require("../models/ledger.models");
+const {
+  Store,
 } = require("../models/store.models");
 const {
   sendPushNotification,
   notifyRole,
 } = require("../utils/pushNotification.js");
+const { executeStockTransaction, initializeStockForItem } = require("../services/Inventory/stock.service.js");
 
-// const StoreInventory = mongoose.model("StoreInventory");
-// const StoreStockMovement = mongoose.model("StoreStockMovement");
 
-/* =====================================
-   UTILITY: CALCULATE SALE PRICE
-===================================== */
-function calcSalePrice(stock) {
-  const surcharge = {
-    staffSalary: stock?.surchargePercentage?.staffSalary || 0,
-    profit: stock?.surchargePercentage?.profit || 0,
-    expenses: stock?.surchargePercentage?.expenses || 0,
-    investment: stock?.surchargePercentage?.investment || 0,
-    tax: stock?.surchargePercentage?.tax || 0,
-  };
-
-  const totalPercent =
-    surcharge.staffSalary +
-    surcharge.profit +
-    surcharge.expenses +
-    surcharge.investment +
-    surcharge.tax;
-
-  return stock.purchasePrice + (stock.purchasePrice * totalPercent) / 100;
-}
-
-/* =====================================
-   CREATE STOCK (MASTER)
-===================================== */
-const createStock = async (req, res) => {
+/* =========================
+   CREATE CATEGORY
+========================= */
+const createCategory = async (req, res) => {
   try {
-    const { storeId, itemId, quantity, reservedQuantity } = req.body;
+    const { name, parentId, description } = req.body;
 
-    if (!data.name || !data.category || !data.unit) {
-      throw new Error("Name, category, unit required");
-    }
+    if (!name) throw new Error("Category name is required");
 
-    const stock = new Stock({
-      storeId,
-      itemId,
-      quantity,
-      reservedQuantity,
+    // prevent duplicate under same parent
+    const exists = await Stock_Category.findOne({
+      name: name.trim(),
+      parentId: parentId || null,
+      isActive: true,
     });
 
-    await stock.save();
+    if (exists) throw new Error("Category already exists");
 
-    res.status(201).json(stock);
+    // validate parent
+    if (parentId) {
+      const parent = await Stock_Category.findById(parentId);
+      if (!parent) throw new Error("Invalid parent category");
+    }
+
+    const category = await Stock_Category.create({
+      name: name.trim(),
+      parentId: parentId || null,
+      description,
+      createdBy: req.user?._id,
+    });
+
+    res.status(201).json({ success: true, data: category });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+/* =========================
+   GET CATEGORIES
+========================= */
+const getAllCategories = async (req, res) => {
+  try {
+    const categories = await Stock_Category.find({
+      isActive: true,
+    }).populate("parentId")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: categories,
+    });
+
   } catch (err) {
     console.log(err);
-    res.status(400).json({ error: err.message });
+
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-/* =====================================
-   GET ALL STOCK
-===================================== */
-const getStocks = async (req, res) => {
+/* =========================
+   GET CATEGORY
+========================= */
+const getCategoryTree = async (req, res) => {
   try {
-    const stocks = await Stock.find().sort({ createdAt: -1 });
+    const categories = await Stock_Category.find({ isActive: true }).lean();
 
-    res.json(stocks);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    const map = {};
+    const roots = [];
 
-/* =====================================
-   GET STOCK BY ID
-===================================== */
-const getStockById = async (req, res) => {
-  try {
-    const stock = await Stock.findById(req.params.id);
+    categories.forEach((c) => {
+      map[c._id] = { ...c, children: [] };
+    });
 
-    if (!stock) throw new Error("Stock not found");
-
-    res.json(stock);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-/* =====================================
-   UPDATE STOCK (MASTER ONLY)
-===================================== */
-const updateStock = async (req, res) => {
-  try {
-    const stock = await Stock.findById(req.params.id);
-
-    if (!stock) throw new Error("Stock not found");
-
-    const allowedFields = [
-      "name",
-      "category",
-      "unit",
-      "purchasePrice",
-      "gstRate",
-      "surchargePercentage",
-      "description",
-    ];
-
-    allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        stock[field] = req.body[field];
+    categories.forEach((c) => {
+      if (c.parentId) {
+        map[c.parentId]?.children.push(map[c._id]);
+      } else {
+        roots.push(map[c._id]);
       }
     });
 
-    stock.salePrice = calcSalePrice(stock);
-
-    await stock.save();
-
-    res.json(stock);
+    res.json({ success: true, data: roots });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-/* =====================================
-   DELETE STOCK
-===================================== */
-const deleteStock = async (req, res) => {
+/* =========================
+   GET CATEGORY
+========================= */
+const getCategoryById = async (req, res) => {
   try {
-    const stock = await Stock.findById(req.params.id);
+    const category = await Stock_Category.findById(req.params.id);
 
-    if (!stock) throw new Error("Stock not found");
+    if (!category) throw new Error("Category not found");
 
-    // Optional: prevent delete if used
-    // const used = await StoreInventory.findOne({ stockId: stock._id });
-
-    await stock.deleteOne();
-
-    res.json({ message: "Deleted successfully" });
+    res.json({ success: true, data: category });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-/* =====================================
-   CREATE STOCK ITEM (MASTER)
-===================================== */
-const createStockItem = async (req, res) => {
+/* =========================
+   UPDATE CATEGORY
+========================= */
+const updateCategory = async (req, res) => {
   try {
-    const data = req.body;
+    const { name, parentId, description, isActive } = req.body;
 
-    if (!data.name || !data.category || !data.unit) {
-      throw new Error("Name, category, unit required");
+    const category = await Stock_Category.findById(req.params.id);
+    if (!category) throw new Error("Category not found");
+
+    // prevent duplicate
+    if (name) {
+      const exists = await Stock_Category.findOne({
+        _id: { $ne: category._id },
+        name: name.trim(),
+        parentId: parentId || category.parentId || null,
+        isActive: true,
+      });
+
+      if (exists) throw new Error("Category already exists");
+
+      category.name = name.trim();
     }
 
-    // Prevent duplicate
-    const exists = await Item.findOne({
-      name: data.name,
-      unit: data.unit,
-    });
-
-    if (exists) {
-      throw new Error("Item already exists");
+    // prevent self parent
+    if (parentId && parentId.toString() === category._id.toString()) {
+      throw new Error("Category cannot be its own parent");
     }
 
-    const item = new Item({
-      name: data.name,
-      category: data.category,
-      unit: data.unit,
-      itemType: data.itemType || "CONSUMABLE",
+    // validate parent
+    if (parentId) {
+      const parent = await Stock_Category.findById(parentId);
+      if (!parent) throw new Error("Invalid parent category");
+      category.parentId = parentId;
+    }
 
-      code: data.code,
-      gstRate: Number(data.gstRate || 0),
+    if (description !== undefined) category.description = description;
+    if (isActive !== undefined) category.isActive = isActive;
 
-      purchasePrice: Number(data.purchasePrice || 0),
-      mrp: Number(data.mrp),
-    });
+    await category.save();
 
-    await item.save();
-
-    res.status(201).json(item);
+    res.json({ success: true, data: category });
   } catch (err) {
-    console.log(err);
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-/* =====================================
-   GET ALL STOCK ITEM
-===================================== */
-const getStockItems = async (req, res) => {
+/* =========================
+   DELETE CATEGORY
+========================= */
+const deleteCategory = async (req, res) => {
   try {
-    const items = await Item.find().sort({ createdAt: -1 });
+    const category = await Stock_Category.findById(req.params.id);
+    if (!category) throw new Error("Category not found");
 
-    res.json(items);
+    // check child categories
+    const hasChildren = await Stock_Category.exists({ parentId: category._id });
+    if (hasChildren) throw new Error("Category has subcategories");
+
+    // check usage in items
+    const used = await Item.exists({ categoryId: category._id });
+    if (used) throw new Error("Category is used in items");
+
+    category.isActive = false;
+    await category.save();
+
+    res.json({ success: true, message: "Category deactivated" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-/* =====================================
-   GET STOCK ITEM BY ID
-===================================== */
-const getStockItemById = async (req, res) => {
-  try {
-    const item = await Item.findById(req.params.id);
 
-    if (!item) throw new Error("Item not found");
-
-    res.json(item);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-/* =====================================
-   UPDATE STOCK (MASTER ONLY)
-===================================== */
-const updateStockItem = async (req, res) => {
-  try {
-    const stock = await Stock.findById(req.params.id);
-
-    if (!stock) throw new Error("Stock not found");
-
-    const allowedFields = [
-      "name",
-      "category",
-      "unit",
-      "purchasePrice",
-      "gstRate",
-      "surchargePercentage",
-      "description",
-    ];
-
-    allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        stock[field] = req.body[field];
-      }
-    });
-
-    stock.salePrice = calcSalePrice(stock);
-
-    await stock.save();
-
-    res.json(stock);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-/* =====================================
-   DELETE STOCK
-===================================== */
-const deleteStockItem = async (req, res) => {
-  try {
-    const stock = await Stock.findById(req.params.id);
-
-    if (!stock) throw new Error("Stock not found");
-
-    // Optional: prevent delete if used
-    // const used = await StoreInventory.findOne({ stockId: stock._id });
-
-    await stock.deleteOne();
-
-    res.json({ message: "Deleted successfully" });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-/* =====================================
-   CREATE STOCK GROUP
-===================================== */
+/* =========================
+   CREATE GROUP
+========================= */
 const createStockGroup = async (req, res) => {
   try {
-    const { name, code, unit } = req.body;
-
-    if (!name) throw new Error("Name required");
-
-    const exists = await Stock_Group.findOne({ name });
-    if (exists) throw new Error("Group already exists");
-
-    const group = await Stock_Group.create({
+    const {
       name,
       code,
-      unit,
+      affectsInventory,
+      isConsumable,
+      isAsset,
+      defaultPurchaseLedgerId,
+      defaultSalesLedgerId,
+      defaultExpenseLedgerId,
+      description,
+    } = req.body;
+
+    if (!name) throw new Error("Name & Code required");
+
+    // uniqueness
+    const exists = await Stock_Group.findOne({
+      $or: [{ name }, { code }],
+      isActive: true,
     });
 
-    res.status(201).json(group);
+    if (exists) throw new Error("Group already exists");
+
+    // flag validation
+    if (isAsset && isConsumable) {
+      throw new Error("Asset cannot be consumable");
+    }
+
+    // ledger validation
+    // const ledgerIds = [
+    //   defaultPurchaseLedgerId,
+    //   defaultSalesLedgerId,
+    //   defaultExpenseLedgerId,
+    // ].filter(Boolean);
+
+    // if (ledgerIds.length) {
+    //   const count = await Ledger.countDocuments({ _id: { $in: ledgerIds } });
+    //   if (count !== ledgerIds.length) {
+    //     throw new Error("Invalid ledger reference");
+    //   }
+    // }
+
+    const group = await Stock_Group.create({
+      name: name.trim(),
+      code,
+      affectsInventory,
+      isConsumable,
+      isAsset,
+      // defaultPurchaseLedgerId,
+      // defaultSalesLedgerId,
+      // defaultExpenseLedgerId,
+      description,
+      isActive: true,
+    });
+
+    res.status(201).json({ success: true, data: group });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.log(err)
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-/* =====================================
+/* =========================
    GET GROUPS
-===================================== */
+========================= */
 const getStockGroups = async (req, res) => {
-  const data = await Stock_Group.find();
-  res.json(data);
+  try {
+    const groups = await Stock_Group.find({ isActive: true });
+
+    res.json({ success: true, data: groups });
+  } catch (err) {
+    console.log(err)
+    res.status(400).json({ success: false, message: err.message });
+  }
 };
 
-/* =====================================
-   UPDATE GROUP
-===================================== */
-const updateStockGroup = async (req, res) => {
+/* =========================
+   GET GROUP BY ID
+========================= */
+const getStockGroupById = async (req, res) => {
   try {
     const group = await Stock_Group.findById(req.params.id);
 
     if (!group) throw new Error("Group not found");
+
+    res.json({ success: true, data: group });
+  } catch (err) {
+    console.log(err)
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+/* =========================
+   UPDATE GROUP
+========================= */
+const updateStockGroup = async (req, res) => {
+  try {
+    const group = await Stock_Group.findById(req.params.id);
+    if (!group) throw new Error("Group not found");
+
+    const {
+      name,
+      code,
+      isConsumable,
+      isAsset,
+      defaultPurchaseLedgerId,
+      defaultSalesLedgerId,
+      defaultExpenseLedgerId,
+    } = req.body;
+
+    // uniqueness check
+    if (name || code) {
+      const exists = await Stock_Group.findOne({
+        _id: { $ne: group._id },
+        $or: [{ name }, { code }],
+        isActive: true,
+      });
+
+      if (exists) throw new Error("Duplicate group");
+    }
+
+    // flag validation
+    if (isAsset && isConsumable) {
+      throw new Error("Asset cannot be consumable");
+    }
 
     Object.assign(group, req.body);
 
     await group.save();
 
-    res.json(group);
+    res.json({ success: true, data: group });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.log(err)
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-/* =====================================
+/* =========================
    DELETE GROUP
-===================================== */
+========================= */
 const deleteStockGroup = async (req, res) => {
   try {
     const group = await Stock_Group.findById(req.params.id);
-
     if (!group) throw new Error("Group not found");
 
-    await group.deleteOne();
+    // prevent deletion if used
+    const used = await Item.exists({ groupId: group._id });
+    if (used) throw new Error("Group used in items");
 
-    res.json({ message: "Deleted" });
+    group.isActive = false;
+    await group.save();
+
+    res.json({ success: true, message: "Group deactivated" });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-const applyStoreStockMovement = async ({
-  storeId,
-  stockId,
-  quantity,
-  rate = 0,
-  direction,
-  type,
-  referenceType,
-  referenceId,
-  narration,
-  createdBy,
-  session,
-}) => {
-  if (!["IN", "OUT"].includes(direction)) {
-    throw new Error("Invalid direction");
-  }
 
-  let inventory = await StoreInventory.findOne({
-    storeId,
-    stockId,
-  }).session(session);
-
-  if (!inventory) {
-    inventory = new StoreInventory({
-      storeId,
-      stockId,
-      quantity: 0,
-      averageRate: 0,
+/* =========================
+   CREATE ITEM
+========================= */
+const createStockItem = async (req, res) => {
+  try {
+    const item = await Item.create({
+      ...req.body,
+      createdBy: req.user?._id,
     });
+
+    // 🔥 OPTIONAL: Auto stock create for all stores (if needed)
+    // 🔥 AUTO CREATE STOCK FOR ALL STORES
+    const stores = await Store.find({
+      isActive: true,
+    }).select("_id");
+
+    await initializeStockForItem(
+      item._id,
+      stores.map((s) => s._id)
+    );
+    // Or skip and let service auto-create on first transaction
+
+    res.status(201).json({ success: true, data: item });
+  } catch (err) {
+    console.log(err)
+    res.status(400).json({ success: false, message: err.message });
   }
+};
 
-  /* =========================
-     IN (GRN / RETURN)
-  ========================== */
-  if (direction === "IN") {
-    const newQty = inventory.quantity + quantity;
+/* =========================
+   GET ITEMS
+========================= */
+const getStockItems = async (req, res) => {
+  try {
+    const items = await Item.find({ isActive: true })
+      .populate("categoryId groupId")
+      .lean();
 
-    inventory.averageRate =
-      newQty === 0
-        ? 0
-        : (inventory.quantity * inventory.averageRate + quantity * rate) /
-          newQty;
-
-    inventory.quantity = newQty;
-    inventory.lastPurchaseRate = rate;
+    res.json({ success: true, data: items });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
   }
+};
 
-  /* =========================
-     OUT (DN / ISSUE)
-  ========================== */
-  if (direction === "OUT") {
-    if (inventory.quantity < quantity) {
+/* =========================
+   GET ITEM BY ID
+========================= */
+const getStockItemById = async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.id)
+      .populate("categoryId groupId");
+
+    if (!item) throw new Error("Item not found");
+
+    res.json({ success: true, data: item });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+/* =========================
+   UPDATE ITEM
+========================= */
+const updateStockItem = async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.id);
+
+    if (!item) throw new Error("Item not found");
+
+    Object.assign(item, req.body);
+    await item.save();
+
+    res.json({ success: true, data: item });
+  } catch (err) {
+    console.log(err)
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+/* =========================
+   DELETE ITEM
+========================= */
+const deleteStockItem = async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.id);
+
+    if (!item) throw new Error("Item not found");
+
+    item.isActive = false;
+    await item.save();
+
+    res.json({ success: true, message: "Item deactivated" });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+
+/* =========================
+   GET STOCKS 
+========================= */
+const getStocks = async (req, res) => {
+  try {
+    const { storeId, itemId } = req.query;
+
+    const filter = { isActive: true };
+
+    if (storeId) filter.storeId = storeId;
+    if (itemId) filter.itemId = itemId;
+
+    const stocks = await Stock.find(filter)
+      .populate("itemId storeId")
+      .lean();
+
+    res.json({ success: true, data: stocks });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+/* =========================
+   GET STOCK
+========================= */
+const getStockById = async (req, res) => {
+  try {
+    const stock = await Stock.findById(req.params.id).populate(
+      "itemId storeId",
+    );
+
+    if (!stock) throw new Error("Stock not found");
+
+    res.json({ success: true, data: stock });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+/* =========================
+   STOCK SUMMARY
+========================= */
+const getStockSummary = async (req, res) => {
+  try {
+    const result = await Stock.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalQty: { $sum: "$quantity" },
+          totalValue: { $sum: "$stockValue" },
+        },
+      },
+    ]);
+
+    res.json({
+      success: true,
+      data: result[0] || { totalQty: 0, totalValue: 0 },
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+/* =========================
+   ITEM-WISE STOCK
+========================= */
+const getItemStock = async (req, res) => {
+  try {
+    const data = await Stock.find({
+      itemId: req.params.itemId,
+    }).populate("storeId");
+
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+/* =========================
+   STORE-WISE STOCK
+========================= */
+const getStoreStock = async (req, res) => {
+  try {
+    const data = await Stock.find({
+      storeId: req.params.storeId,
+    }).populate("itemId");
+
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+
+const reserveStock = async (req, res) => {
+  try {
+    const { stockId, quantity } = req.body;
+
+    const stock = await Stock.findById(stockId);
+    if (!stock) throw new Error("Stock not found");
+
+    const availableQty = stock.quantity - stock.reservedQty;
+
+    if (availableQty < quantity) {
       throw new Error("Insufficient stock");
     }
 
-    inventory.quantity -= quantity;
+    stock.reservedQty += quantity;
+    stock.availableQty = stock.quantity - stock.reservedQty;
+
+    await stock.save();
+
+    res.json({ success: true, data: stock });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
   }
-
-  await inventory.save({ session });
-
-  /* =========================
-     MOVEMENT LOG
-  ========================== */
-  await StoreStockMovement.create(
-    [
-      {
-        storeId,
-        stockId,
-        quantity,
-        rate,
-        direction,
-        type,
-        referenceType,
-        referenceId,
-        narration,
-        createdBy,
-      },
-    ],
-    { session },
-  );
-
-  return inventory;
 };
 
-const adjustStock = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
+const releaseReservedStock = async (req, res) => {
   try {
-    const { storeId, stockId, quantity, direction, rate, narration } = req.body;
+    const { stockId, quantity } = req.body;
 
-    await applyStoreStockMovement({
-      storeId,
-      stockId,
-      quantity,
-      rate,
-      direction,
-      type: "ADJUSTMENT",
-      referenceType: "Manual",
-      narration,
-      createdBy: req.user._id,
-      session,
+    const stock = await Stock.findById(stockId);
+    if (!stock) throw new Error("Stock not found");
+
+    stock.reservedQty = Math.max(0, stock.reservedQty - quantity);
+    stock.availableQty = stock.quantity - stock.reservedQty;
+
+    await stock.save();
+
+    res.json({ success: true, data: stock });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+
+/* =========================
+   CREATE TRANSACTION
+========================= */
+const createStockTransaction = async (req, res) => {
+  try {
+    await executeStockTransaction({
+      ...req.body,
+      userId: req.user?._id,
     });
 
-    await session.commitTransaction();
-    session.endSession();
-
-    res.json({ message: "Stock adjusted" });
+    res.status(201).json({
+      success: true,
+      message: "Stock transaction successful",
+    });
   } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
-
-    res.status(400).json({ error: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-const getStoreInventory = async (req, res) => {
+/* =========================
+   STOCK TRANSACTIONS
+========================= */
+const getStockTransactions = async (req, res) => {
   try {
-    const { storeId } = req.params;
+    const { itemId, storeId } = req.query;
 
-    const inventory = await StoreInventory.find({ storeId })
-      .populate("stockId", "name unit category")
-      .sort({ "stockId.name": 1 });
+    const filter = {};
 
-    res.json(inventory);
+    if (itemId) filter.itemId = itemId;
+
+    if (storeId) {
+      filter.$or = [
+        { fromStoreId: storeId },
+        { toStoreId: storeId },
+      ];
+    }
+
+    const data = await Stock_Transaction.find(filter)
+      .populate("itemId fromStoreId toStoreId")
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-const getStoreStock = async (req, res) => {
-  const data = await StoreInventory.find({
-    storeId: req.params.storeId,
-  }).populate("stockId");
 
-  res.json(data);
-};
 
-const getStockSummary = async (req, res) => {
-  const result = await StoreInventory.aggregate([
-    {
-      $group: {
-        _id: null,
-        totalQty: { $sum: "$quantity" },
-        totalValue: { $sum: "$stockValue" },
-      },
-    },
-  ]);
 
-  res.json(result[0] || { totalQty: 0, totalValue: 0 });
-};
-
-const getItemStock = async (req, res) => {
-  const data = await StoreInventory.find({
-    stockId: req.params.stockId,
-  }).populate("storeId");
-
-  res.json(data);
-};
 
 module.exports = {
-  createStock,
-  getStockById,
-  getStocks,
-  updateStock,
-  deleteStock,
+  createStockGroup,
+  getStockGroups,
+  getStockGroupById,
+  updateStockGroup,
+  deleteStockGroup,
+
+  createCategory,
+  getAllCategories,
+  getCategoryTree,
+  getCategoryById,
+  updateCategory,
+  deleteCategory,
+
   createStockItem,
   getStockItems,
   getStockItemById,
   updateStockItem,
   deleteStockItem,
-  createStockGroup,
-  getStockGroups,
-  updateStockGroup,
-  deleteStockGroup,
-  applyStoreStockMovement,
-  getItemStock,
+
+  getStocks,
+  getStockById,
   getStockSummary,
+  getItemStock,
   getStoreStock,
-  adjustStock,
+
+  createStockTransaction,
+  getStockTransactions,
 };

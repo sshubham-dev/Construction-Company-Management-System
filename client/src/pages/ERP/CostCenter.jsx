@@ -193,6 +193,7 @@ const CostCenter = () => {
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [editModal, setEditModal] = useState(false);
   const [editId, setEditId] = useState("");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const fetchCostCenter = async () => {
@@ -242,10 +243,23 @@ const CostCenter = () => {
     }
   };
 
+  const filtered = costCenters.filter((cc) => {
+    const matchSearch = cc.name?.toLowerCase().includes(search.toLowerCase());
+    return matchSearch;
+  });
+
   return (
     <div className="p-2">
-      <h1 className="text-2xl font-bold mb-4">Cost Centers</h1>
-
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-xl font-bold">Cost Center</h1>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search ledger..."
+          className="border px-3 py-2 rounded w-72"
+        />
+      </div>
       {/* Add Cost Center Button */}
       <button
         onClick={() => setIsModalOpen(true)}
@@ -256,8 +270,8 @@ const CostCenter = () => {
 
       {/* Cost Centers List */}
       <ul className="border rounded-md px-3 py-3 bg-white shadow-md">
-        {costCenters.map((center) => (
-          <li key={center.id} className="border-b py-3 last:border-0">
+        {filtered.map((center, index) => (
+          <li key={index} className="border-b py-3 last:border-0">
             <div className="flex flex-nowrap justify-between items-center mb-2">
               <h2 className="text-lg font-semibold cursor-pointer text-wrap">
                 {center.name} ({center.companyId?.name})

@@ -1,9 +1,6 @@
-const DeliveryNote = require("../models/deliverynote.models");
-const { StoreInventory, StockTransfer } = require("../models/store.models");
 const mongoose = require("mongoose");
-// const SiteInventory = require("../models/siteInventory.model"); // if you create
+const { DeliveryNote, SiteReceipt } = require("../models/deliverynote.models");
 const PurchaseRequest = require("../models/purchaserequest.models");
-const { createSalesInvoiceFromDN } = require("./salesinvoice.controller");
 
 
 /* =====================================
@@ -34,236 +31,199 @@ const generateDeliveryNoteNo = async () => {
 ===================================== */
 const createDeliveryNote = async (req, res) => {
   try {
-    const user = req.user;
-    const { purchaseRequestId, store, destination, items, remarks, deliveryTo } = req.body;
-
-    if (!purchaseRequestId) {
-      return res.status(400).json({ error: "Purchase Request required" });
-    }
-
-    if (!items?.length) {
-      return res.status(400).json({ error: "Items required" });
-    }
+    const { purchaseRequestId, fromStoreId, toStoreId, items } = req.body;
 
     const pr = await PurchaseRequest.findById(purchaseRequestId);
-    if (!pr) return res.status(404).json({ error: "PR not found" });
+    if (!pr) throw new Error("PR not found");
 
-    const prItemMap = new Map(pr.items.map((i) => [i.itemId.toString(), i]));
+    const dnItems = items.map(i => {
+      const prItem = pr.items.find(
+        p => p.itemId.toString() === i.itemId
+      );
 
-    const dnItems = [];
+      if (!prItem) throw new Error("Invalid PR item");
 
-    for (const item of items) {
-      const prItem = prItemMap.get(item.itemId.toString());
+      const pending = prItem.requestedQty - prItem.issuedQty;
 
-      if (!prItem) {
-        return res.status(400).json({
-          error: `Item ${item.item} not in PR`,
-        });
+      if (i.issuedQty > pending) {
+        throw new Error("Exceeds pending qty");
       }
 
-      const issuedQty = Number(item.issuedQty);
-
-      if (issuedQty <= 0) {
-        return res.status(400).json({
-          error: `Invalid qty for ${item.item}`,
-        });
-      }
-
-      if (issuedQty > prItem.requestedQty - prItem.issuedQty) {
-        return res.status(400).json({
-          error: `Exceeds pending qty for ${item.item}`,
-        });
-      }
-
-      dnItems.push({
+      return {
         itemId: prItem.itemId,
-        item: prItem.item,
         unit: prItem.unit,
         requestedQty: prItem.requestedQty,
-        issuedQty,
+        issuedQty: i.issuedQty,
         acceptedQty: 0,
         rejectedQty: 0,
-        status: "Issued",
-      });
-    }
-
-    const dn = await DeliveryNote.create({
-      deliveryNoteNo: await generateDeliveryNoteNo(),
-      purchaseRequestId: pr._id,
-
-      store: {
-        id: store?.id,
-        name: store?.name,
-      },
-
-      destination: {
-        id: destination.id,
-        deliveryTo: destination.deliveryTo,
-        name: destination.name,
-      },
-
-      issuedBy: user._id,
-      issueDate: new Date(),
-
-      items: dnItems,
-
-      status: "Issued",
+      };
     });
 
-    res.status(201).json({ dn });
+    const dn = await DeliveryNote.create({
+      dnNo: `DN-${Date.now()}`,
+      purchaseRequestId,
+      fromStoreId,
+      toStoreId,
+      issuedBy: req.user._id,
+      items: dnItems,
+      status: "ISSUED",
+    });
+
+    res.status(201).json({ success: true, data: dn });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
+  }
+};
+
+/* =====================================
+   RECEIVE DELIVERY NOTE (SITE )
+===================================== */
+const receiveDeliveryNote = async (req, res) => {
+  try {
+    const dn = await DeliveryNote.findById(req.params.id);
+
+    if (!dn || dn.status !== "ISSUED") {
+      throw new Error("Invalid DN state");
+    }
+
+    let mismatch = false;
+
+    dn.items.forEach(dnItem => {
+      const payload = req.body.items.find(
+        i => i.itemId.toString() === dnItem.itemId.toString()
+      );
+
+      if (!payload) return;
+
+      if (payload.acceptedQty + payload.rejectedQty !== dnItem.issuedQty) {
+        mismatch = true;
+      }
+
+      dnItem.acceptedQty = payload.acceptedQty;
+      dnItem.rejectedQty = payload.rejectedQty;
+      dnItem.rejectionReason = payload.rejectionReason || "";
+    });
+
+    dn.status = mismatch ? "MISMATCH" : "RECEIVED";
+    dn.receivedBy = req.user._id;
+    dn.receivedDate = new Date();
+
+    await dn.save();
+
+    res.json({ success: true, data: dn });
+
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };
 
 /* =====================================
    CONFIRM DELIVERY NOTE (CORE ENGINE)
 ===================================== */
-const confirmDeliveryNote = async (req, res) => {
+const verifyDeliveryNote = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const user = req.user;
-    const { items } = req.body;
-
     const dn = await DeliveryNote.findById(req.params.id).session(session);
-    if (!dn || dn.status !== "Issued") {
+
+    if (!dn || dn.status !== "RECEIVED") {
       throw new Error("Invalid DN state");
     }
 
-    const pr = await PurchaseRequest.findById(dn.purchaseRequestId).session(
-      session,
-    );
+    const pr = await PurchaseRequest.findById(dn.purchaseRequestId).session(session);
     if (!pr) throw new Error("PR not found");
 
-    let hasMismatch = false;
-
     for (const item of dn.items) {
-      if (item.acceptedQty <= 0) continue;
+      const issued = item.issuedQty;
+      const accepted = Number(item.acceptedQty || 0);
+      const rejected = Number(item.rejectedQty || 0);
 
-      await applyStoreStockMovement({
-        storeId: dn.store.id,
-        stockId: item.itemId,
-        quantity: item.acceptedQty,
-        direction: "OUT",
-        type: "DN",
-        referenceType: "DN",
-        referenceId: dn._id,
-        createdBy: user._id,
-        session,
-      });
-    }
-
-    for (const payloadItem of items) {
-      const dnItem = dn.items.find(
-        (i) => i.itemId.toString() === payloadItem.itemId.toString(),
-      );
-
-      if (!dnItem) throw new Error("Invalid DN item");
-
-      const acceptedQty = Number(payloadItem.acceptedQty) || 0;
-      const rejectedQty = Number(payloadItem.rejectedQty) || 0;
-
-      if (acceptedQty < 0 || rejectedQty < 0) {
-        throw new Error("Negative qty not allowed");
+      /* =========================
+         VALIDATION (IMPORTANT)
+      ========================== */
+      if (accepted + rejected !== issued) {
+        throw new Error(`Qty mismatch for item ${item.itemId}`);
       }
 
-      if (acceptedQty + rejectedQty !== dnItem.issuedQty) {
-        dnItem.status = "Mismatch";
-        hasMismatch = true;
-        continue;
+      /* =========================
+         ACCEPTED → STOCK TRANSFER
+      ========================== */
+      if (accepted > 0) {
+        await executeStockTransaction({
+          itemId: item.itemId,
+          fromStoreId: dn.fromStoreId,
+          toStoreId: dn.toStoreId,
+          quantity: accepted,
+          rate: 0,
+          type: "TRANSFER",
+          source: "DN",
+          referenceId: dn._id,
+          userId: req.user._id,
+          session, // ✅ IMPORTANT
+        });
       }
 
-      if (rejectedQty > 0 && !payloadItem.rejectionReason) {
-        throw new Error(`Rejection reason required for ${dnItem.item}`);
+      /* =========================
+         REJECTED → RETURN BACK
+      ========================== */
+      if (rejected > 0) {
+        await executeStockTransaction({
+          itemId: item.itemId,
+          fromStoreId: dn.toStoreId,
+          toStoreId: dn.fromStoreId,
+          quantity: rejected,
+          rate: 0,
+          type: "TRANSFER",
+          source: "DN_REJECT",
+          referenceId: dn._id,
+          userId: req.user._id,
+          session,
+        });
       }
 
-      /* ===== STORE INVENTORY CHECK ===== */
-      const storeInv = await StoreInventory.findOne({
-        storeId: dn.store.id,
-        stockId: dnItem.itemId,
-      }).session(session);
-
-      if (!storeInv || storeInv.quantity < acceptedQty) {
-        throw new Error(`Insufficient stock for ${dnItem.item}`);
-      }
-
-      /* ===== STORE ↓ ===== */
-      storeInv.quantity -= acceptedQty;
-      await storeInv.save({ session });
-
-      /* ===== TRANSFER ENTRY ===== */
-      await StockTransfer.create(
-        [
-          {
-            stockId: dnItem.itemId,
-            quantity: acceptedQty,
-            rate: dnItem.costRate || 0,
-            fromType: "Store",
-            fromId: dn.store.id,
-            toType: "Site",
-            toId: dn.site.id,
-            referenceType: "DN",
-            referenceId: dn._id,
-            createdBy: user._id,
-          },
-        ],
-        { session },
-      );
-
-      /* ===== PR UPDATE ===== */
+      /* =========================
+         UPDATE PR
+      ========================== */
       const prItem = pr.items.find(
-        (i) => i.itemId.toString() === dnItem.itemId.toString(),
+        (i) => i.itemId.toString() === item.itemId.toString()
       );
 
-      if (prItem) {
-        prItem.issuedQty += acceptedQty;
+      if (prItem && accepted > 0) {
+        prItem.issuedQty += accepted;
+
+        // safety cap
+        if (prItem.issuedQty > prItem.requestedQty) {
+          prItem.issuedQty = prItem.requestedQty;
+        }
       }
-
-      /* ===== DN UPDATE ===== */
-      dnItem.acceptedQty = acceptedQty;
-      dnItem.rejectedQty = rejectedQty;
-      dnItem.rejectionReason = payloadItem.rejectionReason || "";
-      dnItem.status = "Verified";
     }
 
-    /* ===== FINAL STATUS ===== */
-    if (hasMismatch) {
-      dn.status = "Mismatch";
-    } else {
-      dn.status = "Verified";
-      dn.receivedBy = user._id;
-      dn.receivedDate = new Date();
-    }
+    /* =========================
+       UPDATE PR STATUS
+    ========================== */
+    updatePRStatus(pr);
+
+    /* =========================
+       UPDATE DN
+    ========================== */
+    dn.status = "VERIFIED";
+    dn.receivedDate = new Date();
 
     await pr.save({ session });
     await dn.save({ session });
 
-    /* ===== INVOICE ===== */
-    let invoice = null;
-
-    if (dn.status === "Verified") {
-      invoice = await createSalesInvoiceFromDN(dn, user._id, session);
-
-      dn.salesInvoiceId = invoice._id;
-      await dn.save({ session });
-    }
-
     await session.commitTransaction();
     session.endSession();
 
-    res.json({
-      dn,
-      invoiceId: invoice?._id || null,
-    });
+    res.json({ success: true, data: dn });
+
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
 
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -280,9 +240,106 @@ const getDeliveryNoteById = async (req, res) => {
   res.json(dn);
 };
 
+
+
+const createSiteReceipt = async (req, res) => {
+  try {
+    const { poId } = req.body;
+
+    const po = await PurchaseOrder.findById(poId);
+
+    if (!po) throw new Error("PO not found");
+
+    if (po.deliveryType !== "SITE") {
+      throw new Error("Not a site delivery PO");
+    }
+
+    const items = po.items.map(i => ({
+      itemId: i.itemId,
+      poItemId: i._id,
+      orderedQty: i.quantity,
+      receivedQty: 0,
+      rejectedQty: 0,
+      rate: i.rate,
+      amount: 0,
+    }));
+
+    const receipt = await SiteReceipt.create({
+      receiptNo: `SR-${Date.now()}`,
+      poId,
+      supplierId: po.supplierId,
+      siteId: po.siteId,
+      items,
+      createdBy: req.user._id,
+    });
+
+    res.status(201).json({ success: true, data: receipt });
+
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const postSiteReceipt = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const receipt = await SiteReceipt.findById(req.params.id).session(session);
+
+    if (!receipt) throw new Error("Not found");
+    if (receipt.status !== "VERIFIED") {
+      throw new Error("Not verified");
+    }
+
+    const po = await PurchaseOrder.findById(receipt.poId).session(session);
+
+    for (const item of receipt.items) {
+      if (item.receivedQty <= 0) continue;
+
+      await executeStockTransaction({
+        itemId: item.itemId,
+        toStoreId: receipt.siteId,
+        quantity: item.receivedQty,
+        rate: item.rate,
+        type: "IN",
+        source: "SITE_RECEIPT",
+        referenceId: receipt._id,
+        userId: req.user._id,
+      });
+
+      const poItem = po.items.id(item.poItemId);
+      poItem.receivedQty += item.receivedQty;
+    }
+
+    po.updateStatus();
+    await po.save({ session });
+
+    receipt.status = "POSTED";
+    await receipt.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({ success: true, data: receipt });
+
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+
+    res.status(400).json({ error: err.message });
+  }
+};
+
+
+
 module.exports = {
   createDeliveryNote,
-  confirmDeliveryNote,
+  receiveDeliveryNote,
+  verifyDeliveryNote,
   getDeliveryNotes,
   getDeliveryNoteById,
+
+  createSiteReceipt,
+  postSiteReceipt,
 };

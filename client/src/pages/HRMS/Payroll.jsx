@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Modal from "../../components/Modal";
 import CreateSalary from "../../components/CreateSalary";
+import SalaryDetails from "./SalaryDetails";
 
 const Payroll = () => {
   const [salaries, setSalaries] = useState([]);
@@ -9,6 +10,9 @@ const Payroll = () => {
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
   const [createModal, setCreateModal] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [salaryData, setSalaryData] = useState(null);
+  const [view, setView] = useState(false);
 
   useEffect(() => {
     fetchSalary();
@@ -17,6 +21,18 @@ const Payroll = () => {
   const fetchSalary = async () => {
     const res = await axios.get("/api/v1/payroll");
     setSalaries(res.data);
+  };
+
+  const handleEdit = (id) => {
+    setEditId(id);
+    setCreateModal(true)
+  };
+
+  const handleView = (data) => {
+    console.log(data);
+
+    setSalaryData(data);
+    setView(true);
   };
 
   const deleteSalary = async (id) => {
@@ -124,11 +140,21 @@ const Payroll = () => {
 
                 <td className="p-3">
                   <div className="flex justify-center gap-3">
-                    <button className="text-blue-600">View</button>
+                    <button
+                      onClick={() => handleView(salary)}
+                      className="text-blue-600"
+                    >
+                      View
+                    </button>
 
-                    <button className="text-green-600">Edit</button>
+                    <button
+                      onClick={() => handleEdit(salary._id)}
+                      className="text-green-600"
+                    >
+                      Edit
+                    </button>
 
-                    <button className="text-purple-600">Download</button>
+                    {/* <button className="text-purple-600">Download</button> */}
 
                     <button
                       className="text-red-600"
@@ -147,8 +173,8 @@ const Payroll = () => {
       {/* Mobile Cards */}
 
       <div className="md:hidden space-y-4">
-        {filtered.map((salary) => (
-          <div key={salary._id} className="bg-white p-4 rounded-xl shadow">
+        {filtered.map((salary, index) => (
+          <div key={index} className="bg-white p-4 rounded-xl shadow">
             <div className="flex justify-between mb-2">
               <div className="font-semibold">{salary.employeeName}</div>
 
@@ -168,11 +194,21 @@ const Payroll = () => {
             </div>
 
             <div className="flex flex-wrap gap-3 mt-3 text-sm">
-              <button className="text-blue-600">View</button>
+              <button
+                onClick={() => handleView(salary)}
+                className="text-blue-600"
+              >
+                View
+              </button>
 
-              <button className="text-green-600">Edit</button>
+              <button
+                onClick={() => handleEdit(salary._id)}
+                className="text-green-600"
+              >
+                Edit
+              </button>
 
-              <button className="text-purple-600">Download</button>
+              {/* <button className="text-purple-600">Download</button> */}
 
               <button
                 className="text-red-600"
@@ -184,12 +220,17 @@ const Payroll = () => {
           </div>
         ))}
       </div>
+
       <Modal
         isOpen={createModal}
         onClose={() => setCreateModal(false)}
         head="Calculate Salary"
       >
-        <CreateSalary onClose={() => setCreateModal(false)} />
+        <CreateSalary onClose={() => setCreateModal(false)} editId={editId} />
+      </Modal>
+
+      <Modal isOpen={view} onClose={() => setView(false)}>
+        {salaryData && <SalaryDetails payroll={salaryData} />}
       </Modal>
     </div>
   );

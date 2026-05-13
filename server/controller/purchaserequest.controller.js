@@ -1,17 +1,32 @@
-const mongoose = require("mongoose");
 const PurchaseRequest = require("../models/purchaserequest.models");
 const Site = require("../models/site.models");
 const { Store } = require("../models/store.models");
-const {Stock} = require("../models/stock.models");
+const { Item } = require("../models/stock.models");
 
 /* =====================================
    GENERATE PR NUMBER
 ===================================== */
 async function generatePrNumber() {
-  const count = await PurchaseRequest.countDocuments();
-  const number = String(count + 1).padStart(4, "0");
+  const last = await PurchaseRequest.findOne()
+    .sort({ createdAt: -1 })
+    .select("prNumber");
+
   const year = new Date().getFullYear();
-  return `PR-${year}-${number}`;
+
+  if (!last) return `PR-${year}-0001`;
+
+  const lastNumber = parseInt(last.prNumber.split("-")[2]) || 0;
+
+  return `PR-${year}-${String(lastNumber + 1).padStart(4, "0")}`;
+}
+
+function updatePRStatus(pr) {
+  const totalRequested = pr.items.reduce((a, i) => a + i.requestedQty, 0);
+  const totalIssued = pr.items.reduce((a, i) => a + i.issuedQty, 0);
+
+  if (totalIssued === 0) pr.status = "APPROVED";
+  else if (totalIssued < totalRequested) pr.status = "PARTIAL";
+  else pr.status = "DELIVERED";
 }
 
 /* =====================================
@@ -21,67 +36,62 @@ const createPurchaseRequest = async (req, res) => {
   try {
     const user = req.user;
 
-    const {
-      site,
-      store,
-      reqDate,
-      requirementFor,
-      category,
-      remarks,
-      items,
-    } = req.body;
+    const { site, store, reqDate, requirementFor, category, narration, items } =
+      req.body;
 
-    if (!site) throw new Error("Site is required");
-    if (!store) throw new Error("Store is required");
-    if (!items || !items.length) throw new Error("Items required");
+    if (!site) throw new Error("Site required");
+    if (!store) throw new Error("Store required");
+    if (!items?.length) throw new Error("Items required");
 
-    const existingSite = await Site.findById(site);
-    if (!existingSite) throw new Error("Invalid site");
+    const [existingSite, existingStore] = await Promise.all([
+      Store.findById(site),
+      Store.findById(store),
+    ]);
 
-    const existingStore = await Store.findById(store);
-    if (!existingStore) throw new Error("Invalid store");
+    if (existingSite.type !== "SITE") {
+      throw new Error("Invalid site (must be SITE)");
+    }
 
-    /* ===== PROCESS ITEMS ===== */
-    const processedItems = [];
+    if (existingStore.type !== "WAREHOUSE") {
+      throw new Error("Invalid store (must be WAREHOUSE)");
+    }
 
-    for (const i of items) {
-      if (!i.itemId || !i.requestedQty) {
-        throw new Error("Invalid item");
-      }
+    const itemIds = items.map(i => i.itemId);
+    const dbItems = await Item.find({ _id: { $in: itemIds } });
 
-      const stock = await Stock.findById(i.itemId);
-      if (!stock) throw new Error("Invalid stock item");
+    const itemMap = new Map(dbItems.map(i => [i._id.toString(), i]));
 
-      processedItems.push({
-        itemId: stock._id,
-        unit: stock.unit, // 🔥 auto-fill
+    const processedItems = items.map(i => {
+      const item = itemMap.get(i.itemId);
+      if (!item) throw new Error("Invalid item");
+
+      return {
+        itemId: item._id,
+        unit: item.unit,
         requestedQty: Number(i.requestedQty),
         issuedQty: 0,
-      });
-    }
+        pendingQty: Number(i.requestedQty),
+      };
+    });
 
     const pr = await PurchaseRequest.create({
       prNumber: await generatePrNumber(),
-      createdBy: user._id,
-
       site,
       store,
-
       reqDate,
       requirementFor,
       category,
-      remarks,
-
+      narration,
       items: processedItems,
-
       status: "DRAFT",
       inchargeApprove: "PENDING",
+      createdBy: user._id,
     });
 
-    return res.status(201).json({ success: true, data: pr });
+    res.status(201).json({ success: true, data: pr });
   } catch (err) {
-    console.error(err);
-    return res.status(400).json({ error: err.message });
+    console.log(err)
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -93,33 +103,20 @@ const updatePurchaseRequest = async (req, res) => {
     const pr = await PurchaseRequest.findById(req.params.id);
 
     if (!pr) throw new Error("PR not found");
+    if (pr.status !== "DRAFT") throw new Error("Only draft editable");
 
-    if (pr.status !== "DRAFT") {
-      throw new Error("Only draft PR can be edited");
-    }
-
-    const {
-      items,
-      remarks,
-      reqDate,
-      category,
-      requirementFor,
-    } = req.body;
+    const { items, narration, reqDate, category, requirementFor } = req.body;
 
     if (items) {
       const updatedItems = [];
 
       for (const i of items) {
-        if (!i.itemId || !i.requestedQty) {
-          throw new Error("Invalid item");
-        }
-
-        const stock = await Stock.findById(i.itemId);
-        if (!stock) throw new Error("Invalid stock item");
+        const item = await Item.findById(i.itemId);
+        if (!item) throw new Error("Invalid item");
 
         updatedItems.push({
-          itemId: stock._id,
-          unit: stock.unit,
+          itemId: item._id,
+          unit: item.unit,
           requestedQty: Number(i.requestedQty),
           issuedQty: 0,
         });
@@ -128,16 +125,16 @@ const updatePurchaseRequest = async (req, res) => {
       pr.items = updatedItems;
     }
 
-    if (remarks !== undefined) pr.remarks = remarks;
+    if (narration !== undefined) pr.narration = narration;
     if (reqDate) pr.reqDate = reqDate;
     if (category) pr.category = category;
     if (requirementFor) pr.requirementFor = requirementFor;
 
     await pr.save();
 
-    return res.json({ success: true, data: pr });
+    res.json({ success: true, data: pr });
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -149,22 +146,15 @@ const submitPurchaseRequest = async (req, res) => {
     const pr = await PurchaseRequest.findById(req.params.id);
 
     if (!pr) throw new Error("PR not found");
+    if (pr.status !== "DRAFT") throw new Error("Only draft allowed");
 
-    if (pr.status !== "DRAFT") {
-      throw new Error("Only draft PR can be submitted");
-    }
-
-    pr.status = "PENDING";
+    pr.status = "REQUESTED";
 
     await pr.save();
 
-    return res.json({
-      success: true,
-      message: "PR submitted for approval",
-      data: pr,
-    });
+    res.json({ success: true, message: "Submitted", data: pr });
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -176,23 +166,16 @@ const approvePurchaseRequest = async (req, res) => {
     const pr = await PurchaseRequest.findById(req.params.id);
 
     if (!pr) throw new Error("PR not found");
+    if (pr.status !== "REQUESTED") throw new Error("Invalid state");
 
-    if (pr.status !== "PENDING") {
-      throw new Error("PR not in pending state");
-    }
-
-    pr.inchargeApprove = "Approved";
+    pr.inchargeApprove = "APPROVED";
     pr.status = "APPROVED";
 
     await pr.save();
 
-    return res.json({
-      success: true,
-      message: "PR Approved",
-      data: pr,
-    });
+    res.json({ success: true, message: "Approved", data: pr });
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -204,23 +187,16 @@ const rejectPurchaseRequest = async (req, res) => {
     const pr = await PurchaseRequest.findById(req.params.id);
 
     if (!pr) throw new Error("PR not found");
+    if (pr.status !== "REQUESTED") throw new Error("Invalid state");
 
-    if (pr.status !== "PENDING") {
-      throw new Error("PR not in pending state");
-    }
-
-    pr.inchargeApprove = "Rejected";
+    pr.inchargeApprove = "REJECTED";
     pr.status = "REJECTED";
 
     await pr.save();
 
-    return res.json({
-      success: true,
-      message: "PR Rejected",
-      data: pr,
-    });
+    res.json({ success: true, message: "Rejected", data: pr });
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -231,10 +207,23 @@ const getOpenPRForDN = async (req, res) => {
   try {
     const prs = await PurchaseRequest.find({
       status: { $in: ["APPROVED", "PARTIAL"] },
-    }).populate("items.itemId");
+    }).populate({
+      path: "items.itemId",
+      populate: [
+        {
+          path: "categoryId",
+        },
+        {
+          path: "groupId",
+        },
+      ],
+    })
+      .populate("site store")
+      .exec();
 
     return res.json(prs);
   } catch (err) {
+    console.log(err)
     return res.status(500).json({ error: err.message });
   }
 };
@@ -243,24 +232,55 @@ const getOpenPRForDN = async (req, res) => {
    GET ALL
 ===================================== */
 const getAllPurchaseRequests = async (req, res) => {
-  const data = await PurchaseRequest.find()
-    .sort({ createdAt: -1 })
-    .populate("site store items.itemId");
+  try {
+    const data = await PurchaseRequest.find()
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "items.itemId",
+        populate: [
+          {
+            path: "categoryId",
+          },
+          {
+            path: "groupId",
+          },
+        ],
+      })
+      .populate("site store")
+      .exec();
 
-  return res.json(data);
+    return res.json(data);
+  } catch (error) {
+    console.log(error)
+  }
 };
 
 /* =====================================
    GET BY ID
 ===================================== */
 const getPurchaseRequestById = async (req, res) => {
-  const pr = await PurchaseRequest.findById(req.params.id).populate(
-    "site store items.itemId"
-  );
+  try {
+    const pr = await PurchaseRequest.findById(req.params.id).populate({
+      path: "items.itemId",
+      populate: [
+        {
+          path: "categoryId",
+        },
+        {
+          path: "groupId",
+        },
+      ],
+    })
+      .populate("site store")
+      .exec();
 
-  if (!pr) return res.status(404).json({ message: "Not found" });
+    if (!pr) return res.status(404).json({ message: "Not found" });
 
-  return res.json(pr);
+    return res.json(pr);
+  } catch (error) {
+    console.log(error)
+  }
+
 };
 
 /* =====================================
@@ -271,16 +291,13 @@ const deletePurchaseRequest = async (req, res) => {
     const pr = await PurchaseRequest.findById(req.params.id);
 
     if (!pr) throw new Error("PR not found");
-
-    if (pr.status !== "DRAFT") {
-      throw new Error("Only draft PR can be deleted");
-    }
+    if (pr.status !== "DRAFT") throw new Error("Only draft can be deleted");
 
     await pr.deleteOne();
 
-    return res.json({ message: "Deleted" });
+    res.json({ success: true, message: "PR deactivated" });
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -291,7 +308,19 @@ const getPurchaseRequestBySite = async (req, res) => {
   try {
     const prs = await PurchaseRequest.find({
       site: req.params.id,
-    }).populate("site store items.itemId");
+    }).populate({
+      path: "items.itemId",
+      populate: [
+        {
+          path: "categoryId",
+        },
+        {
+          path: "groupId",
+        },
+      ],
+    })
+      .populate("site store")
+      .exec();
 
     return res.json(prs);
   } catch (err) {

@@ -13,9 +13,7 @@ const {
   sendPushNotification,
   notifyRole,
 } = require("../utils/pushNotification.js");
-const {
-  syncCostCenterForSite,
-} = require("../services/ERP/costcenter.service.js");
+const SyncStore_CostCenter = require("../utils/costcenter_storeSync.js");
 
 const getSites = async (req, res) => {
   try {
@@ -121,9 +119,9 @@ const createSite = async (req, res) => {
 
     const upload = agreementLocalPath
       ? await uploadOnCloudinary(agreementLocalPath, {
-          folder: "sites/agreements",
-          public_id: `${name}-${Date.now()}`,
-        })
+        folder: "sites/agreements",
+        public_id: `${name}-${Date.now()}`,
+      })
       : null;
 
     const existingClient = client ? await Client.findById(client) : null;
@@ -152,6 +150,7 @@ const createSite = async (req, res) => {
         ? { id: existingClient._id, name: existingClient.name }
         : null,
       siteId,
+      businessUnitId: user.businessUnitId,
       companyId: user.companyId,
       structureType,
       floors: parsedFloors,
@@ -175,8 +174,22 @@ const createSite = async (req, res) => {
     const savedSite = await newSite.save();
     await assignSiteToUsers(savedSite, existingIncharge, existingSupervisor);
 
-    savedSite.costcenter = syncCostCenterForSite(savedSite, "SITE")._id;
+    const storeData = {
+      businessUnitId: savedSite.businessUnitId,
+      address: { line1: savedSite?.address },
+      storeHead: savedSite.incharge?.id,
+      storeIncharge: existingSupervisor
+        ? savedSite.supervisor?.id : null,
+      companyId: savedSite.companyId,
+      type: "SITE",
+      name: savedSite.name,
+    }
+
+    const store_costCenter = await SyncStore_CostCenter(storeData)
+    savedSite.costcenter = store_costCenter?.costCenterId;
+    savedSite.store = store_costCenter?._id;
     await savedSite.save();
+
     const employees = await User.find({ role: "Employee" });
 
     for (const employee of employees) {
@@ -214,13 +227,14 @@ const updateSite = async (req, res) => {
       projectType,
       address,
     } = req.body;
+    const user = req.user;
 
     const agreementLocalPath = req.file?.path;
     const upload = agreementLocalPath
       ? await uploadOnCloudinary(agreementLocalPath, {
-          folder: "sites/agreements",
-          public_id: `${name}-${Date.now()}`,
-        })
+        folder: "sites/agreements",
+        public_id: `${name}-${Date.now()}`,
+      })
       : null;
 
     const existingClient = client ? await Client.findById(client) : null;
@@ -249,9 +263,7 @@ const updateSite = async (req, res) => {
     existingSite.floors = parsedFloors;
     existingSite.projectType = projectType || existingSite.projectType;
     existingSite.companyId = existingSite.companyId || req.user.companyId;
-
-    const costCenter = await syncCostCenterForSite(existingSite, "SITE");
-    existingSite.costcenter = costCenter?._id || existingSite.costcenter;
+    existingSite.businessUnitId = user.businessUnitId || esistingSite?.businessUnitId
 
     if (existingClient) {
       existingSite.client = {
@@ -307,12 +319,28 @@ const updateSite = async (req, res) => {
         public_id: upload.public_id,
       };
 
+    const storeData = {
+      businessUnitId: existingSite.businessUnitId,
+      address: { line1: existingSite?.address },
+      storeHead: existingSite.incharge?.id,
+      storeIncharge: existingSite.supervisor?.id,
+      companyId: existingSite.companyId,
+      type: "SITE",
+      name: existingSite.name,
+    }
+    const siteStore = existingSite.store;
+
+    const store_costCenter = await SyncStore_CostCenter(storeData)
+    existingSite.costcenter = store_costCenter?.costCenterId;
+    existingSite.store = store_costCenter?._id;
+
+    console.log("store_costCenter", store_costCenter)
     const updated = await existingSite.save();
     await assignSiteToUsers(updated, existingIncharge, existingSupervisor);
 
     res.status(200).json({
       message: "Site updated successfully",
-      updated,
+      // updated,
     });
   } catch (error) {
     console.error("Error updating site:", error);

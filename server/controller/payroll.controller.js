@@ -1,4 +1,5 @@
 const Payroll = require("../models/payroll.models");
+
 const calculateSalary = (data) => {
   const {
     baseSalary,
@@ -76,7 +77,11 @@ const getPayroll = async (req, res) => {
 };
 
 const updatePayroll = async (req, res) => {};
-const deletePayroll = async (req, res) => {};
+const deletePayroll = async (req, res) => {
+  const {id} = req.params;
+  const deleted = await Payroll.findByIdAndDelete(id);
+  res.json("Payroll deleted.")
+};
 
 module.exports = {
   createPayroll,

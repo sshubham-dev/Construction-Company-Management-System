@@ -57,10 +57,10 @@ const createExpense = async (req, res) => {
     const expenseLedger = await Ledger.findById(req.body.expenseLedger);
     let expenseFor = null;
     const expenseForId =
-  req.body.expenseFor === "null" || !req.body.expenseFor
-    ? null
-    : req.body.expenseFor;
-    if (expenseForId){
+      req.body.expenseFor === "null" || !req.body.expenseFor
+        ? null
+        : req.body.expenseFor;
+    if (expenseForId) {
       console.log("finding expense for", req.body.expenseFor)
       expenseFor = await CostCenter.findById(req.body.expenseFor);
       console.log("found expense for")
@@ -288,6 +288,93 @@ const getExpenseById = async (req, res) => {
   res.json(expense);
 };
 
+// V2
+const getExpensesv2 = async (req, res) => {
+  try {
+    const { employeeId, month, year, type, status, approval } = req.query;
+
+    let query = {};
+
+    /* -----------------------------
+       Resolve employee → user
+    ------------------------------ */
+
+    let finalUserId = null;
+
+    if (employeeId) {
+      const employee = await Employee.findById(employeeId);
+
+      if (!employee) {
+        return res.status(404).json({ message: "Employee not found" });
+      }
+
+      finalUserId = employee.userId;
+    }
+
+    if (finalUserId) {
+      query.createdBy = finalUserId;
+    }
+
+    /* -----------------------------
+       Date Filter
+    ------------------------------ */
+
+    if (month && year) {
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 1);
+
+      query.date = { $gte: start, $lt: end };
+    }
+
+    /* -----------------------------
+       Expense Type
+    ------------------------------ */
+
+    if (type) {
+      query["expenseLedger.id"] = type || null;
+    }
+
+    /* -----------------------------
+       Status
+    ------------------------------ */
+
+    if (status) query.status = status;
+
+    if (approval) query.isApproved = approval;
+
+    /* -----------------------------
+       Fetch Expenses
+    ------------------------------ */
+
+    const expenses = await Expenses.find(query)
+      .populate("expenseLedger")
+      .populate("paidByLedger")
+      .populate("expenseFor")
+      .sort({ date: -1 })
+      .exec();
+
+    const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+    res.json({
+      totalAmount,
+      count: expenses.length,
+      expenses,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getExpenseByIdv2 = async (req, res) => {
+  const expense = await Expenses.findById(req.params.id)
+    .populate("expenseLedger")
+    .populate("paidByLedger")
+    .populate("expenseFor")
+    .exec();
+  if (!expense) return res.status(404).json({ message: "Expense not found" });
+  res.json(expense);
+};
+
 /* ======================================================
    UPDATE EXPENSE (DRAFT ONLY)
 ====================================================== */
@@ -437,4 +524,6 @@ module.exports = {
   updateExpense,
   deleteExpense,
   getExpenses,
+  getExpenseByIdv2,
+  getExpensesv2
 };

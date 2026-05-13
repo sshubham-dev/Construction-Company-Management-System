@@ -1,41 +1,25 @@
 const mongoose = require("mongoose");
 
 const returnItemSchema = new mongoose.Schema({
-  stockId: {
+  itemId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Stock",
+    ref: "Item",
     required: true,
   },
 
-  dnItemId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true, // link to DN item
-  },
-
-  unit: String,
-
-  returnQty: {
+  quantity: {
     type: Number,
     required: true,
     min: 0,
   },
 
-  rate: Number,
-
-  amount: Number,
-
-  condition: {
+  reason: {
     type: String,
-    enum: ["New", "Used", "Scrap"],
+    enum: ["EXCESS", "SCRAP", "DAMAGE", "TOOLS_RETURN", "SUPPLIER_RETURN"],
     required: true,
   },
 
   remarks: String,
-});
-returnItemSchema.pre("save", function () {
-  if (this.returnQty > this.issuedQty) {
-    return new Error("Return qty cannot exceed issued qty");
-  }
 });
 
 const returnSchema = new mongoose.Schema(
@@ -46,21 +30,19 @@ const returnSchema = new mongoose.Schema(
       index: true,
     },
 
-    /* =========================
-       RETURN TYPE
-    ========================== */
-    type: {
-      type: String,
-      enum: ["SITE_RETURN", "PURCHASE_RETURN"],
-      required: true,
+    date: {
+      type: Date,
+      default: Date.now,
     },
 
-    /* =========================
-       SOURCE
-    ========================== */
+    /* ======================
+     MOVEMENT
+  ====================== */
+
     fromStoreId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",
+      required: true,
     },
 
     toStoreId: {
@@ -70,50 +52,53 @@ const returnSchema = new mongoose.Schema(
 
     supplierId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Supplier",
+      ref: "Ledger",
     },
 
-    /* =========================
-       REFERENCES
-    ========================== */
-    deliveryNoteId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "DeliveryNote",
+    /* ======================
+     TYPE
+  ====================== */
+
+    type: {
+      type: String,
+      enum: ["SITE_RETURN", "PURCHASE_RETURN", "ADJUSTMENT"],
+      required: true,
     },
 
-    purchaseInvoiceId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "PurchaseInvoice",
-    },
+    /* ======================
+     ITEMS
+  ====================== */
 
-    /* =========================
-       ITEMS
-    ========================== */
     items: [returnItemSchema],
 
-    /* =========================
-       STATUS
-    ========================== */
+    /* ======================
+     LINK (OPTIONAL)
+  ====================== */
+
+    reference: {
+      type: String, // DN, GRN, etc
+    },
+
+    referenceId: {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+
+    /* ======================
+     STATUS
+  ====================== */
+
     status: {
       type: String,
-      enum: ["DRAFT", "POSTED", "CANCELLED"],
+      enum: ["DRAFT", "VERIFIED", "CANCELLED"],
       default: "DRAFT",
     },
 
-    /* =========================
-       AUDIT
-    ========================== */
+    narration: String,
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-
-    approvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-
-    remarks: String,
   },
   { timestamps: true },
 );

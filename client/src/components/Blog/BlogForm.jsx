@@ -76,6 +76,7 @@ export default function BlogForm({ initialData = {}, onSubmit }) {
             className="w-fit border p-2"
           >
             <option value="architecture">Architecture</option>
+            <option value="approval">Approval</option>
             <option value="construction">Construction</option>
             <option value="interior">Interior</option>
           </select>

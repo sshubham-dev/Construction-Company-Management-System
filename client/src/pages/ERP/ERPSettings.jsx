@@ -7,7 +7,6 @@ import { MdDelete, MdAdd } from "react-icons/md";
 import GroupModal from '../../components/CreateGroup';
 import CostCenterPage from './CostCenter';
 import Modal from '../../components/Modal';
-import CreateStockGroup from '../../components/CreateStockGroup';
 import LedgerMaping from '../../components/LedgerMaping';
 
 
@@ -16,7 +15,6 @@ const ERPSettings = () => {
   const navigate = useNavigate();
   const [isGroupModalOpen, setGroupModalOpen] = useState(false);
   const [isLedgerMapModalOpen, setLedgerMapModalOpen] = useState(false);
-  const [isStockGroupModalOpen, setStockGroupModalOpen] = useState(false);
 
 
   return (
@@ -32,16 +30,6 @@ const ERPSettings = () => {
                   className=" "
                   onClick={() => setLedgerMapModalOpen(true)}>
                   Ledger Maping
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2 justify-center items-center">
-              <h1 className='text-xl'>Inventory</h1>
-              <div className="flex flex-col gap-2 justify-center items-center">
-                <button
-                  className=" "
-                  onClick={() => setStockGroupModalOpen(true)}>
-                  Stock Group
                 </button>
               </div>
             </div>
@@ -121,10 +109,6 @@ const ERPSettings = () => {
         {/* Add/Edit Modal */}
         <Modal isOpen={isLedgerMapModalOpen} onClose={() => setLedgerMapModalOpen(false)} head='Map Leadger'>
           <LedgerMaping onClose={() => setLedgerMapModalOpen(false)} />
-        </Modal>
-        <Modal onClose={() => setStockGroupModalOpen(false)} isOpen={isStockGroupModalOpen} head='Create Stock Group'>
-          <CreateStockGroup
-            onClose={() => setStockGroupModalOpen(false)} />
         </Modal>
         <Toaster
           position="top-right"

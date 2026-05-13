@@ -1,7 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
 import axios from "axios";
 import Select from "react-select";
-import { toast, Toaster } from "react-hot-toast";
+
+import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { Plus, Trash2, Package } from "lucide-react";
+
+axios.defaults.withCredentials = true;
 
 const CreatePurchaseRequest = ({ onClose, editId }) => {
   const isEdit = Boolean(editId);
@@ -9,153 +15,319 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
   const [loading, setLoading] = useState(false);
 
   const [sites, setSites] = useState([]);
-  const [stores, setStores] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [stocks, setStocks] = useState([]);
 
+  const [stores, setStores] = useState([]);
+
+  const [itemsMaster, setItemsMaster] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  const [requirements, setRequirements] = useState([]);
+  const { user } = useSelector((state) => state.auth);
   const [form, setForm] = useState({
-    site: "",
-    store: "",
     category: "",
-    reqDate: "",
+
     requirementFor: "",
-    remarks: "",
+
+    reqDate: "",
+
+    site: "",
+
+    store: "",
+
+    narration: "",
+
     items: [],
   });
 
   /* =========================
-     LOAD MASTER DATA
+     LOAD MASTER
   ========================== */
+
   useEffect(() => {
     loadMasters();
-    if (isEdit) loadPR();
+
+    if (isEdit) {
+      loadPR(editId);
+    }
   }, [editId]);
 
   const loadMasters = async () => {
     try {
-      const [siteRes, storeRes, catRes, stockRes] = await Promise.all([
-        axios.get("/api/v1/site"),
-        axios.get("/api/v1/store"),
-        axios.get("/api/v1/stock-group"),
-        axios.get("/api/v1/stock"),
+      const [
+        siteRes,
+        storeRes,
+        itemRes,
+        categoryRes,
+        // requirementRes
+      ] = await Promise.all([
+        axios.get("/api/v1/store?type=SITE"),
+
+        axios.get("/api/v1/store?type=WAREHOUSE"),
+
+        axios.get("/api/v1/stock-item"),
+
+        axios.get("/api/v1/stock-category"),
+
+        // axios.get("/api/v1/project-schedule"),
       ]);
 
-      setSites(siteRes.data);
-      setStores(storeRes.data);
-      setCategories(catRes.data);
-      setStocks(stockRes.data);
-    } catch {
-      toast.error("Failed to load data");
+      setSites(siteRes.data.data || []);
+
+      setStores(storeRes.data.data || []);
+
+      setItemsMaster(itemRes.data.data || []);
+      setCategories(categoryRes.data.data || []);
+
+      // setRequirements(requirementRes.data || []);
+    } catch (err) {
+      console.log(err);
+
+      toast.error("Failed to load master data");
     }
   };
 
+  useEffect(() => {
+    if (!form.category || !itemsMaster.length) return;
+
+    setForm((prev) => ({
+      ...prev,
+      items: prev.items.filter((i) => {
+        const item = itemsMaster.find(
+          (m) => String(m._id) === String(i.itemId),
+        );
+
+        if (!item) return true;
+
+        return (
+          String(item?.categoryId?._id || item?.categoryId) ===
+          String(form.category)
+        );
+      }),
+    }));
+  }, [form.category, itemsMaster]);
+
   /* =========================
-     LOAD EDIT DATA
+     LOAD EDIT
   ========================== */
-  const loadPR = async () => {
+
+  const loadPR = async (id) => {
     try {
-      const { data } = await axios.get(`/api/v1/purchase-request/${editId}`);
+      const res = await axios.get(`/api/v1/purchase-request/${id}`);
+
+      const data = res.data;
 
       setForm({
-        site: data.site?._id || data.site,
-        store: data.store?._id || data.store,
-        category: data.category || "",
-        reqDate: data.reqDate?.split("T")[0] || "",
+        category: data.category?._id || data.category || "",
+
         requirementFor: data.requirementFor || "",
-        remarks: data.remarks || "",
-        items: data.items.map((i) => ({
-          itemId: i.itemId._id || i.itemId,
-          name: i.itemId.name || "",
-          unit: i.unit,
-          requestedQty: i.requestedQty,
-        })),
+
+        reqDate: data.reqDate?.split("T")[0] || "",
+
+        site: data.site?._id || data.site,
+
+        store: data.store?._id || data.store,
+
+        narration: data.narration || "",
+
+        status: data.status || "DRAFT",
+
+        items:
+          data.items?.map((i) => ({
+            itemId: i.itemId?._id || i.itemId,
+
+            itemName: i.itemId?.name,
+
+            unit: i.unit || "",
+
+            requestedQty: i.requestedQty || 0,
+
+            remarks: i.remarks || "",
+          })) || [],
       });
-    } catch {
+    } catch (err) {
+      console.log(err);
       toast.error("Failed to load PR");
     }
   };
 
   /* =========================
-     FILTER STOCK
-  ========================== */
-  const filteredStocks = form.category
-    ? stocks.filter((s) => s.category === form.category)
-    : stocks;
-
-  /* =========================
      ITEM HANDLING
   ========================== */
 
-  const addItem = () => {
-    setForm((p) => ({
-      ...p,
-      items: [...p.items, { itemId: "", name: "", unit: "", requestedQty: 0 }],
+  const addItem = (e) => {
+    e.preventDefault();
+    setForm((prev) => ({
+      ...prev,
+
+      items: [
+        ...prev.items,
+
+        {
+          itemId: "",
+          itemName: "",
+          unit: "",
+          requestedQty: "",
+        },
+      ],
     }));
   };
 
   const removeItem = (index) => {
-    const updated = [...form.items];
-    updated.splice(index, 1);
-    setForm({ ...form, items: updated });
+    setForm((prev) => ({
+      ...prev,
+
+      items: prev.items.filter((_, i) => i !== index),
+    }));
   };
 
   const updateItem = (index, field, value) => {
     const updated = [...form.items];
+
     updated[index][field] = value;
-    setForm({ ...form, items: updated });
+
+    setForm((prev) => ({
+      ...prev,
+      items: updated,
+    }));
   };
 
   const handleItemSelect = (index, selected) => {
-    const stock = stocks.find((s) => s._id === selected.value);
+    const item = itemsMaster.find((i) => i._id === selected.value);
 
-    // prevent duplicate
-    const exists = form.items.find((i) => i.itemId === stock._id);
+    if (!item) return;
+
+    /* DUPLICATE CHECK */
+
+    const exists = form.items.some(
+      (i, idx) => i.itemId === item._id && idx !== index,
+    );
+
     if (exists) {
       return toast.error("Item already added");
     }
 
-    updateItem(index, "itemId", stock._id);
-    updateItem(index, "name", stock.name);
-    updateItem(index, "unit", stock.unit);
+    updateItem(index, "itemId", item._id);
+
+    updateItem(index, "itemName", item.name);
+
+    updateItem(index, "unit", item.unit);
+  };
+
+  /* =========================
+     TOTALS
+  ========================== */
+
+  const totalQty = useMemo(() => {
+    return form.items.reduce((a, i) => a + Number(i.requestedQty || 0), 0);
+  }, [form.items]);
+
+  const filteredItems = useMemo(() => {
+    if (!form.category) {
+      return itemsMaster;
+    }
+
+    return itemsMaster.filter(
+      (item) =>
+        String(item.categoryId?._id || item.categoryId) ===
+        String(form.category),
+    );
+  }, [itemsMaster, form.category]);
+  /* =========================
+     VALIDATE
+  ========================== */
+
+  const validate = () => {
+    if (!form.site) {
+      toast.error("Site required");
+
+      return false;
+    }
+
+    if (!form.store) {
+      toast.error("Store required");
+
+      return false;
+    }
+
+    if (!form.reqDate) {
+      toast.error("Request date required");
+
+      return false;
+    }
+
+    if (!form.category) {
+      toast.error("Category required");
+      return false;
+    }
+
+    if (!form.requirementFor) {
+      toast.error("Need to tell the Requirement");
+      return false;
+    }
+
+    if (!form.items.length) {
+      toast.error("Add items");
+
+      return false;
+    }
+
+    for (const item of form.items) {
+      if (!item.itemId) {
+        toast.error("Select item");
+
+        return false;
+      }
+
+      if (!item.requestedQty || item.requestedQty <= 0) {
+        toast.error("Invalid quantity");
+
+        return false;
+      }
+    }
+
+    return true;
   };
 
   /* =========================
      SUBMIT
   ========================== */
 
-  const handleSubmit = async (submit = false) => {
-    if (!form.site) return toast.error("Site required");
-    if (!form.store) return toast.error("Store required");
-    if (!form.items.length) return toast.error("Add items");
-
-    const payload = {
-      site: form.site,
-      store: form.store,
-      category: form.category,
-      reqDate: form.reqDate,
-      requirementFor: form.requirementFor,
-      remarks: form.remarks,
-      items: form.items.map((i) => ({
-        itemId: i.itemId,
-        requestedQty: Number(i.requestedQty),
-      })),
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
 
     try {
       setLoading(true);
 
+      const payload = {
+        ...form,
+
+        status: "REQUESTED",
+
+        items: form.items.map((i) => ({
+          itemId: i.itemId,
+
+          unit: i.unit,
+
+          requestedQty: Number(i.requestedQty),
+        })),
+      };
+      console.log(payload);
       if (isEdit) {
         await axios.put(`/api/v1/purchase-request/${editId}`, payload);
+
         toast.success("PR updated");
       } else {
-        const res = await axios.post("/api/v1/purchase-request", payload);
+        await axios.post("/api/v1/purchase-request", payload);
 
-        toast.success(submit ? "PR submitted" : "PR saved");
+        toast.success("PR submitted");
       }
 
-      onClose();
+      onClose?.();
     } catch (err) {
-      toast.error(err.response?.data?.error || "Error");
+      console.log(err);
+
+      toast.error(err.response?.data?.message || "Failed to save PR");
     } finally {
       setLoading(false);
     }
@@ -166,144 +338,286 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
   ========================== */
 
   return (
-    <div className="mx-auto space-y-4">
-
-
+    <div className="space-y-5">
       {/* HEADER */}
-      <Select
-        placeholder="Select Site"
-        value={sites.find((s) => s._id === form.site) && {
-          value: form.site,
-          label: sites.find((s) => s._id === form.site)?.name,
-        }}
-        onChange={(v) => setForm({ ...form, site: v.value })}
-        options={sites.map((s) => ({ value: s._id, label: s.name }))}
-      />
 
-      <Select
-        placeholder="Select Store"
-        value={stores.find((s) => s._id === form.store) && {
-          value: form.store,
-          label: stores.find((s) => s._id === form.store)?.name,
-        }}
-        onChange={(v) => setForm({ ...form, store: v.value })}
-        options={stores.map((s) => ({ value: s._id, label: s.name }))}
-      />
+      <div>
+        <h2 className="text-xl font-semibold">
+          {isEdit ? "Edit Purchase Request" : "Create Purchase Request"}
+        </h2>
 
-      <Select
-        placeholder="Category"
-        value={form.category ? { value: form.category, label: form.category } : null}
-        onChange={(v) =>
-          setForm({ ...form, category: v.value, items: [] })
-        }
-        options={categories.map((c) => ({
-          value: c.name,
-          label: c.name,
-        }))}
-      />
+        <p className="text-sm text-gray-500 mt-1">
+          Request material from warehouse/store
+        </p>
+      </div>
 
-      <input
-        type="date"
-        value={form.reqDate}
-        onChange={(e) => setForm({ ...form, reqDate: e.target.value })}
-        className="border p-2 w-full rounded"
-      />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* BASIC */}
 
-      <input
-        placeholder="Requirement For"
-        value={form.requirementFor}
-        onChange={(e) =>
-          setForm({ ...form, requirementFor: e.target.value })
-        }
-        className="border p-2 w-full rounded"
-      />
-
-      {/* ITEMS */}
-      <div className="space-y-2">
-        <button
-          onClick={addItem}
-          className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-        >
-          + Add Item
-        </button>
-
-        {form.items.map((item, i) => (
-          <div key={i} className="border p-3 rounded space-y-2 bg-white">
-
-            <Select
-              placeholder="Select Item"
-              value={
-                item.itemId
-                  ? { value: item.itemId, label: item.name }
-                  : null
-              }
-              onChange={(v) => handleItemSelect(i, v)}
-              options={filteredStocks.map((s) => ({
+        <Section title="Basic Details">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SelectField
+              label="Site*"
+              options={sites.map((s) => ({
                 value: s._id,
                 label: s.name,
               }))}
+              value={sites
+                .map((s) => ({
+                  value: s._id,
+                  label: s.name,
+                }))
+                .find((s) => s.value === form.site)}
+              onChange={(v) =>
+                setForm((p) => ({
+                  ...p,
+                  site: v?.value || "",
+                }))
+              }
             />
 
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="number"
-                placeholder="Qty"
-                value={item.requestedQty}
-                onChange={(e) =>
-                  updateItem(i, "requestedQty", e.target.value)
-                }
-                className="border p-2 rounded"
-              />
+            <SelectField
+              label="Store*"
+              options={stores.map((s) => ({
+                value: s._id,
+                label: s.name,
+              }))}
+              value={stores
+                .map((s) => ({
+                  value: s._id,
+                  label: s.name,
+                }))
+                .find((s) => s.value === form.store)}
+              onChange={(v) =>
+                setForm((p) => ({
+                  ...p,
+                  store: v?.value || "",
+                }))
+              }
+            />
 
-              <input
-                value={item.unit}
-                readOnly
-                className="border p-2 bg-gray-100 rounded"
-              />
+            <SelectField
+              label="Category*"
+              options={categories.map((c) => ({
+                value: c._id,
+                label: c.name,
+              }))}
+              value={categories
+                .map((c) => ({
+                  value: c._id,
+                  label: c.name,
+                }))
+                .find((c) => c.value === form.category)}
+              onChange={(v) =>
+                setForm((p) => ({
+                  ...p,
+                  category: v?.value || "",
+                }))
+              }
+            />
+
+            {/* <SelectField
+              label="Requirement For"
+              options={requirements.map((r) => ({
+                value: r.name,
+                label: r.name,
+              }))}
+              value={requirements
+                .map((r) => ({
+                  value: r.name,
+                  label: r.name,
+                }))
+                .find((r) => r.value === form.requirementFor)}
+              onChange={(v) =>
+                setForm((p) => ({
+                  ...p,
+                  requirementFor: v?.value || "",
+                }))
+              }
+            /> */}
+
+            <Input
+              label="Requirement For*"
+              type="text"
+              required="true"
+              value={form.requirementFor}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  requirementFor: e.target.value,
+                }))
+              }
+            />
+
+            <Input
+              type="date"
+              label="Required Date*"
+              value={form.reqDate}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  reqDate: e.target.value,
+                }))
+              }
+            />
+          </div>
+        </Section>
+
+        {/* ITEMS */}
+        <Section title="Items">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-500">
+              Total Qty: <span className="font-semibold">{totalQty}</span>
             </div>
 
             <button
-              onClick={() => removeItem(i)}
-              className="text-red-600 text-xs"
+              onClick={addItem}
+              className="bg-blue-600 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-sm"
             >
-              Remove
+              <Plus size={16} />
+              Add Item
             </button>
           </div>
-        ))}
-      </div>
 
-      {/* REMARKS */}
-      <textarea
-        placeholder="Remarks"
-        value={form.remarks}
-        onChange={(e) => setForm({ ...form, remarks: e.target.value })}
-        className="border p-2 w-full rounded"
-      />
+          <div className="space-y-4">
+            {form.items.map((item, index) => (
+              <div
+                key={index}
+                className="border rounded-xl p-4 bg-gray-50 space-y-3"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Package size={16} />
 
-      {/* ACTIONS */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => handleSubmit(false)}
-          className="flex-1 bg-gray-600 text-white py-2 rounded"
-          disabled={loading}
-        >
-          Save Draft
-        </button>
+                    <span className="font-medium text-sm">
+                      Item {index + 1}
+                    </span>
+                  </div>
 
-        {!isEdit && (
+                  <button
+                    onClick={() => removeItem(index)}
+                    className="text-red-600"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+
+                <Select
+                  placeholder={
+                    form.category ? "Select Item*" : "Select Category First*"
+                  }
+                  options={filteredItems.map((i) => ({
+                    value: i._id,
+                    label: `${i.name} (${i.unit})`,
+                  }))}
+                  value={
+                    filteredItems
+                      .map((i) => ({
+                        value: i._id,
+                        label: `${i.name} (${i.unit})`,
+                      }))
+                      .find((i) => String(i.value) === String(item.itemId)) ||
+                    null
+                  }
+                  onChange={(v) => handleItemSelect(index, v)}
+                  isDisabled={!form.category}
+                />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    type="number"
+                    label="Requested Qty*"
+                    value={item.requestedQty}
+                    onChange={(e) =>
+                      updateItem(index, "requestedQty", e.target.value)
+                    }
+                  />
+
+                  <Input label="Unit*" value={item.unit} readOnly />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* NARRATION */}
+
+        <Section title="Narration">
+          <Textarea
+            value={form.narration}
+            onChange={(e) =>
+              setForm((p) => ({
+                ...p,
+                narration: e.target.value,
+              }))
+            }
+            placeholder="Additional notes..."
+          />
+        </Section>
+
+        {/* ACTIONS */}
+
+        <div className="bg-white p-2 flex gap-3 z-50">
           <button
-            onClick={() => handleSubmit()}
-            className="flex-1 bg-green-600 text-white py-2 rounded"
+            // onClick={() => handleSubmit("DRAFT")}
             disabled={loading}
+            className="flex-1 bg-gray-700 text-white py-3 rounded-lg"
+          >
+            Save Draft
+          </button>
+
+          <button
+            // onClick={() => handleSubmit(true)}
+            type="submit"
+            disabled={loading}
+            className="flex-1 bg-green-600 text-white py-3 rounded-lg"
           >
             Submit PR
           </button>
-        )}
-      </div>
-
-      <Toaster position="top-right" />
+        </div>
+      </form>
     </div>
   );
 };
 
 export default CreatePurchaseRequest;
+
+/* =========================
+   HELPERS
+========================= */
+
+const Section = ({ title, children }) => (
+  <div className="bg-white border rounded-xl p-4 space-y-4">
+    <h2 className="font-medium">{title}</h2>
+
+    {children}
+  </div>
+);
+
+const Input = ({ label, ...props }) => (
+  <div className="space-y-1">
+    <label className="text-sm text-gray-600">{label}</label>
+
+    <input {...props} className="border rounded-lg px-3 py-2 w-full" />
+  </div>
+);
+
+const Textarea = ({ label, ...props }) => (
+  <div className="space-y-1">
+    <label className="text-sm text-gray-600">{label}</label>
+
+    <textarea
+      {...props}
+      rows={3}
+      className="border rounded-lg px-3 py-2 w-full"
+    />
+  </div>
+);
+
+const SelectField = ({ label, ...props }) => (
+  <div className="space-y-1">
+    <label className="text-sm text-gray-600">{label}</label>
+
+    <Select {...props} isClearable />
+  </div>
+);

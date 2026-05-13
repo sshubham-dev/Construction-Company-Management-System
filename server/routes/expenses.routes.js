@@ -8,13 +8,17 @@ const {
   postExpense,
   cancelExpense,
   getExpenses,
+  getExpensesv2,
+  getExpenseByIdv2,
 } = require("../controller/expenses.controller"); // Adjust the path as necessary
 const { adminAuth, userAuth } = require("../middlewares/auth.middleware");
 const upload = require("../middlewares/Upload");
 
 Expenses.post("/", userAuth, upload.array("attachments", 5), createExpense);
 Expenses.get("/", userAuth, getExpenses);
+Expenses.get("/v2", userAuth, getExpensesv2);
 Expenses.get("/:id", userAuth, getExpenseById);
+Expenses.get("/v2/:id", userAuth, getExpenseByIdv2);
 Expenses.put("/post/:id", userAuth, postExpense);
 Expenses.put("/cancel/:id", userAuth, cancelExpense);
 Expenses.put("/:id", userAuth, upload.array("attachments", 5), updateExpense);

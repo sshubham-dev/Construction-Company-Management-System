@@ -1,15 +1,12 @@
 const mongoose = require("mongoose");
-const Return = require("../models/return.models"); // Assuming the model is in the models folder
+const Return = require("../models/return.models");
+const { Stock } = require("../models/stock.models");
 const {
   sendApproveByAdmin,
   sendApproveByStoreIncharge,
 } = require("./approval.controller.js");
-const Site = require("../models/site.models");
-const User = require("../models/user.models");
-const { StoreInventory } = require("../models/store.models");
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
-const SalesInvoice = require("../models/salesinvoice.models.js");
-const {StockTransfer} = require("../models/stock.models.js");
+const { sendPushNotification, notifyRole } = require("../utils/pushNotification.js");
+const { postReturn } = require("../services/Inventory/return.service.js");
 
 
 /* =====================================
@@ -17,63 +14,48 @@ const {StockTransfer} = require("../models/stock.models.js");
 ===================================== */
 const createReturn = async (req, res) => {
   try {
-    const user = req.user;
-    const { site, materialType, date, returnable, salesInvoiceId } = req.body;
-
-    const existingSite = await Site.findById(site);
-    if (!existingSite) throw new Error("Site not found");
-
-    const invoice = await SalesInvoice.findById(salesInvoiceId);
-    if (!invoice || invoice.status !== "Posted") {
-      throw new Error("Invalid Sales Invoice");
-    }
-
-    const items = invoice.items.map((invItem, index) => {
-      const userItem = returnable?.[index];
-
-      const qty = Number(userItem?.quantity || 0);
-
-      return {
-        stockId: invItem.stockId,
-        item: invItem.item,
-        unit: invItem.unit,
-        quantity: qty,
-        rate: invItem.sellingRate,
-        amount: qty * invItem.sellingRate,
-      };
+    const ret = await Return.create({
+      ...req.body,
+      createdBy: req.user._id,
     });
 
-    const returnDoc = await Return.create({
-      site: { id: existingSite._id, name: existingSite.name },
-      materialType,
-      date,
-      returnable: items,
-      createdBy: user._id,
-      salesInvoice: {
-        id: invoice._id,
-        invoiceNo: invoice.invoiceNo,
-      },
-      status: "Draft",
-    });
+    res.status(201).json({ success: true, data: ret });
 
-    /* ===== APPROVAL FLOW ===== */
-    sendApproveByStoreIncharge(returnDoc, "Return", user._id);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
 
-    /* ===== NOTIFICATION ===== */
-    const employees = await User.find({ role: "Employee" });
+/* =========================
+   VERIFY
+========================= */
+const verifyReturn = async (req, res) => {
+  try {
+    const ret = await Return.findById(req.params.id);
 
-    for (const emp of employees) {
-      emp.notification.push({
-        title: "Material Return",
-        message: `Return requested for ${existingSite.name}`,
-        createdAt: new Date(),
-        link: `/return/${returnDoc._id}`,
-      });
-      await emp.save();
-      sendPushNotification(emp._id, "New return request");
-    }
+    if (!ret) throw new Error("Not found");
+    if (ret.status !== "DRAFT") throw new Error("Invalid state");
 
-    res.status(201).json({ success: true, data: returnDoc });
+    ret.status = "VERIFIED";
+    await ret.save();
+
+    res.json({ success: true, data: ret });
+
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+
+/* =========================
+   POST
+========================= */
+const postReturnController = async (req, res) => {
+  try {
+    const data = await postReturn(req.params.id, req.user._id);
+
+    res.json({ success: true, data });
+
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -119,129 +101,13 @@ const updateReturn = async (req, res) => {
 };
 
 /* =====================================
-   COMPLETE RETURN (CORE ENGINE)
-===================================== */
-const completeReturn = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const user = req.user;
-
-    const returnDoc = await Return.findById(req.params.id).session(session);
-
-    if (!returnDoc) throw new Error("Return not found");
-
-    if (returnDoc.status === "Completed") {
-      throw new Error("Already completed");
-    }
-
-    const invoice = await SalesInvoice.findById(
-      returnDoc.salesInvoice.id
-    ).session(session);
-
-    if (!invoice) throw new Error("Invoice not found");
-
-    /* ===============================
-       PROCESS ITEMS
-    =============================== */
-    for (const item of returnDoc.returnable) {
-      const qty = Number(item.quantity || 0);
-      if (qty <= 0) continue;
-
-      await applyStoreStockMovement({
-    storeId: storeId,
-    stockId: item.stockId,
-    quantity: item.receivedQuantity,
-    direction: "IN",
-    type: "RETURN",
-    referenceType: "RETURN",
-    referenceId: returnDoc._id,
-    createdBy: user._id,
-    session,
-  });
-
-      const invoiceItem = invoice.items.find(
-        (i) => i.stockId.toString() === item.stockId.toString()
-      );
-
-      if (!invoiceItem) {
-        throw new Error(`Invalid item ${item.item}`);
-      }
-
-      if (qty > invoiceItem.acceptedQty) {
-        throw new Error(`Return exceeds delivered for ${item.item}`);
-      }
-
-      /* ===== STORE INVENTORY ↑ ===== */
-      let storeInv = await StoreInventory.findOne({
-        storeId: invoice.store.id,
-        stockId: item.stockId,
-      }).session(session);
-
-      if (!storeInv) {
-        storeInv = new StoreInventory({
-          storeId: invoice.store.id,
-          stockId: item.stockId,
-          quantity: 0,
-        });
-      }
-
-      storeInv.quantity += qty;
-      await storeInv.save({ session });
-
-      /* ===== TRANSFER ENTRY ===== */
-      await StockTransfer.create(
-        [
-          {
-            stockId: item.stockId,
-            quantity: qty,
-            rate: item.rate,
-            fromType: "Site",
-            fromId: returnDoc.site.id,
-            toType: "Store",
-            toId: invoice.store.id,
-            referenceType: "RETURN",
-            referenceId: returnDoc._id,
-            createdBy: user._id,
-          },
-        ],
-        { session }
-      );
-    }
-
-    /* ===============================
-       FINALIZE
-    =============================== */
-    returnDoc.status = "Completed";
-    returnDoc.completedBy = user._id;
-    returnDoc.completedAt = new Date();
-
-    await returnDoc.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    res.json({
-      success: true,
-      message: "Return completed",
-      data: returnDoc,
-    });
-  } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
-
-    res.status(500).json({ error: err.message });
-  }
-};
-
-/* =====================================
    GET
 ===================================== */
 const getReturns = async (req, res) => {
   const data = await Return.find().sort({ createdAt: -1 });
   res.json(data);
 };
+
 
 const getReturnById = async (req, res) => {
   const data = await Return.findById(req.params.id);
@@ -284,47 +150,214 @@ const getReturnItem = async (req, res) => {
 
 const updateReturnItem = async (req, res) => {
   try {
-    const id = req.params.id;
-    const index = req.params.index;
-    const existingReturnRequest = await Return.findById(id);
-    if (!existingReturnRequest) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Return not found" });
-    }
-    if (index < 0 || index >= existingReturnRequest.returnable.length) {
-      return res.status(400).json({ success: false, message: "Invalid index" });
-    }
-    const { item, quantity, unit } = req.body;
-    if (!item || !quantity || !unit) {
-      return res.status(400).json({
+    const { id, itemId } = req.params;
+    const { quantity, reason, remarks } = req.body;
+
+    const ret = await Return.findById(id);
+
+    if (!ret) {
+      return res.status(404).json({
         success: false,
-        message: "Item, quantity, and unit are required",
+        message: "Return not found",
       });
     }
-    existingReturnRequest.returnable[index] = {
-      item: item || existingReturnRequest.returnable[index].item,
-      quantity: quantity || existingReturnRequest.returnable[index].quantity,
-      unit: unit || existingReturnRequest.returnable[index].unit,
-      rate: rate || existingReturnRequest.returnable[index].rate,
-      receivedQuantity:
-        receivedQuantity ||
-        existingReturnRequest.returnable[index].receivedQuantity,
-      remarks: remarks || existingReturnRequest.returnable[index].remarks,
-    };
-    await existingReturnRequest.save();
-    res.status(200).json(existingReturnRequest);
+
+    /* =========================
+       STATUS CHECK
+    ========================== */
+    if (ret.status !== "DRAFT") {
+      return res.status(400).json({
+        success: false,
+        message: "Only draft return can be edited",
+      });
+    }
+
+    /* =========================
+       FIND ITEM
+    ========================== */
+    const item = ret.items.find(
+      (i) => i.itemId.toString() === itemId
+    );
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found in return",
+      });
+    }
+
+    /* =========================
+       VALIDATION
+    ========================== */
+    if (quantity !== undefined && quantity < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid quantity",
+      });
+    }
+
+    if (reason) {
+      const validReasons = [
+        "EXCESS",
+        "SCRAP",
+        "DAMAGE",
+        "TOOLS_RETURN",
+        "SUPPLIER_RETURN",
+      ];
+
+      if (!validReasons.includes(reason)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid reason",
+        });
+      }
+    }
+
+    /* =========================
+       UPDATE FIELDS
+    ========================== */
+    if (quantity !== undefined) item.quantity = Number(quantity);
+    if (reason) item.reason = reason;
+    if (remarks !== undefined) item.remarks = remarks;
+
+    await ret.save();
+
+    res.json({
+      success: true,
+      data: ret,
+    });
+
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
 
+const bulkUpdateReturnItems = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const { items } = req.body;
+
+    if (!Array.isArray(items) || !items.length) {
+      throw new Error("Items array required");
+    }
+
+    const ret = await Return.findById(id).session(session);
+
+    if (!ret) throw new Error("Return not found");
+
+    if (ret.status !== "DRAFT") {
+      throw new Error("Only draft return editable");
+    }
+
+    /* =========================
+       FETCH STOCKS (BATCH)
+    ========================== */
+    const itemIds = items.map(i => i.itemId);
+
+    const stocks = await Stock.find({
+      itemId: { $in: itemIds },
+      storeId: ret.fromStoreId,
+    }).session(session);
+
+    const stockMap = new Map(
+      stocks.map(s => [s.itemId.toString(), s])
+    );
+
+    /* =========================
+       VALIDATION + UPDATE
+    ========================== */
+    for (const input of items) {
+      const { itemId, quantity, reason, remarks } = input;
+
+      const existingItem = ret.items.find(
+        i => i.itemId.toString() === itemId
+      );
+
+      if (!existingItem) {
+        throw new Error(`Item not found: ${itemId}`);
+      }
+
+      if (quantity < 0) {
+        throw new Error("Invalid quantity");
+      }
+
+      /* =========================
+         STOCK VALIDATION
+      ========================== */
+      const stock = stockMap.get(itemId);
+
+      if (!stock) {
+        throw new Error(`Stock not found for item ${itemId}`);
+      }
+
+      const availableQty = stock.quantity - stock.reservedQty;
+
+      if (quantity > availableQty) {
+        throw new Error(
+          `Insufficient stock for item ${itemId}. Available: ${availableQty}`
+        );
+      }
+
+      /* =========================
+         REASON VALIDATION
+      ========================== */
+      if (reason) {
+        const validReasons = [
+          "EXCESS",
+          "SCRAP",
+          "DAMAGE",
+          "TOOLS_RETURN",
+          "SUPPLIER_RETURN",
+        ];
+
+        if (!validReasons.includes(reason)) {
+          throw new Error(`Invalid reason for item ${itemId}`);
+        }
+      }
+
+      /* =========================
+         UPDATE ITEM
+      ========================== */
+      existingItem.quantity = Number(quantity);
+
+      if (reason) existingItem.reason = reason;
+      if (remarks !== undefined) existingItem.remarks = remarks;
+    }
+
+    await ret.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({
+      success: true,
+      message: "Return items updated successfully",
+      data: ret,
+    });
+
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
 
 module.exports = {
   createReturn,
-  completeReturn,
+  verifyReturn,
+  postReturnController,
   getReturnById,
   getReturns,
   updateReturn,

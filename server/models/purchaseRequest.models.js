@@ -3,30 +3,34 @@ const mongoose = require("mongoose");
 /* =========================
    PR ITEM
 ========================= */
-const prItemSchema = new mongoose.Schema(
-  {
-    itemId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Stock",
-      required: true,
-    },
-    unit: String,
-
-    requestedQty: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-
-    issuedQty: {
-      type: Number,
-      default: 0, // updated via DN
-      min: 0,
-    },
-    remarks: String,
+const prItemSchema = new mongoose.Schema({
+  itemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Item",
+    required: true,
   },
-  { timestamps: true },
-);
+
+  unit: { type: String, required: true },
+
+  requestedQty: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+
+  issuedQty: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
+  pendingQty: {
+    type: Number,
+    default: 0,
+  },
+
+  remarks: String,
+});
 
 /* =========================
    VALIDATION
@@ -35,6 +39,10 @@ prItemSchema.pre("validate", function () {
   if (this.issuedQty > this.requestedQty) {
     return new Error("Issued qty cannot exceed requested qty");
   }
+});
+
+prItemSchema.pre("save", function () {
+  this.pendingQty = this.requestedQty - this.issuedQty;
 });
 
 /* =========================
@@ -51,14 +59,13 @@ const purchaseRequestSchema = new mongoose.Schema(
       trim: true,
       index: true,
     },
-    createdBy: {
+
+    category: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Stock_Category",
     },
 
-    category: String,
     requirementFor: String,
-
     reqDate: Date,
 
     /* =========================
@@ -66,7 +73,7 @@ const purchaseRequestSchema = new mongoose.Schema(
     ========================== */
     site: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Site",
+      ref: "Store",
       required: true,
     },
 
@@ -95,14 +102,13 @@ const purchaseRequestSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
-        "DRAFT",
-        "PENDING",
+        "REQUESTED",
         "APPROVED",
         "REJECTED",
         "PARTIAL",
-        "COMPLETED",
+        "DELIVERED",
       ],
-      default: "DRAFT",
+      default: "REQUESTED",
     },
 
     /* =========================
@@ -115,17 +121,12 @@ const purchaseRequestSchema = new mongoose.Schema(
       },
     ],
 
-    /* =========================
-       BILLING LINK
-    ========================== */
-    salesInvoices: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "SalesInvoice",
-      },
-    ],
+    narration: String,
 
-    remarks: String,
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true },
 );
@@ -133,13 +134,13 @@ const purchaseRequestSchema = new mongoose.Schema(
 /* =========================
    VIRTUALS
 ========================= */
-purchaseRequestSchema.virtual("deliveryStatusAuto").get(function () {
+purchaseRequestSchema.virtual("deliveryStatus").get(function () {
   const totalRequested = this.items.reduce((a, i) => a + i.requestedQty, 0);
   const totalIssued = this.items.reduce((a, i) => a + i.issuedQty, 0);
 
-  if (totalIssued === 0) return "Pending";
-  if (totalIssued < totalRequested) return "Partially Delivered";
-  return "Delivered";
+  if (totalIssued === 0) return "PENDING";
+  if (totalIssued < totalRequested) return "PARTIAL";
+  return "DELIVERED";
 });
 
 /* =========================

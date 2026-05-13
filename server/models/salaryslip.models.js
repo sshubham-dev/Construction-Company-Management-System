@@ -8,6 +8,7 @@ const salaryPaymentSubSchema =  new mongoose.Schema({
   remarks: String
 }, { _id: false });
 
+
 const salaryslipSchema =  new mongoose.Schema({
   employee: { type: Schema.Types.ObjectId, ref: "Employee", required: true },
   payPeriodStart: Date,
@@ -35,6 +36,7 @@ const salaryslipSchema =  new mongoose.Schema({
   createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   remarks: String
 }, { timestamps: true });
+
 
 salaryslipSchema.pre("save", function () {
   // compute netPay and totals

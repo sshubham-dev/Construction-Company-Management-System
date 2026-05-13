@@ -129,9 +129,13 @@ import Suppliers from "./pages/ERP/Suppliers.jsx";
 import InvoiceForm from "./pages/ERP/Components/InvoiceForm.jsx";
 
 // ERP/Inventory
-import Inventory from "./pages/ERP/Inventory.jsx";
+import StockCategory from "./pages/ERP/StockCategory.jsx";
+import StockGroup from "./pages/ERP/StockGroup.jsx";
+import StockItem from "./pages/ERP/StockItem.jsx";
 import Store from "./pages/ERP/Store.jsx";
 import Stock from "./pages/ERP/Stock.jsx";
+import Assets from "./pages/ERP/Assets.jsx";
+import Inventory from "./pages/ERP/Inventory.jsx";
 import PurchaseOrders from "./pages/ERP/PurchaseOrders.jsx";
 import DeliveryNotes from "./pages/ERP/DeliveryNotes.jsx";
 import GRN from "./pages/ERP/GRN.jsx";
@@ -313,13 +317,13 @@ const App = () => {
         <Route path="/suppliers" element={<Suppliers />} />
         <Route path="/supplier/:id" element={<SupplierScreen />} />
 
-        <Route path="/site/purchase-request" element={<PurchaseRequest />} />
+        <Route path="/purchase-request/:mode" element={<PurchaseRequest />} />
         <Route
-          path="/purchase-request/:id"
+          path="/purchase-request/:mode/:id"
           element={<PurchaseRequestScreen />}
         />
         <Route
-          path="/purchase-request/:id/approval/:approvalId"
+          path="/site/purchase-request/:id/approval/:approvalId"
           element={<PurchaseRequestScreen />}
         />
 
@@ -369,6 +373,10 @@ const App = () => {
         />
         {/* <Route path="/erp/report/:of" element={<ERPReport />} /> */}
         <Route path="/erp/inventory/stock" element={<Stock />} />
+        <Route path="/erp/inventory/assets" element={<Assets />} />
+        <Route path="/erp/inventory/stock/category" element={<StockCategory />} />
+        <Route path="/erp/inventory/stock/item" element={<StockItem />} />
+        <Route path="/erp/inventory/stock/group" element={<StockGroup />} />
         <Route path="/erp/inventory/sales" element={<Sales />} />
         <Route path="/erp/inventory/sales-invoice" element={<SalesInvoice />} />
         <Route

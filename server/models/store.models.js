@@ -3,27 +3,36 @@ const mongoose = require("mongoose");
 const storeSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    code: { type: String, unique: true, index: true },
+
+    code: {
+      type: String,
+      required: true,
+      uppercase: true,
+      trim: true,
+      unique: true,
+      index: true,
+    },
 
     type: {
       type: String,
-      enum: ["STORE", "SITE"],
-      default: "STORE",
+      enum: ["WAREHOUSE", "SITE"],
+      required: true,
+      index: true,
     },
 
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-    },
+    companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company" },
+
     businessUnitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BusinessUnit",
       required: true,
       index: true,
     },
+
     costCenterId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CostCenter",
+      default: null,
     },
 
     address: {
@@ -33,78 +42,201 @@ const storeSchema = new mongoose.Schema(
       pincode: String,
     },
 
-    isCentralStore: { type: Boolean, default: false },
-
     storeHead: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
+      ref: "User",
       required: true,
     },
 
     storeIncharge: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
-      required: true,
-    },
-
-    surcharge: {
-      staffSalary: Number,
-      expenses: Number,
-      investment: Number,
-      profit: Number,
+      ref: "User",
+      default: null,
     },
 
     isActive: { type: Boolean, default: true },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-const inventoryTransactionSchema = new mongoose.Schema(
+
+const pricingPolicySchema = new mongoose.Schema(
   {
-    storeId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
+    /* ======================
+     SCOPE
+  ====================== */
 
-    stockId: { type: mongoose.Schema.Types.ObjectId, ref: "Stock" },
-
-    type: {
-      type: String,
-      enum: [
-        "OPENING",
-        "GRN",
-        "DN",
-        "ISSUE",
-        "TRANSFER",
-        "RETURN",
-        "ADJUSTMENT",
-      ],
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
       required: true,
+      index: true,
     },
 
-    qtyIn: { type: Number, default: 0 },
-    qtyOut: { type: Number, default: 0 },
+    itemId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Item",
+      default: null, // null = applies to all items
+      index: true,
+    },
 
-    rate: Number,
-    value: Number,
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null, // fallback level
+    },
 
-    fromStoreId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
-    toStoreId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
+    /* ======================
+     PRICING METHOD
+  ====================== */
 
-    referenceType: String,
-    referenceId: mongoose.Schema.Types.ObjectId,
+    pricingType: {
+      type: String,
+      enum: ["PERCENTAGE", "FIXED", "OVERRIDE"],
+      default: "PERCENTAGE",
+    },
 
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    /* ======================
+     COMPONENTS
+  ====================== */
 
-    narration: String,
+    transportPercent: {
+      type: Number,
+      default: 0,
+    },
+
+    handlingPercent: {
+      type: Number,
+      default: 0,
+    },
+
+    overheadPercent: {
+      type: Number,
+      default: 0,
+    },
+
+    profitPercent: {
+      type: Number,
+      default: 0,
+    },
+
+    /* ======================
+     FIXED / OVERRIDE
+  ====================== */
+
+    fixedAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    overridePrice: {
+      type: Number,
+      default: 0,
+    },
+
+    /* ======================
+     PRIORITY (IMPORTANT)
+  ====================== */
+
+    priority: {
+      type: Number,
+      default: 1,
+    },
+
+    /* ======================
+     STATUS
+  ====================== */
+
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+
+    effectiveFrom: Date,
+    effectiveTo: Date,
+
+    /* ======================
+     META
+  ====================== */
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true },
 );
 
-const InventoryTransaction = mongoose.model(
-  "InventoryTransaction",
-  inventoryTransactionSchema,
+
+const storeTransferRequestSchema = new mongoose.Schema(
+  {
+    transferNo: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
+    fromStoreId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+    },
+
+    toStoreId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+    },
+
+    items: [
+      {
+        itemId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Item",
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+        },
+        rate: Number,
+      },
+    ],
+
+    status: {
+      type: String,
+      enum: ["DRAFT", "PENDING", "APPROVED", "REJECTED", "COMPLETED"],
+      default: "DRAFT",
+      index: true,
+    },
+
+    requestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    approvedAt: Date,
+    rejectedReason: String,
+
+    narration: String,
+  },
+  { timestamps: true }
 );
+
+
 const Store = mongoose.model("Store", storeSchema);
+const Store_Transfer = mongoose.model(
+  "Store_Transfer",
+  storeTransferRequestSchema
+);
 
 module.exports = {
   Store,
-  InventoryTransaction,
+  Store_Transfer,
 };

@@ -1,33 +1,27 @@
-const express = require('express');
+const express = require("express");
+
 const Stock = express.Router();
-const Stock_Group = express.Router();
-const {   createStock,
-  getStockById,
+
+const {
   getStocks,
-  updateStock,
-  deleteStock,
-  createStockGroup,
-  getStockGroups,
-  updateStockGroup,
-  deleteStockGroup,
-  getItemStock,
+  getStockById,
   getStockSummary,
+  getItemStock,
   getStoreStock,
-  adjustStock } = require('../controller/stock.controller');
-const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
-// Stock routes
-Stock.post('/', createStock);
-Stock.get('/', getStocks);
-Stock.get('/:id', getStockById);
-Stock.put('/:id', updateStock);
-Stock.delete('/:id', deleteStock);
+} = require("../controller/stock.controller");
 
-// Stock Group routes
-Stock_Group.post('/', createStockGroup);
-Stock_Group.get('/', getStockGroups);
-// Stock_Group.get('/:id', getStockGroupById);
-Stock_Group.put('/:id', updateStockGroup);
-Stock_Group.delete('/:id', deleteStockGroup);
+/* =========================
+   STOCK
+========================= */
 
-module.exports = { Stock, Stock_Group };
+Stock.get("/", getStocks);
+
+Stock.get("/summary", getStockSummary);
+
+Stock.get("/:itemId", getItemStock);
+
+Stock.get("/store/:storeId", getStoreStock);
+
+Stock.get("/:id", getStockById);
+module.exports = Stock;

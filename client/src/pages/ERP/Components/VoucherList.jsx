@@ -52,6 +52,7 @@ const VoucherList = ({ type, onCreate }) => {
           maxAmount,
         },
       });
+      console.log(res.data)
 
       setData(res.data.data || res.data || []);
       setTotal(res.data.total || 0);

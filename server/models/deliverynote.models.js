@@ -1,68 +1,54 @@
 const mongoose = require("mongoose");
 
-const deliveryItemSchema = new mongoose.Schema(
-  {
-    itemId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Stock",
-      required: true,
-    },
-
-    // prItemId: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   required: true,
-    // },
-
-    unit: String,
-
-    requestedQty: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-
-    issuedQty: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-
-    acceptedQty: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    rejectedQty: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    rejectionReason: String,
-
-    /* 🔥 PRICING SNAPSHOT */
-    costRate: {
-      type: Number,
-      required: true,
-    }, // from store inventory
-    sellingRate: Number, // after margin
-    gstRate: Number,
-
-    amount: Number,
-    taxAmount: Number,
+const deliveryItemSchema = new mongoose.Schema({
+  itemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Item",
+    required: true,
   },
-  { _id: false },
-);
 
-deliveryItemSchema.pre("save", function () {
+  unit: {
+    type: String,
+    required: true,
+  },
+
+  requestedQty: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+
+  issuedQty: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+
+  acceptedQty: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
+  rejectedQty: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
+  rejectionReason: String,
+});
+
+deliveryItemSchema.pre("validate", function (next) {
   if (this.acceptedQty + this.rejectedQty !== this.issuedQty) {
-    return new Error("Accepted + Rejected must equal Issued");
+    return next(new Error("Accepted + Rejected must equal Issued"));
   }
 
   if (this.acceptedQty > this.issuedQty) {
-    return new Error("Accepted cannot exceed issued");
+    return next(new Error("Accepted cannot exceed issued"));
   }
+
+  next();
 });
 
 const deliveryNoteSchema = new mongoose.Schema(
@@ -86,18 +72,24 @@ const deliveryNoteSchema = new mongoose.Schema(
     /* =========================
        DESTINATION
     ========================== */
-
-    destination: {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        refPath: "deliveryTo",
-      },
-      deliveryTo: {
-        type: String,
-        enum: ["Site", "Client"],
-        required: true,
-      },
+    toStoreId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+      index: true,
     },
+
+    // destination: {
+    //   id: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     refPath: "deliveryTo",
+    //   },
+    //   deliveryTo: {
+    //     type: String,
+    //     enum: ["Site", "Client"],
+    //     required: true,
+    //   },
+    // },
 
     /* =========================
        LINKED PR (optional)
@@ -140,8 +132,15 @@ const deliveryNoteSchema = new mongoose.Schema(
     ========================== */
     status: {
       type: String,
-      enum: ["Draft", "Issued", "Verified", "Mismatch", "Cancelled"],
-      default: "Draft",
+      enum: [
+        "DRAFT",
+        "ISSUED",
+        "RECEIVED",
+        "VERIFIED", // ✅ remove space
+        "MISMATCH",
+        "CANCELLED",
+      ],
+      default: "DRAFT",
     },
 
     /* =========================
@@ -150,49 +149,155 @@ const deliveryNoteSchema = new mongoose.Schema(
     attachments: [
       {
         url: String,
-        fileType: String,
+        public_url: String,
       },
     ],
 
-    remarks: String,
+    narration: String,
   },
   { timestamps: true },
 );
 
-deliveryNoteSchema.pre("save", function () {
-  let total = 0;
-  let gst = 0;
-
-  const round = (n) => Math.round(n * 100) / 100;
-
-  this.items.forEach((item) => {
-    const amount = round((item.acceptedQty || 0) * (item.sellingRate || 0));
-    item.amount = amount;
-
-    total += amount;
-
-    const tax = item.gstRate ? round((amount * item.gstRate) / 100) : 0;
-
-    item.taxAmount = tax;
-    gst += tax;
-  });
-
-  this.totalAmount = round(total);
-  this.totalTax = round(gst);
-  this.netAmount = round(total + gst);
-});
-
+deliveryNoteSchema.index({ fromStoreId: 1, toStoreId: 1 });
 deliveryNoteSchema.virtual("statusAuto").get(function () {
   const totalIssued = this.items.reduce((a, i) => a + i.issuedQty, 0);
-  const totalAccepted = this.items.reduce((a, i) => a + i.acceptedQty, 0);
 
-  if (totalAccepted === 0) return "Issued";
-  if (totalAccepted < totalIssued) return "Mismatch";
-  return "Verified";
+  const totalProcessed = this.items.reduce(
+    (a, i) => a + i.acceptedQty + i.rejectedQty,
+    0
+  );
+
+  if (totalProcessed === 0) return "ISSUED";
+  if (totalProcessed < totalIssued) return "MISMATCH";
+  return "VERIFIED";
 });
+
+
+
+const siteReceiptItemSchema = new mongoose.Schema({
+  itemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Item",
+    required: true,
+  },
+
+  poItemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+  },
+
+  orderedQty: {
+    type: Number,
+    required: true,
+  },
+
+  receivedQty: {
+    type: Number,
+    required: true,
+  },
+
+  rejectedQty: {
+    type: Number,
+    default: 0,
+  },
+
+  rate: {
+    type: Number,
+    required: true,
+  },
+
+  amount: {
+    type: Number,
+    required: true,
+  },
+
+  remarks: String,
+});
+
+const siteReceiptSchema = new mongoose.Schema(
+  {
+    receiptNo: {
+      type: String,
+      unique: true,
+      index: true,
+    },
+
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+
+    /* ======================
+     PO LINK
+  ====================== */
+
+    poId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PO",
+      required: true,
+      index: true,
+    },
+
+    supplierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger",
+      required: true,
+    },
+
+    /* ======================
+     SITE
+  ====================== */
+
+    siteId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store", // type = SITE
+      required: true,
+    },
+
+    /* ======================
+     ITEMS
+  ====================== */
+
+    items: [siteReceiptItemSchema],
+
+    totalAmount: {
+      type: Number,
+      required: true,
+    },
+
+    /* ======================
+     STATUS
+  ====================== */
+
+    status: {
+      type: String,
+      enum: ["DRAFT", "RECEIVED", "VERIFIED", "POSTED", "CANCELLED"],
+      default: "DRAFT",
+      index: true,
+    },
+
+    /* ======================
+     META
+  ====================== */
+
+    receivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    verifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    narration: String,
+  },
+  { timestamps: true },
+);
 
 const DeliveryNote =
   mongoose.models.DeliveryNote ||
   mongoose.model("DeliveryNote", deliveryNoteSchema);
+const SiteReceipt = mongoose.model("SiteReceipt", siteReceiptSchema);
 
-module.exports = DeliveryNote;
+module.exports = { DeliveryNote, SiteReceipt };
