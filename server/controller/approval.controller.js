@@ -1318,6 +1318,8 @@ const sendApproveByAdmin = async (data, approvalof, by) => {
       return;
     }
 
+    console.log(data)
+
     const existingUser = await User.findById(by).select(
       "-password -refreshToken",
     );

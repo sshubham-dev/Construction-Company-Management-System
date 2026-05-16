@@ -2,13 +2,22 @@ const express = require("express");
 const DN = express.Router();
 const {
   createDeliveryNote,
-  confirmDeliveryNote,
+  updateDeliveryNote,
+  issueDeliveryNote,
+  receiveDeliveryNote,
+  verifyDeliveryNote,
   getDeliveryNotes,
   getDeliveryNoteById,
 } = require("../controller/deliverynote.controller"); // Adjust the path as necessary
 const { adminAuth, userAuth } = require("../middlewares/auth.middleware");
 
 DN.route("/").get(getDeliveryNotes).post(userAuth, createDeliveryNote);
-DN.route("/:id").get(getDeliveryNoteById)
-// .put(userAuth, confirmDeliveryNote); // Confirm DN
+DN.route("/:id").get(getDeliveryNoteById).put(userAuth, updateDeliveryNote);
+
+DN.put("/issue/:id", userAuth, issueDeliveryNote);
+
+DN.put("/receive/:id", userAuth, receiveDeliveryNote);
+
+// DN.put("/:id/verify", userAuth, verifyDeliveryNote);
+
 module.exports = DN;

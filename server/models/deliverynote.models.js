@@ -39,16 +39,18 @@ const deliveryItemSchema = new mongoose.Schema({
   rejectionReason: String,
 });
 
-deliveryItemSchema.pre("validate", function (next) {
-  if (this.acceptedQty + this.rejectedQty !== this.issuedQty) {
-    return next(new Error("Accepted + Rejected must equal Issued"));
+deliveryItemSchema.pre("validate", function () {
+  if (
+    Number(this.acceptedQty || 0) +
+    Number(this.rejectedQty || 0) >
+    Number(this.issuedQty || 0)
+  ) {
+    return
+    new Error(
+      "Accepted + rejected cannot exceed issued qty"
+    )
   }
 
-  if (this.acceptedQty > this.issuedQty) {
-    return next(new Error("Accepted cannot exceed issued"));
-  }
-
-  next();
 });
 
 const deliveryNoteSchema = new mongoose.Schema(
@@ -159,17 +161,29 @@ const deliveryNoteSchema = new mongoose.Schema(
 );
 
 deliveryNoteSchema.index({ fromStoreId: 1, toStoreId: 1 });
-deliveryNoteSchema.virtual("statusAuto").get(function () {
-  const totalIssued = this.items.reduce((a, i) => a + i.issuedQty, 0);
-
-  const totalProcessed = this.items.reduce(
-    (a, i) => a + i.acceptedQty + i.rejectedQty,
+/* =========================
+   VIRTUAL DELIVERY STATUS
+========================= */
+deliveryNoteSchema.virtual("deliveryStatus").get(function () {
+  const totalIssued = this.items.reduce(
+    (a, i) => a + Number(i.issuedQty || 0),
     0
   );
 
-  if (totalProcessed === 0) return "ISSUED";
-  if (totalProcessed < totalIssued) return "MISMATCH";
-  return "VERIFIED";
+  const totalAccepted = this.items.reduce(
+    (a, i) => a + Number(i.acceptedQty || 0),
+    0
+  );
+
+  if (totalAccepted === 0) {
+    return "PENDING";
+  }
+
+  if (totalAccepted < totalIssued) {
+    return "PARTIAL";
+  }
+
+  return "COMPLETE";
 });
 
 

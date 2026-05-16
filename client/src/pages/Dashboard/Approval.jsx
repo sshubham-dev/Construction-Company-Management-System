@@ -156,7 +156,7 @@ const ExpenseView = ({ isOpen, data, onClose }) => {
 
           {/* Ledgers */}
           <div>
-            <p className="text-sm text-gray-500">Expense Type</p>
+            <p className="text-sm text-gray-500">Paid For</p>
             <p className="text-base font-medium">
               {expense?.expenseLedger?.name || "—"}
             </p>

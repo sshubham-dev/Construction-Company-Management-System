@@ -37,6 +37,7 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
     narration: "",
 
     items: [],
+    status: "DRAFT",
   });
 
   /* =========================
@@ -302,7 +303,7 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
       const payload = {
         ...form,
 
-        status: "REQUESTED",
+        status: form.status || "REQUESTED",
 
         items: form.items.map((i) => ({
           itemId: i.itemId,
@@ -559,7 +560,12 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
 
         <div className="bg-white p-2 flex gap-3 z-50">
           <button
-            // onClick={() => handleSubmit("DRAFT")}
+            onClick={(e) =>
+              setForm((p) => ({
+                ...p,
+                status: "DRAFT",
+              }))
+            }
             disabled={loading}
             className="flex-1 bg-gray-700 text-white py-3 rounded-lg"
           >

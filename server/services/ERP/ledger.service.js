@@ -88,8 +88,8 @@ const createLedger = async (data) => {
 };
 
 // ✅
-const getLedgers = async (companyId) => {
-  return await Ledger.find({ companyId })
+const getLedgers = async (query) => {
+  return await Ledger.find(query)
     .populate("groupId")
     .populate("referenceId")
     .populate("companyId")

@@ -136,16 +136,17 @@ const createQualitySchedule = async (req, res) => {
 
     const newQualitySchedule = new QualitySchedule({
       site: { id: existingSite?._id, name: existingSite?.name },
-      // qualityScheduleId,
       workDetails,
       createdBy: user._id,
     });
+    
     console.log(newQualitySchedule);
+
     const savedQualitySchedule = await newQualitySchedule.save();
+
     if (!savedQualitySchedule)
       return res.status(500).json({ error: "Something went wrong" });
 
-    // sendApproveByAdmin(savedQualitySchedule, 'Quality Schedule', user._id)
     sendApproveByIncharge(savedQualitySchedule, "Quality Schedule", user._id);
     sendApproveByQuality(savedQualitySchedule, "Quality Schedule", user._id);
     const existingUser = await User.findById(user._id).select(

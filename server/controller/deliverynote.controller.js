@@ -9,21 +9,9 @@ const PurchaseRequest = require("../models/purchaserequest.models");
 const generateDeliveryNoteNo = async () => {
   const year = new Date().getFullYear();
 
-  const lastDN = await DeliveryNote.findOne({
-    deliveryNoteNo: new RegExp(`^DN-${year}-`),
-  })
-    .sort({ createdAt: -1 })
-    .select("deliveryNoteNo")
-    .lean();
+  const dnCount = await DeliveryNote.countDocuments();
 
-  let nextNumber = 1;
-
-  if (lastDN?.deliveryNoteNo) {
-    const lastSeq = parseInt(lastDN.deliveryNoteNo.split("-").pop(), 10);
-    if (!isNaN(lastSeq)) nextNumber = lastSeq + 1;
-  }
-
-  return `DN-${year}-${String(nextNumber).padStart(6, "0")}`;
+  return `DN-${year}-${String(dnCount + 1).padStart(4, "0")}`;
 };
 
 /* =====================================
@@ -31,7 +19,22 @@ const generateDeliveryNoteNo = async () => {
 ===================================== */
 const createDeliveryNote = async (req, res) => {
   try {
-    const { purchaseRequestId, fromStoreId, toStoreId, items } = req.body;
+    const {
+      purchaseRequestId,
+      fromStoreId,
+      toStoreId,
+      items,
+      narration,
+      status
+    } = req.body;
+
+    if (!purchaseRequestId) {
+      throw new Error("Purchase Request required");
+    }
+
+    if (!items?.length) {
+      throw new Error("Items required");
+    }
 
     const pr = await PurchaseRequest.findById(purchaseRequestId);
     if (!pr) throw new Error("PR not found");
@@ -52,27 +55,98 @@ const createDeliveryNote = async (req, res) => {
       return {
         itemId: prItem.itemId,
         unit: prItem.unit,
-        requestedQty: prItem.requestedQty,
+        requestedQty: prItem.pendingQty,
         issuedQty: i.issuedQty,
         acceptedQty: 0,
         rejectedQty: 0,
       };
     });
 
+    const dnCount = await generateDeliveryNoteNo();
+
     const dn = await DeliveryNote.create({
-      dnNo: `DN-${Date.now()}`,
+      dnNo: dnCount,
       purchaseRequestId,
       fromStoreId,
       toStoreId,
       issuedBy: req.user._id,
       items: dnItems,
-      status: "ISSUED",
+      status: status || "DRAFT",
+      narration,
     });
 
+    if (!pr.deliveryNotes.includes(dn._id)) {
+      pr.deliveryNotes.push(dn._id);
+      await pr.save();
+    }
     res.status(201).json({ success: true, data: dn });
 
   } catch (err) {
+    console.log(err);
     res.status(400).json({ error: err.message });
+  }
+};
+
+const updateDeliveryNote = async (req, res) => {
+  try {
+    const dn = await DeliveryNote.findById(req.params.id);
+
+    if (!dn) {
+      throw new Error("DN not found");
+    }
+
+    if (dn.status !== "DRAFT") {
+      throw new Error("Only draft DN editable");
+    }
+
+    Object.assign(dn, req.body);
+
+    await dn.save();
+
+    res.json({
+      success: true,
+      data: dn,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+const issueDeliveryNote = async (req, res) => {
+  try {
+    const dn = await DeliveryNote.findById(req.params.id);
+
+    if (!dn) {
+      throw new Error("DN not found");
+    }
+
+    if (dn.status !== "DRAFT") {
+      throw new Error("Only draft DN can be issued");
+    }
+
+    dn.status = "ISSUED";
+    dn.issueDate = new Date();
+    dn.issuedBy = req.user._id;
+
+    await dn.save();
+
+    res.json({
+      success: true,
+      message: "DN issued successfully",
+      data: dn,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -91,7 +165,7 @@ const receiveDeliveryNote = async (req, res) => {
 
     dn.items.forEach(dnItem => {
       const payload = req.body.items.find(
-        i => i.itemId.toString() === dnItem.itemId.toString()
+        i => i.itemId === dnItem.itemId
       );
 
       if (!payload) return;
@@ -114,6 +188,7 @@ const receiveDeliveryNote = async (req, res) => {
     res.json({ success: true, data: dn });
 
   } catch (err) {
+    console.log(err)
     res.status(400).json({ error: err.message });
   }
 };
@@ -128,8 +203,12 @@ const verifyDeliveryNote = async (req, res) => {
   try {
     const dn = await DeliveryNote.findById(req.params.id).session(session);
 
-    if (!dn || dn.status !== "RECEIVED") {
-      throw new Error("Invalid DN state");
+    if (!dn) {
+      throw new Error("DN not found");
+    }
+
+    if (dn.status !== "RECEIVED") {
+      throw new Error("DN must be received first");
     }
 
     const pr = await PurchaseRequest.findById(dn.purchaseRequestId).session(session);
@@ -231,13 +310,76 @@ const verifyDeliveryNote = async (req, res) => {
    GET
 ===================================== */
 const getDeliveryNotes = async (req, res) => {
-  const dns = await DeliveryNote.find().sort({ createdAt: -1 });
-  res.json(dns);
+  try {
+    const data = await DeliveryNote.find()
+      .sort({ createdAt: -1 })
+      .populate("purchaseRequestId")
+      .populate("fromStoreId")
+      .populate("toStoreId")
+      .populate("issuedBy")
+      .populate("receivedBy")
+      .populate({
+        path: "items.itemId",
+        populate: [
+          {
+            path: "categoryId",
+          },
+          {
+            path: "groupId",
+          },
+        ],
+      });
+
+    res.json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };
 
 const getDeliveryNoteById = async (req, res) => {
-  const dn = await DeliveryNote.findById(req.params.id);
-  res.json(dn);
+  try {
+    const dn = await DeliveryNote.findById(req.params.id)
+      .populate("purchaseRequestId")
+      .populate("fromStoreId")
+      .populate("toStoreId")
+      .populate("issuedBy")
+      .populate("receivedBy")
+      .populate({
+        path: "items.itemId",
+        populate: [
+          {
+            path: "categoryId",
+          },
+          {
+            path: "groupId",
+          },
+        ],
+      });
+
+    if (!dn) {
+      throw new Error("DN not found");
+    }
+
+    res.json({
+      success: true,
+      data: dn,
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };
 
 
@@ -335,6 +477,8 @@ const postSiteReceipt = async (req, res) => {
 
 module.exports = {
   createDeliveryNote,
+  updateDeliveryNote,
+  issueDeliveryNote,
   receiveDeliveryNote,
   verifyDeliveryNote,
   getDeliveryNotes,

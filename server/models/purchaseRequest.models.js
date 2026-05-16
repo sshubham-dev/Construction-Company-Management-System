@@ -102,13 +102,14 @@ const purchaseRequestSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
+        "DRAFT",
         "REQUESTED",
         "APPROVED",
         "REJECTED",
         "PARTIAL",
         "DELIVERED",
       ],
-      default: "REQUESTED",
+      default: "DRAFT",
     },
 
     /* =========================

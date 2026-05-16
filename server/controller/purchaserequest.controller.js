@@ -1,7 +1,9 @@
 const PurchaseRequest = require("../models/purchaserequest.models");
+const { RFQ } = require("../models/rfq.models");
 const Site = require("../models/site.models");
 const { Store } = require("../models/store.models");
 const { Item } = require("../models/stock.models");
+const { DeliveryNote, SiteReceipt } = require("../models/deliverynote.models");
 
 /* =====================================
    GENERATE PR NUMBER
@@ -206,7 +208,7 @@ const rejectPurchaseRequest = async (req, res) => {
 const getOpenPRForDN = async (req, res) => {
   try {
     const prs = await PurchaseRequest.find({
-      status: { $in: ["APPROVED", "PARTIAL"] },
+      status: { $in: ["REQUESTED", "APPROVED", "PARTIAL"] },
     }).populate({
       path: "items.itemId",
       populate: [
@@ -221,10 +223,202 @@ const getOpenPRForDN = async (req, res) => {
       .populate("site store")
       .exec();
 
-    return res.json(prs);
+    /* =========================
+ FILTER PR
+========================== */
+    const finalPRs = [];
+
+    for (const pr of prs) {
+
+      /* =========================
+         CHECK EXISTING RFQ
+      ========================== */
+
+      const existingRFQ =
+        await DeliveryNote.findOne({
+          purchaseRequestId:
+            pr._id,
+
+          status: {
+            $ne: "CANCELLED",
+          },
+        });
+
+      if (existingRFQ) {
+        continue;
+      }
+
+      /* =========================
+         PROCUREMENT ITEMS
+      ========================== */
+
+      const procurementItems =
+        pr.items.filter(
+          (i) => {
+
+            if (
+              i.pendingQty <= 0
+            ) {
+              return false;
+            }
+
+            const type =
+              i.itemId
+                ?.itemType;
+
+            return [
+              "INVENTORY", "ASSET",
+            ].includes(
+              type
+            );
+          }
+        );
+
+      if (
+        !procurementItems.length
+      ) {
+        continue;
+      }
+
+      /* =========================
+         UPDATE ITEMS
+      ========================== */
+
+      pr.items =
+        procurementItems;
+
+      finalPRs.push(pr);
+    }
+
+    return res.json(finalPRs);
   } catch (err) {
     console.log(err)
     return res.status(500).json({ error: err.message });
+  }
+};
+
+
+/* =====================================
+   GET OPEN PR (FOR RFQ)
+===================================== */
+const getOpenPRForRFQ = async (req, res) => {
+  try {
+
+    /* =========================
+       LOAD PR
+    ========================== */
+
+    const prs =
+      await PurchaseRequest.find({
+        status: {
+          $in: [
+            "REQUESTED",
+            "APPROVED",
+            "PARTIAL",
+          ],
+        },
+      })
+
+        .populate({
+          path: "items.itemId",
+
+          populate: [
+            {
+              path: "categoryId",
+            },
+            {
+              path: "groupId",
+            },
+          ],
+        })
+
+        .populate(
+          "site store"
+        )
+
+        .lean();
+
+    /* =========================
+       FILTER PR
+    ========================== */
+
+    const finalPRs = [];
+
+    for (const pr of prs) {
+
+      /* =========================
+         CHECK EXISTING RFQ
+      ========================== */
+
+      const existingRFQ =
+        await RFQ.findOne({
+          purchaseRequestId:
+            pr._id,
+
+          status: {
+            $ne: "CANCELLED",
+          },
+        });
+
+      if (existingRFQ) {
+        continue;
+      }
+
+      /* =========================
+         PROCUREMENT ITEMS
+      ========================== */
+
+      const procurementItems =
+        pr.items.filter(
+          (i) => {
+
+            if (
+              i.pendingQty <= 0
+            ) {
+              return false;
+            }
+
+            const type =
+              i.itemId
+                ?.itemType;
+
+            return [
+              "MATERIAL",
+              "SERVICE",
+            ].includes(
+              type
+            );
+          }
+        );
+
+      if (
+        !procurementItems.length
+      ) {
+        continue;
+      }
+
+      /* =========================
+         UPDATE ITEMS
+      ========================== */
+
+      pr.items =
+        procurementItems;
+
+      finalPRs.push(pr);
+    }
+
+    return res.json({
+      success: true,
+      data: finalPRs,
+    });
+
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
   }
 };
 
@@ -339,4 +533,5 @@ module.exports = {
   getPurchaseRequestById,
   getPurchaseRequestBySite,
   getOpenPRForDN,
+  getOpenPRForRFQ,
 };

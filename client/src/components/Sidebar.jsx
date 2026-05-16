@@ -501,7 +501,21 @@ const Sidebar = ({ isOpen, onClose }) => {
     // Sales / Purchase Request
     {
       to: "/purchase-request/ERP",
-      name: "Purchase Request",
+      name: "Material Request",
+      icon: <BiSolidPurchaseTag />,
+      role: [
+        "Admin",
+        "Company",
+        "Supplier",
+        "Accountant",
+        "Account Head",
+        "Store Helper",
+        "Store Incharge",
+      ],
+    },
+    {
+      to: "/erp/procurement/rfq",
+      name: "RFQ",
       icon: <BiSolidPurchaseTag />,
       role: [
         "Admin",
@@ -555,8 +569,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         "Accountant",
         "Account Head",
         "Store Incharge",
-        "Site Incharge",
-        "Site Supervisor",
       ],
     },
 
@@ -744,7 +756,14 @@ const Sidebar = ({ isOpen, onClose }) => {
     {
       name: "Sites",
       // icon: <FaPersonShelter />,
-      role: ["Admin", "Company", "Ceo", "Account Head"],
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Account Head",
+        "Site Incharge",
+        "Site Supervisor",
+      ],
     },
     {
       to: "/sites/project-schedules",
@@ -837,12 +856,20 @@ const Sidebar = ({ isOpen, onClose }) => {
       ],
     },
     {
-      to: "/site/dn",
+      to: "/site/inventory/dn",
       name: "Delivery Note",
       icon: (
         <FaTruckArrowRight style={{ transform: "rotate(360deg) scaleX(1)" }} />
       ),
-      role: ["Admin", "Company", "Ceo", "Accountant", "Account Head"],
+      role: [
+        "Admin",
+        "Company",
+        "Ceo",
+        "Accountant",
+        "Account Head",
+        "Site Incharge",
+        "Site Supervisor",
+      ],
     },
     {
       to: "/sites/return",

@@ -29,7 +29,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
       });
       // console.log(data);
       // Site / Store / Office ledgers
-      setLedgers(data);
+      setLedgers(data.data);
     };
     const fetchCostCenter = async () => {
       try {
@@ -52,14 +52,14 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
 
     const loadExpense = async () => {
       const { data } = await axios.get(`/api/v1/expenses/${editId}`);
-      console.log(data)
+      console.log(data);
       setForm({
         date: data.date?.slice(0, 10),
         amount: data.amount,
         narration: data.narration,
-        expenseLedger: data.expenseLedger || data.expenseLedger?.id,
-        expenseFor: data.expenseFor || null,
-        attachments: [...data?.attachments || null],
+        expenseLedger: data.expenseLedger?._id || data.expenseLedger || "",
+        expenseFor: data.expenseFor?._id || data.expenseFor || null,
+        attachments: [...(data?.attachments || null)],
       });
 
       if (data.attachments?.[0]?.url) {
@@ -192,7 +192,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
         <Select
           options={expenseLedgerOptions}
           value={expenseLedgerOptions.find(
-            (o) => o.value === form.expenseLedger,
+            (o) => o.value === form.expenseLedger || form.expenseLedger?._id,
           )}
           onChange={(opt) =>
             setForm((prev) => ({
@@ -212,7 +212,9 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
         </label>
         <Select
           options={expenseForOptions}
-          value={expenseForOptions.find((o) => o.value === form.expenseFor)}
+          value={expenseForOptions.find(
+            (o) => o.value === form.expenseFor || form.expenseFor?._id,
+          )}
           onChange={(opt) =>
             setForm((prev) => ({
               ...prev,

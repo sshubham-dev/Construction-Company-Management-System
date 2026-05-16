@@ -15,6 +15,7 @@ import {
   Truck,
   Boxes,
   ShoppingCart,
+  CheckCheck,
 } from "lucide-react";
 
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -203,6 +204,15 @@ const PurchaseRequest = () => {
       setData((prev) => prev.filter((i) => i._id !== id));
     } catch (err) {
       toast.error("Delete failed");
+    }
+  };
+
+  const handleSubmit = async (id) => {
+    try {
+      await axios.put(`/api/v1/purchase-request/submit/${id}`);
+      toast.success("PR Submited");
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -430,7 +440,7 @@ const PurchaseRequest = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map((r) => {
+          {filtered.map((r, index) => {
             const totalQty = r.items?.reduce((a, i) => a + i.requestedQty, 0);
 
             const pendingQty = r.items?.reduce((a, i) => a + i.pendingQty, 0);
@@ -441,7 +451,7 @@ const PurchaseRequest = () => {
 
             return (
               <div
-                key={r._id}
+                key={index}
                 className="bg-white border rounded-2xl p-5 shadow-sm space-y-4"
               >
                 {/* TOP */}
@@ -546,16 +556,12 @@ const PurchaseRequest = () => {
                       }}
                     />
                   )}
-                  
-                  {editable && (
-                    <ActionBtn
-                      icon={<Pencil size={15} />}
-                      text="Edit"
-                      onClick={() => {
-                        setEditId(r._id);
 
-                        setEditModal(true);
-                      }}
+                  {r.status !== "REQUESTED" && (
+                    <ActionBtn
+                      icon={<CheckCheck size={15} />}
+                      text="Submit"
+                      onClick={() => handleSubmit(r._id)}
                     />
                   )}
 

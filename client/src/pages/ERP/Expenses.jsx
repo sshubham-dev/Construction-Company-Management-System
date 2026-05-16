@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import Modal from "../../components/Modal";
 import ExpenseForm from "../../components/CreateExpenses";
 import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import Select from "react-select";
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
@@ -14,16 +16,32 @@ const Expenses = () => {
   // Filters
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedType, setSelectedType] = useState(null);
+  const [expenseLedgers, setExpenseLedgers] = useState([]);
 
   useEffect(() => {
     fetchExpenses();
+    loadLedgers();
   }, [selectedMonth]);
+
+  const loadLedgers = async () => {
+    const { data } = await axios.get(
+      `/api/v1/ledger?comapnyId=${user.companyId}`,
+    );
+    console.log(data.data);
+    // Expense ledgers (Expenses group)
+    setExpenseLedgers(
+      data.data.filter((l) => l.groupId?.name.includes("Expenses")),
+    );
+  };
+
   const fetchExpenses = async () => {
     try {
-      const response = await axios.get("/api/v1/expenses/v2", {
+      const response = await axios.get("/api/v1/expenses", {
         params: {
           userId: user._id,
           month: selectedMonth,
+          year: selectedYear,
         },
       });
       setExpenses(response.data.expenses);
@@ -85,6 +103,19 @@ const Expenses = () => {
       alert(err.response?.data?.message || "Failed to cancel expense");
     }
   };
+
+  const expenseLedgerOptions = useMemo(() => {
+    return [
+      {
+        value: "",
+        label: "All Expense Types",
+      },
+      ...expenseLedgers.map((l) => ({
+        value: l._id,
+        label: l.name,
+      })),
+    ];
+  }, [expenseLedgers]);
 
   const totalAmount = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalPosted = filteredExpenses
@@ -151,12 +182,23 @@ const Expenses = () => {
 
       {/* Filter */}
       <div className="flex gap-2">
+        {/* Expenses type */}
+        <Select
+          options={expenseLedgerOptions}
+          value={expenseLedgerOptions.find((o) => o.value === selectedType)}
+          onChange={(opt) => setSelectedType(opt.value || "")}
+          placeholder="Expense Type..."
+          isClearable
+          className="col-span-2"
+        />
+
         {/* Month Filter */}
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
           className="border rounded px-2 py-1 text-sm"
         >
+          <option value="">All Months</option>
           {Array.from({ length: 12 }, (_, i) => (
             <option key={i + 1} value={i + 1}>
               {new Date(0, i).toLocaleString("en", { month: "long" })}
@@ -170,6 +212,7 @@ const Expenses = () => {
           onChange={(e) => setSelectedYear(e.target.value)}
           className="border rounded px-2 py-1 text-sm"
         >
+          <option value="">All Year</option>
           {Array.from({ length: 5 }, (_, i) => {
             const year = new Date().getFullYear() - i;
             return (
@@ -213,12 +256,12 @@ const Expenses = () => {
       </div>
 
       {/* Expense List */}
-      {filteredExpenses.length === 0 ? (
+      {expenses.length === 0 ? (
         <div className="bg-white border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-500">
           No expenses found for the selected month.
         </div>
       ) : (
-        filteredExpenses.map((expense) => (
+        expenses.map((expense) => (
           <div
             key={expense._id}
             className="bg-white rounded-lg border border-gray-200 px-5 py-4 space-y-3"
@@ -230,7 +273,8 @@ const Expenses = () => {
                   {expense.narration || "Expense"}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  For: {expense.expenseForLedger?.name || expense.expenseFor?.name}
+                  For:{" "}
+                  {expense.expenseFor?.name || expense.expenseForLedger?.name}
                 </p>
               </div>
 

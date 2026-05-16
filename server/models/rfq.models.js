@@ -40,15 +40,23 @@ const rfqSchema = new mongoose.Schema(
     suppliers: [rfqSupplierSchema],
 
     paymentTerms: { type: String, default: "As per agreement" },
-
+    estimatedAmount: Number,
     status: {
       type: String,
       enum: ["DRAFT", "SENT", "CLOSED", "CANCELLED"],
       default: "DRAFT",
     },
-
+    quotationDeadline: Date,
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     narration: String,
+    procurementType: {
+      type: String,
+      enum: [
+        "SITE_PROCUREMENT",
+        "STORE_PROCUREMENT",
+        "EMERGENCY_PROCUREMENT",
+      ],
+    },
   },
   { timestamps: true }
 );
@@ -62,7 +70,8 @@ const quotationItemSchema = new mongoose.Schema({
   quantity: { type: Number, required: true },
   rate: { type: Number, required: true },
   lastPurchaseRate: Number,
-  variance: Number,
+  varianceAmount: Number,
+  variancePercentage: Number,
   remarks: String,
 });
 
@@ -98,12 +107,14 @@ quotationSchema.index({ rfqId: 1, supplierId: 1 }, { unique: true });
 
 quotationSchema.pre("save", function () {
   this.totalAmount = this.items.reduce(
-    (sum, i) => sum + i.quantity * i.rate,
+    (sum, i) =>
+      sum + (i.quantity * i.rate),
     0
   );
 });
-
 const RFQ = mongoose.model("RFQ", rfqSchema);
 const Quotation = mongoose.model("Quotation", quotationSchema);
 
 module.exports = { RFQ, Quotation };
+
+

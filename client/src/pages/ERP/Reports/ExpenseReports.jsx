@@ -24,10 +24,10 @@ const ExpenseReports = () => {
       const { data } = await axios.get(
         `/api/v1/ledger?comapnyId=${user.companyId}`,
       );
-
+      console.log(data.data);
       // Expense ledgers (Expenses group)
       setExpenseLedgers(
-        data.filter((l) => l.groupId?.name.includes("Expenses")),
+        data.data.filter((l) => l.groupId?.name.includes("Expenses")),
       );
     };
 
@@ -73,10 +73,16 @@ const ExpenseReports = () => {
   };
 
   const expenseLedgerOptions = useMemo(() => {
-    return expenseLedgers.map((l) => ({
-      value: l._id,
-      label: l.name,
-    }));
+    return [
+      {
+        value: "",
+        label: "All Expense Types",
+      },
+      ...expenseLedgers.map((l) => ({
+        value: l._id,
+        label: l.name,
+      })),
+    ];
   }, [expenseLedgers]);
 
   const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -135,7 +141,7 @@ const ExpenseReports = () => {
         <Select
           options={expenseLedgerOptions}
           value={expenseLedgerOptions.find((o) => o.value === selectedType)}
-          onChange={(opt) => setSelectedType(opt.value)}
+          onChange={(opt) => setSelectedType(opt.value || "")}
           placeholder="Expense Type..."
           isClearable
           className="col-span-2"
@@ -277,7 +283,7 @@ const ExpenseReports = () => {
 
                 <td className="p-3">{exp?.expenseLedger?.name || "-"}</td>
                 <td className="p-3">
-                  {exp?.expenseForLedger?.name || exp?.expenseFor?._id?.name}
+                  {exp?.expenseForLedger?.name || exp?.expenseFor?.name}
                 </td>
 
                 <td className="p-3">{exp.narration}</td>
@@ -313,21 +319,21 @@ const ExpenseReports = () => {
                   {/* {exp.status !== "Posted" &&
                     (exp.isApproved === "For Approval" ||
                       exp.isApproved === "Rejected") && ( */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEditExpense(exp._id)}
-                          className="text-sm text-blue-600 hover:text-blue-800"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteExpense(exp._id)}
-                          className="text-sm text-red-600 hover:text-red-800"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    {/* )} */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditExpense(exp._id)}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteExpense(exp._id)}
+                      className="text-sm text-red-600 hover:text-red-800"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  {/* )} */}
                 </td>
               </tr>
             ))}

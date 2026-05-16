@@ -19,7 +19,7 @@ const GRN = () => {
   const fetchGRNs = async () => {
     try {
       const res = await axios.get("/api/v1/grn");
-      setGrns(res.data);
+      setGrns(res.data.data);
     } catch (err) {
       console.error(err);
     } finally {

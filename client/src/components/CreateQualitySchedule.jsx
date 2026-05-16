@@ -46,20 +46,6 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // const fetchWork = async () => {
-    //   try {
-    //     const title = "Quality Schedule";
-    //     const workData = await axios.post("/api/v1/work-details/name", {
-    //       title,
-    //     });
-    //     console.log(workData);
-    //     setWorkDetails(workData.data.description);
-    //   } catch (error) {
-    //     console.log("Error fetching work details:", error.message);
-    //     toast.error(error.message);
-    //   }
-    // };
-    // fetchWork();
     if (user && user?.department === "Site Incharge") {
       console.log(user._id);
       getUserSites(user._id);
@@ -108,7 +94,7 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
   const fetchScheduleDetail = async (id, index) => {
     try {
       const response = await axios.get(
-        `/api/v1/quality-schedule/${id}/workDetails`
+        `/api/v1/quality-schedule/${id}/workDetails`,
       );
       const detail = response.data[index];
       // console.log('response.data', response.data[index])
@@ -133,7 +119,7 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
       setFormData({
         site: data?.site.id,
         // qualityScheduleId: data?.qualityScheduleId,
-        workDetails: [{ work: "", checkingDate: "" }],
+        workDetails: data?.workDetails,
       });
     } catch (error) {
       console.log("Error fetching project schedule:", error);
@@ -147,7 +133,7 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
     setScheduleFor(
       Array.isArray(selectedSite?.projectSchedule?.projectDetail)
         ? selectedSite.projectSchedule.projectDetail
-        : []
+        : [],
     );
     // setWorkDetails(selectedSite?.projectSchedule?.projectDetail);
     const fetchProjectSchedule = async () => {
@@ -155,19 +141,19 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
         const projectScheduleData = await axios.get(`/api/v1/project-schedule`);
         // console.log(projectScheduleData.data);
         const filteredProjectSchedules = projectScheduleData.data.filter(
-          (projectSchedule) => projectSchedule.site?.id._id === formData.site
+          (projectSchedule) => projectSchedule.site?.id._id === formData.site,
         )[0];
         const filteredProjectDetail =
           filteredProjectSchedules?.projectDetail.filter(
             (detail) =>
               detail?.status?.toLowerCase() !== "completed" &&
-              detail?.status?.toLowerCase() !== "pending"
+              detail?.status?.toLowerCase() !== "pending",
           );
 
         // console.log(filteredProjectSchedules);
         console.log(filteredProjectDetail);
         setScheduleFor(
-          Array.isArray(filteredProjectDetail) ? filteredProjectDetail : []
+          Array.isArray(filteredProjectDetail) ? filteredProjectDetail : [],
         );
         // setWorkDetails(filteredProjectDetail);
       } catch (error) {
@@ -225,7 +211,7 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
         console.log(formData);
         const response = await axios.put(
           `/api/v1/quality-schedule/${scheduleIdToEdit}`,
-          formData
+          formData,
         );
         toast.success(response.data.message);
         onClose();
@@ -233,7 +219,7 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
       } else if (workToEdit.id && workToEdit.index !== undefined) {
         await axios.put(
           `/api/v1/quality-schedule/${workToEdit.id}/workDetails/${workToEdit.index}`,
-          workDetail
+          workDetail,
         );
         toast.success("Edited successfully");
         onClose();
@@ -451,7 +437,10 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
                           });
                         }}
                         options={[
-                          ...(Array.isArray(scheduleFor) ? scheduleFor : []).map((work) => ({
+                          ...(Array.isArray(scheduleFor)
+                            ? scheduleFor
+                            : []
+                          ).map((work) => ({
                             value: work.workDetail,
                             label: work.workDetail,
                           })),
@@ -533,7 +522,7 @@ const CreateQualitySchedule = ({ onClose, id, index }) => {
                           handleWorkChange(
                             index,
                             "checkingDate",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         className="border p-2 rounded w-full"

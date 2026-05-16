@@ -116,7 +116,27 @@ const createExpense = async (req, res) => {
         );
       }
     }
-    sendApproveByAdmin(expense, "Expense", user._id);
+
+    // const newExpense = {
+    //   date,
+    //   amount: Number(amount),
+    //   narration,
+    //   companyId: user.companyId,
+    //   expenseLedger: expenseLedger.name,
+    //   paidByLedger: paidByLedger.name,
+    //   expenseFor: expenseFor?.name || null,
+    //   attachments, // ✅ keep this
+    //   status: "Draft",
+    //   createdBy: req.user._id,
+    // }
+
+    const newExpense = await Expenses.findById(expense._id)
+      .populate("paidByLedger")
+      .populate("expenseLedger")
+      .populate("expenseFor")
+      .lean();
+    console.log(newExpense)
+    sendApproveByAdmin(newExpense, "Expense", user._id);
 
   } catch (err) {
     console.error(err);
@@ -213,8 +233,9 @@ const cancelExpense = async (req, res) => {
 ====================================================== */
 const getExpenses = async (req, res) => {
   try {
-    const { employeeId, month, year, type, status, approval } = req.query;
+    const { userId, employeeId, month, year, type, status, approval } = req.query;
 
+    // console.log(req.query)
     let query = {};
 
     /* -----------------------------
@@ -222,7 +243,11 @@ const getExpenses = async (req, res) => {
     ------------------------------ */
 
     let finalUserId = null;
+    if (userId) {
+      query.createdBy = userId;
+    }
 
+    // console.log("Initalizating ")
     if (employeeId) {
       const employee = await Employee.findById(employeeId);
 
@@ -238,8 +263,8 @@ const getExpenses = async (req, res) => {
     }
 
     /* -----------------------------
-       Date Filter
-    ------------------------------ */
+     Date Filter
+  ------------------------------ */
 
     if (month && year) {
       const start = new Date(year, month - 1, 1);
@@ -253,7 +278,7 @@ const getExpenses = async (req, res) => {
     ------------------------------ */
 
     if (type) {
-      query["expenseLedger.id"] = type || null;
+      query["expenseLedger"] = type || null;
     }
 
     /* -----------------------------
@@ -267,85 +292,7 @@ const getExpenses = async (req, res) => {
     /* -----------------------------
        Fetch Expenses
     ------------------------------ */
-
-    const expenses = await Expenses.find(query).sort({ date: -1 });
-
-    const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
-
-    res.json({
-      totalAmount,
-      count: expenses.length,
-      expenses,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const getExpenseById = async (req, res) => {
-  const expense = await Expenses.findById(req.params.id);
-  if (!expense) return res.status(404).json({ message: "Expense not found" });
-  res.json(expense);
-};
-
-// V2
-const getExpensesv2 = async (req, res) => {
-  try {
-    const { employeeId, month, year, type, status, approval } = req.query;
-
-    let query = {};
-
-    /* -----------------------------
-       Resolve employee → user
-    ------------------------------ */
-
-    let finalUserId = null;
-
-    if (employeeId) {
-      const employee = await Employee.findById(employeeId);
-
-      if (!employee) {
-        return res.status(404).json({ message: "Employee not found" });
-      }
-
-      finalUserId = employee.userId;
-    }
-
-    if (finalUserId) {
-      query.createdBy = finalUserId;
-    }
-
-    /* -----------------------------
-       Date Filter
-    ------------------------------ */
-
-    if (month && year) {
-      const start = new Date(year, month - 1, 1);
-      const end = new Date(year, month, 1);
-
-      query.date = { $gte: start, $lt: end };
-    }
-
-    /* -----------------------------
-       Expense Type
-    ------------------------------ */
-
-    if (type) {
-      query["expenseLedger.id"] = type || null;
-    }
-
-    /* -----------------------------
-       Status
-    ------------------------------ */
-
-    if (status) query.status = status;
-
-    if (approval) query.isApproved = approval;
-
-    /* -----------------------------
-       Fetch Expenses
-    ------------------------------ */
-
+    // console.log("finding ")
     const expenses = await Expenses.find(query)
       .populate("expenseLedger")
       .populate("paidByLedger")
@@ -354,18 +301,20 @@ const getExpensesv2 = async (req, res) => {
       .exec();
 
     const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
-
+    // console.log(expenses)
+    // console.log("Found")
     res.json({
       totalAmount,
       count: expenses.length,
       expenses,
     });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: error.message });
   }
 };
 
-const getExpenseByIdv2 = async (req, res) => {
+const getExpenseById = async (req, res) => {
   const expense = await Expenses.findById(req.params.id)
     .populate("expenseLedger")
     .populate("paidByLedger")
@@ -408,8 +357,9 @@ const updateExpense = async (req, res) => {
     /* ----------------------------------
        LEDGER VALIDATION (IF CHANGED)
     ---------------------------------- */
+    let expenseLedger;
     if (req.body.expenseLedger) {
-      const expenseLedger = await Ledger.findById(req.body.expenseLedger);
+      expenseLedger = await Ledger.findById(req.body.expenseLedger);
       if (!expenseLedger) {
         return res.status(400).json({ message: "Invalid expense ledger" });
       }
@@ -420,8 +370,9 @@ const updateExpense = async (req, res) => {
     const isValidObjectId = (val) =>
       val && val !== "null" && val !== "undefined";
 
+    let expenseFor;
     if (isValidObjectId(req.body.expenseFor)) {
-      const expenseFor = await CostCenter.findById(req.body.expenseFor);
+      expenseFor = await CostCenter.findById(req.body.expenseFor);
 
       if (!expenseFor) {
         return res.status(400).json({ message: "Invalid expense-for" });
@@ -478,7 +429,14 @@ const updateExpense = async (req, res) => {
         );
       }
     }
-    sendApproveByAdmin(expense, "Expense", user._id);
+
+    const updateExpense = await Expenses.findById(expense._id)
+      .populate("paidByLedger")
+      .populate("expenseLedger")
+      .populate("expenseFor")
+      .lean();
+    console.log(updateExpense)
+    sendApproveByAdmin(updateExpense, "Expense", user._id);
 
     // await updateVoucher(expense.voucherId);
 
@@ -496,7 +454,7 @@ const updateExpense = async (req, res) => {
    DELETE EXPENSE (DRAFT ONLY)
 ====================================================== */
 const deleteExpense = async (req, res) => {
-  const expense = await Expenses.findById(req.params.id);
+  const expense = await Expenses.findByIdAndDelete(req.params.id);
   if (!expense) return res.status(404).json({ message: "Expense not found" });
 
   if (
@@ -507,8 +465,6 @@ const deleteExpense = async (req, res) => {
       .status(400)
       .json({ message: "Only Draft expense can be deleted" });
   }
-
-  await expense.deleteOne();
 
   for (const att of expense.attachments) {
     await deleteFromCloudinary(att.public_id);
@@ -524,6 +480,4 @@ module.exports = {
   updateExpense,
   deleteExpense,
   getExpenses,
-  getExpenseByIdv2,
-  getExpensesv2
 };

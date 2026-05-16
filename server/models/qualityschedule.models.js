@@ -9,7 +9,6 @@ const workDetailSchema = new mongoose.Schema({
   },
   checkedAt: {
     type: Date,
-    default: Date.now,
   },
   difference: {
     type: String,

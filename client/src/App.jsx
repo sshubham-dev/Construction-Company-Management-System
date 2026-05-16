@@ -160,6 +160,10 @@ import Order from "./pages/ERP/Order.jsx";
 import LedgerGroup from "./pages/ERP/LedgerGroup.jsx";
 import MultiLevelReport from "./pages/ERP/Reports/MultiLevelReport.jsx";
 import ProjectEditor from "./components/CreateProject.jsx";
+import DNDetail from "./pages/ERP/DNDetail.jsx";
+import RFQ from "./pages/ERP/RFQ.jsx";
+import RFQDetail from "./pages/ERP/RFQDetail.jsx";
+import RFQComparison from "./pages/ERP/RFQComparison.jsx";
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -363,8 +367,8 @@ const App = () => {
         <Route path="/erp/inventory" element={<Store />} />
         <Route path="/erp/inventory/grn" element={<GRN />} />
         <Route path="/erp/inventory/grn/:id" element={<GRNScreen />} />
-        <Route path="/erp/inventory/dn" element={<DeliveryNotes />} />
-        <Route path="/erp/inventory/dn/:id" element={<DeliveryNoteScreen />} />
+        <Route path="/:mode/inventory/dn" element={<DeliveryNotes />} />
+        <Route path="/:mode/inventory/dn/:id" element={<DNDetail />} />
         <Route path="/erp/inventory/store" element={<Store />} />
         <Route path="/erp/inventory/store/:id" element={<StoreScreen />} />
         <Route
@@ -374,7 +378,10 @@ const App = () => {
         {/* <Route path="/erp/report/:of" element={<ERPReport />} /> */}
         <Route path="/erp/inventory/stock" element={<Stock />} />
         <Route path="/erp/inventory/assets" element={<Assets />} />
-        <Route path="/erp/inventory/stock/category" element={<StockCategory />} />
+        <Route
+          path="/erp/inventory/stock/category"
+          element={<StockCategory />}
+        />
         <Route path="/erp/inventory/stock/item" element={<StockItem />} />
         <Route path="/erp/inventory/stock/group" element={<StockGroup />} />
         <Route path="/erp/inventory/sales" element={<Sales />} />
@@ -388,6 +395,12 @@ const App = () => {
           element={<PurchaseRequest />}
         />
         <Route path="/erp/inventory/create-sales" element={<Sales />} />
+        <Route path="/erp/procurement/rfq" element={<RFQ />} />
+        <Route path="/erp/procurement/rfq/:id" element={<RFQDetail />} />
+        <Route
+          path="/erp/procurement/rfq/:id/comparison"
+          element={<RFQComparison />}
+        />
         <Route path="/erp/inventory/purchase" element={<Purchase />} />
         <Route path="/erp/inventory/order" element={<Order />} />
         <Route path="/erp/business_unit" element={<BusinessUnit />} />
