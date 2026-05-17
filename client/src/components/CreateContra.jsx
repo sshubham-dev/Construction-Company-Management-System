@@ -26,7 +26,7 @@ const CreateContra = ({ onClose, refresh }) => {
         const res = await axios.get("/api/v1/ledger", {
           params: { companyId: user.companyId },
         });
-        const data = Array.isArray(res.data) ? res.data : [];
+        const data = Array.isArray(res.data.data) ? res.data.data : [];
         console.log(data)
 
         // Only cash/bank accounts

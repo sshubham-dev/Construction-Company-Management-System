@@ -33,7 +33,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
       const res = await axios.get("/api/v1/ledger", {
         params: { companyId: user.companyId },
       });
-      setLedgers(res.data || []);
+      setLedgers(res.data.data|| []);
     };
     loadLedgers();
     axios

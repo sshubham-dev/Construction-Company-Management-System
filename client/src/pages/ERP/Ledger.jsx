@@ -19,9 +19,9 @@ const LedgerList = () => {
     const res = await axios.get("/api/v1/ledger", {
       params: { companyId: user.companyId },
     });
-    console.log(res.data);
-    setLedgers(res.data);
-    setFiltered(res.data);
+    console.log(res.data.data);
+    setLedgers(res.data.data);
+    setFiltered(res.data.data);
   };
 
   useEffect(() => {
