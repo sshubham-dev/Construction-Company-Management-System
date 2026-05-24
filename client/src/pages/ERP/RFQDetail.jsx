@@ -53,7 +53,7 @@ const RFQDetail = () => {
       setLoading(true);
 
       const res = await axios.get(`/api/v1/rfq/${id}`);
-
+      console.log(res.data.data);
       setRFQ(res.data.data);
     } catch (err) {
       console.log(err);
@@ -70,11 +70,17 @@ const RFQDetail = () => {
 
   const sendRFQ = async () => {
     try {
-      await axios.post(`/api/v1/rfq/send/${id}`);
+      const res = await axios.put(`/api/v1/rfq/send/${id}`);
 
       toast.success("RFQ sent successfully");
 
       fetchRFQ();
+
+      /* =========================
+       SHOW SHARE LINKS
+    ========================== */
+
+      console.log(res.data.data.suppliers);
     } catch (err) {
       console.log(err);
 
@@ -376,6 +382,7 @@ const RFQDetail = () => {
             const quotation = rfq.quotations?.find(
               (q) => q.supplierId === supplier.supplierId?._id,
             );
+            // console.log(supplier);
 
             return (
               <div key={index} className="border rounded-2xl p-4">
@@ -395,7 +402,7 @@ const RFQDetail = () => {
 
                   {/* STATUS */}
 
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center px-3 gap-3 flex-wrap">
                     {quotation ? (
                       <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
                         Quotation Submitted
@@ -406,15 +413,65 @@ const RFQDetail = () => {
                       </span>
                     )}
 
-                    <button className="border px-3 py-2 rounded-xl text-sm flex items-center gap-2">
-                      <Eye size={14} />
-                      View Link
-                    </button>
+                    <div className="flex flex-wrap gap-3 ">
+                      {/* COPY LINK */}
 
-                    <button className="border px-3 py-2 rounded-xl text-sm flex items-center gap-2">
-                      <Mail size={14} />
-                      Resend
-                    </button>
+                      <button
+                        onClick={() => {
+                          const link = `${window.location.origin}/vendor/rfq/${supplier.accessToken}`;
+
+                          navigator.clipboard.writeText(link);
+
+                          toast.success("RFQ link copied");
+                        }}
+                        className="border px-3 py-1 rounded-xl text-sm"
+                      >
+                        Copy Link
+                      </button>
+
+                      {/* COPY MESSAGE */}
+
+                      <button
+                        onClick={() => {
+                          const message = `Hello ${supplier.supplierId?.name},
+
+You are invited to submit quotation for RFQ ${rfq.rfqNo}.
+
+Please submit quotation using the link below:
+
+${window.location.origin}/vendor/rfq/${supplier.accessToken}
+
+Regards,
+Bhuvi Procurement Team`;
+
+                          navigator.clipboard.writeText(message);
+
+                          toast.success("Message copied");
+                        }}
+                        className="border px-3 py-1 rounded-xl text-sm"
+                      >
+                        Copy Message
+                      </button>
+
+                      {/* WHATSAPP */}
+
+                      <a
+                        href={`https://wa.me/91${supplier.supplierId?.mailingDetails?.phone}?text=${encodeURIComponent(
+                          `Hello ${supplier.supplierId?.name},
+
+You are invited to submit quotation for RFQ ${rfq.rfqNo}.
+
+Please submit quotation using the link below:
+
+${window.location.origin}/vendor/rfq/${supplier.accessToken}`,
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-green-600 text-white px-3 py-1 rounded-xl text-sm flex items-center gap-2"
+                      >
+                        <Mail size={14} /> Whatsapp
+                      </a>
+                    </div>
                   </div>
                 </div>
 

@@ -10,6 +10,7 @@ const {
     selectQuotation,
     getQuotationById,
     compareQuotations,
+    getVendorRFQ,
 } = require("../controller/rfq.controller"); // Adjust the path as necessary
 const { adminAuth, userAuth } = require("../middlewares/auth.middleware");
 
@@ -17,10 +18,11 @@ RFQs.route("/").get(getRFQs).post(userAuth, createRFQ);
 RFQs.get('/:id', getRFQById)
 RFQs.put("/send/:id", userAuth, sendRFQ);
 RFQs.put("/close/:id", userAuth, closeRFQ);
-RFQs.post('/submit', submitQuotation);
+RFQs.post('/public/submit', submitQuotation);
 RFQs.post('/select-quotation/:quoteId', selectQuotation)
 RFQs.get('/quote/:id', getQuotationById)
 RFQs.get('/comparison/:id', compareQuotations)
+RFQs.get("/vendor/rfq/:token", getVendorRFQ);
 
 // DN.put("/:id/verify", userAuth, verifyDeliveryNote);
 

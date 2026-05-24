@@ -56,6 +56,7 @@ const deletePayment = async (req, res) => {
   }
 };
 
+
 /* POST */
 const postPayment = async (req, res) => {
   try {

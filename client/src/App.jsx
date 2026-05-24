@@ -164,6 +164,8 @@ import DNDetail from "./pages/ERP/DNDetail.jsx";
 import RFQ from "./pages/ERP/RFQ.jsx";
 import RFQDetail from "./pages/ERP/RFQDetail.jsx";
 import RFQComparison from "./pages/ERP/RFQComparison.jsx";
+import PublicQuotationPage from "./pages/ERP/PublicQuotationPage.jsx";
+// import FiscalYear from "./pages/ERP/FiscalYear.jsx";
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -349,6 +351,7 @@ const App = () => {
         <Route path="/return-order/:id" element={<ReturnOrderScreen />} />
 
         <Route path="/erp/company" element={<Company />} />
+        {/* <Route path="/erp/fy" element={<FiscalYear />} /> */}
         <Route path="/erp-setting" element={<ERPSettings />} />
         <Route path="/erp/groups" element={<LedgerGroup />} />
 
@@ -401,6 +404,7 @@ const App = () => {
           path="/erp/procurement/rfq/:id/comparison"
           element={<RFQComparison />}
         />
+        <Route path="/vendor/rfq/:token" element={<PublicQuotationPage />} />
         <Route path="/erp/inventory/purchase" element={<Purchase />} />
         <Route path="/erp/inventory/order" element={<Order />} />
         <Route path="/erp/business_unit" element={<BusinessUnit />} />

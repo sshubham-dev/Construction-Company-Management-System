@@ -2,8 +2,12 @@ const { RFQ, Quotation } = require("../models/rfq.models");
 const PurchaseRequest = require("../models/purchaserequest.models");
 const { Item } = require("../models/stock.models");
 const { Ledger } = require("../models/ledger.models");
-const crypto = require("crypto");
 const Supplier = require('../models/supplier.models.js');
+const {
+  generateRFQToken,
+  generateSupplierRFQLink,
+  generateRFQShareMessage,
+} = require("../utils/rfq.utils");
 
 /* =========================
    GENERATE RFQ NUMBER
@@ -112,100 +116,73 @@ const createRFQ = async (req, res) => {
        RFQ ITEMS
     ========================== */
 
-    const items =
-      procurementItems.map((i) => ({
-        itemId: i.itemId._id,
+    const items = procurementItems.map((i) => ({
+      itemId: i.itemId._id,
 
-        unit: i.unit,
+      unit: i.unit,
 
-        quantity:
-          i.pendingQty,
+      quantity:
+        i.pendingQty,
 
-        lastPurchaseRate:
-          i.lastPurchaseRate || 0,
+      lastPurchaseRate:
+        i.lastPurchaseRate || 0,
 
-        remarks:
-          i.remarks || "",
-      }));
-
-    /* =========================
-       SUPPLIERS
-    ========================== */
-
-    const supplierList =
-      suppliers.map(
-        (supplierId) => ({
-          supplierId,
-
-          accessToken:
-            crypto
-              .randomBytes(16)
-              .toString("hex"),
-
-          expiresAt:
-            quotationDeadline ||
-            new Date(
-              Date.now() +
-              7 *
-              24 *
-              60 *
-              60 *
-              1000
-            ),
-        })
-      );
+      remarks:
+        i.remarks || "",
+    }));
 
     /* =========================
        ESTIMATION
     ========================== */
 
-    const estimatedAmount =
-      items.reduce(
-        (sum, i) =>
-          sum +
+    const estimatedAmount = items.reduce(
+      (sum, i) =>
+        sum +
+        (
+          i.quantity *
           (
-            i.quantity *
-            (
-              i.lastPurchaseRate ||
-              0
-            )
-          ),
-        0
-      );
+            i.lastPurchaseRate ||
+            0
+          )
+        ),
+      0
+    );
 
     /* =========================
        CREATE RFQ
     ========================== */
 
-    const rfq =
-      await RFQ.create({
-        rfqNo:
-          await generateRFQNo(),
+    const rfq = await RFQ.create({
+      rfqNo:
+        await generateRFQNo(),
 
-        storeId:
-          pr.store,
+      storeId:
+        pr.store,
 
-        purchaseRequestId,
+      purchaseRequestId,
 
-        items,
+      items,
 
-        suppliers:
-          supplierList,
+      suppliers: suppliers.map(
+        (supplierId) => ({
+          supplierId,
+        })
+      ),
 
-        quotationDeadline,
+      quotationDeadline,
 
-        procurementType,
+      procurementType,
 
-        estimatedAmount,
+      estimatedAmount,
 
-        narration,
+      narration,
 
-        createdBy:
-          req.user._id,
+      createdBy:
+        req.user._id,
 
-        status:
-          "DRAFT",
-      });
+      status:
+        "DRAFT",
+    });
 
     res.status(201).json({
       success: true,
@@ -227,10 +204,15 @@ const createRFQ = async (req, res) => {
 ========================= */
 const sendRFQ = async (req, res) => {
   try {
+
     const rfq =
       await RFQ.findById(
         req.params.id
-      );
+      )
+
+        .populate(
+          "suppliers.supplierId"
+        );
 
     if (!rfq) {
       throw new Error(
@@ -243,29 +225,264 @@ const sendRFQ = async (req, res) => {
       "DRAFT"
     ) {
       throw new Error(
-        "RFQ already sent"
+        "Only draft RFQ can send"
       );
     }
 
-    rfq.status = "SENT";
+    /* =========================
+       GENERATE TOKENS
+    ========================== */
 
-    rfq.sentAt =
+    rfq.suppliers =
+      rfq.suppliers.map(
+        (supplier) => {
+
+          if (
+            !supplier.accessToken
+          ) {
+            supplier.accessToken =
+              generateRFQToken();
+          }
+
+          if (
+            !supplier.expiresAt
+          ) {
+            supplier.expiresAt =
+              new Date(
+                Date.now() +
+                7 *
+                24 *
+                60 *
+                60 *
+                1000
+              );
+          }
+
+          return supplier;
+        }
+      );
+
+    /* =========================
+       STATUS
+    ========================== */
+
+    rfq.status =
+      "REQUESTED";
+
+    rfq.requestedAt =
       new Date();
 
     await rfq.save();
 
+    /* =========================
+       SHARE DATA
+    ========================== */
+
+    const shareData =
+      rfq.suppliers.map(
+        (supplier) => {
+
+          const link =
+            generateSupplierRFQLink(
+              supplier.accessToken
+            );
+
+          return {
+            supplierId:
+              supplier
+                .supplierId
+                ?._id,
+
+            supplierName:
+              supplier
+                .supplierId
+                ?.name,
+
+            phone:
+              supplier
+                .supplierId
+                ?.phone,
+
+            email:
+              supplier
+                .supplierId
+                ?.email,
+
+            link,
+
+            message:
+              generateRFQShareMessage({
+                supplierName:
+                  supplier
+                    .supplierId
+                    ?.name,
+
+                rfqNo:
+                  rfq.rfqNo,
+
+                link,
+
+                deadline:
+                  rfq.quotationDeadline
+                    ?.toDateString(),
+              }),
+          };
+        }
+      );
+
     res.json({
       success: true,
-      data: rfq,
+
+      message:
+        "RFQ sent successfully",
+
+      data: {
+        rfq,
+        suppliers:
+          shareData,
+      },
     });
 
   } catch (err) {
+
     console.log(err);
 
     res.status(400).json({
       success: false,
-      error: err.message,
+      error:
+        err.message,
     });
+  }
+};
+
+/* =========================
+   GET RFQs
+========================= */
+const getRFQs = async (req, res) => {
+  try {
+    const data = await RFQ.find()
+      .populate("storeId purchaseRequestId suppliers.supplierId")
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.log(error)
+  }
+};
+
+const getRFQById = async (req, res) => {
+  try {
+    const data = await RFQ.findById(req.params.id)
+      .populate("storeId purchaseRequestId suppliers.supplierId")
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.log(error)
+  }
+};
+
+const getVendorRFQ = async (req, res) => {
+  try {
+
+    const { token } =
+      req.params;
+
+    const rfq = await RFQ.findOne({
+      "suppliers.accessToken":
+        token,
+    })
+      .populate({
+        path: "items.itemId",
+
+        populate: [
+          {
+            path:
+              "categoryId",
+          },
+        ],
+      })
+      .populate(
+        "purchaseRequestId storeId"
+      )
+      .populate({
+        path:
+          "suppliers.supplierId",
+
+        select:
+          "name mobile email",
+      });
+
+    if (!rfq) {
+      throw new Error(
+        "Invalid RFQ"
+      );
+    }
+
+    const supplier = rfq.suppliers.find(
+      (s) =>
+        s.accessToken ===
+        token
+    );
+
+    if (!supplier) {
+      throw new Error(
+        "Invalid supplier"
+      );
+    }
+
+    if (supplier.expiresAt < new Date()) {
+      throw new Error(
+        "RFQ expired"
+      );
+    }
+
+    if (!["REQUESTED", "QUOTED"].includes(rfq.status)) {
+      throw new Error(
+        "RFQ not available"
+      );
+    }
+
+    const existingQuotation = await Quotation.findOne({
+      rfqId: rfq._id,
+      supplierId:
+        supplier.supplierId,
+    });
+
+    res.json({
+      success: true,
+
+      data: {
+        rfq,
+        supplier,
+        alreadySubmitted: !!existingQuotation,
+      },
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(400).json({
+      success: false,
+      error:
+        err.message,
+    });
+  }
+};
+
+/* =========================
+   GET QUOTATIONS
+========================= */
+const getQuotationById = async (req, res) => {
+  try {
+    const data = await Quotation.find(req.params.id)
+      .populate("supplierId")
+      .lean();
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.log(error)
   }
 };
 
@@ -274,14 +491,24 @@ const sendRFQ = async (req, res) => {
 ========================= */
 const submitQuotation = async (req, res) => {
   try {
-    const { accessToken, items } = req.body;
+    const { accessToken, items, freightAmount } = req.body;
 
     const rfq = await RFQ.findOne({
-      "suppliers.accessToken": accessToken,
-      status: "SENT",
+      "suppliers.accessToken":
+        accessToken,
+
+      status: {
+        $in: [
+          "REQUESTED",
+          "QUOTED",
+        ],
+      },
     });
 
     if (!rfq) throw new Error("Invalid RFQ");
+    if (rfq.status === "CLOSED") {
+      throw new Error("RFQ closed");
+    }
 
     const supplier = rfq.suppliers.find(
       (s) => s.accessToken === accessToken
@@ -337,68 +564,36 @@ const submitQuotation = async (req, res) => {
       };
     });
 
-    let quotation;
-
-    try {
-      quotation = await Quotation.create({
+    const existingQuotation =
+      await Quotation.findOne({
         rfqId: rfq._id,
-        supplierId: supplier.supplierId,
-        accessToken,
-        items: processedItems,
+
+        supplierId:
+          supplier.supplierId,
       });
-    } catch (err) {
-      if (err.code === 11000) {
-        throw new Error("Quotation already submitted");
-      }
-      throw err;
+
+    if (existingQuotation) {
+      throw new Error(
+        "Quotation already submitted"
+      );
     }
+
+    const quotation = await Quotation.create({
+      rfqId: rfq._id,
+      supplierId: supplier.supplierId,
+      accessToken,
+      items: processedItems,
+      freightAmount,
+    });
+
+    rfq.status = "QUOTED";
+    await rfq.save();
 
     res.status(201).json({ success: true, data: quotation });
 
   } catch (err) {
+    console.log(err);
     res.status(400).json({ error: err.message });
-  }
-};
-
-/* =========================
-   GET RFQs
-========================= */
-const getRFQs = async (req, res) => {
-  try {
-    const data = await RFQ.find()
-      .populate("storeId purchaseRequestId suppliers.supplierId")
-      .sort({ createdAt: -1 });
-
-    res.json({ success: true, data });
-  } catch (error) {
-    console.log(error)
-  }
-};
-
-const getRFQById = async (req, res) => {
-  try {
-    const data = await RFQ.findById(req.params.id)
-      .populate("storeId purchaseRequestId suppliers.supplierId")
-      .sort({ createdAt: -1 });
-
-    res.json({ success: true, data });
-  } catch (error) {
-    console.log(error)
-  }
-};
-
-/* =========================
-   GET QUOTATIONS
-========================= */
-const getQuotationById = async (req, res) => {
-  try {
-    const data = await Quotation.find(req.params.id)
-      .populate("supplierId")
-      .lean();
-
-    res.json({ success: true, data });
-  } catch (error) {
-    console.log(error)
   }
 };
 
@@ -406,18 +601,111 @@ const getQuotationById = async (req, res) => {
    COMPARE QUOTATIONS (L1)
 ========================= */
 const compareQuotations = async (req, res) => {
-  try {
-    const quotations = await Quotation.find({ rfqId: req.params.rfqId });
 
-    const sorted = quotations.sort((a, b) => a.totalAmount - b.totalAmount);
+  try {
+
+    const quotations = await Quotation.find({
+      rfqId:
+        req.params.id,
+    })
+      .populate("supplierId", `name mobile`)
+      .populate({
+        path: "items.itemId",
+        select: `
+              name
+              code
+            `,
+      });
+
+    if (!quotations.length) {
+      throw new Error(
+        "No quotations found"
+      );
+    }
+
+    const rfq = await RFQ.findById(
+      req.params.id
+    ).populate("purchaseRequestId");
+
+    if (!rfq) {
+      throw new Error("RFQ not found");
+    }
+
+    /* =====================
+       TOTAL CALCULATION
+    ===================== */
+
+    const processed = quotations.map(
+      (quotation) => {
+
+        const itemTotal = quotation.items.reduce(
+          (
+            sum,
+            item
+          ) =>
+            sum +
+            (
+              item.quantity *
+              item.rate
+            ),
+          0
+        );
+
+        const totalAmount = itemTotal + (quotation.freightAmount || 0);
+
+        return {
+          ...quotation.toObject(),
+          totalAmount,
+        };
+      }
+    );
+
+    /* =====================
+       SORT L1
+    ===================== */
+
+    processed.sort(
+      (a, b) =>
+        a.totalAmount -
+        b.totalAmount
+    );
+
+    /* =====================
+       RANKING
+    ===================== */
+
+    const ranked = processed.map(
+      (
+        quotation,
+        index
+      ) => ({
+        ...quotation,
+
+        rank:
+          `L${index + 1}`,
+      })
+    );
 
     res.json({
       success: true,
-      best: sorted[0],
-      all: sorted,
+
+      best:
+        ranked[0],
+
+      all:
+        ranked,
+        rfq,
     });
-  } catch (error) {
-    console.log(error)
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(400).json({
+      success: false,
+      error:
+        err.message,
+    });
   }
 };
 
@@ -425,37 +713,124 @@ const compareQuotations = async (req, res) => {
    SELECT QUOTATION
 ========================= */
 const selectQuotation = async (req, res) => {
+
   const session =
     await mongoose.startSession();
 
-  session.startTransaction();
   try {
-    const quotation = await Quotation.findById(req.params.id);
-    if (!quotation) throw new Error("Quotation not found");
 
-    const rfq = await RFQ.findById(quotation.rfqId);
+    session.startTransaction();
 
-    if (rfq.status !== "SENT") {
-      throw new Error("RFQ closed");
+    /* =====================
+       QUOTATION
+    ===================== */
+
+    const quotation = await Quotation.findById(req.params.id).session(session);
+
+    if (!quotation) {
+      throw new Error("Quotation not found");
     }
 
+    /* =====================
+       RFQ
+    ===================== */
+
+    const rfq = await RFQ.findById(quotation.rfqId).session(session);
+
+    if (!rfq) {
+      throw new Error("RFQ not found");
+    }
+
+    if (rfq.status === "CLOSED") {
+      throw new Error("RFQ already closed");
+    }
+
+    /* =====================
+       REJECT OTHERS
+    ===================== */
+
     await Quotation.updateMany(
-      { rfqId: rfq._id, _id: { $ne: quotation._id } },
-      { status: "REJECTED", isSelected: false }
+      {
+        rfqId:
+          rfq._id,
+
+        _id: {
+          $ne:
+            quotation._id,
+        },
+      },
+
+      {
+        status:
+          "REJECTED",
+
+        isSelected:
+          false,
+      },
+
+      { session }
     );
 
-    quotation.status = "SELECTED";
-    quotation.isSelected = true;
-    await quotation.save();
+    /* =====================
+       SELECT CURRENT
+    ===================== */
 
-    rfq.status = "CLOSED";
-    await rfq.save();
+    quotation.status =
+      "SELECTED";
 
-    res.json({ success: true, data: quotation });
+    quotation.isSelected =
+      true;
+
+    await quotation.save({
+      session,
+    });
+
+    /* =====================
+       CLOSE RFQ
+    ===================== */
+
+    rfq.status =
+      "CLOSED";
+
+    rfq.selectedQuotationId =
+      quotation._id;
+
+    rfq.selectedSupplierId =
+      quotation.supplierId;
+
+    await rfq.save({
+      session,
+    });
+
+    /* =====================
+       COMMIT
+    ===================== */
+
     await session.commitTransaction();
+
+    res.json({
+      success: true,
+
+      data:
+        quotation,
+    });
+
   } catch (err) {
-    res.status(400).json({ error: err.message });
+
     await session.abortTransaction();
+
+    console.log(err);
+
+    res.status(400).json({
+      success: false,
+
+      error:
+        err.message,
+    });
+
+  } finally {
+
+    session.endSession();
   }
 };
 
@@ -507,6 +882,7 @@ module.exports = {
   sendRFQ,
   getRFQs,
   getRFQById,
+  getVendorRFQ,
   closeRFQ,
   submitQuotation,
   getQuotationById,

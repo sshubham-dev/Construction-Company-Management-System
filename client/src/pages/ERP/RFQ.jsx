@@ -551,11 +551,17 @@ const RFQ = () => {
 
   const sendRFQ = async (id) => {
     try {
-      await axios.post(`/api/v1/rfq/${id}/send`);
+      const res = await axios.put(`/api/v1/rfq/send/${id}`);
 
       toast.success("RFQ sent successfully");
 
       fetchRFQs();
+
+      /* =========================
+       SHOW SHARE LINKS
+    ========================== */
+
+      console.log(res.data.data.suppliers);
     } catch (err) {
       console.log(err);
 

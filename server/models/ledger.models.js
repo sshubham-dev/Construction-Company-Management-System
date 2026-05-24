@@ -27,7 +27,7 @@ const ledgerSchema = new mongoose.Schema(
     },
     mailingDetails: {
       name: String,
-      phoneNo: String,
+      phone: String,
       email: String,
       address: String,
       state: String,

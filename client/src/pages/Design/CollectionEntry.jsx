@@ -34,7 +34,7 @@ const CollectionEntry = ({ onClose, editId }) => {
           companyId: user.companyId,
         },
       })
-      .then((res) => setLedgers(res.data));
+      .then((res) => setLedgers(res.data.data));
     const fetchCostCenter = async () => {
       try {
         const res = await axios.get("/api/v1/cost-center", {

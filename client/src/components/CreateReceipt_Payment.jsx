@@ -33,7 +33,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
       const res = await axios.get("/api/v1/ledger", {
         params: { companyId: user.companyId },
       });
-      setLedgers(res.data.data|| []);
+      setLedgers(res.data.data || []);
     };
     loadLedgers();
     axios
@@ -53,7 +53,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
 
   const cashBankLedgers = useMemo(
     () =>
-      ledgers.filter((l) =>
+      ledgers?.filter((l) =>
         CASH_BANK_UNDER.map((u) => u?.toLowerCase()).includes(
           l?.groupId?.name.toLowerCase(),
         ),
@@ -63,7 +63,7 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
 
   const nonCashBankLedgers = useMemo(
     () =>
-      ledgers.filter(
+      ledgers?.filter(
         (l) =>
           !CASH_BANK_UNDER.map((u) => u?.toLowerCase()).includes(
             l?.groupId?.name.toLowerCase(),

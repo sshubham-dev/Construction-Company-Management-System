@@ -16,7 +16,7 @@ const rfqItemSchema = new mongoose.Schema({
 ========================= */
 const rfqSupplierSchema = new mongoose.Schema({
   supplierId: { type: mongoose.Schema.Types.ObjectId, ref: "Ledger", required: true },
-  accessToken: { type: String, required: true, index: true },
+  accessToken: { type: String, index: true },
   expiresAt: Date,
 });
 
@@ -43,7 +43,13 @@ const rfqSchema = new mongoose.Schema(
     estimatedAmount: Number,
     status: {
       type: String,
-      enum: ["DRAFT", "SENT", "CLOSED", "CANCELLED"],
+      enum: [
+        "DRAFT",
+        "REQUESTED",
+        "QUOTED",
+        "CLOSED",
+        "CANCELLED",
+      ],
       default: "DRAFT",
     },
     quotationDeadline: Date,
@@ -69,7 +75,9 @@ const quotationItemSchema = new mongoose.Schema({
   itemId: { type: mongoose.Schema.Types.ObjectId, ref: "Item", required: true },
   quantity: { type: Number, required: true },
   rate: { type: Number, required: true },
+  gst: Number,
   lastPurchaseRate: Number,
+  deliveryDays: Date,
   varianceAmount: Number,
   variancePercentage: Number,
   remarks: String,
@@ -88,6 +96,7 @@ const quotationSchema = new mongoose.Schema(
 
     items: [quotationItemSchema],
 
+    freightAmount: Number,
     totalAmount: Number,
 
     isSelected: { type: Boolean, default: false },
@@ -112,6 +121,7 @@ quotationSchema.pre("save", function () {
     0
   );
 });
+
 const RFQ = mongoose.model("RFQ", rfqSchema);
 const Quotation = mongoose.model("Quotation", quotationSchema);
 

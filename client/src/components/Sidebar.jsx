@@ -288,6 +288,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       role: ["Admin", "Company", "Account Head", "Accountant"],
     },
     {
+      to: "/erp/fy",
+      name: "Fiscal Year",
+      icon: <MdAccountBalance />,
+      role: ["Admin", "Company", "Account Head"],
+    },
+    {
       to: "/erp/business_unit",
       name: "Business Unit",
       icon: <IoIosJournal />,
