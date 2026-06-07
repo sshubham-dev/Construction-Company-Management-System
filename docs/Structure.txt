@@ -1,0 +1,71 @@
+docs/
+├── system/
+│   ├── architecture.md
+│   ├── audit.md
+│   ├── refactor-plan.md
+│   ├── implementation.md
+│   ├── re-audit.md
+│   └── workflows.md
+│
+├── backend/
+│   ├── architecture/
+│   ├── middleware/
+│   ├── auth/
+│   ├── scheduler/
+│   ├── logging/
+│   ├── validation/
+│   └── api/
+│
+├── modules/
+│   ├── accounting/
+│   │   ├── architecture.md
+│   │   ├── audit.md
+│   │   ├── refactor-plan.md
+│   │   ├── implementation.md
+│   │   ├── re-audit.md
+│   │   └── workflows/
+│   │
+│   ├── inventory/
+│   ├── purchase/
+│   ├── sales/
+│   ├── crm/
+│   └── reports/
+│
+├── database/
+│   ├── architecture.md
+│   ├── collections.md
+│   ├── indexing-strategy.md
+│   ├── audit.md
+│   └── optimization-plan.md
+│
+├── deployment/
+│   ├── architecture.md
+│   ├── environments.md
+│   ├── ci-cd.md
+│   ├── backup-strategy.md
+│   └── deployment-audit.md
+│
+├── security/
+│   ├── auth-security.md
+│   ├── api-security.md
+│   ├── audit.md
+│   ├── vulnerabilities.md
+│   └── hardening-plan.md
+│
+├── performance/
+│   ├── backend-performance.md
+│   ├── frontend-performance.md
+│   ├── db-performance.md
+│   ├── audit.md
+│   └── optimization-plan.md
+│
+├── workflows/
+│   ├── voucher-flow.md
+│   ├── purchase-flow.md
+│   ├── inventory-flow.md
+│   └── reporting-flow.md
+│
+└── decisions/
+    ├── ADR-001-auth-strategy.md
+    ├── ADR-002-mongodb-design.md
+    └── ADR-003-queue-system.md

@@ -7,6 +7,7 @@ const {
 const Employee = require("../models/employee.models");
 const {
   sendApproveByAdmin,
+  sendApproveByAccountant,
   sendApproveByAccountHead,
 } = require("./approval.controller.js");
 const User = require("../models/user.models");
@@ -20,6 +21,8 @@ const {
   cancelVoucher,
   updateVoucher,
 } = require("../services/ERP/voucher/voucher.service.js");
+const { getFinancialYear } = require("../utils/getFinancialYear.js");
+const { generateVoucherNo } = require("../utils/voucherNoGenerator.js");
 
 const resolvePaidByLedger = async (userId) => {
   const employee = await Employee.findOne({ userId });
@@ -137,6 +140,7 @@ const createExpense = async (req, res) => {
       .lean();
     console.log(newExpense)
     sendApproveByAdmin(newExpense, "Expense", user._id);
+    sendApproveByAccountant(newExpense, "Expense", user._id);
 
   } catch (err) {
     console.error(err);
@@ -158,17 +162,28 @@ const postExpense = async (req, res) => {
         .json({ message: "Only Draft expense can be posted" });
     }
 
-    // 🔥 Create voucher
-    const voucher = await createVoucher({
+    const fy = getFinancialYear(expense.date);
+
+    const voucherNo = await generateVoucherNo({
       companyId: expense.companyId,
       type: "JOURNAL",
+      fy: fy.code,
+    });
+
+
+    // 🔥 Create voucher
+    const voucher = await createVoucher({
+      voucherNo,
+      type: "JOURNAL",
       date: expense.date,
+      fy: fy.code,
+      companyId: expense.companyId,
       narration: expense.narration,
 
-      reference: "Expense" + " " + expense.expenseNo,
+      reference: "Expense",
       referenceId: expense._id,
 
-      costCenterId: expense.expenseFor._id,
+      costCenterId: expense.expenseFor._id || null,
 
       entries: [
         {
@@ -182,11 +197,9 @@ const postExpense = async (req, res) => {
           amount: expense.amount,
         },
       ],
-
-      // createdBy: user._id,
+      status: "DRAFT",
+      createdBy: req.user._id,
     });
-
-    await postVoucher(voucher._id);
 
     // 🔗 link back
     expense.voucherId = voucher._id;
@@ -437,6 +450,7 @@ const updateExpense = async (req, res) => {
       .lean();
     console.log(updateExpense)
     sendApproveByAdmin(updateExpense, "Expense", user._id);
+    sendApproveByAccountant(updateExpense, "Expense", user._id);
 
     // await updateVoucher(expense.voucherId);
 

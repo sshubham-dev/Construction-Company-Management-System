@@ -2,7 +2,8 @@ const Voucher = require("../../models/voucher.models");
 const { Ledger } = require("../../models/ledger.models");
 const InvoiceAllocation = require("../../models/invoiceAllocation.models");
 const { getVouchers } = require("./voucher/query.service");
-const { generateVoucherNo } = require("../../utils/voucherNoGenerator");
+const { generateVoucherNo, rebuildVoucherNumbers } = require("../../utils/voucherNoGenerator");
+const { getFinancialYear } = require("../../utils/getFinancialYear");
 
 /* ======================
    CREATE PAYMENT VOUCHER
@@ -18,6 +19,7 @@ async function createPaymentVoucher(data, user) {
     costCenterId,
     invoices = [],
   } = data;
+  if (!date) throw Error("Date required");
 
   if (!from || !to || !amount) {
     throw new Error("Missing required fields");
@@ -43,15 +45,19 @@ async function createPaymentVoucher(data, user) {
     { ledgerId: fromLedger._id, type: "CREDIT", amount },
   ];
 
+  const fy = getFinancialYear(date);
+
   const voucherNo = await generateVoucherNo({
     companyId: user.companyId,
     type: "PAYMENT",
+    fy: fy.code,
   });
 
   const voucher = await Voucher.create({
     voucherNo,
     type: "PAYMENT",
     date,
+    fy: fy.code,
     entries,
     narration,
     costCenterId: costCenterId || null,
@@ -74,6 +80,48 @@ async function createPaymentVoucher(data, user) {
 
   //   await InvoiceAllocation.insertMany(allocations);
   // }
+
+  return voucher;
+}
+
+async function updatePaymentVoucher(id, data) {
+  const voucher = await Voucher.findById(id);
+
+  if (!voucher) throw new Error("Voucher not found");
+
+  if (voucher.status !== "DRAFT") {
+    throw new Error("Only Draft voucher can be updated");
+  }
+
+  const {
+    from,
+    to,
+    amount,
+    narration,
+    date,
+    costCenterId,
+    invoices = [],
+  } = data;
+
+  const entries = [
+    { ledgerId: to, type: "DEBIT", amount },
+    { ledgerId: from, type: "CREDIT", amount },
+  ];
+
+  const fy = getFinancialYear(date);
+  if (voucher.fy !== fy.code) {
+    await rebuildVoucherNumbers({
+      companyId: voucher.companyId,
+      type: voucher.type,
+      fy: fy.code,
+    });
+  }
+  voucher.entries = entries;
+  voucher.narration = narration;
+  voucher.date = date;
+  voucher.costCenterId = costCenterId;
+
+  await voucher.save();
 
   return voucher;
 }
@@ -101,15 +149,21 @@ async function deletePaymentVoucher(id) {
     throw new Error("Only Draft voucher can be deleted");
   }
 
-  await InvoiceAllocation.deleteMany({ voucherId: id });
   await voucher.deleteOne();
+
+  // const fy = getFinancialYear(voucher.date);
+  // await rebuildVoucherNumbers({
+  //   companyId: voucher.companyId,
+  //   type: voucher.type,
+  //   fy: fy.code,
+  // });
 
   return true;
 }
 
 module.exports = {
   createPaymentVoucher,
-  // updatePaymentVoucher,
+  updatePaymentVoucher,
   getAllPayments,
   getPaymentById,
   deletePaymentVoucher,

@@ -1,12 +1,13 @@
 const PurchaseVoucher = require("../models/purchaseVoucher.model");
 const GRN = require("../models/grn.model");
+const { getFinancialYear } = require("../../utils/getFinancialYear");
 
 /* =========================
    CREATE FROM GRN
 ========================= */
 async function createPurchaseVoucherFromGRN(grn, userId, session) {
   const exists = await PurchaseVoucher.findOne({ grnId: grn._id }).session(session);
-
+  
   if (exists) return exists; // prevent duplicate
 
   const items = grn.items.map((i) => ({
@@ -16,8 +17,16 @@ async function createPurchaseVoucherFromGRN(grn, userId, session) {
     taxRate: 0, // plug GST logic later
   }));
 
+  const fy = getFinancialYear(date);
+
+  const voucherNo = await generateVoucherNo({
+    companyId: user.companyId,
+    type: "CONTRA",
+    fy: fy.code,
+  });
+
   const voucher = new PurchaseVoucher({
-    voucherNo: await generateVoucherNo(),
+    voucherNo: voucherNo,
     grnId: grn._id,
     supplierLedgerId: grn.supplierId,
     purchaseLedgerId: await getPurchaseLedger(grn),

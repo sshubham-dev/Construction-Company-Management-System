@@ -126,7 +126,7 @@ const convertToUser = async (id, role, password, status) => {
           ],
         });
         if (employeeUser)
-        console.log("Found User");
+          console.log("Found User");
         if (status === "Update") {
           employeeUser.userName = employee.name || employeeUser.userName;
           employeeUser.userMail = employee.email || employeeUser.userMail;
@@ -173,36 +173,36 @@ const convertToUser = async (id, role, password, status) => {
           ],
         });
         if (clientUser)
-        if (status === "Update") {
-          clientUser.userName = client.name || clientUser.userName;
-          clientUser.userMail = client.email || clientUser.userMail;
-          clientUser.phone = client.phone || clientUser.phone;
-          clientUser.whatsapp = client.whatsapp || clientUser.whatsapp;
-          clientUser.department = client.department || clientUser.department;
-          clientUser.role = role || clientUser.role;
-          clientUser.password = password || clientUser.password;
-          clientUser.companyId = client.companyId || clientUser.companyId;
-          clientUser.ledger = client.ledger || clientUser.ledger;
-          clientUser.businessUnitId =
-            client.businessUnitId || clientUser.businessUnitId;
-          await clientUser.save();
-        } else if (status === "Create") {
-          const newClientUser = new User({
-            userName: client.name,
-            userMail: client.email,
-            password,
-            phone: client.phone,
-            whatsapp: client.whatsapp,
-            role,
-            department: "Client",
-            companyId: client.companyId,
-            businessUnitId: employee.businessUnitId,
-            ledger: employee.ledger,
-          });
-          const savedClientUser = await newClientUser.save();
-          client.userId = savedClientUser._id;
-          await client.save({ validateBeforeSave: false });
-        }
+          if (status === "Update") {
+            clientUser.userName = client.name || clientUser.userName;
+            clientUser.userMail = client.email || clientUser.userMail;
+            clientUser.phone = client.phone || clientUser.phone;
+            clientUser.whatsapp = client.whatsapp || clientUser.whatsapp;
+            clientUser.department = client.department || clientUser.department;
+            clientUser.role = role || clientUser.role;
+            clientUser.password = password || clientUser.password;
+            clientUser.companyId = client.companyId || clientUser.companyId;
+            clientUser.ledger = client.ledger || clientUser.ledger;
+            clientUser.businessUnitId =
+              client.businessUnitId || clientUser.businessUnitId;
+            await clientUser.save();
+          } else if (status === "Create") {
+            const newClientUser = new User({
+              userName: client.name,
+              userMail: client.email,
+              password,
+              phone: client.phone,
+              whatsapp: client.whatsapp,
+              role,
+              department: "Client",
+              companyId: client.companyId,
+              businessUnitId: employee.businessUnitId,
+              ledger: employee.ledger,
+            });
+            const savedClientUser = await newClientUser.save();
+            client.userId = savedClientUser._id;
+            await client.save({ validateBeforeSave: false });
+          }
         break;
 
       case "Contractor":
@@ -217,39 +217,39 @@ const convertToUser = async (id, role, password, status) => {
           ],
         });
         if (contractorUser)
-        if (status === "Update") {
-          contractorUser.userName = contractor.name || contractorUser.userName;
-          contractorUser.userMail = contractor.email || contractorUser.userMail;
-          contractorUser.phone = contractor.phone || contractorUser.phone;
-          contractorUser.whatsapp =
-            contractor.whatsapp || contractorUser.whatsapp;
-          contractorUser.department =
-            contractor.department || contractorUser.department;
-          contractorUser.role = role || contractorUser.role;
-          contractorUser.password = password || contractorUser.password;
-          contractorUser.companyId =
-            contractor.companyId || contractorUser.companyId;
-          contractorUser.ledger = contractor.ledger || contractorUser.ledger;
-          contractorUser.businessUnitId =
-            contractor.businessUnitId || contractorUser.businessUnitId;
-          await contractorUser.save();
-        } else if (status === "Create") {
-          const newContractorUser = new User({
-            userName: contractor.name,
-            userMail: contractor.email,
-            password,
-            phone: contractor.phone,
-            whatsapp: contractor.whatsapp,
-            role,
-            department: "Contractor",
-            companyId: contractor.companyId,
-            businessUnitId: contractor.businessUnitId,
-            ledger: contractor.ledger,
-          });
-          const savedContractorUser = await newContractorUser.save();
-          contractor.userId = savedContractorUser._id;
-          await contractor.save({ validateBeforeSave: false });
-        }
+          if (status === "Update") {
+            contractorUser.userName = contractor.name || contractorUser.userName;
+            contractorUser.userMail = contractor.email || contractorUser.userMail;
+            contractorUser.phone = contractor.phone || contractorUser.phone;
+            contractorUser.whatsapp =
+              contractor.whatsapp || contractorUser.whatsapp;
+            contractorUser.department =
+              contractor.department || contractorUser.department;
+            contractorUser.role = role || contractorUser.role;
+            contractorUser.password = password || contractorUser.password;
+            contractorUser.companyId =
+              contractor.companyId || contractorUser.companyId;
+            contractorUser.ledger = contractor.ledger || contractorUser.ledger;
+            contractorUser.businessUnitId =
+              contractor.businessUnitId || contractorUser.businessUnitId;
+            await contractorUser.save();
+          } else if (status === "Create") {
+            const newContractorUser = new User({
+              userName: contractor.name,
+              userMail: contractor.email,
+              password,
+              phone: contractor.phone,
+              whatsapp: contractor.whatsapp,
+              role,
+              department: "Contractor",
+              companyId: contractor.companyId,
+              businessUnitId: contractor.businessUnitId,
+              ledger: contractor.ledger,
+            });
+            const savedContractorUser = await newContractorUser.save();
+            contractor.userId = savedContractorUser._id;
+            await contractor.save({ validateBeforeSave: false });
+          }
         break;
 
       case "Supplier":
@@ -265,38 +265,38 @@ const convertToUser = async (id, role, password, status) => {
             { department: "Supplier" },
           ],
         });
-        if (supplierUser) 
-        if (status === "Update") {
-          supplierUser.userName = supplier.name || supplierUser.userName;
-          supplierUser.userMail = supplier.email || supplierUser.userMail;
-          supplierUser.phone = supplier.phone || supplierUser.phone;
-          supplierUser.whatsapp = supplier.whatsapp || supplierUser.whatsapp;
-          supplierUser.department =
-            supplier.department || supplierUser.department;
-          supplierUser.role = role || supplierUser.role;
-          supplierUser.password = password || supplierUser.password;
-          supplierUser.companyId = supplier.companyId || supplierUser.companyId;
-          supplierUser.ledger = supplier.ledger || supplierUser.ledger;
-          supplierUser.businessUnitId =
-            supplier.businessUnitId || supplierUser.businessUnitId;
-          await supplierUser.save();
-        } else if (status === "Create") {
-          const newSupplierUser = new User({
-            userName: supplier.name,
-            userMail: supplier.email,
-            password,
-            phone: supplier.phone,
-            whatsapp: supplier.whatsapp,
-            role,
-            department: "Supplier",
-            companyId: supplier.companyId,
-            businessUnitId: supplier.businessUnitId,
-            ledger: supplier.ledger,
-          });
-          const savedSupplierUser = await newSupplierUser.save();
-          supplier.userId = savedSupplierUser._id;
-          await supplier.save({ validateBeforeSave: false });
-        }
+        if (supplierUser)
+          if (status === "Update") {
+            supplierUser.userName = supplier.name || supplierUser.userName;
+            supplierUser.userMail = supplier.email || supplierUser.userMail;
+            supplierUser.phone = supplier.phone || supplierUser.phone;
+            supplierUser.whatsapp = supplier.whatsapp || supplierUser.whatsapp;
+            supplierUser.department =
+              supplier.department || supplierUser.department;
+            supplierUser.role = role || supplierUser.role;
+            supplierUser.password = password || supplierUser.password;
+            supplierUser.companyId = supplier.companyId || supplierUser.companyId;
+            supplierUser.ledger = supplier.ledger || supplierUser.ledger;
+            supplierUser.businessUnitId =
+              supplier.businessUnitId || supplierUser.businessUnitId;
+            await supplierUser.save();
+          } else if (status === "Create") {
+            const newSupplierUser = new User({
+              userName: supplier.name,
+              userMail: supplier.email,
+              password,
+              phone: supplier.phone,
+              whatsapp: supplier.whatsapp,
+              role,
+              department: "Supplier",
+              companyId: supplier.companyId,
+              businessUnitId: supplier.businessUnitId,
+              ledger: supplier.ledger,
+            });
+            const savedSupplierUser = await newSupplierUser.save();
+            supplier.userId = savedSupplierUser._id;
+            await supplier.save({ validateBeforeSave: false });
+          }
         break;
 
       default:
@@ -342,6 +342,7 @@ const login = async (req, res) => {
       //   `User ${user.userName} has logged in.`,
       //   "/",
       // );
+
       return res
         .status(200)
         .cookie("accessToken", accessToken, options)
@@ -385,6 +386,41 @@ const logout = async (req, res) => {
     .clearCookie("refreshToken", options)
     .json({ message: "User Logged Out", token });
 };
+
+const refresh = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const user = await User.findById(decoded?._id).select("-password");
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const newAccessToken = generateAccessToken(user);
+    const newRefreshToken = generateRefreshToken(user._id);
+    user.refreshToken = newRefreshToken;
+    await user.save({ validateBeforeSave: false });
+    const options = {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      expires: new Date(Date.now() + 60 * 60 * 1000),
+    };
+    res.status(200)
+      .cookie("accessToken", newAccessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json({
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 
 const users = async (req, res) => {
   try {
@@ -506,4 +542,5 @@ module.exports = {
   logout,
   resetPasswd,
   convertToUser,
+  refresh,
 };

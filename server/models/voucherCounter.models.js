@@ -14,6 +14,10 @@ const voucherCounterSchema = new mongoose.Schema({
     required: true,
   },
 
+  fy: {
+    type: String,
+  },
+
   seq: {
     type: Number,
     default: 0,
@@ -21,7 +25,7 @@ const voucherCounterSchema = new mongoose.Schema({
 });
 
 voucherCounterSchema.index(
-  { companyId: 1, type: 1 },
+  { companyId: 1, type: 1, fy: 1 },
   { unique: true }
 );
 

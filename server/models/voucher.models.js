@@ -32,6 +32,11 @@ const voucherSchema = new mongoose.Schema(
       default: Date.now,
     },
 
+    fy: {
+      type: String,
+      required: true,
+    },
+
     narration: String,
 
     /* ======================
@@ -99,13 +104,17 @@ const voucherSchema = new mongoose.Schema(
     },
 
     postedAt: Date,
+    postedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
     cancelledAt: Date,
   },
   { timestamps: true },
 );
 
 
-voucherSchema.index({ voucherNo: 1, companyId: 1 }, { unique: true });
+voucherSchema.index({ voucherNo: 1, companyId: 1, fy: 1 }, { unique: true });
 
 voucherSchema.pre("save", function () {
   let debit = 0;

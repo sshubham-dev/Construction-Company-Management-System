@@ -1,6 +1,6 @@
 const express = require('express');
 const Journal = express.Router();
-const {   createJournal,
+const { createJournal,
   updateJournal,
   deleteJournal,
   getJournals,
@@ -16,7 +16,7 @@ Journal.get('/', userAuth, getJournals);
 Journal.get('/:id', userAuth, getJournalById);
 Journal.put('/post/:id', userAuth, postJournal);
 Journal.put('/cancel/:id', userAuth, cancelJournal);
-Journal.put('/:voucherNo', userAuth, updateJournal);
+Journal.put('/:id', userAuth, updateJournal);
 Journal.delete('/:id', userAuth, deleteJournal);
 // Journal.get("/next-voucher", getNextJournalNo);
 // Stock Journal Routes

@@ -1,7 +1,11 @@
 const Voucher = require("../../models/voucher.models");
 const { Ledger } = require("../../models/ledger.models");
 const { getVouchers } = require("./voucher/query.service");
-const { generateVoucherNo } = require("../../utils/voucherNoGenerator");
+const {
+  generateVoucherNo,
+  rebuildVoucherNumbers,
+} = require("../../utils/voucherNoGenerator");
+const { getFinancialYear } = require("../../utils/getFinancialYear");
 
 /* ======================
    CREATE
@@ -10,6 +14,7 @@ const { generateVoucherNo } = require("../../utils/voucherNoGenerator");
 async function createContraVoucher(data, user) {
   const { date, from, to, amount, narration, costCenterId } = data;
 
+  if (!date) throw Error("Date required");
   if (!from || !to || !amount) {
     throw new Error("Missing required fields");
   }
@@ -38,21 +43,25 @@ async function createContraVoucher(data, user) {
     },
   ];
 
+  const fy = getFinancialYear(date);
+
   const voucherNo = await generateVoucherNo({
     companyId: user.companyId,
     type: "CONTRA",
+    fy: fy.code,
   });
 
   const voucher = await Voucher.create({
     voucherNo,
     type: "CONTRA",
     date,
+    fy: fy.code,
     entries,
     narration,
     costCenterId: costCenterId || null,
     status: "DRAFT",
     companyId: user.companyId,
-    createdBy: user._id
+    createdBy: user._id,
   });
 
   return voucher;
@@ -88,6 +97,15 @@ async function updateContraVoucher(id, data) {
     { ledgerId: fromLedger._id, type: "CREDIT", amount },
   ];
 
+  const fy = getFinancialYear(date);
+  if (voucher.fy !== fy.code) {
+    await rebuildVoucherNumbers({
+      companyId: voucher.companyId,
+      type: voucher.type,
+      fy: fy.code,
+    });
+  }
+
   voucher.narration = narration;
   voucher.date = date;
   voucher.costCenterId = costCenterId || null;
@@ -111,6 +129,13 @@ async function deleteContraVoucher(id) {
   }
 
   await voucher.deleteOne();
+
+  // const fy = getFinancialYear(voucher.date);
+  // await rebuildVoucherNumbers({
+  //   companyId: voucher.companyId,
+  //   type: voucher.type,
+  //   fy: fy.code,
+  // });
 
   return true;
 }

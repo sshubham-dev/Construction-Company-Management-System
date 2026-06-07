@@ -21,7 +21,7 @@ const LedgerReport = () => {
       params: { companyId: user.companyId },
     });
     console.log("ledger found: ", res.data);
-    setLedgers(res.data || []);
+    setLedgers(res.data.data || []);
   };
 
   useEffect(() => {

@@ -108,7 +108,7 @@ const costCenterSchema = new mongoose.Schema(
     },
     isActive: { type: Boolean, default: true }, // Active/Inactive Status
     type: { type: String, required: true },
-    reference: { type: mongoose.Schema.Types.ObjectId, refPath: "type" }, // Dynamic reference
+    reference: { type: mongoose.Schema.Types.ObjectId, refPath: "type", default: null }, // Dynamic reference
   },
   { timestamps: true },
 );

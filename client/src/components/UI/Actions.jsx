@@ -19,7 +19,7 @@ import CreatePurchaseOrder from "../CreatePurchaseOrder";
 import CreateLabourAttendance from "../CreateLabourAttendance";
 import CreateGRN from "../CreateGRN";
 import CreateDeliveryNote from "../CreateDeliveryNote";
-import CollectionEntry from "../../pages/Design/CollectionEntry";
+import CollectionEntry from "../../pages/ERP/Components/CollectionEntry";
 import CreateSalary from "../CreateSalary";
 
 export default function Actions({ role }) {

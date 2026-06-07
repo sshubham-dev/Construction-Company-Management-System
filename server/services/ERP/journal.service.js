@@ -1,14 +1,17 @@
 const Voucher = require("../../models/voucher.models");
 const { Ledger } = require("../../models/ledger.models");
 const { getVouchers } = require("./voucher/query.service");
-const { generateVoucherNo } = require("../../utils/voucherNoGenerator");
+const { generateVoucherNo, rebuildVoucherNumbers } = require("../../utils/voucherNoGenerator");
+const { getFinancialYear } = require("../../utils/getFinancialYear");
 
 /* ======================
    CREATE
 ====================== */
 // ✅
 async function createJournalVoucher(data, user) {
-  const { date, narration, entries, costCenterId} = data;
+  const { date, narration, entries, costCenterId } = data;
+
+  if (!date) throw Error("Date required");
 
   if (!entries || entries.length < 2) {
     throw new Error("Minimum two entries required");
@@ -37,9 +40,12 @@ async function createJournalVoucher(data, user) {
     });
   }
 
-    const voucherNo = await generateVoucherNo({
+  const fy = getFinancialYear(date);
+
+  const voucherNo = await generateVoucherNo({
     companyId: user.companyId,
     type: "JOURNAL",
+    fy: fy.code,
   });
 
   if (debit !== credit) {
@@ -50,6 +56,7 @@ async function createJournalVoucher(data, user) {
     voucherNo,
     type: "JOURNAL",
     date,
+    fy: fy.code,
     narration,
     entries: formattedEntries,
     totalDebit: debit,
@@ -101,6 +108,15 @@ async function updateJournalVoucher(id, data) {
     throw new Error("Debit and Credit must match");
   }
 
+  const fy = getFinancialYear(date);
+
+  if (voucher.fy !== fy.code) {
+    await rebuildVoucherNumbers({
+      companyId: voucher.companyId,
+      type: voucher.type,
+      fy: fy.code,
+    });
+  }
   voucher.entries = formattedEntries;
   voucher.narration = narration;
   voucher.date = date;
@@ -128,6 +144,13 @@ async function deleteJournalVoucher(id) {
 
   await voucher.deleteOne();
 
+  // const fy = getFinancialYear(voucher.date);
+  // await rebuildVoucherNumbers({
+  //   companyId: voucher.companyId,
+  //   type: voucher.type,
+  //   fy: fy.code,
+  // });
+
   return true;
 }
 
@@ -136,7 +159,7 @@ async function deleteJournalVoucher(id) {
 ====================== */
 // ✅
 async function getAllJournals(query) {
-const result = await getVouchers("JOURNAL", query);
+  const result = await getVouchers("JOURNAL", query);
   return result;
 
 }

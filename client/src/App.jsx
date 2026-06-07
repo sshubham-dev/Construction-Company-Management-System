@@ -95,8 +95,6 @@ import { initPushNotifications } from "./helper/notificationService.js";
 
 // Design
 import ProjectReport from "./pages/Design/ProjectReport.jsx";
-import CollectionEntry from "./pages/Design/CollectionEntry.jsx";
-import Collections from "./pages/Design/Collections.jsx";
 
 // HRMS
 import AttendanceReport from "./pages/HRMS/AttendanceReport.jsx";
@@ -126,6 +124,7 @@ import Expenses from "./pages/ERP/Expenses.jsx";
 import PaymentChallan from "./pages/ERP/PaymentChallan.jsx";
 import ERPSettings from "./pages/ERP/ERPSettings.jsx";
 import Suppliers from "./pages/ERP/Suppliers.jsx";
+import Collections from "./pages/ERP/Collections.jsx";
 import InvoiceForm from "./pages/ERP/Components/InvoiceForm.jsx";
 
 // ERP/Inventory
@@ -165,7 +164,6 @@ import RFQ from "./pages/ERP/RFQ.jsx";
 import RFQDetail from "./pages/ERP/RFQDetail.jsx";
 import RFQComparison from "./pages/ERP/RFQComparison.jsx";
 import PublicQuotationPage from "./pages/ERP/PublicQuotationPage.jsx";
-// import FiscalYear from "./pages/ERP/FiscalYear.jsx";
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -351,7 +349,6 @@ const App = () => {
         <Route path="/return-order/:id" element={<ReturnOrderScreen />} />
 
         <Route path="/erp/company" element={<Company />} />
-        {/* <Route path="/erp/fy" element={<FiscalYear />} /> */}
         <Route path="/erp-setting" element={<ERPSettings />} />
         <Route path="/erp/groups" element={<LedgerGroup />} />
 
@@ -414,6 +411,7 @@ const App = () => {
         <Route path="/erp/cost-center" element={<CostCenter />} />
         <Route path="/erp/invoice/create" element={<InvoiceForm />} />
         <Route path="/erp/invoice" element={<Invoice />} />
+        <Route path="/erp/collections" element={<Collections />} />
         <Route
           path="/erp/payment-challan/create"
           element={<CreatePayChallan />}
@@ -447,8 +445,6 @@ const App = () => {
         <Route path="/crm/Quotation" element={<Quotations />} />
 
         <Route path="/design/project" element={<ProjectReport />} />
-        <Route path="/design/collection-entry" element={<CollectionEntry />} />
-        <Route path="/design/collections" element={<Collections />} />
 
         <Route path="/my_expenses" element={<Expenses />} />
 

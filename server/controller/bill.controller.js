@@ -16,7 +16,7 @@ const {
 } = require("./approval.controller.js");
 const { Ledger } = require("../models/ledger.models.js");
 const { Journal } = require("../models/journal.models.js");
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
+const { sendPushNotification, notifyRole } = require("../utils/pushNotification.js");
 
 const generateBillNo = async (req, res) => {
   try {
@@ -150,6 +150,7 @@ const siteBill = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error });
   }
 };
+
 // Todo - review and update --> save bill to it's respective site, supplier, contractor
 // const createBill = async (req, res) => {
 //   try {
@@ -383,6 +384,7 @@ const createBill = async (req, res) => {
     await newBill.save();
 
     sendApproveByAccountHead(newBill, "Bill", user._id);
+    sendApproveByAccountant(newBill, "Bill", user._id);
     sendApproveByAdmin(newBill, "Bill", user._id);
     sendApproveByQuality(newBill, "Bill", user._id);
     sendApproveByIncharge(newBill, "Bill", user._id);
@@ -429,7 +431,7 @@ const saveBill = async (req, res) => {
     if (bill.createdBy.toString() === user?._id.toString()) {
       if (
         bill.adminApprove === "Approved" &&
-        bill.accountheadApprove === "Approved" &&
+        bill.accountantApprove === "Approved" &&
         bill.inchargeApprove === "Approved" &&
         bill.qualityApprove === "Approved"
       ) {
@@ -463,9 +465,9 @@ const saveBill = async (req, res) => {
 
         const contractorLedger = existingContractor
           ? await Ledger.findOne({
-              referenceId: existingContractor._id,
-              referenceType: "Contractor",
-            })
+            referenceId: existingContractor._id,
+            referenceType: "Contractor",
+          })
           : bill.contractor.name;
 
         const siteLedger = await Ledger.findOne({
@@ -480,11 +482,10 @@ const saveBill = async (req, res) => {
           const newJournal = new Journal({
             voucherNo,
             date: new Date(),
-            narration: `Bill for ${
-              existingContractor
+            narration: `Bill for ${existingContractor
                 ? existingContractor.name
                 : bill.contractor.name
-            } at site ${existingSite.name}`,
+              } at site ${existingSite.name}`,
             entries: [
               {
                 account: {

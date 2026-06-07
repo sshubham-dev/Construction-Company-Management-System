@@ -261,6 +261,28 @@ const reject = async (req, res) => {
           //     "accountantApprove",
           //     "Purchase Request"
           //   );
+          case "Expense":
+            const expenses = await Expenses.findById(approval?.data._id)
+              .populate("createdBy")
+              .exec();
+            console.log(expenses);
+            ((approval.isApproved = false),
+              (approval.data.approval = "Rejected"),
+              (expenses.isApproved = "Rejected"),
+              console.log("before approval", approval.data));
+            await approval.save();
+            await expenses.save();
+            console.log("after Rejected", approval.data);
+            saveReject(approval, user?._id, "Expenses");
+            await Approval.findByIdAndDelete(approval?._id);
+            expenses.createdBy.message.push(
+              "Expenses has been Rejected By Accountant",
+            );
+            res
+              .status(201)
+              .json({ message: "Expenses has been Rejected By Accountant" });
+            break;
+
           default:
             return res.status(400).json({ message: "Invalid approval type" });
         }
@@ -770,8 +792,12 @@ const approve = async (req, res) => {
 
           case "Expense":
             const expenses = await Expenses.findById(approval?.data._id)
-            .populate("createdBy")
-            .exec();
+              .populate("createdBy")
+              .exec();
+            if (!expenses) {
+              const approval = await Approval.findByIdAndDelete(id);
+              return res.status(404).json({ message: "Expenses not found so, approval has been deleted" });
+            }
             console.log(expenses);
             approval.isApproved = true;
             approval.data.isApproved = "Approved";
@@ -798,15 +824,14 @@ const approve = async (req, res) => {
       case "Accountant":
         switch (approval.approvalOf) {
           case "Bill":
-            const bill = await Bill.findById(approval.data._id)
-              .populate("createdBy")
-              .exec();
+            const bill = await Bill.findById(approval.data._id);
+
             ((approval.isApproved = true), await approval.save());
-            bill.accountantApprove = "Approved";
-            await bill.save();
-            (saveApproved(approval, user._id, "Bill"),
-              await Approval.findByIdAndDelete(approval?._id));
-            bill.createdBy.message.push("Bill has been Approved By Accountant");
+            ((bill.accountantApprove = "Approved"), await bill.save());
+
+            saveApproved(approval, user._id, "Bill");
+            await Approval.findByIdAndDelete(approval?._id);
+            // bill.createdBy.message.push('Bill has been Approved By Parveen Sir');
             for (let emp of employees) {
               sendPushNotification(
                 emp._id,
@@ -814,10 +839,9 @@ const approve = async (req, res) => {
               );
               await emp.save();
             }
-            res
-              .status(201)
-              .json({ message: "Bill has been Approved By Accountant" });
-            // console.log('bill:', bill)
+            res.status(201).json({
+              message: `${approval.approvalOf} of ${approval.data?.site?.name} has been Approved By ${user.userName}.`,
+            });
             break;
 
           case "Purchase Request":
@@ -841,6 +865,32 @@ const approve = async (req, res) => {
             res.status(201).json({
               message: "Purchase Request has been Approved By Accounts",
             });
+            break;
+
+          case "Expense":
+            const expenses = await Expenses.findById(approval?.data._id)
+              .populate("createdBy")
+              .exec();
+            if (!expenses) {
+              const approval = await Approval.findByIdAndDelete(id);
+              return res.status(404).json({ message: "Expenses not found so, approval has been deleted" });
+            }
+            console.log(expenses);
+            approval.isApproved = true;
+            approval.data.isApproved = "Approved";
+            expenses.isApproved = "Approved";
+            console.log("before approval", approval.data);
+            await approval.save();
+            await expenses.save();
+            console.log("after approval", approval.data);
+            saveApproved(approval, user?._id, "Expenses");
+            await Approval.findByIdAndDelete(approval?._id);
+            expenses.createdBy.message.push(
+              "Expenses has been Approved By Accountant",
+            );
+            res
+              .status(201)
+              .json({ message: "Expenses has been Approved By Accountant" });
             break;
 
           default:

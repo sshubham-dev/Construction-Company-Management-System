@@ -2,7 +2,8 @@ const Voucher = require("../../models/voucher.models");
 const { Ledger } = require("../../models/ledger.models");
 const InvoiceAllocation = require("../../models/invoiceAllocation.models");
 const { getVouchers } = require("./voucher/query.service");
-const { generateVoucherNo } = require("../../utils/voucherNoGenerator");
+const { generateVoucherNo, rebuildVoucherNumbers } = require("../../utils/voucherNoGenerator");
+const { getFinancialYear } = require("../../utils/getFinancialYear");
 
 
 /* ======================
@@ -18,6 +19,8 @@ async function createReceiptVoucher(data, user) {
     amount,
     narration,
   } = data;
+
+  if (!date) throw Error("Date required");
 
   if (!from || !to || !amount) {
     throw new Error("Missing required fields");
@@ -43,15 +46,19 @@ async function createReceiptVoucher(data, user) {
     { ledgerId: partyLedger._id, type: "CREDIT", amount },
   ];
 
+  const fy = getFinancialYear(date);
+
   const voucherNo = await generateVoucherNo({
     companyId: user.companyId,
     type: "RECEIPT",
+    fy: fy.code,
   });
 
   const voucher = await Voucher.create({
     voucherNo,
     type: "RECEIPT",
     date,
+    fy: fy.code,
     entries,
     narration,
     costCenterId: costCenterId || null,
@@ -60,24 +67,10 @@ async function createReceiptVoucher(data, user) {
     createdBy: user._id,
   });
 
-  /* ======================
-     SAVE INVOICE ALLOCATION
-  ====================== */
-
-  // if (invoices.length > 0) {
-  //   const allocations = invoices.map((inv) => ({
-  //     voucherId: voucher._id,
-  //     invoiceId: inv.invoiceId,
-  //     amount: inv.amount,
-  //     type: "RECEIPT",
-  //   }));
-
-  //   await InvoiceAllocation.insertMany(allocations);
-  // }
-
   return voucher;
 }
 
+// ✅
 async function updateReceiptVoucher(id, data) {
   const voucher = await Voucher.findById(id);
 
@@ -102,25 +95,22 @@ async function updateReceiptVoucher(id, data) {
     { ledgerId: from, type: "CREDIT", amount },
   ];
 
+  const fy = getFinancialYear(date);
+
+  if (voucher.fy !== fy.code) {
+    await rebuildVoucherNumbers({
+      companyId: voucher.companyId,
+      type: voucher.type,
+      fy: fy.code,
+    });
+  }
+
   voucher.entries = entries;
   voucher.narration = narration;
   voucher.date = date;
   voucher.costCenterId = costCenterId;
 
   await voucher.save();
-
-  await InvoiceAllocation.deleteMany({ voucherId: id });
-
-  if (invoices.length > 0) {
-    const allocations = invoices.map((inv) => ({
-      voucherId: id,
-      invoiceId: inv.invoiceId,
-      amount: inv.amount,
-      type: "RECEIPT",
-    }));
-
-    await InvoiceAllocation.insertMany(allocations);
-  }
 
   return voucher;
 }
@@ -131,6 +121,7 @@ async function getAllReceipts(query) {
   return result;
 }
 
+// ✅
 async function getReceiptById(id) {
   const voucher = await Voucher.findById(id).populate("entries.ledgerId");
 
@@ -149,8 +140,14 @@ async function deleteReceiptVoucher(id) {
     throw new Error("Only Draft voucher can be deleted");
   }
 
-  await InvoiceAllocation.deleteMany({ voucherId: id });
   await voucher.deleteOne();
+
+  // const fy = getFinancialYear(voucher.date);
+  // await rebuildVoucherNumbers({
+  //   companyId: voucher.companyId,
+  //   type: voucher.type,
+  //   fy: fy.code,
+  // });
 
   return true;
 }

@@ -36,6 +36,10 @@ const companySchema = new mongoose.Schema(
       },
     ],
 
+    accounting: {
+      booksBeginFrom: Date, // 01-04-2023
+    },
+
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true },

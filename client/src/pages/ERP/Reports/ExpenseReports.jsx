@@ -19,6 +19,7 @@ const ExpenseReports = () => {
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [editFrom, setEditForm] = useState(false);
   const [editId, setEditId] = useState(null);
+
   useEffect(() => {
     const loadLedgers = async () => {
       const { data } = await axios.get(
@@ -307,14 +308,20 @@ const ExpenseReports = () => {
 
                 {/*  */}
                 <td className="p-3">
-                  {/* {exp.status !== "Posted" && exp.isApproved === "Approved" && (
-                    <button
-                      onClick={() => postExpense(exp._id)}
-                      className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                    >
-                      Post
-                    </button>
-                  )} */}
+                  {user?.department === "Accountant" ||
+                    user?.department === "Account Head" && (
+                      <>
+                        {exp.status !== "Posted" &&
+                          exp.isApproved === "Approved" && (
+                            <button
+                              onClick={() => postExpense(exp._id)}
+                              className="bg-green-600 text-white px-2 py-1 rounded text-xs"
+                            >
+                              Post
+                            </button>
+                          )}
+                      </>
+                    )}
                   {/* Delete */}
                   {/* {exp.status !== "Posted" &&
                     (exp.isApproved === "For Approval" ||

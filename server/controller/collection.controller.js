@@ -14,6 +14,8 @@ const {
   postVoucher,
   cancelVoucher,
 } = require("../services/ERP/voucher/voucher.service.js");
+const { getFinancialYear } = require("../utils/getFinancialYear.js");
+const { generateVoucherNo } = require("../utils/voucherNoGenerator.js");
 
 /* ---------------- CREATE COLLECTION ENTRY ---------------- */
 
@@ -275,6 +277,17 @@ const getCollections = async (req, res) => {
       },
       { $unwind: "$client" },
 
+      /* ---- JOIN RECEIVED INTO ---- */
+      {
+        $lookup: {
+          from: "ledgers",
+          localField: "receivedInto",
+          foreignField: "_id",
+          as: "received",
+        },
+      },
+      { $unwind: "$received" },
+
       /* ---- JOIN COST CENTER ---- */
       {
         $lookup: {
@@ -383,14 +396,22 @@ const postCollection = async (req, res) => {
       throw new Error("Already processed");
     }
 
-    // 🔥 CREATE VOUCHER
-    const voucher = await createVoucher({
+    const fy = getFinancialYear(collection.date);
+
+    const voucherNo = await generateVoucherNo({
       companyId: collection.companyId,
       type: "RECEIPT",
-      date: collection.date,
-      narration: collection.narration,
+      fy: fy.code,
+    });
 
-      // businessUnitId: collection.businessUnitId,
+    // 🔥 CREATE VOUCHER
+    const voucher = await createVoucher({
+      voucherNo,
+      type: "RECEIPT",
+      date: collection.date,
+      fy: fy.code,
+      companyId: collection.companyId,
+      narration: collection.narration,
       costCenterId: collection.costCenterId,
 
       reference: "Collection",
@@ -408,11 +429,9 @@ const postCollection = async (req, res) => {
           amount: collection.amount,
         },
       ],
-
+      status: "DRAFT",
       createdBy: req.user._id,
     });
-
-    await postVoucher(voucher._id);
 
     collection.voucherId = voucher._id;
     collection.status = "approved";

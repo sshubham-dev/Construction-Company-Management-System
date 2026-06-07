@@ -176,7 +176,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
 
     {
-      to: "/design/collections",
+      to: "/erp/collections",
       name: "Record Client Payment",
       icon: <FaWallet />,
       role: [
@@ -286,12 +286,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: "Company Management",
       icon: <MdAccountBalance />,
       role: ["Admin", "Company", "Account Head", "Accountant"],
-    },
-    {
-      to: "/erp/fy",
-      name: "Fiscal Year",
-      icon: <MdAccountBalance />,
-      role: ["Admin", "Company", "Account Head"],
     },
     {
       to: "/erp/business_unit",

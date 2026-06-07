@@ -36,7 +36,7 @@ const syncLedger = async ({
   // 2. Prepare ledger data (ALWAYS FULL STATE)
   const ledgerData = {
     name: doc.name,
-    alias: doc.name,
+    alias: `${doc.name} - ${category}`,
     groupId: group._id, // ✅ always updated
     companyId: doc.companyId,
     referenceType: category,

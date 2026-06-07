@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import Modal from "../../components/Modal";
-import CollectionEntry from "./CollectionEntry";
+import CollectionEntry from "./Components/CollectionEntry";
 import { GrEdit } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
 
@@ -71,6 +71,8 @@ const Collections = () => {
           maxAmount,
         },
       });
+
+      console.log(res.data.data);
 
       setList(res.data.data || []);
       setTotal(res.data.total || 0);
@@ -348,11 +350,11 @@ const Collections = () => {
               </div>
 
               <div>
-                <b>Client:</b> {selected.clientLedgerId?.name}
+                <b>Client:</b> {selected.client?.name}
               </div>
 
               <div>
-                <b>Bank:</b> {selected.receivedInto?.name}
+                <b>Bank:</b> {selected.received?.name}
               </div>
 
               <div>
@@ -398,25 +400,28 @@ const Collections = () => {
 
             {/* ACTIONS */}
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
-              {selected.status === "pending" &&
-                (user?.department === "Accountant" ||
-                  user?.department === "Account head") && (
+              {user?.department === "Accountant" ||
+                (user?.department === "Account Head" && (
                   <>
-                    <button
-                      onClick={() => reject(selected._id)}
-                      className="flex-1 bg-red-500 text-white py-2 rounded-lg"
-                    >
-                      Reject
-                    </button>
+                    {selected.status === "pending" && (
+                      <>
+                        <button
+                          onClick={() => reject(selected._id)}
+                          className="flex-1 bg-red-500 text-white py-2 rounded-lg"
+                        >
+                          Reject
+                        </button>
 
-                    <button
-                      onClick={() => approve(selected._id)}
-                      className="flex-1 bg-green-600 text-white py-2 rounded-lg"
-                    >
-                      Post
-                    </button>
+                        <button
+                          onClick={() => approve(selected._id)}
+                          className="flex-1 bg-green-600 text-white py-2 rounded-lg"
+                        >
+                          Post
+                        </button>
+                      </>
+                    )}
                   </>
-                )}
+                ))}
 
               <button
                 onClick={() => setSelected(null)}

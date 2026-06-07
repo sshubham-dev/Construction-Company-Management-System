@@ -34,9 +34,9 @@ const CostCenterModal = ({ isOpen, onClose, costCenters, onSave, editId }) => {
           name: selected.name || "",
           companyId: selected.companyId?._id || "",
           type: selected.type || "",
-          parentId: selected.parentId || "",
+          parentId: selected.parentId || null,
           isActive: selected.isActive ?? true,
-          reference: selected.reference || "",
+          reference: selected.reference || null,
         });
       }
     }
@@ -121,7 +121,7 @@ const CostCenterModal = ({ isOpen, onClose, costCenters, onSave, editId }) => {
           >
             <option value="">Primary</option>
             {costCenters.map((center) => (
-              <option key={center.id} value={center.name}>
+              <option key={center._id} value={center._id}>
                 {center.name}
               </option>
             ))}
@@ -150,7 +150,7 @@ const CostCenterModal = ({ isOpen, onClose, costCenters, onSave, editId }) => {
           >
             <option value="">Primary</option>
             {costCenters.map((center) => (
-              <option key={center.id} value={center.id}>
+              <option key={center._id} value={center._id || null}>
                 {center.name}
               </option>
             ))}
