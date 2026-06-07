@@ -63,6 +63,7 @@ const Stock_Transaction = require("./routes/stockTransaction.routes");
 const Item = require("./routes/item.routes");
 const StockAudit = require("./routes/stockaudit.routes");
 const RFQs = require("./routes/rfq.routes");
+const FiscalYear = require("./routes/fiscalYear.routes");
 // midellware
 
 const allowedOrigins = process.env.CORS_ORIGIN.split(",");
@@ -169,6 +170,7 @@ app.use("/api/v1/projects", Projects);
 app.use("/api/v1/company", Company);
 app.use("/api/v1/reports", Reports)
 app.use("/api/v1/rfq", RFQs)
+app.use("/api/v1/fy", FiscalYear)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   console.log(err);
