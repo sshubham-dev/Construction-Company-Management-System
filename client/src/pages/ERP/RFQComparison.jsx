@@ -32,7 +32,7 @@ const RFQComparison = () => {
 
   const [quotations, setQuotations] = useState([]);
 
-  const [selecting, setSelecting] = useState("");
+  const [selected, setSelected] = useState(null);
 
   /* =====================================
      FETCH
@@ -51,6 +51,7 @@ const RFQComparison = () => {
       setRFQ(res.data.rfq);
 
       setQuotations(res.data.all || []);
+      console.log(res.data.rfq, res.data.all);
     } catch (err) {
       console.log(err);
 
@@ -74,19 +75,21 @@ const RFQComparison = () => {
 
   const selectVendor = async (quotationId) => {
     try {
-      setSelecting(quotationId);
+      setSelected(quotationId);
 
-      await axios.post(`/api/v1/rfq/select-quotation/${quotationId}`);
+      const res = await axios.post(
+        `/api/v1/rfq/select-quotation/${quotationId}`,
+      );
 
-      toast.success("Vendor selected successfully");
-
+      toast.success("Vendor selected and Purchase Order created");
+      // navigate(`/erp/purchase-order/${res.data.purchaseOrder._id}`);
       fetchData();
     } catch (err) {
       console.log(err);
 
       toast.error(err.response?.data?.error || "Failed");
     } finally {
-      setSelecting("");
+      setSelected("");
     }
   };
 
@@ -176,18 +179,23 @@ const RFQComparison = () => {
           </div>
         </div>
 
-        {/* ACTION */}
+        {rfq.status === "CLOSED" && rfq.purchaseOrderId && (
+          <div className="flex flex-wrap gap-3">
+            <button className="bg-green-100 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2">
+              <CheckCircle2 size={18} />
+              RFQ Closed
+            </button>
 
-        {rfq.status === "CLOSED" && (
-          <button
-            onClick={() =>
-              navigate(`/erp/procurement/po/create?rfq=${rfq._id}`)
-            }
-            className="bg-green-600 hover:bg-green-700 transition text-white px-5 py-3 rounded-xl flex items-center justify-center gap-2"
-          >
-            <ShoppingCart size={18} />
-            Create Purchase Order
-          </button>
+            <button
+              onClick={() =>
+                navigate(`/erp/inventory/purchase-order/${rfq.purchaseOrderId._id}`)
+              }
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl flex items-center gap-2"
+            >
+              <ShoppingCart size={18} />
+              View Purchase Order
+            </button>
+          </div>
         )}
       </div>
 
@@ -215,6 +223,48 @@ const RFQComparison = () => {
         <KPI icon={<Scale size={18} />} title="Comparison" value="L1/L2" />
       </div>
 
+      {rfq.status === "CLOSED" && (
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <CheckCircle2 size={24} className="text-green-600" />
+
+            <div>
+              <h2 className="font-semibold text-lg text-green-700">
+                Procurement Decision Completed
+              </h2>
+
+              <p className="text-sm text-gray-600">
+                Vendor has been selected and Purchase Order generated.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-4">
+            <MiniCard
+              label="Selected Supplier"
+              value={rfq.selectedSupplierId?.name || "-"}
+            />
+
+            <MiniCard
+              label="PO Number"
+              value={rfq.purchaseOrderId?.poNo || "-"}
+            />
+
+            <MiniCard
+              label="PO Amount"
+              value={`₹${(
+                rfq.purchaseOrderId?.totalAmount || 0
+              ).toLocaleString()}`}
+            />
+
+            <MiniCard
+              label="Status"
+              value={rfq.purchaseOrderId?.status || "-"}
+            />
+          </div>
+        </div>
+      )}
+
       {/* NO QUOTATIONS */}
 
       {ranked.length === 0 ? (
@@ -228,6 +278,8 @@ const RFQComparison = () => {
 
             const isSelected = quotation.status === "SELECTED";
 
+            const isWinner = quotation._id === rfq.selectedQuotationId?._id;
+
             const itemSubtotal = quotation.items.reduce(
               (sum, item) => sum + item.quantity * item.rate,
               0,
@@ -237,8 +289,8 @@ const RFQComparison = () => {
               <div
                 key={quotation._id}
                 className={`rounded-2xl overflow-hidden border ${
-                  isSelected
-                    ? "border-green-500 ring-2 ring-green-100 bg-white"
+                  isWinner
+                    ? "border-green-500 ring-2 ring-green-100 bg-green-50"
                     : "bg-white"
                 }`}
               >
@@ -291,12 +343,12 @@ const RFQComparison = () => {
                     {!isSelected && rfq.status !== "CLOSED" && (
                       <button
                         onClick={() => selectVendor(quotation._id)}
-                        disabled={selecting === quotation._id}
+                        disabled={selected === quotation._id}
                         className="bg-green-600 hover:bg-green-700 transition text-white px-4 py-2 rounded-xl text-sm flex items-center gap-2"
                       >
                         <CheckCircle2 size={15} />
 
-                        {selecting === quotation._id
+                        {selected === quotation._id
                           ? "Selecting..."
                           : "Select Vendor"}
                       </button>
@@ -575,6 +627,7 @@ const RFQComparison = () => {
                   <th className="text-left px-4 py-3">Status</th>
 
                   <th className="text-left px-4 py-3">Submitted</th>
+                  <th className="text-left px-4 py-3">Result</th>
                 </tr>
               </thead>
 
@@ -608,6 +661,18 @@ const RFQComparison = () => {
 
                       <td className="px-4 py-4">
                         {moment(q.createdAt).format("DD MMM YYYY")}
+                      </td>
+
+                      <td className="px-4 py-4">
+                        {q.status === "SELECTED" ? (
+                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+                            Winner
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
+                            Rejected
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );

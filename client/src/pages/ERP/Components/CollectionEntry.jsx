@@ -3,6 +3,7 @@ import axios from "axios";
 import Select from "react-select";
 import { useSelector, useDispatch } from "react-redux";
 import toast from "react-hot-toast";
+import imageCompression from "browser-image-compression";
 
 const CollectionEntry = ({ onClose, editId }) => {
   const [ledgers, setLedgers] = useState([]);
@@ -15,6 +16,7 @@ const CollectionEntry = ({ onClose, editId }) => {
     costCenterId: "",
     clientLedgerId: "",
     receivedInto: "",
+    departmentId: "",
     amount: "",
     medium: "",
     referenceNo: "",
@@ -22,10 +24,11 @@ const CollectionEntry = ({ onClose, editId }) => {
     proofImage: null,
   });
   const [costCenters, setCostCenter] = useState([]);
+  const [departmentId, setDepartmentId] = useState("");
+  const [uploading, setUploading] = useState(false);
 
-  const PARTY_UNDER = ["Sundry Debtors","Direct Income", "Indirect Income"];
+  const PARTY_UNDER = ["Sundry Debtors", "Direct Income", "Indirect Income"];
   const CASH_BANK_UNDER = ["Cash-in-Hand", "Bank Accounts"];
-  const COST_CENTER = ["Department", "SITE"];
 
   useEffect(() => {
     axios
@@ -42,7 +45,8 @@ const CollectionEntry = ({ onClose, editId }) => {
             companyId: user.companyId,
           },
         });
-        setCostCenter(res.data.filter((cc) => COST_CENTER.includes(cc?.type)));
+        // console.log("Fetched cost centers:", res.data);
+        setCostCenter(res.data);
       } catch (error) {
         console.log(error);
       }
@@ -55,6 +59,12 @@ const CollectionEntry = ({ onClose, editId }) => {
     }
   }, []);
 
+  console.log(ledgers);
+  const departments = useMemo(
+    () => costCenters.filter((cc) => cc.type === "Department"),
+    [costCenters],
+  );
+
   const fetchData = async (id) => {
     try {
       const res = await axios.get(`/api/v1/collection/${id}`);
@@ -64,6 +74,7 @@ const CollectionEntry = ({ onClose, editId }) => {
       setForm({
         date: data.date?.slice(0, 10),
         costCenterId: data.costCenterId?._id || null,
+        departmentId: data.departmentId?._id || null,
         clientLedgerId: data.clientLedgerId?._id || "",
         receivedInto: data.receivedInto?._id || "",
         amount: data.amount || "",
@@ -88,31 +99,86 @@ const CollectionEntry = ({ onClose, editId }) => {
     [ledgers],
   );
 
-  console.log(cashBankLedgers);
+  const filteredCostCenters = useMemo(() => {
+    // console.log("Filtering cost centers for departmentId:", departmentId);
+    if (!form.departmentId) return [];
+    return costCenters.filter((cc) => cc.parentId === form.departmentId);
+  }, [costCenters, form.departmentId]);
 
   const findOption = (options, value) => options.find((o) => o.value === value);
 
   const mapOptions = (arr) =>
     arr.map((l) => ({
       value: l._id,
-      label: `${l.name} (${l.referenceType || l?.groupId?.name || l.type})`,
+      label: `${l.name} (${
+        l.mailingDetails?.phoneNo ||
+        l.referenceType ||
+        l?.groupId?.name
+      })`,
     }));
 
   const updateForm = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
+  const handleUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    let toastId;
+    try {
+      setUploading(true);
+      // ✅ show loading toast
+      toastId = toast.loading("Uploading image...");
+      // compress
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+      });
+      setForm((p) => ({
+        ...p,
+        proofImage: compressedFile,
+      }));
+      // ✅ success toast (replaces loading)
+      toast.success("Image uploaded successfully", { id: toastId });
+    } catch (err) {
+      console.log("Upload error", err);
+      // ❌ error toast (replaces loading)
+      toast.error("Upload failed. Try again.", { id: toastId });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    const fd = new FormData();
+
+    Object.entries(form).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        fd.append(key, value);
+      }
+    });
+
+    for (const pair of fd.entries()) {
+      console.log(pair[0], pair[1]);
+    }
 
     let toastId;
     try {
       toastId = toast.loading("Processing...");
       if (editId !== undefined) {
-        await axios.put(`/api/v1/collection/${editId}`, form);
+        await axios.put(`/api/v1/collection/${editId}`, fd, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
         toast.success("Updated successfully", { id: toastId });
       } else {
-        console.log(form);
-        await axios.post("/api/v1/collection", form);
+        await axios.post("/api/v1/collection", fd, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
         toast.success("Created successfully", { id: toastId });
       }
       onClose();
@@ -154,8 +220,18 @@ const CollectionEntry = ({ onClose, editId }) => {
       />
 
       <Select
-        options={mapOptions(costCenters)}
-        value={findOption(mapOptions(costCenters), form.costCenterId)}
+        options={mapOptions(departments)}
+        placeholder="Select Department"
+        value={findOption(mapOptions(departments), form.departmentId)}
+        onChange={(v) => {
+          setDepartmentId(v?.value || "");
+          updateForm("departmentId", v?.value || "");
+        }}
+      />
+
+      <Select
+        options={mapOptions(filteredCostCenters)}
+        value={findOption(mapOptions(filteredCostCenters), form.costCenterId)}
         placeholder="Payment For"
         onChange={(v) => updateForm("costCenterId", v?.value || "")}
       />
@@ -202,7 +278,9 @@ const CollectionEntry = ({ onClose, editId }) => {
       {/* PROOF IMAGE */}
       <input
         type="file"
-        onChange={(e) => updateForm("proofImage", e.target.files[0])}
+        accept="image/*"
+        // onChange={(e) => updateForm("proofImage", e.target.files[0])}
+        onChange={handleUpload}
         className="border p-2 rounded w-full"
       />
 

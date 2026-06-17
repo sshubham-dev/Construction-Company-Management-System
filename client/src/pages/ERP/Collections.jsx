@@ -392,7 +392,7 @@ const Collections = () => {
             {/* IMAGE */}
             {selected.proofImage && (
               <img
-                src={selected.proofImage}
+                src={selected.proofImage?.secure_url}
                 alt="proof"
                 className="w-full max-h-64 object-contain rounded-lg border"
               />

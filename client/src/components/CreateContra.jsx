@@ -3,17 +3,18 @@ import axios from "axios";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
 
-const CreateContra = ({ onClose, refresh }) => {
+const CreateContra = ({ onClose, refresh, editId }) => {
+  const isEdit = !!editId;
   const [loading, setLoading] = useState(false);
   const [accounts, setAccounts] = useState([]);
   const [costCenters, setCostCenters] = useState([]);
   const [form, setForm] = useState({
     date: new Date().toISOString().split("T")[0],
+    costCenterId: "",
     from: "",
     to: "",
     amount: "",
     narration: "",
-    costCenterId: "",
   });
   const { user, isLoggedIn } = useSelector((state) => state.auth);
 
@@ -27,7 +28,7 @@ const CreateContra = ({ onClose, refresh }) => {
           params: { companyId: user.companyId },
         });
         const data = Array.isArray(res.data.data) ? res.data.data : [];
-        console.log(data)
+        console.log(data);
 
         // Only cash/bank accounts
         const filtered = data.filter(
@@ -50,6 +51,27 @@ const CreateContra = ({ onClose, refresh }) => {
       });
   }, []);
 
+  useEffect(() => {
+    if (!editId) return;
+
+    fetchVoucher();
+  }, [editId]);
+
+  const fetchVoucher = async () => {
+    const res = await axios.get(`/api/v1/contra/${editId}`);
+
+    const voucher = res.data;
+
+    setForm({
+      date: voucher.date?.slice(0, 10),
+      costCenterId: voucher.costCenterId?._id || voucher.costCenterId,
+      from: voucher.entries.find((x) => x.type === "CREDIT")?.ledgerId?._id,
+      to: voucher.entries.find((x) => x.type === "DEBIT")?.ledgerId?._id,
+      amount: voucher.totalDebit,
+      narration: voucher.narration,
+    });
+  };
+
   /* ======================
      HANDLE CHANGE
   ====================== */
@@ -71,14 +93,25 @@ const CreateContra = ({ onClose, refresh }) => {
     setLoading(true);
     console.log("Submitting Contra:", form);
     try {
-      await axios.post("/api/v1/contra", {
-        date: form.date,
-        from: form.from,
-        to: form.to,
-        amount: Number(form.amount),
-        narration: form.narration,
-        costCenterId: form.costCenterId,
-      });
+      if (isEdit) {
+        await axios.post(`/api/v1/contra/${editId}`, {
+          date: form.date,
+          from: form.from,
+          to: form.to,
+          amount: Number(form.amount),
+          narration: form.narration,
+          costCenterId: form.costCenterId,
+        });
+      } else {
+        await axios.post("/api/v1/contra", {
+          date: form.date,
+          from: form.from,
+          to: form.to,
+          amount: Number(form.amount),
+          narration: form.narration,
+          costCenterId: form.costCenterId,
+        });
+      }
 
       if (refresh) refresh();
       onClose();

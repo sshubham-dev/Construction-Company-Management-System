@@ -34,7 +34,7 @@ CollectionRoute.put("/cancel/:id", adminAuth, cancelCollection);
 
 // update & delete
 CollectionRoute.get("/:id", userAuth, getCollection);
-CollectionRoute.put("/:id", userAuth, updateCollection);
+CollectionRoute.put("/:id",  upload.single("proofImage"), userAuth, updateCollection);
 CollectionRoute.delete("/:id", userAuth, deleteCollection);
 
 module.exports = CollectionRoute;

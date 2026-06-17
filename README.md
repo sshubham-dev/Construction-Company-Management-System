@@ -1,102 +1,143 @@
 # Construction Company Management System (MERN Stack) 🚧
 
-## Overview:
-The Construction Company Management System (CCMS) is a professional-grade software designed for real-world application in the construction industry. Built using the MERN stack (MongoDB, Express.js, React.js, Node.js), it offers comprehensive tools to manage construction projects, streamline workflows, and ensure operational efficiency.
+## Project Overview
 
-## Features:
+We are developing a Construction Company Management System (ERP) to manage the complete workflow of a construction and interior business from lead generation to project completion, accounting, employee management, and reporting.
 
-### 1. Project Management 🏗️
-- **Site Details:**
-  - Manage detailed profiles for multiple construction sites.
-  - Track progress and maintain historical records.
-- **Project Scheduling:**
-  - Define timelines, set milestones, and receive notifications for deadlines.
+The system is being built as a centralized platform where management, accountants, project managers, HR, sales teams, and employees can perform their day-to-day operations from a single application.
 
-### 2. Payment Management 💰
-- **Payment Schedules:**
-  - Define, monitor, and automate payment reminders.
-- **Bill Creation:**
-  - Generate invoices for clients and monitor payment status.
+## Current Modules
 
-### 3. Stakeholder Management 🤝
-- **Clients:**
-  - Maintain contact details and track project histories.
-- **Employees:**
-  - Manage roles, responsibilities, and attendance.
-- **Contractors and Suppliers:**
-  - Organize records of contractors and suppliers, including procurement details.
+### CRM & Client Management
 
-### 4. Procurement and Quality Assurance ✅
-- **Purchase Orders:**
-  - Create and track procurement processes.
-- **Quality Checks:**
-  - Schedule, document, and integrate quality assurance feedback.
+- Lead management
+- Client database
+- Follow-up tracking
+- Inquiry management
 
-### 5. Extra Work and Approvals 📝
-- Document and approve additional work and budgets seamlessly.
-- Notifications for timely decision-making.
+### Project Management
 
-### 6. Attendance Management 🕒
-- Monitor attendance and generate HR reports.
+- Project creation and tracking
+- Site visit records
+- Project status monitoring
+- Task assignment and tracking
+- Project documentation
 
-## Technical Details 🔧
-- **Frontend:** React.js
-- **Backend:** Node.js and Express.js
-- **Database:** MongoDB
-- **Authentication:** JWT-based system with role-based access control.
-- **Deployment:** Manual deployment in production environments.
+### HR & Employee Management
 
-## Installation and Setup 📦
+- Employee records
+- Attendance management
+- Leave management
+- Performance tracking
+- Role-based access control
 
-### Prerequisites:
-- Node.js and npm installed.
-- MongoDB instance running locally or on a server.
+### Accounting & Finance
 
-### Steps:
-1. Clone the repository:
-   ```
-   git clone [repository_url]
-   ```
-2. Install backend dependencies:
-   ```
-   cd project-directory
-   npm install
-   ```
-3. Install frontend dependencies:
-   ```
-   cd client
-   npm install
-   ```
-4. Start the application:
-   ```
-   npm run dev
-   ```
-   This starts both the backend and frontend servers.
+- Ledger management
+- Voucher entries
+- Cash and bank transactions
+- Client receivables
+- Expense management
+- Cost center accounting
+- Financial reports
 
-5. Open the application in a browser at `http://localhost:3000`.
+### Inventory & Procurement (In Progress)
 
-## Deployment 🚀
-For deploying in a production environment:
-- Ensure all environment variables for database connection and authentication are configured.
-- Use a Node.js process manager (e.g., PM2) to run the backend server.
-- Deploy the frontend build files to a web server (e.g., Nginx or Apache).
+- Material management
+- Vendor management
+- Purchase tracking
+- Stock monitoring
 
-## Known Issues 🐛
-- Performance optimization for datasets exceeding 10,000 records is ongoing.
-- Minor UI inconsistencies may occur on older browsers.
+### Reporting & Dashboard
 
-## Future Roadmap 🛤️
-- Develop a mobile application for site-level operations.
-- Integrate with accounting software.
-- Advanced reporting and analytics.
-- Real-time collaboration tools.
+- Business analytics
+- Financial reports
+- Employee reports
+- Project reports
+- Management dashboard
 
-## Feedback and Support 📬
-For feedback or support, reach out to us at shubhamkrg1819@gmail.com.
+## Pending Development Work
+
+Some completed modules require enhancement and additional development:
+
+### Frontend Improvements
+
+- Mobile responsive menu implementation
+- UI/UX refinements
+- Dashboard improvements
+
+### Functional Features
+
+- Blog search and filtering
+- Product search and filtering
+- Contact form integration
+- Hire form integration
+
+### Admin Features
+
+- Blog management panel
+- Product management panel
+- Content management improvements
+
+### Backend & Database
+
+- MongoDB optimization
+- Additional APIs
+- Validation improvements
+- Performance enhancements
+
+## Technology Stack
+
+### Frontend
+
+- React.js
+- React Router
+- Axios
+- Tailwind CSS
+- Context API
+
+### Backend
+
+- Node.js
+- Express.js
+
+### Database
+
+- MongoDB
+- Mongoose
+
+### Authentication
+
+- JWT Authentication
+- Role-Based Access Control (RBAC)
+
+### Development Tools
+
+- Git
+- GitHub
+- Postman
+
+## Coding Standards
+
+- Clean and scalable code structure
+- Component-based architecture
+- RESTful API practices
+- Proper error handling
+- Documentation for major features
+- Git-based workflow
+
+## Project Access
+
+### GitHub Repository
+
+GitHub: [@BhuviManager](https://github.com/sshubham-dev/Construction-Company-Management-System.git)
+
+### Application URL
+
+App URL: [BHUVIMANAGER](https://app.bhuvihomes.in/)
 
 ## Developer 👨‍💻
+
 Developed and maintained by [@sshubham-dev](https://github.com/sshubham-dev).
 
 ---
-## MONGO_URI=mongodb+srv://shubham:Sshubham1919@bhuvi-manager.bcutehz.mongodb.net/Management?retryWrites=true&w=majority&appName=Bhuvi-Manager
-

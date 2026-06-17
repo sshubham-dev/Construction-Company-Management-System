@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
 
 const PurchaseRequestPdf = ({ PurchaseRequest }) => {
   if (!PurchaseRequest) return <Document />;
-console.log(PurchaseRequest)
+  console.log(PurchaseRequest);
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -133,131 +133,181 @@ console.log(PurchaseRequest)
           {/* ✅ Fix logo src to use public folder */}
           <Image src={logo} style={styles.logo} />
           <Text style={styles.companyName}>Bhuvi Consultants</Text>
-          <Text style={styles.contact}>123 Main Street, Ranchi, Jharkhand</Text>
           <Text style={styles.contact}>
-            Contact: +91 9876543210 | info@bhuvi.com
+            3rd floor, The WestendTower, Ranchi, Jharkhand
+          </Text>
+          <Text style={styles.contact}>
+            Contact: +91 8986699600 | bhuvihomes@gmail.com
           </Text>
         </View>
 
-        {/* PurchaseRequest Info */}
-        {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>PurchaseRequest Information</Text>
-          <View style={styles.row}>
-            <Text style={styles.label}>PurchaseRequest To:</Text>
-            <Text style={styles.value}>{PurchaseRequest?.contractor?.name || "-"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Site:</Text>
-            <Text style={styles.value}>{PurchaseRequest?.site?.name || "-"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Date:</Text>
-            <Text style={styles.value}>
-              {PurchaseRequest?.startdate
-                ? moment(PurchaseRequest.startdate).format("DD-MM-YYYY")
-                : "-"}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Duration:</Text>
-            <Text style={styles.value}>
-              {PurchaseRequest?.duration
-                ? moment(PurchaseRequest.duration).format("MM-YYYY")
-                : "-"}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>PurchaseRequest No:</Text>
-            <Text style={styles.value}>
-              {PurchaseRequest.PurchaseRequestNo ? `BHC/${PurchaseRequest?.PurchaseRequestNo}` : "-"}
-            </Text>
-          </View>
-        </View> */}
+        {/* PR INFORMATION */}
 
-        {/* Work Details */}
-        {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Work Details</Text>
-          <View style={styles.table}>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableHeader}>Description</Text>
-              <Text style={styles.tableHeader}>Rate</Text>
-              <Text style={styles.tableHeader}>Quantity</Text>
-              <Text style={styles.tableHeader}>Total</Text>
-            </View>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableCell}>
-                {PurchaseRequest?.PurchaseRequestOf?.workDetail || "-"}
-              </Text>
-              <Text style={styles.tableCell}>
-                ₹{PurchaseRequest?.PurchaseRequestOf?.rate || "0"}/{PurchaseRequest?.PurchaseRequestOf?.unit}
-              </Text>
-              <Text style={styles.tableCell}>
-                {PurchaseRequest?.PurchaseRequestOf?.area || "0"} {PurchaseRequest?.PurchaseRequestOf?.unit}
-              </Text>
-              <Text style={styles.tableCell}>
-                ₹{PurchaseRequest?.PurchaseRequestOf?.amount || "0"}
-              </Text>
-            </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Purchase Request Information</Text>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>PR No</Text>
+            <Text>{PurchaseRequest?.prNumber || "-"}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Date</Text>
+            <Text>
+              {PurchaseRequest?.reqDate
+                ? moment(PurchaseRequest.reqDate).format("DD-MM-YYYY")
+                : "-"}
+            </Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Status</Text>
+            <Text>{PurchaseRequest?.status || "-"}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Site</Text>
+            <Text>{PurchaseRequest?.site?.name || "-"}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Store</Text>
+            <Text>{PurchaseRequest?.store?.name || "-"}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Category</Text>
+            <Text>{PurchaseRequest?.category?.name || "-"}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Requirement For</Text>
+            <Text>{PurchaseRequest?.requirementFor || "-"}</Text>
           </View>
         </View>
 
-        {/* Payment Details */}
-        {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Details</Text>
+        {/* REQUESTED MATERIALS */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Requested Materials</Text>
+
+          <View style={styles.table}>
+            <View style={styles.tableRow}>
+              <Text style={[styles.tableHeader, { flex: 0.5 }]}>#</Text>
+
+              <Text style={[styles.tableHeader, { flex: 3 }]}>Item</Text>
+
+              <Text style={[styles.tableHeader, { flex: 1 }]}>Unit</Text>
+
+              <Text style={[styles.tableHeader, { flex: 1 }]}>Req</Text>
+
+              <Text style={[styles.tableHeader, { flex: 1 }]}>Issued</Text>
+
+              <Text style={[styles.tableHeader, { flex: 1 }]}>Pending</Text>
+            </View>
+
+            {PurchaseRequest?.items?.map((item, index) => (
+              <View key={index} style={styles.tableRow}>
+                <Text style={[styles.tableCell, { flex: 0.5 }]}>
+                  {index + 1}
+                </Text>
+
+                <Text style={[styles.tableCell, { flex: 3 }]}>
+                  {item?.itemId?.name}
+                </Text>
+
+                <Text style={[styles.tableCell, { flex: 1 }]}>
+                  {item?.unit}
+                </Text>
+
+                <Text style={[styles.tableCell, { flex: 1 }]}>
+                  {item?.requestedQty}
+                </Text>
+
+                <Text style={[styles.tableCell, { flex: 1 }]}>
+                  {item?.issuedQty}
+                </Text>
+
+                <Text style={[styles.tableCell, { flex: 1 }]}>
+                  {item?.pendingQty}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Summary</Text>
+
           <View style={styles.row}>
-            <Text style={styles.label}>Payment Date:</Text>
-            <Text style={styles.value}>
-              {PurchaseRequest?.dateOfPayment
-                ? moment(PurchaseRequest.dateOfPayment).format("DD-MM-YYYY")
-                : "-"}
+            <Text style={styles.label}>Total Items</Text>
+
+            <Text>{PurchaseRequest?.items?.length || 0}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Total Requested Qty</Text>
+
+            <Text>
+              {PurchaseRequest?.items?.reduce(
+                (a, i) => a + (i.requestedQty || 0),
+                0,
+              )}
             </Text>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Total Amount:</Text>
-            <Text style={styles.value}>₹{PurchaseRequest?.amount || "0"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>To Pay:</Text>
-            <Text style={styles.value}>₹{PurchaseRequest?.toPay || "0"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Paid:</Text>
-            <Text style={styles.value}>₹{PurchaseRequest?.paidAmount || "0"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Due:</Text>
-            <Text style={styles.value}>₹{PurchaseRequest?.dueAmount || "0"}</Text>
-          </View>
-        </View> */}
 
-        {/* Notes */}
-        {/* {PurchaseRequest?.reason && (
+          <View style={styles.row}>
+            <Text style={styles.label}>Total Issued Qty</Text>
+
+            <Text>
+              {PurchaseRequest?.items?.reduce(
+                (a, i) => a + (i.issuedQty || 0),
+                0,
+              )}
+            </Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Total Pending Qty</Text>
+
+            <Text>
+              {PurchaseRequest?.items?.reduce(
+                (a, i) => a + (i.pendingQty || 0),
+                0,
+              )}
+            </Text>
+          </View>
+        </View>
+
+        {PurchaseRequest?.narration && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Notes</Text>
-            <Text style={styles.notes}>{PurchaseRequest?.reason}</Text>
-          </View>
-        )} */}
+            <Text style={styles.sectionTitle}>Narration</Text>
 
-        {/* Signature */}
-        {/* <View style={styles.signatures}>
-          <View style={styles.signatureBox}>
-            <Text style={styles.signatureLine}>Contractor</Text>
+            <Text>{PurchaseRequest.narration}</Text>
           </View>
+        )}
+
+        <View style={styles.signatures}>
+          {/* <View style={styles.signatureBox}>
+            <Text style={styles.signatureLine}>Requested By</Text>
+          </View> */}
+
           <View style={styles.signatureBox}>
-            <Text style={styles.signatureLine}>PurchaseRequesting Manager</Text>
+            <Text style={styles.signatureLine}>Site Incharge</Text>
           </View>
+
           <View style={styles.signatureBox}>
-            <Text style={styles.signatureLine}>Quality</Text>
+            <Text style={styles.signatureLine}>Store Incharge</Text>
           </View>
-          <View style={styles.signatureBox}>
-            <Text style={styles.signatureLine}>Authority</Text>
-          </View>
-        </View>  */}
+
+          {/* <View style={styles.signatureBox}>
+            <Text style={styles.signatureLine}>Approved By</Text>
+          </View> */}
+        </View>
 
         {/* Footer */}
         <Text style={styles.footer}>
-          This is a system-generated PurchaseRequest. For any queries contact Bhuvi
-          Consultants office.
+          This is a system-generated PurchaseRequest. For any queries contact
+          Bhuvi Consultants office.
         </Text>
       </Page>
     </Document>

@@ -21,28 +21,28 @@ const { executeStockTransaction, initializeStockForItem } = require("../services
 ========================= */
 const createCategory = async (req, res) => {
   try {
-    const { name, parentId, description } = req.body;
+    const { name, groupId, description } = req.body;
 
     if (!name) throw new Error("Category name is required");
 
     // prevent duplicate under same parent
     const exists = await Stock_Category.findOne({
       name: name.trim(),
-      parentId: parentId || null,
+      groupId: groupId,
       isActive: true,
     });
 
     if (exists) throw new Error("Category already exists");
 
     // validate parent
-    if (parentId) {
-      const parent = await Stock_Category.findById(parentId);
+    if (groupId) {
+      const parent = await Stock_Category.findById(groupId);
       if (!parent) throw new Error("Invalid parent category");
     }
 
     const category = await Stock_Category.create({
       name: name.trim(),
-      parentId: parentId || null,
+      groupId: groupId,
       description,
       createdBy: req.user?._id,
     });
@@ -60,8 +60,8 @@ const getAllCategories = async (req, res) => {
   try {
     const categories = await Stock_Category.find({
       isActive: true,
-    }).populate("parentId")
-      .sort({ createdAt: -1 });
+    }).populate("groupId")
+      .sort({ name: 1 });
 
     res.json({
       success: true,
@@ -93,8 +93,8 @@ const getCategoryTree = async (req, res) => {
     });
 
     categories.forEach((c) => {
-      if (c.parentId) {
-        map[c.parentId]?.children.push(map[c._id]);
+      if (c.groupId) {
+        map[c.groupId]?.children.push(map[c._id]);
       } else {
         roots.push(map[c._id]);
       }
@@ -126,7 +126,7 @@ const getCategoryById = async (req, res) => {
 ========================= */
 const updateCategory = async (req, res) => {
   try {
-    const { name, parentId, description, isActive } = req.body;
+    const { name, groupId, description, isActive } = req.body;
 
     const category = await Stock_Category.findById(req.params.id);
     if (!category) throw new Error("Category not found");
@@ -136,7 +136,7 @@ const updateCategory = async (req, res) => {
       const exists = await Stock_Category.findOne({
         _id: { $ne: category._id },
         name: name.trim(),
-        parentId: parentId || category.parentId || null,
+        groupId: groupId || category.groupId,
         isActive: true,
       });
 
@@ -145,18 +145,7 @@ const updateCategory = async (req, res) => {
       category.name = name.trim();
     }
 
-    // prevent self parent
-    if (parentId && parentId.toString() === category._id.toString()) {
-      throw new Error("Category cannot be its own parent");
-    }
-
-    // validate parent
-    if (parentId) {
-      const parent = await Stock_Category.findById(parentId);
-      if (!parent) throw new Error("Invalid parent category");
-      category.parentId = parentId;
-    }
-
+    if (groupId !== undefined) category.groupId = groupId;
     if (description !== undefined) category.description = description;
     if (isActive !== undefined) category.isActive = isActive;
 
@@ -175,10 +164,6 @@ const deleteCategory = async (req, res) => {
   try {
     const category = await Stock_Category.findById(req.params.id);
     if (!category) throw new Error("Category not found");
-
-    // check child categories
-    const hasChildren = await Stock_Category.exists({ parentId: category._id });
-    if (hasChildren) throw new Error("Category has subcategories");
 
     // check usage in items
     const used = await Item.exists({ categoryId: category._id });
@@ -265,7 +250,7 @@ const createStockGroup = async (req, res) => {
 ========================= */
 const getStockGroups = async (req, res) => {
   try {
-    const groups = await Stock_Group.find({ isActive: true });
+    const groups = await Stock_Group.find({ isActive: true }).sort({ name: 1 });
 
     res.json({ success: true, data: groups });
   } catch (err) {
@@ -393,6 +378,7 @@ const getStockItems = async (req, res) => {
   try {
     const items = await Item.find({ isActive: true })
       .populate("categoryId groupId")
+      .sort({ name: 1 })
       .lean();
 
     res.json({ success: true, data: items });

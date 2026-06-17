@@ -82,7 +82,6 @@ const Receipt_Payment = () => {
                   <th className="px-4 py-2">To</th>
                   <th className="px-4 py-2">Amount</th>
                   <th className="px-4 py-2">Description</th>
-                  {/* <th className="px-4 py-2">Invoice</th> */}
                   <th className="px-4 py-2"></th>
                 </tr>
               </thead>

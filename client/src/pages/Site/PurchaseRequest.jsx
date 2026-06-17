@@ -70,6 +70,7 @@ const PurchaseRequest = () => {
       setLoading(true);
 
       const res = await axios.get("/api/v1/purchase-request");
+      console.log(res.data);
 
       setData(res.data || []);
     } catch (err) {
@@ -485,7 +486,7 @@ const PurchaseRequest = () => {
                     </p>
 
                     <p className="text-xs text-gray-400 mt-1">
-                      {r.category} • {r.requirementFor}
+                      {r.category?.name} • {r.requirementFor}
                     </p>
                   </div>
 

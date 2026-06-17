@@ -8,10 +8,11 @@ const stockCategorySchema = new mongoose.Schema(
       trim: true,
     },
 
-    parentId: {
+    groupId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Stock_Category",
-      default: null,
+      ref: "Stock_Group",
+      required: true,
+      index: true,
     },
 
     description: String,
@@ -24,7 +25,7 @@ const stockCategorySchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// stockCategorySchema.index({ name: 1, parentId: 1 }, { unique: true });
+// stockCategorySchema.index({ name: 1, groupId: 1 });
 
 const stockGroupSchema = new mongoose.Schema(
   {

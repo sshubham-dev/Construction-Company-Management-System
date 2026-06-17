@@ -18,6 +18,11 @@ const collectionSchema = new mongoose.Schema(
       // required: true,
       default: null,
     },
+    departmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CostCenter",
+      required: true,
+    },
     costCenterId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CostCenter",

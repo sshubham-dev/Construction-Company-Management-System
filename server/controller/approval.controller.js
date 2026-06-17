@@ -844,7 +844,7 @@ const approve = async (req, res) => {
             });
             break;
 
-          case "Purchase Request":
+          case "Purchase Order":
             const purchaseRequest = await PurchaseRequest.findById(
               approval?.data._id,
             );
@@ -878,7 +878,7 @@ const approve = async (req, res) => {
             console.log(expenses);
             approval.isApproved = true;
             approval.data.isApproved = "Approved";
-            expenses.isApproved = "Approved";
+            expenses.isApproved = "Accounts Approved";
             console.log("before approval", approval.data);
             await approval.save();
             await expenses.save();

@@ -20,10 +20,11 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
 
   const [itemsMaster, setItemsMaster] = useState([]);
   const [categories, setCategories] = useState([]);
-
+  const [groups, setGroups] = useState([]);
   const [requirements, setRequirements] = useState([]);
   const { user } = useSelector((state) => state.auth);
   const [form, setForm] = useState({
+    group: "",
     category: "",
 
     requirementFor: "",
@@ -59,6 +60,7 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
         storeRes,
         itemRes,
         categoryRes,
+        groupRes,
         // requirementRes
       ] = await Promise.all([
         axios.get("/api/v1/store?type=SITE"),
@@ -69,15 +71,16 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
 
         axios.get("/api/v1/stock-category"),
 
+        axios.get("/api/v1/stock-group"),
+
         // axios.get("/api/v1/project-schedule"),
       ]);
 
       setSites(siteRes.data.data || []);
-
       setStores(storeRes.data.data || []);
-
       setItemsMaster(itemRes.data.data || []);
       setCategories(categoryRes.data.data || []);
+      setGroups(groupRes.data.data || []);
 
       // setRequirements(requirementRes.data || []);
     } catch (err) {
@@ -118,6 +121,7 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
       const data = res.data;
 
       setForm({
+        group: data.group?._id || data.group || "",
         category: data.category?._id || data.category || "",
 
         requirementFor: data.requirementFor || "",
@@ -222,17 +226,39 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
     return form.items.reduce((a, i) => a + Number(i.requestedQty || 0), 0);
   }, [form.items]);
 
-  const filteredItems = useMemo(() => {
-    if (!form.category) {
-      return itemsMaster;
+  const filteredCategories = useMemo(() => {
+    if (!form.group) {
+      return categories;
     }
 
-    return itemsMaster.filter(
-      (item) =>
-        String(item.categoryId?._id || item.categoryId) ===
-        String(form.category),
+    return categories.filter(
+      (category) =>
+        String(category.groupId?._id || category.groupId) ===
+        String(form.group),
     );
-  }, [itemsMaster, form.category]);
+  }, [categories, form.group]);
+
+  const filteredItems = useMemo(() => {
+    let data = [...itemsMaster];
+
+    if (form.group) {
+      data = data.filter(
+        (item) =>
+          String(item.groupId?._id || item.groupId) === String(form.group),
+      );
+    }
+
+    if (form.category) {
+      data = data.filter(
+        (item) =>
+          String(item.categoryId?._id || item.categoryId) ===
+          String(form.category),
+      );
+    }
+
+    return data;
+  }, [itemsMaster, form.group, form.category]);
+
   /* =========================
      VALIDATE
   ========================== */
@@ -252,6 +278,12 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
 
     if (!form.reqDate) {
       toast.error("Request date required");
+
+      return false;
+    }
+
+    if (!form.group) {
+      toast.error("Stock Group required");
 
       return false;
     }
@@ -289,6 +321,13 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
     return true;
   };
 
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+
+      category: "",
+    }));
+  }, [form.group]);
   /* =========================
      SUBMIT
   ========================== */
@@ -398,12 +437,36 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
             />
 
             <SelectField
+              label="Group*"
+              options={groups.map((g) => ({
+                value: g._id,
+                label: g.name,
+              }))}
+              value={groups
+                .map((g) => ({
+                  value: g._id,
+                  label: g.name,
+                }))
+                .find((g) => g.value === form.group)}
+              onChange={(v) =>
+                setForm((p) => ({
+                  ...p,
+
+                  group: v?.value || "",
+
+                  category: "",
+                }))
+              }
+            />
+
+            <SelectField
               label="Category*"
-              options={categories.map((c) => ({
+              isDisabled={!form.group}
+              options={filteredCategories.map((c) => ({
                 value: c._id,
                 label: c.name,
               }))}
-              value={categories
+              value={filteredCategories
                 .map((c) => ({
                   value: c._id,
                   label: c.name,
@@ -414,6 +477,13 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
                   ...p,
                   category: v?.value || "",
                 }))
+              }
+              placeholder={
+                !form.group
+                  ? "Select Group First*"
+                  : !form.category
+                    ? "Select Category First*"
+                    : "Select Item*"
               }
             />
 
@@ -521,7 +591,7 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
                     null
                   }
                   onChange={(v) => handleItemSelect(index, v)}
-                  isDisabled={!form.category}
+                  isDisabled={!form.group || !form.category}
                 />
 
                 <div className="grid grid-cols-2 gap-3">

@@ -3,9 +3,20 @@ import axios from "axios";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
 
-const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
-  const isPayment = type === "Payment";
+const API_MAP = {
+  payment: "/api/v1/payment",
+  receipt: "/api/v1/receipt",
+};
 
+const CreateReceipt_Payment = ({
+  type = "payment",
+  onClose,
+  refresh,
+  editId,
+}) => {
+  const endpoint = API_MAP[type];
+  const isPayment = type.toLowerCase() === "payment";
+  const isEdit = !!editId;
   /* ---------------- STATE ---------------- */
   const [ledgers, setLedgers] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -15,12 +26,11 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     costCenterId: "",
-    fromLedgerId: "",
-    toLedgerId: "",
+    from: "",
+    to: "",
     amount: "",
     referenceNo: "",
-    description: "",
-    invoices: [], // ✅ NEW
+    narration: "",
   });
   const [costCenters, setCostCenters] = useState([]);
 
@@ -45,10 +55,34 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
       });
   }, []);
 
+  useEffect(() => {
+    if (!editId) return;
+    console.log(editId);
+    fetchVoucher();
+  }, [editId]);
+
+  const fetchVoucher = async () => {
+    const res = await axios.get(`${endpoint}/${editId}`);
+
+    const voucher = res.data?.voucher;
+    console.log(res.data?.voucher);
+
+    setForm({
+      date: voucher.date?.slice(0, 10),
+      costCenterId: voucher.costCenterId?._id || voucher.costCenterId,
+      from: voucher.entries.find((x) => x.type === "CREDIT")?.ledgerId?._id,
+      to: voucher.entries.find((x) => x.type === "DEBIT")?.ledgerId?._id,
+      amount: voucher.totalDebit,
+      narration: voucher.narration,
+    });
+  };
+
   const mapOptions = (arr) =>
     arr.map((l) => ({
       value: l._id,
-      label: `${l.name} (${l?.groupId?.name})`,
+      label: `${l.name} (${
+        l.mailingDetails?.phoneNo || l?.groupId?.name || l.referenceType
+      })`,
     }));
 
   const cashBankLedgers = useMemo(
@@ -80,91 +114,47 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
     ? mapOptions(nonCashBankLedgers)
     : mapOptions(cashBankLedgers);
 
-  const partyLedgerId = isPayment ? form.toLedgerId : form.fromLedgerId;
-
-  /* ---------------- LOAD DOCUMENTS ---------------- */
-  useEffect(() => {
-    if (!purpose || !partyLedgerId) return;
-
-    axios
-      .get("/api/v1/documents", {
-        params: { purpose, ledgerId: partyLedgerId },
-      })
-      .then((res) => setDocuments(res.data || []))
-      .catch(() => setDocuments([]));
-  }, [purpose, partyLedgerId]);
+  const partyLedgerId = isPayment ? form.to : form.from;
 
   /* ---------------- HELPERS ---------------- */
   const updateForm = (key, value) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const handleInvoiceAmount = (invoiceId, value) => {
-    const amount = Number(value) || 0;
-
-    setForm((prev) => {
-      const existing = prev.invoices.filter((i) => i.invoiceId !== invoiceId);
-
-      if (amount > 0) {
-        existing.push({ invoiceId, amount });
-      }
-
-      return { ...prev, invoices: existing };
-    });
-  };
-
-  const totalAllocated = useMemo(
-    () => form.invoices.reduce((s, i) => s + (i.amount || 0), 0),
-    [form.invoices],
-  );
-
-  const remaining = Number(form.amount || 0) - totalAllocated;
-
-  /* ---------------- AUTO ALLOCATE ---------------- */
-  const autoAllocate = () => {
-    let remaining = Number(form.amount || 0);
-    const allocations = [];
-
-    for (let doc of documents) {
-      if (remaining <= 0) break;
-
-      const alloc = Math.min(doc.balance, remaining);
-
-      allocations.push({
-        invoiceId: doc._id,
-        amount: alloc,
-      });
-
-      remaining -= alloc;
-    }
-
-    setForm((prev) => ({ ...prev, invoices: allocations }));
-  };
-
   /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.fromLedgerId || !form.toLedgerId) return alert("Select ledgers");
+    if (!form.from || !form.to) return alert("Select ledgers");
 
-    if (form.fromLedgerId === form.toLedgerId)
-      return alert("From and To cannot be same");
-
-    if (totalAllocated > Number(form.amount))
-      return alert("Allocated exceeds amount");
+    if (form.from === form.to) return alert("From and To cannot be same");
 
     setLoading(true);
 
     try {
-      await axios.post(isPayment ? "/api/v1/payment" : "/api/v1/receipt", {
-        date: form.date,
-        costCenterId: form.costCenterId,
-        from: form.fromLedgerId,
-        to: form.toLedgerId,
-        amount: Number(form.amount),
-        narration: form.description,
-        referenceNo: form.referenceNo,
-        // invoices: form.invoices,
-      });
+      if (editId !== undefined) {
+        await axios.put(
+          isPayment ? `/api/v1/payment/${editId}` : `/api/v1/receipt/${editId}`,
+          {
+            date: form.date,
+            costCenterId: form.costCenterId,
+            from: form.from,
+            to: form.to,
+            amount: Number(form.amount),
+            narration: form.narration,
+            referenceNo: form.referenceNo,
+          },
+        );
+      } else {
+        await axios.post(isPayment ? "/api/v1/payment" : "/api/v1/receipt", {
+          date: form.date,
+          costCenterId: form.costCenterId,
+          from: form.from,
+          to: form.to,
+          amount: Number(form.amount),
+          narration: form.narration,
+          referenceNo: form.referenceNo,
+        });
+      }
 
       if (refresh) refresh();
       onClose();
@@ -206,7 +196,8 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
       <Select
         options={fromOptions}
         placeholder={isPayment ? "Pay From (Cash/Bank)" : "Receive From"}
-        onChange={(v) => updateForm("fromLedgerId", v?.value || "")}
+        value={fromOptions.find((option) => option.value === form.from)}
+        onChange={(v) => updateForm("from", v?.value || "")}
         isClearable
       />
 
@@ -214,7 +205,8 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
       <Select
         options={toOptions}
         placeholder={isPayment ? "Pay To" : "Receive Into (Cash/Bank)"}
-        onChange={(v) => updateForm("toLedgerId", v?.value || "")}
+        value={toOptions.find((option) => option.value === form.to)}
+        onChange={(v) => updateForm("to", v?.value || "")}
         isClearable
       />
 
@@ -228,68 +220,6 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
         required
       />
 
-      {/* PURPOSE */}
-      {/* <select
-        value={purpose}
-        onChange={(e) => setPurpose(e.target.value)}
-        className="border p-2 rounded w-full"
-      >
-        <option value="">Select Purpose</option>
-
-        {isPayment && (
-          <>
-            <option value="purchase">Purchase Invoice</option>
-            <option value="expense">Expense Bill</option>
-            <option value="workorder">Work Order</option>
-          </>
-        )}
-
-        {!isPayment && (
-          <>
-            <option value="sales">Sales Invoice</option>
-            <option value="advance">Advance Receipt</option>
-            <option value="return">Sales Return</option>
-          </>
-        )}
-      </select> */}
-
-      {/* DOCUMENT LIST */}
-      {/* {documents.length > 0 && (
-        <div className="border rounded p-3 space-y-2 text-sm">
-          <div className="flex justify-between items-center">
-            <span className="font-medium">Invoice Allocation</span>
-            <button
-              type="button"
-              onClick={autoAllocate}
-              className="text-blue-600 text-xs"
-            >
-              Auto Allocate
-            </button>
-          </div>
-
-          {documents.map((doc) => (
-            <div key={doc._id} className="grid grid-cols-4 gap-2 items-center">
-              <div>
-                {doc.docType} #{doc.docNo}
-              </div>
-
-              <div>Due: {doc.balance}</div>
-
-              <input
-                type="number"
-                max={doc.balance}
-                onChange={(e) => handleInvoiceAmount(doc._id, e.target.value)}
-                className="border p-1 rounded"
-              />
-            </div>
-          ))}
-
-          <div className="text-right font-medium">
-            Allocated: {totalAllocated} | Remaining: {remaining}
-          </div>
-        </div>
-      )} */}
-
       {/* REF */}
       <input
         placeholder="Reference No"
@@ -301,8 +231,8 @@ const CreateReceipt_Payment = ({ type = "Payment", onClose, refresh }) => {
       {/* NARRATION */}
       <textarea
         placeholder="Narration"
-        value={form.description}
-        onChange={(e) => updateForm("description", e.target.value)}
+        value={form.narration}
+        onChange={(e) => updateForm("narration", e.target.value)}
         className="border p-2 rounded w-full"
       />
 

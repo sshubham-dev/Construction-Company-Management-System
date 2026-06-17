@@ -33,7 +33,6 @@ async function generatePONumber() {
 const createPurchaseOrder = async (req, res) => {
   try {
     const { quotationId, deliveryType, storeId, siteId, narration } = req.body;
-
     const quotation = await Quotation.findById(quotationId);
     if (!quotation || !quotation.isSelected) {
       throw new Error("Invalid quotation");

@@ -98,7 +98,7 @@ const PurchaseRequestScreen = () => {
       const pr = res.data;
 
       setPurchaseRequest(pr);
-
+      // console.log(pr);
       if (isERPMode) {
         await loadStock(pr.items || [], pr.store?._id || pr.store);
       }
@@ -317,8 +317,8 @@ const PurchaseRequestScreen = () => {
             )}
 
             <PDFDownloadLink
-              document={<PurchaseRequestPdf Work={PurchaseRequest} />}
-              fileName={`PR-${PurchaseRequest?._id || "download"}.pdf`}
+              document={<PurchaseRequestPdf PurchaseRequest={PurchaseRequest} />}
+              fileName={`${PurchaseRequest.site?.name}-${PurchaseRequest.prNumber}.pdf` || "purchase-request.pdf"}
             >
               {({ loading }) => (
                 <button className="bg-blue-600 text-white px-5 py-2 rounded-xl flex items-center">
@@ -337,7 +337,7 @@ const PurchaseRequestScreen = () => {
 
         <div className="bg-white border rounded-2xl p-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <Info label="Category" value={PurchaseRequest.category} />
+            <Info label="Category" value={`${PurchaseRequest.group?.name} • ${PurchaseRequest.category?.name}`} />
 
             <Info
               label="Requirement For"
@@ -351,7 +351,7 @@ const PurchaseRequestScreen = () => {
 
             <Info
               label="Created By"
-              value={PurchaseRequest.createdBy?.name || "-"}
+              value={PurchaseRequest.createdBy?.userName || "-"}
             />
           </div>
         </div>

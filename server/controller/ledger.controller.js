@@ -14,7 +14,9 @@ const create = async (req, res) => {
   try {
     const ledger = await createLedger(req.body);
 
-    await mapLedger(ledger, req.body.referenceType, req.body.referenceId);
+    if(req.body.referenceId){
+      await mapLedger(ledger, req.body.referenceType, req.body.referenceId);
+    }
 
     res.status(201).json(ledger);
   } catch (err) {

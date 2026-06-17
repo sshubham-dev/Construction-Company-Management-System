@@ -1,7 +1,7 @@
 // utils/voucherNoGenerator.js
 const Voucher = require("../models/voucher.models");
 const VoucherCounter = require("../models/voucherCounter.models");
-const { getFinancialYear } = require("./getFinancialYear");
+const getFinancialYear = require("./getFinancialYear");
 
 const TYPE_PREFIX = {
   JOURNAL: "JRNL",
@@ -12,25 +12,38 @@ const TYPE_PREFIX = {
   SALES: "SAL",
 };
 
-exports.generateVoucherNo = async ({ companyId, type, fy }) => {
-  if (!companyId || !type || !fy) {
-    throw new Error("companyId, type, and fy required");
-  }
+const generateVoucherNo = async ({
+  companyId,
+  type,
+  fy,
+}) => {
 
-  // 🔥 atomic increment (no race condition)
-  const counter = await VoucherCounter.findOneAndUpdate(
-    { companyId, type, fy },
-    { $inc: { seq: 1 } },
-    { new: true, upsert: true }
-  );
+  const counter =
+    await VoucherCounter.findOneAndUpdate(
+      {
+        companyId,
+        type,
+        fy,
+      },
+      {
+        $inc: { seq: 1 },
+      },
+      {
+        upsert: true,
+        returnDocument: "after",
+      }
+    );
 
-  const prefix = TYPE_PREFIX[type] || "VCH";
+  const prefix =
+    TYPE_PREFIX[type] || "VCH";
 
-  return `${prefix}-${fy}-${String(counter.seq).padStart(5, "0")}`;
+  return `${prefix}-${fy}-${String(
+    counter.seq
+  ).padStart(5, "0")}`;
 };
 
 
-exports.rebuildVoucherNumbers = async ({ companyId, type, fy }) => {
+const rebuildVoucherNumbers = async ({ companyId, type, fy }) => {
 
   await VoucherCounter.deleteMany({ companyId, type, fy });
 
@@ -54,4 +67,9 @@ exports.rebuildVoucherNumbers = async ({ companyId, type, fy }) => {
   console.log(
     `Updated ${vouchers.length} vouchers`
   );
+}
+
+module.exports = {
+  generateVoucherNo,
+  rebuildVoucherNumbers
 }

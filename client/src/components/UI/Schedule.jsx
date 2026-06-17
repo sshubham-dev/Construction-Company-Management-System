@@ -184,11 +184,11 @@ function ScheduleCard({ title, data, type, getStatusIcon }) {
           >
             {getStatusIcon(task.status)}
             <div>
+              <div className="text-sm font-semibold text-gray-700">
+                Site: {task.site?.name}
+              </div>
               <div className="font-medium text-sm text-gray-900">
                 {task.work || task.workDetail}
-              </div>
-              <div className="text-xs text-gray-700">
-                Site: {task.site?.name}
               </div>
               <div className="text-xs text-gray-500">
                 {type === "project" && (
@@ -255,12 +255,12 @@ function SidePanel({ title, onClose, data, getStatusIcon, type }) {
               className="p-3 rounded-lg bg-gray-50 mb-2 flex justify-between items-center"
             >
               <div>
-                <span className="font-bold text-sm text-gray-900">
-                  {task.work || task.workDetail}
-                </span>
-                <div className="text-xs text-gray-700">
+                <div className="text-sm text-gray-700 font-semibold">
                   Site: {task.site?.name}
                 </div>
+                <span className="font-medium text-sm text-gray-900">
+                  {task.work || task.workDetail}
+                </span>
                 <div className="text-xs text-gray-500 flex flex-col">
                   {type === "project" && (
                     <>

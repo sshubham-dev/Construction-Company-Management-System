@@ -24,19 +24,20 @@ const createCollection = async (req, res) => {
     const data = req.body;
     console.log(data);
     const user = req.user;
-    const proofImage = req.file?.path;
     let upload;
-    if (proofImage) {
-      upload = await uploadOnCloudinary(proofImage, {
-        folder: "collections/proofs",
+    if (req.file.buffer) {
+      upload = await uploadOnCloudinary(req.file.buffer, {
+        folder: "collections",
         public_id: `${data.clientLedgerId}-${Date.now()}`,
       });
+      console.log("File uploaded to Cloudinary:", upload);
     }
 
     const collection = await Collection({
       date: data.date,
       companyId: user.companyId,
       businessUnitId: user.businessUnitId,
+      departmentId: data.departmentId,
       costCenterId: data.costCenterId,
       clientLedgerId: data.clientLedgerId,
       receivedInto: data.receivedInto,
@@ -373,7 +374,8 @@ const getCollection = async (req, res) => {
       .populate("receivedInto")
       .populate("companyId")
       .populate("businessUnitId")
-      .populate("costCenterId");
+      .populate("costCenterId")
+      .populate("departmentId");
 
     res.json(list);
   } catch (err) {
@@ -491,17 +493,21 @@ const updateCollection = async (req, res) => {
 
     // optional file update
     let upload = null;
-    if (req.file?.path) {
-      upload = await uploadOnCloudinary(req.file.path, {
-        folder: "collections/proofs",
+    if (req.file.buffer) {
+      upload = await uploadOnCloudinary(req.file.buffer, {
+        folder: "collections",
         public_id: `${collection.clientLedgerId}-${Date.now()}`,
       });
+      if (!upload) return res.status(404).json({ message: "Some thing went wrong!" })
+      console.log("File uploaded to Cloudinary:", upload);
     }
 
     Object.assign(collection, data);
     collection.receivedInto = data.receivedInto;
     collection.companyId = user.companyId;
     collection.businessUnitId = user.businessUnitId
+    collection.costCenterId = data.costCenterId;
+    collection.departmentId = data.departmentId;
 
     if (upload) {
       collection.proofImage = {

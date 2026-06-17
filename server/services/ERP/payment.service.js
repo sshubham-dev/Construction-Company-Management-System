@@ -3,7 +3,7 @@ const { Ledger } = require("../../models/ledger.models");
 const InvoiceAllocation = require("../../models/invoiceAllocation.models");
 const { getVouchers } = require("./voucher/query.service");
 const { generateVoucherNo, rebuildVoucherNumbers } = require("../../utils/voucherNoGenerator");
-const { getFinancialYear } = require("../../utils/getFinancialYear");
+const getFinancialYear = require("../../utils/getFinancialYear");
 
 /* ======================
    CREATE PAYMENT VOUCHER
@@ -100,22 +100,26 @@ async function updatePaymentVoucher(id, data) {
     narration,
     date,
     costCenterId,
-    invoices = [],
   } = data;
 
   const entries = [
-    { ledgerId: to, type: "DEBIT", amount },
-    { ledgerId: from, type: "CREDIT", amount },
+    { ledgerId: to, type: "DEBIT", amount: Number(amount) },
+    { ledgerId: from, type: "CREDIT", amount: Number(amount) },
   ];
 
   const fy = getFinancialYear(date);
   if (voucher.fy !== fy.code) {
+    // throw new Error(
+    //   `Voucher belongs to FY ${voucher.fy}. Financial Year cannot be changed.`
+    // );
     await rebuildVoucherNumbers({
       companyId: voucher.companyId,
       type: voucher.type,
       fy: fy.code,
     });
+    voucher.fy = fy.code;
   }
+
   voucher.entries = entries;
   voucher.narration = narration;
   voucher.date = date;
@@ -127,6 +131,17 @@ async function updatePaymentVoucher(id, data) {
 }
 
 async function getAllPayments(query) {
+  // if (fromDate || toDate) {
+  //   filter.date = {};
+
+  //   if (fromDate) {
+  //     filter.date.$gte = new Date(fromDate);
+  //   }
+
+  //   if (toDate) {
+  //     filter.date.$lte = new Date(toDate);
+  //   }
+  // }
   const result = await getVouchers("PAYMENT", query);
   return result;
 }

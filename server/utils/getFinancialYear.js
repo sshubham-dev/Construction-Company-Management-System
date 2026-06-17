@@ -1,4 +1,4 @@
-exports.getFinancialYear = (date) => {
+const getFinancialYear = (date) => {
     const d = new Date(date);
 
     const year = d.getFullYear();
@@ -19,3 +19,5 @@ exports.getFinancialYear = (date) => {
         label: `${startYear}-${startYear + 1}`,
     };
 };
+
+module.exports = getFinancialYear;

@@ -9,7 +9,6 @@ const voucherSchema = new mongoose.Schema(
     voucherNo: {
       type: String,
       required: true,
-      unique: true,
       index: true,
     },
 

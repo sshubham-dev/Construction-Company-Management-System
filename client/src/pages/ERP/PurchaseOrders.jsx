@@ -28,7 +28,7 @@ const PurchaseOrders = () => {
     const fetchPurchaseOrders = async () => {
       try {
         const purchaseOrdersData = await axios.get("/api/v1/purchase-order");
-        setPurchaseOrder(purchaseOrdersData.data);
+        setPurchaseOrder(purchaseOrdersData.data.data);
         console.log(purchaseOrdersData.data);
       } catch (error) {
         console.error(error);

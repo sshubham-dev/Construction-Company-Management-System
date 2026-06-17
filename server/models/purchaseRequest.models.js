@@ -60,6 +60,11 @@ const purchaseRequestSchema = new mongoose.Schema(
       index: true,
     },
 
+    group: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Stock_Group",
+    },
+
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Stock_Category",

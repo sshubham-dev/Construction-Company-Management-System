@@ -36,11 +36,30 @@ const rfqSchema = new mongoose.Schema(
       ref: "PurchaseRequest",
     },
 
+    purchaseOrderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PurchaseOrder",
+      default: null,
+    },
+
+    selectedQuotationId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Quotation",
+      default: null,
+    },
+
+    selectedSupplierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger",
+      default: null,
+    },
+
     items: [rfqItemSchema],
     suppliers: [rfqSupplierSchema],
 
     paymentTerms: { type: String, default: "As per agreement" },
     estimatedAmount: Number,
+
     status: {
       type: String,
       enum: [
@@ -53,6 +72,7 @@ const rfqSchema = new mongoose.Schema(
       default: "DRAFT",
     },
     quotationDeadline: Date,
+    
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     narration: String,
     procurementType: {

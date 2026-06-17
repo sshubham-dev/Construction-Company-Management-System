@@ -258,24 +258,59 @@ const RFQDetail = () => {
             className="border px-4 py-2 rounded-xl text-sm flex items-center gap-2"
           >
             <FileBarChart2 size={15} />
-            Compare
+            {rfq.status !== "CLOSED" ? "Compare" : "View Comparison"}
           </button>
-
-          {/* CREATE PO */}
-
-          {/* {rfq.status === "CLOSED" && (
-            <button
-              onClick={() =>
-                navigate(`/erp/procurement/po/create?rfq=${rfq._id}`)
-              }
-              className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm flex items-center gap-2"
-            >
-              <ShoppingCart size={15} />
-              Create PO
-            </button>
-          )} */}
         </div>
       </div>
+
+      {rfq.status === "CLOSED" && (
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-green-700">
+                Procurement Completed
+              </h2>
+
+              <p className="text-sm text-gray-600 mt-1">
+                Vendor selected and Purchase Order generated.
+              </p>
+            </div>
+
+            <button
+              onClick={() =>
+                navigate(`/erp/inventory/purchase-order/${rfq.purchaseOrderId?._id}`)
+              }
+              className="bg-blue-600 text-white px-4 py-2 rounded-xl"
+            >
+              View PO
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-4 mt-5">
+            <MiniCard
+              title="Selected Supplier"
+              value={rfq?.selectedSupplierId?.name || "-"}
+            />
+
+            <MiniCard
+              title="Quotation Amount"
+              value={`₹${(
+                rfq?.selectedQuotationId?.totalAmount || 0
+              ).toLocaleString()}`}
+            />
+
+            <MiniCard
+              title="PO Number"
+              value={rfq.purchaseOrderId?.poNo || "-"}
+            />
+
+            <MiniCard
+              title="PO Status"
+              value={rfq?.purchaseOrderId?.status || "-"}
+            />
+          </div>
+        </div>
+      )}
 
       {/* KPI */}
 

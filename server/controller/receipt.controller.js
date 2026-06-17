@@ -23,6 +23,7 @@ const updateReceipt = async (req, res) => {
     const voucher = await receiptService.updateReceiptVoucher(req.params.id, req.body);
     res.json(voucher);
   } catch (err) {
+    console.log(err)
     res.status(400).json({ error: err.message });
   }
 };

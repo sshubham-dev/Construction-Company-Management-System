@@ -1,140 +1,169 @@
-import { FaMoneyBillWave, FaFileInvoiceDollar, FaChartLine, FaBoxOpen } from 'react-icons/fa';
-import { useState } from 'react';
-import { Pie } from 'react-chartjs-2';
-import { useDispatch, useSelector } from "react-redux";
-import Chart from 'chart.js/auto'; // Automatically registers all necessary components
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useSelector } from "react-redux";
 
 export default function BalanceSheet() {
-  const [showAssets, setShowAssets] = useState(true);
-  const [showLiabilities, setShowLiabilities] = useState(true);
-  const { user, isLoggedIn } = useSelector((state) => state.auth);
-  const assets = [
-    { name: "Cash", amount: 5000, details: [], icon: <FaMoneyBillWave /> },
-    { name: "Accounts Receivable", amount: 3000, details: [
-        { name: "Client A", amount: 1200 },
-        { name: "Client B", amount: 800 },
-        { name: "Client C", amount: 1000 }
-      ], icon: <FaFileInvoiceDollar /> },
-    { name: "Inventory", amount: 7000, details: [
-        { name: "Product X", amount: 4000 },
-        { name: "Product Y", amount: 3000 }
-      ], icon: <FaBoxOpen /> },
-    { name: "Investments", amount: 15000, details: [
-        { name: "Stocks", amount: 10000 },
-        { name: "Bonds", amount: 5000 }
-      ], icon: <FaChartLine /> }
-  ];
-  
-  const liabilities = [
-    { name: "Loans Payable", amount: 4000, details: [] },
-    { name: "Accounts Payable", amount: 2000, details: [] },
-    { name: "Accrued Expenses", amount: 1000, details: [] },
-    { name: "Deferred Revenue", amount: 3000, details: [] }
-  ];
-  
-  const equity = [
-    { name: "Owner's Equity", amount: 8000, details: [] },
-    { name: "Retained Earnings", amount: 5000, details: [] }
-  ];
+  const { user } = useSelector((state) => state.auth);
 
-  const totalAssets = assets.reduce((sum, item) => sum + item.amount, 0);
-  const totalLiabilities = liabilities.reduce((sum, item) => sum + item.amount, 0);
-  const totalEquity = equity.reduce((sum, item) => sum + item.amount, 0);
+  const [data, setData] = useState({
+    assets: [],
+    liabilities: [],
+    totalAssets: 0,
+    totalLiabilities: 0,
+  });
 
-  // Prepare data for the pie chart
-  const chartData = {
-    labels: ['Assets', 'Liabilities', "Owner's Equity"],
-    datasets: [
-      {
-        data: [totalAssets, totalLiabilities, totalEquity],
-        backgroundColor: COLORS,
-        hoverOffset: 4,
-      },
-    ],
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      const res = await axios.get("/api/v1/reports/balance-sheet", {
+        params: {
+          companyId: user.companyId,
+        },
+      });
+
+      setData(res.data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const netWorth = data.totalAssets - data.totalLiabilities;
+
   return (
-    <div className="max-w-4xl mx-auto p-8 bg-gray-50 shadow-lg rounded-lg">
-      <h2 className="text-4xl font-bold mb-6 text-center text-blue-600">Balance Sheet</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <h3 className="text-2xl font-semibold border-b pb-2 text-blue-500 flex justify-between items-center">
-            <span>Assets</span>
-            <button onClick={() => setShowAssets(!showAssets)} className="text-blue-500">
-              {showAssets ? 'Hide' : 'Show'}
-            </button>
-          </h3>
-          {showAssets && assets.map((asset, index) => (
-            <details key={index} className="p-2 border-b hover:bg-gray-100 transition duration-200">
-              <summary className="flex justify-between font-semibold cursor-pointer list-none">
-                <span className="flex items-center">
-                  {asset.icon}
-                  <span className="ml-2">{asset.name}</span>
-                </span>
-                <span>${asset.amount.toLocaleString()}</span>
-              </summary>
-              {asset.details.length > 0 && (
-                <div className="ml-4 mt-2 text-sm text-gray-600">
-                  {asset.details.map((detail, i) => (
-                    <div key={i} className="flex justify-between">
-                      <span>{detail.name}</span>
-                      <span>${detail.amount.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </details>
-          ))}
-          <div className="flex justify-between font-bold p-2 border-t">
-            <span>Total Assets</span>
-            <span>${totalAssets.toLocaleString()}</span>
-          </div>
-          </div>
-        </div>
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold">Balance Sheet</h1>
 
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <h3 className="text-2xl font-semibold border-b pb-2 text-blue-500 flex justify-between items-center">
-            <span>Liabilities & Equity</span>
-            <button onClick={() => setShowLiabilities(!showLiabilities)} className="text-blue-500">
-              {showLiabilities ? 'Hide' : 'Show'}
-            </button>
-          </h3>
-          {showLiabilities && [...liabilities, ...equity].map((item, index) => (
-            <details key={index} className="p-2 border-b hover:bg-gray-100 transition duration-200">
-              <summary className="flex justify-between font-semibold cursor-pointer list-none">
-                <span>{item.name}</span>
-                <span>${item.amount.toLocaleString()}</span>
-              </summary>
-              {item.details.length > 0 && (
-                <div className="ml-4 mt-2 text-sm text-gray-600">
-                  {item.details.map((detail, i) => (
-                    <div key={i} className="flex justify-between">
-                      <span>{detail.name}</span>
-                      <span>${detail.amount.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </details>
-          ))}
-          <div className="flex justify-between font-bold p-2 border-t">
-            <span>Total Liabilities + Equity</span>
-            <span>${(totalLiabilities + totalEquity).toLocaleString()}</span>
-          </div>
-        </div>
-
-
-      <div className="mt-8">
-        <h3 className="text-2xl font-semibold text-blue-500 mb-4">Distribution Chart</h3>
-        <Pie data={chartData} width={400} height={400} />
+        <p className="text-sm text-gray-500">
+          Assets and liabilities as of today
+        </p>
       </div>
 
-      <footer className="mt-8 text-center text-gray-600">
-        <p>Balance Sheet as of {new Date().toLocaleDateString()}</p>
-      </footer>
+      {/* Summary */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+        <SummaryCard title="Assets" value={data.totalAssets} color="green" />
+
+        <SummaryCard
+          title="Liabilities"
+          value={data.totalLiabilities}
+          color="red"
+        />
+
+        <SummaryCard
+          title="Net Worth"
+          value={netWorth}
+          color={netWorth >= 0 ? "green" : "red"}
+        />
+      </div>
+
+      {/* Assets + Liabilities */}
+      <div className="grid gap-4 md:grid-cols-2 md:gap-6 ">
+        {/* Assets */}
+        <div className="overflow-hidden rounded-xl border bg-white shadow-sm h-fit">
+          <div className="border-b bg-green-50 p-4">
+            <h2 className="font-semibold text-green-700">Assets</h2>
+          </div>
+
+          <div className="divide-y">
+            {data.assets.map((row) => (
+              <div
+                key={row.group}
+                className="flex items-start justify-between gap-4 p-4"
+              >
+                <span className="text-sm break-words">{row.group}</span>
+
+                <span className="whitespace-nowrap font-medium text-green-600">
+                  ₹ {row.amount.toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-between border-t bg-green-50 p-4 font-semibold">
+            <span>Total Assets</span>
+
+            <span className="text-green-700">
+              ₹ {loading ? "Loading..." : data.totalAssets.toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {/* Liabilities */}
+        <div className="overflow-hidden rounded-xl border bg-white shadow-sm h-fit">
+          <div className="border-b bg-red-50 p-4">
+            <h2 className="font-semibold text-red-700">Liabilities</h2>
+          </div>
+
+          <div className="divide-y">
+            {data.liabilities.map((row) => (
+              <div
+                key={row.group}
+                className="flex items-start justify-between gap-4 p-4"
+              >
+                <span className="text-sm break-words">{row.group}</span>
+
+                <span className="whitespace-nowrap font-medium text-red-600">
+                  ₹ {row.amount.toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-between border-t bg-red-50 p-4 font-semibold">
+            <span>Total Liabilities</span>
+
+            <span className="text-red-700">
+              ₹{" "}
+              {loading ? "Loading..." : data.totalLiabilities.toLocaleString()}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Net Worth */}
+      <div
+        className={`rounded-xl border p-6 text-center ${
+          netWorth >= 0
+            ? "border-blue-200 bg-blue-50"
+            : "border-red-200 bg-red-50"
+        }`}
+      >
+        <h2 className="text-lg font-semibold">Net Worth</h2>
+
+        <div
+          className={`mt-2 text-2xl md:text-4xl font-bold ${
+            netWorth >= 0 ? "text-blue-700" : "text-red-700"
+          }`}
+        >
+          ₹ {loading ? "Loading..." : netWorth.toLocaleString()}
+        </div>
+      </div>
     </div>
   );
 }
 
+const SummaryCard = ({ title, value, color = "gray" }) => {
+  const colors = {
+    gray: "text-gray-700",
+    green: "text-green-600",
+    red: "text-red-600",
+  };
+
+  return (
+    <div className="rounded-xl border bg-white px-3 py-4 shadow-sm flex items-center flex-col">
+      <p className="text-xs text-gray-500 md:text-sm">{title}</p>
+
+      <h2 className={`mt-2 text-lg md:text-2xl font-bold ${colors[color]}`}>
+        ₹ {value ? Number(value).toLocaleString() : 0}
+      </h2>
+    </div>
+  );
+};

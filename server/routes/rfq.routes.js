@@ -15,13 +15,13 @@ const {
 const { adminAuth, userAuth } = require("../middlewares/auth.middleware");
 
 RFQs.route("/").get(getRFQs).post(userAuth, createRFQ);
-RFQs.get('/:id', getRFQById)
+RFQs.get('/:id', userAuth, getRFQById);
 RFQs.put("/send/:id", userAuth, sendRFQ);
 RFQs.put("/close/:id", userAuth, closeRFQ);
 RFQs.post('/public/submit', submitQuotation);
-RFQs.post('/select-quotation/:quoteId', selectQuotation)
-RFQs.get('/quote/:id', getQuotationById)
-RFQs.get('/comparison/:id', compareQuotations)
+RFQs.post('/select-quotation/:quoteId', userAuth, selectQuotation);
+RFQs.get('/quote/:id', userAuth, getQuotationById);
+RFQs.get('/comparison/:id', userAuth, compareQuotations);
 RFQs.get("/vendor/rfq/:token", getVendorRFQ);
 
 // DN.put("/:id/verify", userAuth, verifyDeliveryNote);

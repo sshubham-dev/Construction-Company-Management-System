@@ -164,7 +164,7 @@ const QualityScheduleScreen = () => {
             <MdAdd /> Add
           </button>
           <PDFDownloadLink
-            document={<QualitySchedulePdf Work={qualitySchedule} />}
+            document={<QualitySchedulePdf QualitySchedule={qualitySchedule} />}
             fileName={`QS-${qualitySchedule?._id || "download"}.pdf`}
           >
             {({ loading }) => (

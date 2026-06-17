@@ -1,394 +1,1398 @@
 const { Ledger, Group } = require("../../models/ledger.models");
 const Voucher = require("../../models/voucher.models");
 
-exports.getSummary = async (companyId) => {
-  const vouchers = await Voucher.find({
+// ✅
+const getSummary = async (
+  companyId,
+  fromDate,
+  toDate
+) => {
+  const filter = {
     companyId,
     // status: "POSTED",
-  });
+  };
 
-  let revenue = 0;
-  let expenses = 0;
+  if (fromDate || toDate) {
+    filter.date = {};
 
-  for (let v of vouchers) {
-    for (let e of v.entries) {
-      // simple logic (can improve later)
-      if (e.type === "CREDIT") revenue += e.amount;
-      if (e.type === "DEBIT") expenses += e.amount;
+    if (fromDate) {
+      filter.date.$gte = new Date(fromDate);
+    }
+
+    if (toDate) {
+      filter.date.$lte = new Date(toDate);
+    }
+  }
+
+  const vouchers = await Voucher.find(filter)
+    .populate({
+      path: "entries.ledgerId",
+      populate: {
+        path: "groupId",
+      },
+    });
+
+  let income = 0;
+  let expense = 0;
+
+  let cash = 0;
+  let bank = 0;
+
+  let receivable = 0;
+  let payable = 0;
+
+  for (const voucher of vouchers) {
+    for (const entry of voucher.entries) {
+      const ledger = entry.ledgerId;
+      const group = ledger?.groupId;
+
+      if (!group) continue;
+
+      const amount = entry.amount;
+
+      // Income
+
+      if (
+        group.nature === "INCOME" &&
+        entry.type === "CREDIT"
+      ) {
+        income += amount;
+      }
+
+      // Expense
+
+      if (
+        group.nature === "EXPENSES" &&
+        entry.type === "DEBIT"
+      ) {
+        expense += amount;
+      }
+
+      // Cash
+
+      if (
+        group.name === "Cash-in-Hand"
+      ) {
+        cash +=
+          entry.type === "DEBIT"
+            ? amount
+            : -amount;
+      }
+
+      // Bank
+
+      if (
+        group.name === "Bank Accounts"
+      ) {
+        bank +=
+          entry.type === "DEBIT"
+            ? amount
+            : -amount;
+      }
+
+      // Receivable
+
+      if (
+        ledger.referenceType === "Client"
+      ) {
+        receivable +=
+          entry.type === "DEBIT"
+            ? amount
+            : -amount;
+      }
+
+      // Payable
+
+      if (
+        [
+          "Supplier",
+          "Contractor",
+          "Employee",
+        ].includes(
+          ledger.referenceType
+        )
+      ) {
+        payable +=
+          entry.type === "CREDIT"
+            ? amount
+            : -amount;
+      }
     }
   }
 
   return {
-    revenue,
-    expenses,
+    revenue: Number(income.toFixed(2)),
+    expenses: Number(expense.toFixed(2)),
+    profit: Number(income - expense),
+
+    cash: Number(cash.toFixed(2)),
+    bank: Number(bank.toFixed(2)),
+
+    receivable: Number(receivable.toFixed(2)),
+    payable: Number(payable.toFixed(2)),
+
+    netWorth:
+      Number(cash +
+        bank +
+        receivable -
+        payable),
   };
 };
 
-exports.getBalanceSheet = async (companyId) => {
-  const ledgers = await Ledger.find({ companyId, isActive: true }).populate(
-    "groupId",
-  );
-
-  const vouchers = await Voucher.find({
+// ✅
+const getBalanceSheet = async (
+  companyId,
+  fromDate,
+  toDate
+) => {
+  const groups = await Group.find({
+    companyId,
+  });
+  const filter = {
     companyId,
     // status: "POSTED",
-  });
+  };
 
-  const ledgerMap = {};
+  if (fromDate || toDate) {
+    filter.date = {};
 
-  // init
-  for (let l of ledgers) {
-    ledgerMap[l._id] = {
-      name: l.name,
-      nature: l.groupId?.nature,
-      balance: 0,
-    };
-  }
+    if (fromDate) {
+      filter.date.$gte = new Date(fromDate);
+    }
 
-  // calculate balance
-  for (let v of vouchers) {
-    for (let e of v.entries) {
-      const l = ledgerMap[e.ledgerId];
-      if (!l) continue;
-
-      if (e.type === "DEBIT") l.balance += e.amount;
-      else l.balance -= e.amount;
+    if (toDate) {
+      filter.date.$lte = new Date(toDate);
     }
   }
 
   const assets = [];
   const liabilities = [];
-  let profit = 0;
 
-  for (let key in ledgerMap) {
-    const l = ledgerMap[key];
+  let totalAssets = 0;
+  let totalLiabilities = 0;
 
-    if (l.nature === "ASSET") {
-      assets.push(l);
-    } else if (l.nature === "LIABILITY") {
-      liabilities.push(l);
-    } else if (l.nature === "INCOME") {
-      profit += l.balance;
-    } else if (l.nature === "EXPENSE") {
-      profit -= l.balance;
+  for (const group of groups) {
+    const ledgers = await Ledger.find({
+      groupId: group._id,
+    });
+
+    let balance = 0;
+
+    for (const ledger of ledgers) {
+      const vouchers = await Voucher.find({
+        filter,
+        "entries.ledgerId": ledger._id,
+      });
+
+      let debit = 0;
+      let credit = 0;
+
+      for (const voucher of vouchers) {
+        for (const entry of voucher.entries) {
+          if (
+            String(entry.ledgerId) !==
+            String(ledger._id)
+          )
+            continue;
+
+          if (entry.type === "DEBIT")
+            debit += entry.amount;
+          else credit += entry.amount;
+        }
+      }
+
+      balance += debit - credit;
+    }
+
+    if (group.nature === "ASSET") {
+      assets.push({
+        group: group.name,
+        amount: balance,
+      });
+
+      totalAssets += balance;
+    }
+
+    if (
+      group.nature === "LIABILITY"
+    ) {
+      liabilities.push({
+        group: group.name,
+        amount: Math.abs(balance),
+      });
+
+      totalLiabilities += Math.abs(
+        balance
+      );
     }
   }
 
   return {
     assets,
     liabilities,
-    equity: [
-      {
-        name: "Profit",
-        balance: profit,
-      },
-    ],
+    totalAssets: Number(totalAssets.toFixed(2)),
+    totalLiabilities: Number(totalLiabilities.toFixed(2)),
   };
 };
 
-exports.getProfitAndLoss = async (companyId, fromDate, toDate) => {
-  const match = {
+// ✅
+const getProfitAndLoss = async (
+  companyId,
+  fromDate,
+  toDate
+) => {
+  const filter = {
     companyId,
     // status: "POSTED",
   };
 
   if (fromDate || toDate) {
-    match.date = {};
-    if (fromDate) match.date.$gte = new Date(fromDate);
-    if (toDate) match.date.$lte = new Date(toDate);
-  }
+    filter.date = {};
 
-  console.log("P&L report finding with: ", match);
-  const vouchers = await Voucher.find(match);
-  console.log("P&L report vouchers found: ", vouchers);
+    if (fromDate) {
+      filter.date.$gte = new Date(fromDate);
+    }
 
-  const ledgerBalances = {};
-
-  for (let v of vouchers) {
-    for (let e of v.entries) {
-      if (!ledgerBalances[e.ledgerId]) {
-        ledgerBalances[e.ledgerId] = 0;
-      }
-
-      if (e.type === "DEBIT") ledgerBalances[e.ledgerId] += e.amount;
-      else ledgerBalances[e.ledgerId] -= e.amount;
+    if (toDate) {
+      filter.date.$lte = new Date(toDate);
     }
   }
 
-  const ledgers = await Ledger.find({
-    _id: { $in: Object.keys(ledgerBalances) },
-  }).populate("groupId");
-
-  let income = [];
-  let expenses = [];
-
-  for (let l of ledgers) {
-    const balance = ledgerBalances[l._id];
-
-    if (l.groupId?.nature === "INCOME") {
-      income.push({ name: l.name, amount: Math.abs(balance) });
-    }
-
-    if (l.groupId?.nature === "EXPENSE") {
-      expenses.push({ name: l.name, amount: Math.abs(balance) });
-    }
-  }
-
-  const totalIncome = income.reduce((s, i) => s + i.amount, 0);
-  const totalExpense = expenses.reduce((s, i) => s + i.amount, 0);
-
-  return {
-    income,
-    expenses,
-    totalIncome,
-    totalExpense,
-    profit: totalIncome - totalExpense,
-  };
-};
-
-exports.getTrialBalance = async (companyId, fromDate, toDate) => {
-  const match = {
+  const groups = await Group.find({
     companyId,
-    // status: "POSTED",
-  };
-
-  if (fromDate || toDate) {
-    match.date = {};
-    if (fromDate) match.date.$gte = new Date(fromDate);
-    if (toDate) match.date.$lte = new Date(toDate);
-  }
-
-  const vouchers = await Voucher.find(match);
-
-  const ledgerMap = {};
-
-  // Step 1: accumulate balances
-  for (let v of vouchers) {
-    for (let e of v.entries) {
-      if (!ledgerMap[e.ledgerId]) {
-        ledgerMap[e.ledgerId] = { debit: 0, credit: 0 };
-      }
-
-      if (e.type === "DEBIT") {
-        ledgerMap[e.ledgerId].debit += e.amount;
-      } else {
-        ledgerMap[e.ledgerId].credit += e.amount;
-      }
-    }
-  }
-
-  // Step 2: attach ledger names
-  const ledgers = await Ledger.find({
-    _id: { $in: Object.keys(ledgerMap) },
   });
 
-  const result = [];
+  const incomeGroups = groups.filter(
+    (g) => g.nature === "INCOME"
+  );
+
+  const expenseGroups = groups.filter(
+    (g) => g.nature === "EXPENSES"
+  );
+
+  const incomeRows = [];
+  const expenseRows = [];
+
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  for (const group of incomeGroups) {
+    const ledgers = await Ledger.find({
+      groupId: group._id,
+    });
+
+    let amount = 0;
+
+    for (const ledger of ledgers) {
+      const vouchers = await Voucher.find({
+        filter,
+        "entries.ledgerId": ledger._id,
+      });
+
+      for (const voucher of vouchers) {
+        for (const entry of voucher.entries) {
+          if (
+            String(entry.ledgerId) ===
+            String(ledger._id) &&
+            entry.type === "CREDIT"
+          ) {
+            amount += entry.amount;
+          }
+        }
+      }
+    }
+
+    incomeRows.push({
+      group: group.name,
+      amount,
+    });
+
+    totalIncome += amount;
+  }
+
+  for (const group of expenseGroups) {
+    const ledgers = await Ledger.find({
+      groupId: group._id,
+    });
+
+    let amount = 0;
+
+    for (const ledger of ledgers) {
+      const vouchers = await Voucher.find({
+        companyId,
+        "entries.ledgerId": ledger._id,
+      });
+
+      for (const voucher of vouchers) {
+        for (const entry of voucher.entries) {
+          if (
+            String(entry.ledgerId) ===
+            String(ledger._id) &&
+            entry.type === "DEBIT"
+          ) {
+            amount += entry.amount;
+          }
+        }
+      }
+    }
+
+    expenseRows.push({
+      group: group.name,
+      amount,
+    });
+
+    totalExpense += amount;
+  }
+
+  return {
+    incomeRows,
+    expenseRows,
+    totalIncome: Number(totalIncome.toFixed(2)),
+    totalExpense: Number(totalExpense.toFixed(2)),
+    netProfit:
+      Number(totalIncome - totalExpense),
+  };
+};
+
+// ✅
+const getTrialBalance = async (
+  companyId,
+  fromDate,
+  toDate
+) => {
+  const filter = {
+    companyId,
+    // status: "POSTED",
+  };
+
+  if (fromDate || toDate) {
+    filter.date = {};
+
+    if (fromDate) {
+      filter.date.$gte = new Date(fromDate);
+    }
+
+    if (toDate) {
+      filter.date.$lte = new Date(toDate);
+    }
+  }
+
+  const ledgers = await Ledger.find({
+    companyId,
+  }).populate("groupId");
+
+  const rows = [];
+
   let totalDebit = 0;
   let totalCredit = 0;
 
-  for (let l of ledgers) {
-    const entry = ledgerMap[l._id];
-
-    const debit = entry.debit;
-    const credit = entry.credit;
-
-    totalDebit += debit;
-    totalCredit += credit;
-
-    result.push({
-      ledgerId: l._id,
-      name: l.name,
-      debit,
-      credit,
-    });
-  }
-
-  return {
-    data: result,
-    totalDebit,
-    totalCredit,
-    isBalanced: totalDebit === totalCredit,
-  };
-};
-
-exports.getOutstanding = async (companyId, type) => {
-  // console.log(
-  //   "Calculating outstanding for companyId: ",
-  //   companyId,
-  //   " type: ",
-  //   type,
-  // );
-  const ledgers = await Ledger.find({
-    companyId,
-    referenceType: type,
-    // isActive: true,
-  });
-  if (ledgers.length === 0) {
-    console.log("No ledgers found for companyId: ", companyId, " type: ", type);
-    return [];
-  }
-  
-  const results = [];
-
-  for (let ledger of ledgers) {
+  for (const ledger of ledgers) {
     const vouchers = await Voucher.find({
-      companyId,
-      // status: "POSTED",
+      filter,
+      status: { $ne: "CANCELLED" },
       "entries.ledgerId": ledger._id,
     });
 
     let debit = 0;
     let credit = 0;
 
-    for (let v of vouchers) {
-      for (let e of v.entries) {
-        if (e.ledgerId.toString() !== ledger._id.toString()) continue;
+    for (const voucher of vouchers) {
+      for (const entry of voucher.entries) {
+        if (
+          String(entry.ledgerId) !==
+          String(ledger._id)
+        )
+          continue;
 
-        if (e.type === "DEBIT") debit += e.amount;
-        else credit += e.amount;
+        if (entry.type === "DEBIT")
+          debit += entry.amount;
+        else credit += entry.amount;
       }
     }
 
-    let balance = debit - credit;
+    rows.push({
+      ledgerId: ledger._id,
+      ledgerName: ledger.name,
+      group: ledger.groupId?.name,
+      debit,
+      credit,
+    });
+
+    totalDebit += debit;
+    totalCredit += credit;
+  }
+
+  return {
+    rows,
+    totalDebit: Number(totalDebit.toFixed(2)),
+    totalCredit: Number(totalCredit.toFixed(2)),
+    isBalanced: Math.abs(totalDebit - totalCredit) < 0.01,
+  };
+};
+
+// ✅
+const getOutstanding = async (companyId, fromDate, toDate, partyType) => {
+  const filter = {
+    companyId,
+    // status: "POSTED",
+  };
+
+  if (fromDate || toDate) {
+    filter.date = {};
+
+    if (fromDate) {
+      filter.date.$gte = new Date(fromDate);
+    }
+
+    if (toDate) {
+      filter.date.$lte = new Date(toDate);
+    }
+  }
+  const ledgers = await Ledger.find({
+    companyId,
+    referenceType: partyType,
+  }).lean();
+
+  if (!ledgers.length) {
+    return {
+      partyType,
+      totalBalance: 0,
+      count: 0,
+      rows: [],
+    };
+  }
+
+  const results = [];
+
+  let totalBalance = 0;
+
+  for (const ledger of ledgers) {
+    const vouchers = await Voucher.find({
+      filter,
+      status: { $ne: "CANCELLED" },
+      "entries.ledgerId": ledger._id,
+    }).select("entries");
+
+    let debit = 0;
+    let credit = 0;
+
+    for (const voucher of vouchers) {
+      for (const entry of voucher.entries) {
+        if (
+          entry.ledgerId.toString() !==
+          ledger._id.toString()
+        )
+          continue;
+
+        if (entry.type === "DEBIT") {
+          debit += Number(entry.amount || 0);
+        } else {
+          credit += Number(entry.amount || 0);
+        }
+      }
+    }
+
+    const balance = debit - credit;
+
+    totalBalance += Math.abs(balance);
 
     results.push({
       ledgerId: ledger._id,
+
       name: ledger.name,
+
+      partyType: ledger.referenceType,
+
+      phone:
+        ledger?.mailingDetails?.phone || "",
+
       debit,
+
       credit,
+
       balance,
+
+      balanceType:
+        balance > 0
+          ? "RECEIVABLE"
+          : balance < 0
+            ? "PAYABLE"
+            : "SETTLED",
+
+      absoluteBalance: Math.abs(balance),
     });
   }
 
-  return results;
+  results.sort(
+    (a, b) =>
+      b.absoluteBalance -
+      a.absoluteBalance
+  );
+
+  return {
+    partyType,
+
+    totalBalance: Number(totalBalance.toFixed(2)),
+
+    count: results.length,
+
+    rows: results,
+  };
 };
 
-exports.getLedgerReport = async ({ ledgerId, companyId, fromDate, toDate }) => {
-  const match = {
+// ✅
+const getLedgerReport = async ({
+  ledgerId,
+  companyId,
+  fromDate,
+  toDate,
+}) => {
+  const ledger = await Ledger.findById(ledgerId);
+
+  if (!ledger) {
+    throw new Error("Ledger not found");
+  }
+
+  const query = {
     companyId,
-    // status: "POSTED",
+    status: { $ne: "CANCELLED" },
     "entries.ledgerId": ledgerId,
   };
 
   if (fromDate || toDate) {
-    match.date = {};
-    if (fromDate) match.date.$gte = new Date(fromDate);
-    if (toDate) match.date.$lte = new Date(toDate);
+    query.date = {};
+
+    if (fromDate) {
+      query.date.$gte = new Date(fromDate);
+    }
+
+    if (toDate) {
+      query.date.$lte = new Date(
+        new Date(toDate).setHours(23, 59, 59, 999)
+      );
+    }
   }
 
-  const vouchers = await Voucher.find(match)
-    .populate("entries.ledgerId")
-    .sort({ date: -1 });
+  const vouchers = await Voucher.find(query)
+    .populate("costCenterId")
+    .sort({ date: 1 });
 
-  let balance = 0;
+  let runningBalance = ledger.openingBalance || 0;
 
   const transactions = [];
 
-  for (let v of vouchers) {
-    for (let e of v.entries) {
-      if (e.ledgerId._id.toString() !== ledgerId.toString()) continue;
+  let totalDebit = 0;
+  let totalCredit = 0;
 
-      if (e.type === "DEBIT") balance += e.amount;
-      else balance -= e.amount;
+  for (const voucher of vouchers) {
+    const entry = voucher.entries.find(
+      (e) => String(e.ledgerId) === String(ledgerId)
+    );
 
-      transactions.push({
-        date: v.date,
-        voucherNo: v.voucherNo,
-        type: v.type,
-        narration: v.narration,
-        debit: e.type === "DEBIT" ? e.amount : 0,
-        credit: e.type === "CREDIT" ? e.amount : 0,
-        balance,
-      });
+    if (!entry) continue;
+
+    let debit = 0;
+    let credit = 0;
+
+    if (entry.type === "DEBIT") {
+      debit = entry.amount;
+      totalDebit += debit;
+      runningBalance += debit;
+    } else {
+      credit = entry.amount;
+      totalCredit += credit;
+      runningBalance -= credit;
+    }
+
+    transactions.push({
+      date: voucher.date,
+      voucherNo: voucher.voucherNo,
+      voucherType: voucher.type,
+      narration: voucher.narration,
+      costCenter: voucher.costCenterId?.name || "-",
+      debit,
+      credit,
+      balance: runningBalance,
+    });
+  }
+
+  return {
+    ledger: {
+      id: ledger._id,
+      name: ledger.name,
+      openingBalance: Number(ledger.openingBalance.toFixed(2)) || 0,
+    },
+
+    summary: {
+      openingBalance: Number(ledger.openingBalance.toFixed(2)) || 0,
+      totalDebit: Number(totalDebit.toFixed(2)),
+      totalCredit: Number(totalCredit.toFixed(2)),
+      closingBalance: Number(runningBalance.toFixed(2)),
+    },
+
+    transactions,
+  };
+};
+
+// 
+const getBusinessUnitReport = async (
+  companyId,
+  fromDate,
+  toDate
+) => {
+  const filter = {
+    companyId,
+    // status: "POSTED",
+    businessUnitId: { $ne: null },
+  };
+
+  if (fromDate || toDate) {
+    filter.date = {};
+
+    if (fromDate) {
+      filter.date.$gte = new Date(fromDate);
+    }
+
+    if (toDate) {
+      filter.date.$lte = new Date(toDate);
     }
   }
 
-  return transactions;
-};
+  const vouchers = await Voucher.find(filter)
+    .populate("businessUnitId")
+    .populate({
+      path: "entries.ledgerId",
+      populate: {
+        path: "groupId",
+      },
+    });
 
-exports.getBusinessUnitReport = async (companyId) => {
-  const vouchers = await Voucher.find({
-    companyId,
-    // status: "POSTED",
-  });
+  const report = {};
 
-  const result = {};
+  for (const voucher of vouchers) {
+    const bu = voucher.businessUnitId;
 
-  for (let v of vouchers) {
-    const bu = v.businessUnitId?.toString();
     if (!bu) continue;
 
-    if (!result[bu]) {
-      result[bu] = {
-        revenue: 0,
+    if (!report[bu._id]) {
+      report[bu._id] = {
+        businessUnitId: bu._id,
+        name: bu.name,
+
+        income: 0,
         expense: 0,
+        profit: 0,
       };
     }
 
-    for (let e of v.entries) {
-      if (e.type === "DEBIT") result[bu].expense += e.amount;
-      else result[bu].revenue += e.amount;
+    for (const entry of voucher.entries) {
+      const ledger = entry.ledgerId;
+      const group = ledger?.groupId;
+
+      if (!group) continue;
+
+      if (
+        group.nature === "INCOME" &&
+        entry.type === "CREDIT"
+      ) {
+        report[bu._id].income += entry.amount;
+      }
+
+      if (
+        group.nature === "EXPENSES" &&
+        entry.type === "DEBIT"
+      ) {
+        report[bu._id].expense += entry.amount;
+      }
     }
   }
 
-  return result;
+  return Object.values(report).map((row) => ({
+    ...row,
+    profit: row.income - row.expense,
+  }));
 };
 
-exports.getCostCenterReport = async (companyId) => {
-  const vouchers = await Voucher.find({
+// ✅
+const getCostCenterReport = async (
+  companyId,
+  fromDate,
+  toDate,
+) => {
+  const filter = {
     companyId,
     // status: "POSTED",
-  });
+    costCenterId: { $ne: null },
+  };
 
-  const result = {};
+  if (fromDate || toDate) {
+    filter.date = {};
 
-  for (let v of vouchers) {
-    const cc = v.costCenterId?.toString();
+    if (fromDate) {
+      filter.date.$gte = new Date(fromDate);
+    }
+
+    if (toDate) {
+      filter.date.$lte = new Date(toDate);
+    }
+  }
+
+  const vouchers = await Voucher.find(filter)
+    .populate("costCenterId")
+    .populate({
+      path: "entries.ledgerId",
+      populate: {
+        path: "groupId",
+      },
+    });
+
+  const report = {};
+
+  for (const voucher of vouchers) {
+    const cc = voucher.costCenterId;
+
     if (!cc) continue;
 
-    if (!result[cc]) {
-      result[cc] = {
-        revenue: 0,
+    if (!report[cc._id]) {
+      report[cc._id] = {
+        costCenterId: cc._id,
+        name: cc.name,
+        type: cc.type,
+
+        income: 0,
         expense: 0,
+        profit: 0,
       };
     }
 
-    for (let e of v.entries) {
-      if (e.type === "DEBIT") result[cc].expense += e.amount;
-      else result[cc].revenue += e.amount;
+    for (const entry of voucher.entries) {
+      const ledger = entry.ledgerId;
+      const group = ledger?.groupId;
+
+      if (!group) continue;
+
+      if (
+        group.nature === "INCOME" &&
+        entry.type === "CREDIT"
+      ) {
+        report[cc._id].income += entry.amount;
+      }
+
+      if (
+        group.nature === "EXPENSES" &&
+        entry.type === "DEBIT"
+      ) {
+        report[cc._id].expense += entry.amount;
+      }
     }
   }
 
-  return result;
+  return Object.values(report)
+    .map((row) => ({
+      ...row,
+      profit: row.income - row.expense,
+    }))
+    .sort((a, b) => b.profit - a.profit);
 };
 
-exports.getCombinedReport = async (companyId) => {
-  const vouchers = await Voucher.find({
+// ✅
+const getCashFlowReport = async (
+  companyId,
+  fromDate,
+  toDate
+) => {
+  const filter = {
     companyId,
     // status: "POSTED",
-  });
+  };
 
-  const result = {};
+  if (fromDate || toDate) {
+    filter.date = {};
 
-  for (let v of vouchers) {
-    const bu = v.businessUnitId?.toString();
-    const cc = v.costCenterId?.toString();
+    if (fromDate)
+      filter.date.$gte = new Date(fromDate);
 
-    if (!bu || !cc) continue;
+    if (toDate)
+      filter.date.$lte = new Date(toDate);
+  }
 
-    if (!result[bu]) result[bu] = {};
-    if (!result[bu][cc]) {
-      result[bu][cc] = {
-        revenue: 0,
-        expense: 0,
-      };
+  const vouchers = await Voucher.find(filter)
+    .populate({
+      path: "entries.ledgerId",
+      populate: {
+        path: "groupId",
+      },
+    });
+
+  let inflow = 0;
+  let outflow = 0;
+
+  const inflowBreakup = {};
+  const outflowBreakup = {};
+
+  const addInflow = (name, amount) => {
+    inflow += amount;
+    inflowBreakup[name] =
+      (inflowBreakup[name] || 0) + amount;
+  };
+
+  const addOutflow = (name, amount) => {
+    outflow += amount;
+    outflowBreakup[name] =
+      (outflowBreakup[name] || 0) + amount;
+  };
+
+  for (const voucher of vouchers) {
+    /* =====================
+       RECEIPTS
+    ===================== */
+
+    if (voucher.type === "RECEIPT") {
+      const amount = voucher.totalCredit;
+
+      let category = "Other Receipt";
+
+      for (const entry of voucher.entries) {
+        const ledger = entry.ledgerId;
+
+        if (!ledger) continue;
+
+        if (ledger.referenceType === "Client") {
+          category = "Client Collection";
+          break;
+        }
+
+        if (
+          ledger.groupId?.nature ===
+          "LIABILITY"
+        ) {
+          category = "Advance Received";
+        }
+      }
+
+      addInflow(category, amount);
     }
 
-    for (let e of v.entries) {
-      if (e.type === "DEBIT") result[bu][cc].expense += e.amount;
-      else result[bu][cc].revenue += e.amount;
+    /* =====================
+       PAYMENTS
+    ===================== */
+
+    if (voucher.type === "PAYMENT") {
+      const amount = voucher.totalDebit;
+
+      let category = "Other Payment";
+
+      for (const entry of voucher.entries) {
+        const ledger = entry.ledgerId;
+
+        if (!ledger) continue;
+
+        if (
+          ledger.referenceType ===
+          "Supplier"
+        ) {
+          category =
+            "Supplier Payment";
+          break;
+        }
+
+        if (
+          ledger.referenceType ===
+          "Contractor"
+        ) {
+          category =
+            "Contractor Payment";
+          break;
+        }
+
+        if (
+          ledger.referenceType ===
+          "Employee"
+        ) {
+          category =
+            "Employee Payment";
+          break;
+        }
+
+        if (
+          ledger.groupId?.nature ===
+          "EXPENSES"
+        ) {
+          category =
+            "Operating Expense";
+        }
+      }
+
+      addOutflow(category, amount);
     }
   }
 
-  return result;
+  return {
+    inflow,
+    outflow,
+
+    netCashFlow:
+      inflow - outflow,
+
+    inflowBreakup,
+    outflowBreakup,
+  };
 };
+
+// ✅
+const getCashFlowDetails = async (
+  companyId,
+  category,
+  fromDate,
+  toDate
+) => {
+
+  const filter = {
+    companyId,
+    // status: "POSTED",
+  };
+
+  if (fromDate || toDate) {
+    filter.date = {};
+
+    if (fromDate)
+      filter.date.$gte =
+        new Date(fromDate);
+
+    if (toDate)
+      filter.date.$lte =
+        new Date(toDate);
+  }
+
+  const vouchers =
+    await Voucher.find(filter)
+      .populate("costCenterId")
+      .populate({
+        path: "entries.ledgerId",
+        populate: {
+          path: "groupId",
+        },
+      });
+
+  const result = [];
+
+  for (const voucher of vouchers) {
+
+    let matched = false;
+    let partyName = "";
+    let partyLedgerId = "";
+
+    for (const entry of voucher.entries) {
+
+      const ledger =
+        entry.ledgerId;
+
+      if (!ledger) continue;
+
+      switch (category) {
+
+        case "Client Collection":
+
+          if (
+            ledger.referenceType ===
+            "Client"
+          ) {
+            matched = true;
+            partyName =
+              ledger.name;
+            partyLedgerId = ledger._id;
+          }
+
+          break;
+
+        case "Supplier Payment":
+
+          if (
+            ledger.referenceType ===
+            "Supplier"
+          ) {
+            matched = true;
+            partyName =
+              ledger.name;
+            partyLedgerId = ledger._id;
+          }
+
+          break;
+
+        case "Contractor Payment":
+
+          if (
+            ledger.referenceType ===
+            "Contractor"
+          ) {
+            matched = true;
+            partyName =
+              ledger.name;
+            partyLedgerId = ledger._id;
+          }
+
+          break;
+
+        case "Employee Payment":
+
+          if (
+            ledger.referenceType ===
+            "Employee"
+          ) {
+            matched = true;
+            partyName =
+              ledger.name;
+            partyLedgerId = ledger._id;
+          }
+
+          break;
+
+        case "Operating Expense":
+
+          if (
+            ledger.groupId?.nature ===
+            "EXPENSES"
+          ) {
+            matched = true;
+            partyName =
+              ledger.name;
+            partyLedgerId = ledger._id;
+          }
+
+          break;
+
+        case "Advance Received":
+
+          if (
+            ledger.groupId?.nature ===
+            "LIABILITY"
+          ) {
+            matched = true;
+            partyName =
+              ledger.name;
+            partyLedgerId = ledger._id;
+          }
+
+          break;
+
+        case "Operating Expense":
+
+          if (
+            ledger.groupId?.nature ===
+            "LIABILITY"
+          ) {
+            matched = true;
+            partyName =
+              ledger.name;
+            partyLedgerId = ledger._id;
+          }
+
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    if (!matched) continue;
+
+    result.push({
+      voucherId: voucher._id,
+      voucherNo:
+        voucher.voucherNo,
+      date: voucher.date,
+      voucherType:
+        voucher.type,
+      narration:
+        voucher.narration,
+
+      costCenter:
+        voucher.costCenterId
+          ?.name || "-",
+
+      party: partyName,
+      partyLedgerId,
+
+      amount:
+        voucher.type ===
+          "PAYMENT"
+          ? voucher.totalDebit
+          : voucher.totalCredit,
+    });
+  }
+
+  return result.sort(
+    (a, b) =>
+      new Date(b.date) -
+      new Date(a.date)
+  );
+};
+
+// 
+const getSiteAnalysis = async (
+  companyId,
+  siteId
+) => {
+
+  const site =
+    await CostCenter.findById(siteId);
+
+  const vouchers =
+    await Voucher.find({
+      companyId,
+      costCenterId: siteId,
+      // status: "POSTED",
+    })
+      .populate({
+        path: "entries.ledgerId",
+        populate: {
+          path: "groupId",
+        },
+      });
+
+  let income = 0;
+  let expense = 0;
+
+  const expenseBreakup = {};
+
+  for (const voucher of vouchers) {
+    for (const entry of voucher.entries) {
+
+      const group =
+        entry.ledgerId?.groupId;
+
+      if (!group) continue;
+
+      if (
+        group.nature === "INCOME" &&
+        entry.type === "CREDIT"
+      ) {
+        income += entry.amount;
+      }
+
+      if (
+        group.nature === "EXPENSES" &&
+        entry.type === "DEBIT"
+      ) {
+
+        expense += entry.amount;
+
+        const ledgerName =
+          entry.ledgerId.name;
+
+        expenseBreakup[
+          ledgerName
+        ] =
+          (expenseBreakup[
+            ledgerName
+          ] || 0) +
+          entry.amount;
+      }
+    }
+  }
+
+  return {
+    siteName: site.name,
+
+    income,
+    expense,
+
+    profit:
+      income - expense,
+
+    expenseBreakup,
+  };
+};
+
+// 
+const getDashboard = async (
+  companyId,
+  fromDate,
+  toDate
+) => {
+  const filter = {
+    companyId,
+    // status: "POSTED",
+  };
+
+  if (fromDate || toDate) {
+    filter.date = {};
+
+    if (fromDate) {
+      filter.date.$gte = new Date(fromDate);
+    }
+
+    if (toDate) {
+      filter.date.$lte = new Date(toDate);
+    }
+  }
+
+  const [
+    summary,
+    pnl,
+    cashFlow,
+    costCenters,
+    clients,
+    suppliers,
+    contractors,
+    employees,
+    recentVouchers
+  ] = await Promise.all([
+
+    getSummary(companyId, fromDate,
+      toDate),
+
+    getProfitAndLoss(companyId, fromDate,
+      toDate),
+
+    getCashFlowReport(companyId, fromDate,
+      toDate),
+
+    getCostCenterReport(companyId, fromDate,
+      toDate),
+
+    getOutstanding(companyId, fromDate,
+      toDate, "Client"),
+
+    getOutstanding(companyId, fromDate,
+      toDate, "Supplier"),
+
+    getOutstanding(companyId, fromDate,
+      toDate, "Contractor"),
+
+    getOutstanding(companyId, fromDate,
+      toDate, "Employee"),
+
+    Voucher.find(filter)
+      // status: "POSTED")
+      .sort({ date: -1 })
+      .limit(20)
+  ]);
+
+  const clientRows = Array.isArray(clients)
+    ? clients
+    : clients?.rows || [];
+
+  const supplierRows = Array.isArray(suppliers)
+    ? suppliers
+    : suppliers?.rows || [];
+
+  const contractorRows = Array.isArray(contractors)
+    ? contractors
+    : contractors?.rows || [];
+
+  const employeeRows = Array.isArray(employees)
+    ? employees
+    : employees?.rows || [];
+
+  const receivable =
+    clientRows?.filter(
+      x => x.balanceType === "RECEIVABLE"
+    ).reduce(
+      (s, x) => s + x.absoluteBalance,
+      0
+    );
+
+  const payable =
+    [...supplierRows,
+    ...contractorRows,
+    ...employeeRows]
+      ?.rows?.filter(
+        x => x.balanceType === "PAYABLE"
+      )
+      .reduce(
+        (s, x) => s + x.absoluteBalance,
+        0
+      );
+
+  return {
+
+    kpi: {
+
+      cash:
+        Number(summary.cash.toFixed(2)) || 0,
+
+      receivable: Number(receivable.toFixed(2)),
+
+      payable: Number(payable.toFixed(2)),
+
+      profit:
+        Number(pnl.netProfit.toFixed(2)) || 0,
+    },
+
+    revenueExpense: {
+      revenue:
+        Number(pnl.totalIncome.toFixed(2)),
+
+      expense:
+        Number(pnl.totalExpense.toFixed(2)),
+    },
+
+    cashFlow: {
+
+      inflow:
+        Number(cashFlow.inflow.toFixed(2)),
+
+      outflow:
+        Number(cashFlow.outflow.toFixed(2)),
+
+      net:
+        Number(cashFlow.netCashFlow.toFixed(2)),
+    },
+
+    departments:
+      costCenters
+        .sort(
+          (a, b) =>
+            b.profit > a.profit
+        )
+        .slice(0, 5),
+
+    topReceivables:
+      clientRows
+        .filter(
+          x =>
+            x.balanceType ===
+            "RECEIVABLE"
+        )
+        .sort(
+          (a, b) =>
+            b.absoluteBalance -
+            a.absoluteBalance
+        )
+        .slice(0, 5),
+
+    topPayables:
+      [...supplierRows,
+      ...contractorRows]
+        .filter(
+          x =>
+            x.balanceType ===
+            "PAYABLE"
+        )
+        .sort(
+          (a, b) =>
+            b.absoluteBalance -
+            a.absoluteBalance
+        )
+        .slice(0, 5),
+
+    recentVouchers
+  };
+};
+
+
+module.exports = {
+  getOutstanding,
+  getLedgerReport,
+  getBalanceSheet,
+  getProfitAndLoss,
+  getSummary,
+  getTrialBalance,
+  getBusinessUnitReport,
+  getCostCenterReport,
+  getCashFlowReport,
+  getSiteAnalysis,
+  getCashFlowDetails,
+  getDashboard,
+}

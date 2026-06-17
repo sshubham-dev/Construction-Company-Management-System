@@ -2,7 +2,7 @@ const Voucher = require("../../models/voucher.models");
 const { Ledger } = require("../../models/ledger.models");
 const { getVouchers } = require("./voucher/query.service");
 const { generateVoucherNo, rebuildVoucherNumbers } = require("../../utils/voucherNoGenerator");
-const { getFinancialYear } = require("../../utils/getFinancialYear");
+const  getFinancialYear  = require("../../utils/getFinancialYear");
 
 /* ======================
    CREATE
@@ -111,11 +111,12 @@ async function updateJournalVoucher(id, data) {
   const fy = getFinancialYear(date);
 
   if (voucher.fy !== fy.code) {
-    await rebuildVoucherNumbers({
-      companyId: voucher.companyId,
-      type: voucher.type,
-      fy: fy.code,
-    });
+    // await rebuildVoucherNumbers({
+    //   companyId: voucher.companyId,
+    //   type: voucher.type,
+    //   fy: fy.code,
+    // });
+  voucher.fy = fy.code
   }
   voucher.entries = formattedEntries;
   voucher.narration = narration;

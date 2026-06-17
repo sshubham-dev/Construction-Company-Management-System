@@ -206,8 +206,8 @@ const Sidebar = ({ isOpen, onClose }) => {
       role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
     },
     {
-      to: "/erp/account",
-      name: "Accounts Management",
+      to: "/erp/account-summary",
+      name: "Accounts Summary",
       icon: <MdAccountBalance />,
       role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
     },
@@ -244,12 +244,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: <FaBalanceScale />,
       role: ["Admin", "Company", "Ceo", "Account Head"],
     },
-    // {
-    //   to: "/erp/cash-flow",
-    //   name: "Cash Flow",
-    //   icon: <FaBalanceScale />,
-    //   role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
-    // },
+    {
+      to: "/erp/cash-flow",
+      name: "Cash Flow",
+      icon: <FaBalanceScale />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
     {
       to: "/erp/ledger-report",
       name: "Ledger Report",
@@ -262,15 +262,34 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: <FaBalanceScale />,
       role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
     },
+    {
+      to: "/erp/trial-balance",
+      name: "TrialBalance",
+      icon: <FaBalanceScale />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
+
+    // Analysis
+    {
+      name: "Accounts Management",
+      // icon: <TbReportAnalytics />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
     // {
-    //   to: "/erp/site-profit",
-    //   name: "Site Profit",
+    //   to: "/erp/site-analysis",
+    //   name: "Site Analysis",
     //   icon: <FaBalanceScale />,
     //   role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
     // },
     {
-      to: "/erp/trial-balance",
-      name: "TrialBalance",
+      to: "/erp/cost-analysis",
+      name: "Cost Analysis",
+      icon: <FaBalanceScale />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
+    {
+      to: "/erp/bu-analysis",
+      name: "Business Unit Analysis",
       icon: <FaBalanceScale />,
       role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
     },

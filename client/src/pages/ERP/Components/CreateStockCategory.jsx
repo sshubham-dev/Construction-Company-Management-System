@@ -7,23 +7,25 @@ const CreateCategory = ({ onClose, editId }) => {
   const isEdit = Boolean(editId);
 
   const [loading, setLoading] = useState(false);
-  const [categories, setCategory] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [form, setForm] = useState({
     name: "",
+    groupId: "",
     description: "",
     isActive: true,
   });
 
   useEffect(() => {
-    const fetchCategory = async () => {
+    const fetchGroups = async () => {
       try {
-        const res = await axios.get("/api/v1/stock-category");
-        setCategory(res.data.data);
+        const res = await axios.get("/api/v1/stock-group");
+        setGroups(res.data.data);
+        // console.log(res.data.data);
       } catch (error) {
         console.log(error);
       }
     };
-    fetchCategory();
+    fetchGroups();
   }, []);
   /* =========================
      LOAD EDIT DATA
@@ -39,6 +41,7 @@ const CreateCategory = ({ onClose, editId }) => {
         setForm({
           name: d.name || "",
           code: d.code || "",
+          groupId: d.groupId || "",
           description: d.description || "",
           isActive: d.isActive ?? true,
         });
@@ -91,7 +94,7 @@ const CreateCategory = ({ onClose, editId }) => {
 
       onClose();
     } catch (err) {
-      console.log(err)
+      console.log(err);
       toast.error(err.response?.data?.error || "Save failed");
     } finally {
       setLoading(false);
@@ -109,9 +112,25 @@ const CreateCategory = ({ onClose, editId }) => {
         />
 
         <Select
-          placeholder="Parent"
-          options={categories.map((s) => ({ value: s._id, label: s.name }))}
-          onChange={handleChange}
+          placeholder="Group"
+          value={
+            groups
+              .map((s) => ({
+                value: s._id,
+                label: s.name,
+              }))
+              .find((o) => o.value === form.groupId) || null
+          }
+          options={groups.map((s) => ({
+            value: s._id,
+            label: s.name,
+          }))}
+          onChange={(option) =>
+            setForm((p) => ({
+              ...p,
+              groupId: option?.value || "",
+            }))
+          }
         />
 
         <textarea

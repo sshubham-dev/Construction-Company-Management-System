@@ -52,7 +52,7 @@ const PurchaseOrderScreen = () => {
         </div>
 
         <PDFDownloadLink
-          document={<PurchaseOrderPdf Work={po} />}
+          document={<PurchaseOrderPdf PurchaseOrder={po} />}
           fileName={`PO-${po.poNumber}.pdf`}
         >
           {({ loading }) => (
@@ -92,7 +92,7 @@ const PurchaseOrderScreen = () => {
             </div>
 
             {/* EDIT (only if no GRN yet) */}
-            {po.deliveryRecords.length === 0 && (
+            {po?.deliveryRecords?.length === 0 && (
               <button
                 onClick={() => handleEditItem(index)}
                 className="mt-3 text-blue-600 flex items-center gap-1"

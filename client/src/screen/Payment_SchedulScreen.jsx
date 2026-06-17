@@ -162,7 +162,7 @@ const Payment_SchedulScreen = () => {
             <MdAdd /> Add
           </button>
           <PDFDownloadLink
-            document={<PaymentSchedulePdf Work={paymentSchedule} />}
+            document={<PaymentSchedulePdf PaymentSchedule={paymentSchedule} />}
             fileName={`PAYS-${paymentSchedule?._id || "download"}.pdf`}
           >
             {({ loading }) => (

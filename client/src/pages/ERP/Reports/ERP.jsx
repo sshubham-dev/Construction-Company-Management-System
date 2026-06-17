@@ -12,61 +12,57 @@ import {
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import {
+  Banknote,
+  HandCoins,
+  BanknoteArrowUp,
+  BanknoteArrowDown,
+} from "lucide-react";
+
+const getCurrentFY = () => {
+  const today = new Date();
+
+  const year =
+    today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1;
+
+  return {
+    from: `${year}-04-01`,
+    to: `${year + 1}-03-31`,
+  };
+};
 
 export default function ERP() {
-  const [summary, setSummary] = useState({});
-  const [revenueData, setRevenueData] = useState([]);
-  const [expenseData, setExpenseData] = useState([]);
+  const fy = getCurrentFY();
+  const [data, setData] = useState({
+    kpi: {},
+    revenueExpense: {},
+    cashFlow: {},
+    departments: [],
+    topReceivables: [],
+    topPayables: [],
+    recentVouchers: [],
+  });
+  const [fromDate, setFromDate] = useState(fy.from);
+  const [toDate, setToDate] = useState(fy.to);
   const [loading, setLoading] = useState(true);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
   /* ======================
      FETCH DATA
   ====================== */
-
   const fetchDashboard = async () => {
     try {
       setLoading(true);
-
-      const [summaryRes, clientRes, supplierRes, contractorRes, employeeRes] =
-        await Promise.all([
-          axios.get(`/api/v1/reports/summary?companyId=${user.companyId}`),
-          axios.get(
-            `/api/v1/reports/outstanding?companyId=${user.companyId}&type=Client`,
-          ),
-          axios.get(
-            `/api/v1/reports/outstanding?companyId=${user.companyId}&type=Supplier`,
-          ),
-          axios.get(
-            `/api/v1/reports/outstanding?companyId=${user.companyId}&type=Contractor`,
-          ),
-          axios.get(
-            `/api/v1/reports/outstanding?companyId=${user.companyId}&type=Employee`,
-          ),
-        ]);
-
-      const summaryData = summaryRes.data;
-      const clients = clientRes.data;
-      const suppliers = supplierRes.data;
-      const contractors = contractorRes.data;
-      const employees = employeeRes.data;
-
-      const receivable = clients.reduce((s, c) => s + c.balance, 0);
-      const payable =
-        suppliers.reduce((s, c) => s + c.balance, 0) +
-        contractors.reduce((s, c) => s + c.balance, 0) +
-        employees.reduce((s, c) => s + c.balance, 0);
-
-      setSummary({
-        revenue: summaryData.revenue || 0,
-        expenses: summaryData.expenses || 0,
-        receivable,
-        payable,
-        profit: (summaryData.revenue || 0) - (summaryData.expenses || 0),
+      const summaryRes = await axios.get("/api/v1/reports/dashboard", {
+        params: {
+          companyId: user.companyId,
+          fromDate,
+          toDate,
+        },
       });
-
-      // 🔥 simple chart mapping
-      setRevenueData(summaryData.monthlyRevenue || []);
-      setExpenseData(summaryData.expenseBreakdown || []);
+      console.log(summaryRes.data);
+      setData(summaryRes.data);
     } catch (err) {
       console.error(err);
       setLoading(false);
@@ -77,62 +73,308 @@ export default function ERP() {
 
   useEffect(() => {
     fetchDashboard();
-  }, [user.companyId]);
-
-  if (loading) return <p>Loading dashboard...</p>;
+  }, [user.companyId, fromDate, toDate]);
 
   return (
     <div className="space-y-5 pb-5">
+      {/* Filters */}
+      <div className="rounded-xl border bg-white p-4 shadow-sm">
+        <div className="grid gap-4 md:grid-cols-3">
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="rounded-lg border px-2 py-1"
+          />
+
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="rounded-lg border px-2 py-1"
+          />
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const fy = getCurrentFY();
+                setFromDate(fy.from);
+                setToDate(fy.to);
+              }}
+              className="rounded-lg border px-3 text-sm"
+            >
+              Current FY
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const today = new Date();
+
+                const from = `${today.getFullYear()}-01-01`;
+
+                const to = today.toISOString().split("T")[0];
+
+                setFromDate(from);
+                setToDate(to);
+              }}
+              className="rounded-lg border px-3 py-2 text-sm"
+            >
+              Current Year
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 p-2">
-        <KPI
-          title="Revenue"
-          value={`₹ ${summary.revenue?.toLocaleString()}`}
-          positive
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KPICard
+          icon={<Banknote />}
+          title="Cash"
+          value={data?.kpi.cash}
+          onClick={() => navigate("/erp/balance-sheet")}
         />
-        <KPI
-          title="Expenses"
-          value={`₹ ${summary.expenses?.toLocaleString()}`}
-        />
-        <KPI
-          title="Profit"
-          value={`₹ ${summary.profit?.toLocaleString()}`}
-          positive={summary.profit >= 0}
-        />
-        <KPI
+
+        <KPICard
+          icon={<BanknoteArrowDown />}
           title="Receivable"
-          value={`₹ ${summary.receivable?.toLocaleString()}`}
+          value={data?.kpi.receivable}
+          onClick={() => navigate("/erp/outstanding")}
         />
-        <KPI title="Payable" value={`₹ ${summary.payable?.toLocaleString()}`} />
+
+        <KPICard
+          icon={<BanknoteArrowUp />}
+          title="Payable"
+          value={data?.kpi.payable}
+          onClick={() => navigate("/erp/outstanding")}
+        />
+
+        <KPICard
+          icon={<HandCoins />}
+          title="Net Profit"
+          value={data?.kpi.profit}
+          onClick={() => navigate("/erp/profit-loss")}
+        />
       </div>
 
       {/* Revenue Chart */}
-      <div className="p-2">
-        <Card title="Revenue Trend">
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="month" />
-              <YAxis hide />
-              <Tooltip />
-              <Line dataKey="value" stroke="#3b82f6" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <div className="mb-4 flex justify-between">
+            <h2 className="font-semibold">Revenue vs Expense</h2>
 
-      {/* Expense Chart */}
-      <div className="p-2">
-        <Card title="Expense Breakdown">
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={expenseData}>
+            <button
+              onClick={() => navigate("/erp/p&l")}
+              className="text-sm text-blue-600"
+            >
+              View
+            </button>
+          </div>
+
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart
+              data={[
+                {
+                  name: "Revenue",
+                  value: data?.revenueExpense.revenue,
+                },
+                {
+                  name: "Expense",
+                  value: data?.revenueExpense.expense,
+                },
+              ]}
+              responsive
+              margin={{
+                top: 10,
+                right: 0,
+                bottom: 0,
+                left: 15,
+              }}
+            >
               <XAxis dataKey="name" />
-              <YAxis hide />
+              <YAxis />
               <Tooltip />
-              <Bar dataKey="value" fill="#10b981" />
+              <Bar dataKey="value" />
             </BarChart>
           </ResponsiveContainer>
-        </Card>
+        </div>
+
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <div className="mb-4 flex justify-between">
+            <h2 className="font-semibold">Cash Flow</h2>
+
+            <button
+              onClick={() => navigate("/erp/cash-flow")}
+              className="text-sm text-blue-600"
+            >
+              View
+            </button>
+          </div>
+
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart
+              data={[
+                {
+                  name: "Inflow",
+                  value: data?.cashFlow.inflow,
+                },
+                {
+                  name: "Outflow",
+                  value: data?.cashFlow.outflow,
+                },
+              ]}
+              responsive
+              margin={{
+                top: 10,
+                right: 0,
+                bottom: 0,
+                left: 15,
+              }}
+            >
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Receivables & Payables */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Receivable */}
+        <div className="rounded-xl border bg-white shadow-sm">
+          <div className="border-b p-4">Top Receivables</div>
+
+          {data?.topReceivables.map((item) => (
+            <button
+              key={item.ledgerId}
+              onClick={() => navigate(`/erp/ledger-report/${item.ledgerId}`)}
+              className="
+          flex
+          w-full
+          justify-between
+          p-4
+          border-b
+        "
+            >
+              <div>
+                <div className="font-medium">{item.name}</div>
+
+                <div className="text-xs text-gray-500">{item.phone}</div>
+              </div>
+
+              <div className="text-green-600">
+                ₹{item.absoluteBalance.toLocaleString()}
+              </div>
+            </button>
+          ))}
+        </div>
+        {/* Payables */}
+        <div className="rounded-xl border bg-white shadow-sm">
+          <div className="border-b p-4">Top Payables</div>
+
+          {data?.topPayables.map((item) => (
+            <button
+              key={item.ledgerId}
+              onClick={() => navigate(`/erp/ledger-report/${item.ledgerId}`)}
+              className="
+          flex
+          w-full
+          justify-between
+          p-4
+          border-b
+        "
+            >
+              <div>
+                <div className="font-medium">{item.name}</div>
+
+                <div className="text-xs text-gray-500">{item.phone}</div>
+              </div>
+
+              <div className="text-green-600">
+                ₹{item.absoluteBalance.toLocaleString()}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Department */}
+      <div className="rounded-xl border bg-white shadow-sm">
+        <div className="border-b p-4">
+          <h2 className="font-semibold">Department Performance</h2>
+        </div>
+
+        <div className="divide-y">
+          {data?.departments.map((dept) => (
+            <div
+              key={dept.costCenterId}
+              className="
+            flex
+            w-full
+            justify-between
+            p-4
+            hover:bg-gray-50
+          "
+            >
+              <div
+                className=" cursor-pointer"
+                onClick={() =>
+                  navigate(`/erp/cost-analysis/${dept.costCenterId}`)
+                }
+              >
+                <div className="font-medium">{dept.name}</div>
+
+                <div className="text-xs text-gray-500">
+                  Income ₹{dept.income?.toLocaleString()}
+                </div>
+              </div>
+
+              <div
+                className={dept.profit >= 0 ? "text-green-600" : "text-red-600"}
+              >
+                ₹{dept.profit?.toLocaleString()}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Voucher */}
+      <div className="rounded-xl border bg-white shadow-sm">
+        <div className="border-b p-4">Recent Activity</div>
+
+        {data?.recentVouchers.map((voucher) => (
+          <div
+            key={voucher._id}
+            className="
+          flex
+          justify-between
+          p-4
+          border-b
+          hover:bg-gray-50
+        "
+          >
+            <div
+              className=" cursor-pointer"
+              onClick={() => navigate(`/erp/vouchers/${voucher._id}`)}
+            >
+              <div className="font-medium">{voucher.voucherNo}</div>
+
+              <div className="text-xs text-gray-500">{voucher.narration}</div>
+            </div>
+
+            <div className="text-right">
+              <div className="text-sm">{voucher.type}</div>
+
+              <div className="text-xs text-gray-500">
+                {new Date(voucher.date).toLocaleDateString()}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -142,23 +384,29 @@ export default function ERP() {
    COMPONENTS
 ====================== */
 
-function KPI({ title, value, positive }) {
+function KPICard({ title, value, icon, color, onClick }) {
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm">
-      <p className="text-sm text-gray-500">{title}</p>
-      <h3 className="text-lg font-bold">{value}</h3>
-      <p className={positive ? "text-green-600" : "text-red-600"}>
-        {positive ? "Good" : "Attention"}
-      </p>
-    </div>
-  );
-}
+    <button
+      onClick={onClick}
+      className="
+      rounded-2xl
+      border
+      bg-white
+      p-4
+      shadow-sm
+      transition
+      hover:shadow-md
+      text-left
+      w-full
+      "
+    >
+      <div className="flex items-center justify-between">{icon}</div>
 
-function Card({ title, children }) {
-  return (
-    <div className="bg-white rounded-xl p-4 shadow-sm">
-      <p className="text-sm text-gray-500">{title}</p>
-      {children}
-    </div>
+      <p className="mt-3 text-xs text-gray-500">{title}</p>
+
+      <h2 className="mt-1 text-xl font-bold">
+        ₹ {value ? value.toLocaleString() : 0}
+      </h2>
+    </button>
   );
 }

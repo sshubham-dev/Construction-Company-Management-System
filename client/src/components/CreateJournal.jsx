@@ -14,17 +14,26 @@ const CreateJournal = ({ onClose, refresh, editData }) => {
   const [loading, setLoading] = useState(false);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
 
+  const account = ["bank", "cash"];
+
   /* ======================
      FETCH LEDGERS
   ====================== */
   useEffect(() => {
-    axios
-      .get("/api/v1/ledger", {
+    const fetchLedgers = async () => {
+      const res = await axios.get("/api/v1/ledger", {
         params: { companyId: user.companyId },
-      })
-      .then((res) => {
-        setLedgers(res.data || []);
       });
+      // console.log("ledger found: ", res.data);
+      const data = Array.isArray(res.data.data) ? res.data.data : [];
+      const filtered = data.filter(
+        (l) =>
+          !l?.groupId?.name?.toLowerCase().includes("bank") &&
+          !l?.groupId?.name?.toLowerCase().includes("cash"),
+      );
+      setLedgers(filtered);
+    };
+
     axios
       .get("/api/v1/cost-center", {
         params: { companyId: user.companyId },
@@ -32,6 +41,7 @@ const CreateJournal = ({ onClose, refresh, editData }) => {
       .then((res) => {
         setCostCenters(res.data || []);
       });
+    fetchLedgers();
   }, []);
 
   /* ======================

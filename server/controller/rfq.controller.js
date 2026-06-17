@@ -1,5 +1,7 @@
+const mongoose = require("mongoose");
 const { RFQ, Quotation } = require("../models/rfq.models");
 const PurchaseRequest = require("../models/purchaserequest.models");
+const PurchaseOrder = require("../models/purchaseOrder.models");
 const { Item } = require("../models/stock.models");
 const { Ledger } = require("../models/ledger.models");
 const Supplier = require('../models/supplier.models.js');
@@ -23,6 +25,19 @@ async function generateRFQNo() {
 
   return `RFQ-${year}-${String(lastNumber + 1).padStart(4, "0")}`;
 }
+
+async function generatePONumber() {
+  const last = await PurchaseOrder.findOne().sort({ createdAt: -1 });
+
+  const year = new Date().getFullYear();
+
+  if (!last) return `PO-${year}-0001`;
+
+  const lastNumber = parseInt(last.poNo.split("-")[2]) || 0;
+
+  return `PO-${year}-${String(lastNumber + 1).padStart(4, "0")}`;
+}
+
 
 /* =========================
    CREATE RFQ
@@ -374,6 +389,19 @@ const getRFQById = async (req, res) => {
   try {
     const data = await RFQ.findById(req.params.id)
       .populate("storeId purchaseRequestId suppliers.supplierId")
+      .populate(
+        "selectedSupplierId",
+        "name mobile"
+      )
+      .populate(
+        "selectedQuotationId"
+      )
+      .populate(
+        "purchaseOrderId"
+      )
+      .populate({
+        path: "items.itemId",
+      })
       .sort({ createdAt: -1 });
 
     res.json({ success: true, data });
@@ -615,7 +643,7 @@ const compareQuotations = async (req, res) => {
               name
               code
             `,
-      });
+      })
 
     if (!quotations.length) {
       throw new Error(
@@ -625,7 +653,7 @@ const compareQuotations = async (req, res) => {
 
     const rfq = await RFQ.findById(
       req.params.id
-    ).populate("purchaseRequestId");
+    ).populate("purchaseRequestId storeId");
 
     if (!rfq) {
       throw new Error("RFQ not found");
@@ -694,7 +722,7 @@ const compareQuotations = async (req, res) => {
 
       all:
         ranked,
-        rfq,
+      rfq,
     });
 
   } catch (err) {
@@ -725,7 +753,7 @@ const selectQuotation = async (req, res) => {
        QUOTATION
     ===================== */
 
-    const quotation = await Quotation.findById(req.params.id).session(session);
+    const quotation = await Quotation.findById(req.params.quoteId).session(session);
 
     if (!quotation) {
       throw new Error("Quotation not found");
@@ -735,7 +763,9 @@ const selectQuotation = async (req, res) => {
        RFQ
     ===================== */
 
-    const rfq = await RFQ.findById(quotation.rfqId).session(session);
+    const rfq = await RFQ.findById(quotation.rfqId)
+      .populate("purchaseRequestId storeId")
+      .session(session);
 
     if (!rfq) {
       throw new Error("RFQ not found");
@@ -798,6 +828,95 @@ const selectQuotation = async (req, res) => {
     rfq.selectedSupplierId =
       quotation.supplierId;
 
+    /* ===================
+    Create PO from selected quotation
+    ======================*/
+    const supplier = await Ledger.findById(
+      quotation.supplierId
+    ).session(session);
+
+    const pr = await PurchaseRequest.findById(
+      rfq.purchaseRequestId
+    ).session(session);
+
+    const poItems = quotation.items.map(
+      (item) => {
+
+        const rfqItem =
+          rfq.items.find(
+            (r) =>
+              r.itemId.toString() ===
+              item.itemId.toString()
+          );
+
+        return {
+          itemId: item.itemId,
+
+          unit:
+            rfqItem?.unit ||
+            "NOS",
+
+          quantity:
+            item.quantity,
+
+          rate:
+            item.rate,
+
+          amount:
+            item.quantity *
+            item.rate,
+        };
+      }
+    );
+
+    const totalAmount =
+      poItems.reduce(
+        (sum, item) =>
+          sum + item.amount,
+        0
+      );
+
+    const deliveryType = rfq.procurementType === "SITE_PROCUREMENT" ? "SITE" : "STORE";
+
+    const po = await PurchaseOrder.create(
+      [{
+        poNo:
+          await generatePONumber(),
+
+        supplierId:
+          quotation.supplierId,
+
+        deliveryType: deliveryType,
+
+        siteId: rfq.purchaseRequestId.site,
+        storeId: rfq.purchaseRequestId.store,
+
+        rfqId:
+          rfq._id,
+
+        quotationId:
+          quotation._id,
+
+        purchaseRequestId:
+          rfq.purchaseRequestId,
+
+        items:
+          poItems,
+
+        totalAmount,
+
+        status:
+          "DRAFT",
+
+        createdBy:
+          req.user._id,
+      }],
+      { session }
+    );
+
+    rfq.purchaseOrderId =
+      po[0]._id;
+
     await rfq.save({
       session,
     });
@@ -808,11 +927,17 @@ const selectQuotation = async (req, res) => {
 
     await session.commitTransaction();
 
+    const updatedRfq = await RFQ.findById(req.params.rfqId)
+      .populate("purchaseOrderId")
+      .populate("selectedSupplierId", "name")
+      .populate("selectedQuotationId");
+
     res.json({
       success: true,
 
-      data:
-        quotation,
+      data: quotation,
+
+      purchaseOrder: po[0],
     });
 
   } catch (err) {

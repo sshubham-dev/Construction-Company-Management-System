@@ -2,19 +2,48 @@ const {
   getOutstanding,
   getLedgerReport,
   getBalanceSheet,
-  getCombinedReport,
   getProfitAndLoss,
   getSummary,
   getTrialBalance,
   getBusinessUnitReport,
   getCostCenterReport,
+  getCashFlowReport,
+  getSiteAnalysis,
+  getCashFlowDetails,
+  getDashboard,
 } = require("../services/ERP/report.service");
+
+
+const Dashboard = async (req, res) => {
+  try {
+    const {
+      companyId,
+      fromDate,
+      toDate,
+    } = req.query;
+    console.log("Finding Data")
+    const data = await getDashboard(
+      companyId,
+      fromDate,
+      toDate,
+    );
+    // console.log(data)
+    console.log("found data")
+    res.json(data);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({
+      error: error,
+    });
+  }
+};
+
 
 const Outstanding = async (req, res) => {
   try {
-    const { companyId, type } = req.query;
+    const { companyId, partyType, fromDate, toDate } = req.query;
     console.log("Outstanding report finding ");
-    const data = await getOutstanding(companyId, type);
+    const data = await getOutstanding(companyId, partyType, fromDate, toDate);
 
     res.json(data);
     console.log("Outstanding report found ");
@@ -39,14 +68,6 @@ const LedgerReport = async (req, res) => {
     console.log(e);
     res.status(500).json({ error: e.message });
   }
-};
-
-const MultiReport = async (req, res) => {
-  const { companyId } = req.query;
-
-  const data = await getCombinedReport(companyId);
-
-  res.json(data);
 };
 
 const BalanceSheet = async (req, res) => {
@@ -104,9 +125,20 @@ const TrialBalance = async (req, res) => {
 const CostCenterReport = async (req, res) => {
   try {
     console.log("Cost center report finding ");
-    const { companyId } = req.query;
-    const data = await getCostCenterReport(companyId);
+    const {
+      companyId,
+      fromDate,
+      toDate,
+    } = req.query;
+
+    const data = await getCostCenterReport(
+      companyId,
+      fromDate,
+      toDate
+    );
+
     res.json(data);
+    console.log(data)
     console.log("Cost center report found ");
   } catch (error) {
     console.log(error);
@@ -127,14 +159,65 @@ const BusinessUnitReport = async (req, res) => {
   }
 };
 
+const CashFlowReport = async (req, res) => {
+  try {
+    console.log("Cash Flow report finding ");
+    const { companyId, fromDate, toDate } = req.query;
+    const data = await getCashFlowReport(
+      companyId,
+      fromDate,
+      toDate);
+    res.json(data);
+    console.log("Cash Flow report found ");
+  } catch (error) {
+    console.log(error);
+    res.status(404).json(error);
+  }
+};
+
+const CashFlowDetails = async (req, res) => {
+  try {
+
+    const {
+      companyId,
+      category,
+      fromDate,
+      toDate,
+    } = req.query;
+
+    const data =
+      await getCashFlowDetails(
+        companyId,
+        category,
+        fromDate,
+        toDate
+      );
+
+    res.json(data);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: error.message,
+    });
+
+  }
+};
+
+const SiteAnalysis = async (req, res) => { };
+
 module.exports = {
+  Dashboard,
   Outstanding,
   LedgerReport,
-  MultiReport,
   BusinessUnitReport,
   BalanceSheet,
   ProfitAndLoss,
   Summary,
   TrialBalance,
   CostCenterReport,
+  CashFlowReport,
+  CashFlowDetails
 };

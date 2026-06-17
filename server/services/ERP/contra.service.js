@@ -5,7 +5,7 @@ const {
   generateVoucherNo,
   rebuildVoucherNumbers,
 } = require("../../utils/voucherNoGenerator");
-const { getFinancialYear } = require("../../utils/getFinancialYear");
+const getFinancialYear = require("../../utils/getFinancialYear");
 
 /* ======================
    CREATE
@@ -99,11 +99,7 @@ async function updateContraVoucher(id, data) {
 
   const fy = getFinancialYear(date);
   if (voucher.fy !== fy.code) {
-    await rebuildVoucherNumbers({
-      companyId: voucher.companyId,
-      type: voucher.type,
-      fy: fy.code,
-    });
+    voucher.fy = fy.code
   }
 
   voucher.narration = narration;

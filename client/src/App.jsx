@@ -126,6 +126,7 @@ import ERPSettings from "./pages/ERP/ERPSettings.jsx";
 import Suppliers from "./pages/ERP/Suppliers.jsx";
 import Collections from "./pages/ERP/Collections.jsx";
 import InvoiceForm from "./pages/ERP/Components/InvoiceForm.jsx";
+import LedgerGroup from "./pages/ERP/LedgerGroup.jsx";
 
 // ERP/Inventory
 import StockCategory from "./pages/ERP/StockCategory.jsx";
@@ -140,12 +141,20 @@ import DeliveryNotes from "./pages/ERP/DeliveryNotes.jsx";
 import GRN from "./pages/ERP/GRN.jsx";
 import ReturnOrders from "./pages/ERP/ReturnOrders.jsx";
 import StockAudit from "./pages/ERP/Stock/StockAudit.jsx";
+import DNDetail from "./pages/ERP/DNDetail.jsx";
+import RFQDetail from "./pages/ERP/RFQDetail.jsx";
+import RFQ from "./pages/ERP/RFQ.jsx";
+import RFQComparison from "./pages/ERP/RFQComparison.jsx";
+import PublicQuotationPage from "./pages/ERP/PublicQuotationPage.jsx";
+import Order from "./pages/ERP/Order.jsx";
 
 // ERP/Reports
-import AccountManagement from "./pages/ERP/Reports/AccountManagement.jsx"; //
+import ERP from "./pages/ERP/Reports/ERP.jsx"; //
+import CostCenterReport from "./pages/ERP/Reports/CostCenterReport.jsx";
+import BusinessUnitReport from "./pages/ERP/Reports/BusinessUnitReport.jsx";
+import AccountSummary from "./pages/ERP/Reports/AccountSummary.jsx";
 import BalanceSheet from "./pages/ERP/Reports/BalanceSheet.jsx"; //
 import CashFlow from "./pages/ERP/Reports/CashFlow.jsx"; //
-import ERP from "./pages/ERP/Reports/ERP.jsx"; //
 import ExpenseReports from "./pages/ERP/Reports/ExpenseReports.jsx"; //
 import LedgerReport from "./pages/ERP/Reports/LedgerReport.jsx"; //
 import Outstanding from "./pages/ERP/Reports/Outstanding.jsx"; //
@@ -155,15 +164,7 @@ import SiteProfit from "./pages/ERP/Reports/SiteProfit.jsx"; //
 import Sales from "./pages/ERP/Reports/Sales.jsx";
 import TrialBalance from "./pages/ERP/Reports/TrialBalance.jsx"; //
 
-import Order from "./pages/ERP/Order.jsx";
-import LedgerGroup from "./pages/ERP/LedgerGroup.jsx";
-import MultiLevelReport from "./pages/ERP/Reports/MultiLevelReport.jsx";
 import ProjectEditor from "./components/CreateProject.jsx";
-import DNDetail from "./pages/ERP/DNDetail.jsx";
-import RFQ from "./pages/ERP/RFQ.jsx";
-import RFQDetail from "./pages/ERP/RFQDetail.jsx";
-import RFQComparison from "./pages/ERP/RFQComparison.jsx";
-import PublicQuotationPage from "./pages/ERP/PublicQuotationPage.jsx";
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -353,16 +354,19 @@ const App = () => {
         <Route path="/erp/groups" element={<LedgerGroup />} />
 
         <Route path="/erp" element={<ERP />} />
-        <Route path="/erp/account" element={<AccountManagement />} />
+        <Route path="/erp/account-summary" element={<AccountSummary />} />
         <Route path="/erp/expenses" element={<ExpenseReports />} />
         <Route path="/erp/balance-sheet" element={<BalanceSheet />} />
         <Route path="/erp/cash-flow" element={<CashFlow />} />
         <Route path="/erp/ledger-report" element={<LedgerReport />} />
+        <Route path="/erp/ledger-report/:id" element={<LedgerReport />} />
         <Route path="/erp/outstanding" element={<Outstanding />} />
         <Route path="/erp/p&l" element={<ProfitLoss />} />
-        <Route path="/erp/site-profit" element={<SiteProfit />} />
+        <Route path="/erp/site-analysis" element={<SiteProfit />} />
+        <Route path="/erp/cost-analysis" element={<CostCenterReport />} />
+        <Route path="/erp/cost-analysis/:id" element={<CostCenterReport />} />
+        <Route path="/erp/bu-analysis" element={<BusinessUnitReport />} />
         <Route path="/erp/trial-balance" element={<TrialBalance />} />
-        <Route path="/erp/multi-level" element={<MultiLevelReport />} />
 
         <Route path="/erp/inventory" element={<Store />} />
         <Route path="/erp/inventory/grn" element={<GRN />} />
@@ -396,6 +400,7 @@ const App = () => {
         />
         <Route path="/erp/inventory/create-sales" element={<Sales />} />
         <Route path="/erp/procurement/rfq" element={<RFQ />} />
+        <Route path="/erp/procurement/po/create?rfq=:rfqId" element={<RFQ />} />
         <Route path="/erp/procurement/rfq/:id" element={<RFQDetail />} />
         <Route
           path="/erp/procurement/rfq/:id/comparison"

@@ -38,7 +38,7 @@ const createPurchaseRequest = async (req, res) => {
   try {
     const user = req.user;
 
-    const { site, store, reqDate, requirementFor, category, narration, items } =
+    const { site, store, reqDate, requirementFor, group, category, narration, items } =
       req.body;
 
     if (!site) throw new Error("Site required");
@@ -82,6 +82,7 @@ const createPurchaseRequest = async (req, res) => {
       store,
       reqDate,
       requirementFor,
+      group,
       category,
       narration,
       items: processedItems,
@@ -107,7 +108,7 @@ const updatePurchaseRequest = async (req, res) => {
     if (!pr) throw new Error("PR not found");
     if (pr.status !== "DRAFT") throw new Error("Only draft editable");
 
-    const { items, narration, reqDate, category, requirementFor } = req.body;
+    const { items, narration, reqDate, group, category, requirementFor } = req.body;
 
     if (items) {
       const updatedItems = [];
@@ -130,6 +131,7 @@ const updatePurchaseRequest = async (req, res) => {
     if (narration !== undefined) pr.narration = narration;
     if (reqDate) pr.reqDate = reqDate;
     if (category) pr.category = category;
+    if (group) pr.group = group;
     if (requirementFor) pr.requirementFor = requirementFor;
 
     await pr.save();
@@ -440,7 +442,7 @@ const getAllPurchaseRequests = async (req, res) => {
           },
         ],
       })
-      .populate("site store")
+      .populate("site store category group createdBy")
       .exec();
 
     return res.json(data);
@@ -465,7 +467,7 @@ const getPurchaseRequestById = async (req, res) => {
         },
       ],
     })
-      .populate("site store")
+      .populate("site store category group createdBy")
       .exec();
 
     if (!pr) return res.status(404).json({ message: "Not found" });

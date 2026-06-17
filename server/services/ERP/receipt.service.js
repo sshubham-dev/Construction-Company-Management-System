@@ -3,7 +3,7 @@ const { Ledger } = require("../../models/ledger.models");
 const InvoiceAllocation = require("../../models/invoiceAllocation.models");
 const { getVouchers } = require("./voucher/query.service");
 const { generateVoucherNo, rebuildVoucherNumbers } = require("../../utils/voucherNoGenerator");
-const { getFinancialYear } = require("../../utils/getFinancialYear");
+const getFinancialYear = require("../../utils/getFinancialYear");
 
 
 /* ======================
@@ -74,7 +74,9 @@ async function createReceiptVoucher(data, user) {
 async function updateReceiptVoucher(id, data) {
   const voucher = await Voucher.findById(id);
 
-  if (!voucher) throw new Error("Voucher not found");
+  if (!voucher) {
+    throw new Error("Voucher not found");
+  }
 
   if (voucher.status !== "DRAFT") {
     throw new Error("Only Draft voucher can be updated");
@@ -87,28 +89,33 @@ async function updateReceiptVoucher(id, data) {
     narration,
     date,
     costCenterId,
-    invoices = [],
   } = data;
-
-  const entries = [
-    { ledgerId: to, type: "DEBIT", amount },
-    { ledgerId: from, type: "CREDIT", amount },
-  ];
 
   const fy = getFinancialYear(date);
 
+  // Prevent FY change
   if (voucher.fy !== fy.code) {
-    await rebuildVoucherNumbers({
-      companyId: voucher.companyId,
-      type: voucher.type,
-      fy: fy.code,
-    });
+    // throw new Error(
+    //   `Voucher belongs to FY ${voucher.fy}. Financial Year cannot be changed.`
+    // );
+    voucher.fy = fy.code;
   }
 
-  voucher.entries = entries;
+  voucher.entries = [
+    {
+      ledgerId: to,
+      type: "DEBIT",
+      amount: Number(amount),
+    },
+    {
+      ledgerId: from,
+      type: "CREDIT",
+      amount: Number(amount),
+    },
+  ];
   voucher.narration = narration;
   voucher.date = date;
-  voucher.costCenterId = costCenterId;
+  voucher.costCenterId = costCenterId || null;
 
   await voucher.save();
 

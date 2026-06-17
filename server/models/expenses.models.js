@@ -101,7 +101,7 @@ const expenseSchema = new mongoose.Schema(
 
     isApproved: {
       type: String,
-      enum: ["For Approval", "Approved", "Rejected"],
+      enum: ["For Approval", "Accounts Approved", "Approved", "Accounts Rejected", "Rejected"],
       default: "For Approval",
     },
 
