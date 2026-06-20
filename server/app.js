@@ -22,7 +22,6 @@ const cookieParser = require("cookie-parser");
 const Supplier = require("./routes/supplier.routes");
 const ExtraWork = require("./routes/extrawork.routes");
 const PurchaseOrder = require("./routes/purchaseorder.routes");
-const Todo = require("./routes/todo.routes");
 const Approval = require("./routes/approval.routes");
 const path = require("path");
 const {
@@ -131,7 +130,6 @@ app.use("/api/v1/quality-schedule", QualitySchedule);
 app.use("/api/v1/payment-schedule", PaymentSchedule);
 app.use("/api/v1/approval", Approval);
 app.use("/api/v1/bill", Bill);
-app.use("/api/v1/todo", Todo);
 app.use("/api/v1/journal", Journal);
 app.use("/api/v1/contra", Contra);
 app.use("/api/v1/payment", Payment);

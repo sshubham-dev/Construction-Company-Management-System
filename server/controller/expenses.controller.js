@@ -39,7 +39,7 @@ const resolvePaidByLedger = async (userId) => {
 ====================================================== */
 const createExpense = async (req, res) => {
   try {
-    const { date, amount, narration } = req.body;
+    const { date, amount, narration, expenseCategory } = req.body;
     const user = req.user;
     const files = req.files || (req.file ? [req.file] : []);
     console.log("BODY:", req.body);
@@ -101,6 +101,7 @@ const createExpense = async (req, res) => {
       amount: Number(amount),
       narration,
       companyId: user.companyId,
+      expenseCategory,
       expenseLedger: expenseLedger._id,
       paidByLedger: paidByLedger._id,
       expenseFor: expenseFor?._id || null,
@@ -119,19 +120,6 @@ const createExpense = async (req, res) => {
         );
       }
     }
-
-    // const newExpense = {
-    //   date,
-    //   amount: Number(amount),
-    //   narration,
-    //   companyId: user.companyId,
-    //   expenseLedger: expenseLedger.name,
-    //   paidByLedger: paidByLedger.name,
-    //   expenseFor: expenseFor?.name || null,
-    //   attachments, // ✅ keep this
-    //   status: "Draft",
-    //   createdBy: req.user._id,
-    // }
 
     const newExpense = await Expenses.findById(expense._id)
       .populate("paidByLedger")
@@ -365,7 +353,7 @@ const updateExpense = async (req, res) => {
     //   });
     // }
 
-    const { date, amount, narration, remarks } = req.body;
+    const { date, amount, narration, remarks, expenseCategory } = req.body;
 
     /* ----------------------------------
        LEDGER VALIDATION (IF CHANGED)
@@ -409,6 +397,7 @@ const updateExpense = async (req, res) => {
     expense.companyId = user.companyId || expense?.companyId;
     expense.paidByLedger = paidByLedger || expense?.paidByLedger;
     expense.createdBy = user._id || expense?.createdBy;
+    expense.expenseCategory = expenseCategory;
 
     /* ----------------------------------
        ATTACHMENTS (APPEND ONLY)

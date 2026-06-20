@@ -14,7 +14,7 @@ const create = async (req, res) => {
   try {
     const ledger = await createLedger(req.body);
 
-    if(req.body.referenceId){
+    if (req.body.referenceId) {
       await mapLedger(ledger, req.body.referenceType, req.body.referenceId);
     }
 
@@ -227,7 +227,7 @@ const createGroup = async (req, res) => {
 
 const getGroups = async (req, res) => {
   try {
-    const data = await GroupService.getGroups(req.query.companyId);
+    const data = await GroupService.getGroups(req.query);
     res.json(data);
   } catch (error) {
     console.error("Get Groups Error:", error);
@@ -247,6 +247,11 @@ const getGroup = async (req, res) => {
 
 const updateGroup = async (req, res) => {
   const data = await GroupService.updateGroup(req.params.id, req.body);
+  res.json(data);
+};
+
+const deleteGroup = async (req, res) => {
+  const data = await GroupService.deleteGroup(req.params.id);
   res.json(data);
 };
 
@@ -310,7 +315,7 @@ module.exports = {
   getGroup,
   updateGroup,
   // getGroupById,
-  // deleteGroup,
+  deleteGroup,
 
   addLedger,
   mapLedger,

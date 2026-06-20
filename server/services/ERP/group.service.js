@@ -20,8 +20,8 @@ const createGroup = async (data, user) => {
 };
 
 // ✅
-const getGroups = async (companyId) => {
-  return await Group.find({ companyId })
+const getGroups = async (query) => {
+  return await Group.find(query)
     .sort({ name: 1 })
     .populate("companyId")
     .populate("parentId");

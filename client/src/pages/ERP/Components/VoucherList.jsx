@@ -89,7 +89,7 @@ const VoucherList = ({ type, onCreate }) => {
     const res = await axios.get("/api/v1/ledger", {
       params: { companyId: user.companyId },
     });
-    console.log("ledger found: ", res.data);
+    // console.log("ledger found: ", res.data);
     if (type === "journal") {
       const data = Array.isArray(res.data.data) ? res.data.data : [];
       const filtered = data.filter(

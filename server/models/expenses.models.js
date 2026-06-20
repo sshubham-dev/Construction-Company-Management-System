@@ -27,6 +27,13 @@ const expenseSchema = new mongoose.Schema(
        CORE LEDGERS
     ====================== */
 
+    expenseCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group",
+      default: null
+      // required: true,
+    },
+
     // WHAT kind of expense (Diesel, Cement, Travel, etc.)
     expenseLedger: {
       type: mongoose.Schema.Types.ObjectId,

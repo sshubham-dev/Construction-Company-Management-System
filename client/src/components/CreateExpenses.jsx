@@ -7,13 +7,15 @@ import { useSelector, useDispatch } from "react-redux";
 
 const ExpenseForm = ({ onClose, editId, onSave }) => {
   const [loading, setLoading] = useState(false);
+  const [expenseGroups, setExpenseGroups] = useState([]);
+  const [expenseCategory, setExpenseCategory] = useState("");
   const [ledgers, setLedgers] = useState([]);
-  // const [expenseLedgers, setExpenseLedgers] = useState([]);
   const [costCenters, setCostCenters] = useState([]);
   const [form, setForm] = useState({
     date: "",
     amount: "",
     narration: "",
+    expenseCategory: "",
     expenseLedger: "",
     expenseFor: null,
     attachments: [],
@@ -23,14 +25,28 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
 
   /* ---------------------------------- LOAD LEDGERS ---------------------------------- */
   useEffect(() => {
-    const loadLedgers = async () => {
-      const { data } = await axios.get("/api/v1/ledger", {
-        params: { companyId: user.companyId },
-      });
-      // console.log(data);
-      // Site / Store / Office ledgers
-      setLedgers(data.data);
+    const fetchExpenseCategory = async () => {
+      try {
+        const res = await axios.get("/api/v1/ledger-group", {
+          params: { companyId: user.companyId, nature: "EXPENSES" },
+        });
+        console.log(
+          res.data?.filter(
+            (g) =>
+              g.name !== "Indirect Expenses" && g.name !== "Direct Expenses",
+          ),
+        );
+        setExpenseGroups(
+          res.data?.filter(
+            (g) =>
+              g.name !== "Indirect Expenses" && g.name !== "Direct Expenses",
+          ),
+        );
+      } catch (error) {
+        console.log(error);
+      }
     };
+
     const fetchCostCenter = async () => {
       try {
         const { data } = await axios.get("/api/v1/cost-center", {
@@ -42,9 +58,20 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
         console.log(error);
       }
     };
-    loadLedgers();
+
+    fetchExpenseCategory();
     fetchCostCenter();
   }, []);
+
+  useEffect(() => {
+    const loadLedgers = async () => {
+      const { data } = await axios.get("/api/v1/ledger", {
+        params: { companyId: user.companyId },
+      });
+      setLedgers(data.data);
+    };
+    loadLedgers();
+  }, [form.expenseCategory]);
 
   /* ---------------------------------- EDIT MODE ---------------------------------- */
   useEffect(() => {
@@ -57,6 +84,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
         date: data.date?.slice(0, 10),
         amount: data.amount,
         narration: data.narration,
+        expenseCategory: data.expenseCategory._id || data.expenseCategory,
         expenseLedger: data.expenseLedger?._id || data.expenseLedger || "",
         expenseFor: data.expenseFor?._id || data.expenseFor || null,
         attachments: [...(data?.attachments || null)],
@@ -84,6 +112,13 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const expenseCategoryOptions = useMemo(() => {
+    return expenseGroups.map((g) => ({
+      value: g._id,
+      label: g.name,
+    }));
+  }, [expenseGroups]);
+
   const expenseForOptions = useMemo(() => {
     return costCenters.map((l) => ({
       value: l._id,
@@ -92,13 +127,14 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
   }, [costCenters]);
 
   const expenseLedgerOptions = useMemo(() => {
+    if (!expenseCategory) return [];
     return ledgers
-      .filter((l) => PARTY_UNDER.includes(l?.groupId?.name))
+      .filter((l) => l?.groupId?._id === form?.expenseCategory)
       .map((l) => ({
         value: l._id,
         label: `${l.name} (${l.referenceType || l?.groupId?.name || l.type})`,
       }));
-  }, [ledgers]);
+  }, [ledgers, form?.expenseCategory]);
 
   const handleFile = (e) => {
     const MAX_MB = 5;
@@ -134,6 +170,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
     fd.append("date", form.date);
     fd.append("amount", form.amount);
     fd.append("narration", form.narration);
+    fd.append("expenseCategory", form.expenseCategory);
     fd.append("expenseLedger", form.expenseLedger);
     fd.append("expenseFor", form.expenseFor || null);
 
@@ -184,6 +221,28 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
         />
       </div>
 
+      {/* Expense Category */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Expense Department
+        </label>
+        <Select
+          options={expenseCategoryOptions}
+          value={expenseCategoryOptions.find(
+            (o) => o.value === form.expenseCategory,
+          )}
+          onChange={(opt) => {
+            setExpenseCategory(opt?.value || "");
+
+            setForm((prev) => ({
+              ...prev,
+              expenseCategory: opt?.value || "",
+            }));
+          }}
+          placeholder="Select Expense Category"
+        />
+      </div>
+
       {/* Expense Ledger */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -200,7 +259,10 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
               expenseLedger: opt?.value || "",
             }))
           }
-          placeholder="Search Expense Type..."
+          isDisabled={!expenseCategory}
+          placeholder={
+            expenseCategory ? "Select Expense Type" : "Select Category First"
+          }
           isClearable
         />
       </div>

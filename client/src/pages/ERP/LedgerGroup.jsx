@@ -53,7 +53,7 @@ const LedgerGroup = () => {
 
   // ✅ DELETE
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this group?")) return;
+    // if (!window.confirm("Are you sure you want to delete this group?")) return;
 
     try {
       await axios.delete(`/api/v1/ledger-group/${id}`);
@@ -121,10 +121,7 @@ const LedgerGroup = () => {
         onClose={() => setIsModalOpen(false)}
         head="Create Ledger Group"
       >
-        <GroupModal
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleSave}
-        />
+        <GroupModal onClose={() => setIsModalOpen(false)} onSave={handleSave} />
       </Modal>
 
       {/* Edit Modal */}
