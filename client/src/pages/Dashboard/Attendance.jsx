@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import moment from 'moment';
-import CreateLeave from '../../components/CreateLeave';
-import Header from '../../components/Header';
-import Modal from '../../components/Modal';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchNotifications } from '../../features/notification/notificationSlice';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import moment from "moment";
+import CreateLeave from "../../components/CreateLeave";
+import Header from "../../components/Header";
+import Modal from "../../components/Modal";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchNotifications } from "../../features/notification/notificationSlice";
 import { FaCheckCircle } from "react-icons/fa";
 import { BsXCircleFill } from "react-icons/bs";
 import { RiFileExcel2Line } from "react-icons/ri";
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 // import { CheckCircle, XCircle } from "react-icons/fa";
 axios.defaults.withCredentials = true;
@@ -22,9 +22,9 @@ const Attendance = () => {
   const [year, setYear] = useState(moment().year());
   const [month, setMonth] = useState(moment().month());
   const { user } = useSelector((state) => state.auth);
-  const [activeTab, setActiveTab] = useState('attendance'); // State for active tab
+  const [activeTab, setActiveTab] = useState("attendance"); // State for active tab
   const [editModal, setEditModal] = useState(false);
-  const [editId, setEditId] = useState('');
+  const [editId, setEditId] = useState("");
   const dispatch = useDispatch();
   // Fetch attendance and leave data
   useEffect(() => {
@@ -34,30 +34,30 @@ const Attendance = () => {
 
   const fetchLeave = async () => {
     try {
-      const leaveResponse = await axios.get('/api/v1/leave');
+      const leaveResponse = await axios.get("/api/v1/leave");
       // console.log('Leaves Response:', leaveResponse.data);
 
       if (Array.isArray(leaveResponse.data)) {
         setLeaves(leaveResponse.data);
       } else {
-        console.error('Invalid leave data:', leaveResponse.data);
+        console.error("Invalid leave data:", leaveResponse.data);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     }
   };
 
   const fetchAttendance = async () => {
     try {
-      const attendanceResponse = await axios.get('/api/v1/attendance');
-      console.log('Attendance Response:', attendanceResponse.data);
+      const attendanceResponse = await axios.get("/api/v1/attendance");
+      console.log("Attendance Response:", attendanceResponse.data);
       if (Array.isArray(attendanceResponse.data)) {
         setAttendances(attendanceResponse.data);
       } else {
-        console.error('Invalid attendance data:', attendanceResponse.data);
+        console.error("Invalid attendance data:", attendanceResponse.data);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     }
   };
 
@@ -69,56 +69,66 @@ const Attendance = () => {
     setMonth(e.target.value);
   };
 
-  const filteredAttendance = attendances.filter(record => {
+  const filteredAttendance = attendances.filter((record) => {
     if (!record.date) return false; // Ensure date exists
     const recordDate = moment(record.date);
-    return recordDate.year() === Number(year) && recordDate.month() === Number(month);
+    return (
+      recordDate.year() === Number(year) && recordDate.month() === Number(month)
+    );
   });
 
-  const filteredLeaves = leaves.filter(record => {
+  const filteredLeaves = leaves.filter((record) => {
     if (!record.from) return false; // Ensure from date exists
     const recordDate = moment(record.from);
-    return recordDate.year() === Number(year) && recordDate.month() === Number(month);
+    return (
+      recordDate.year() === Number(year) && recordDate.month() === Number(month)
+    );
   });
 
   const handleReset = () => {
-    setMonth(moment().month());  // Reset to the current month
-    setYear(moment().year());    // Reset to the current year
+    setMonth(moment().month()); // Reset to the current month
+    setYear(moment().year()); // Reset to the current year
+  };
+
+  const handleEdit = (id) => {
+    setEditModal(true);
+    setEditId(id);
   };
 
   const exportToExcel = async () => {
-  const response = await axios.get(`/api/v1/attendance/export-data/${user._id}`);
-  console.log(response.data)
-  const ws = XLSX.utils.json_to_sheet(response.data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Data');
+    const response = await axios.get(
+      `/api/v1/attendance/export-data/${user._id}`,
+    );
+    console.log(response.data);
+    const ws = XLSX.utils.json_to_sheet(response.data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data");
 
-  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([wbout], { type: 'application/octet-stream' });
-  saveAs(blob, 'attendance.xlsx');
-};
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], { type: "application/octet-stream" });
+    saveAs(blob, "attendance.xlsx");
+  };
 
   return (
-    <div className='p-1'>
+    <div className="p-1">
       {/* <Header category="Page" title="Attendance Dashboard" /> */}
       <section className="h-full w-full mb-16 flex justify-center">
-        <div className='overflow-x-auto scrollbar-hide w-full max-w-screen-xl mx-auto'>
-
+        <div className="overflow-x-auto scrollbar-hide w-full max-w-screen-xl mx-auto">
           {/* Attendance Marking Section */}
           <div className="flex flex-col md:flex-row gap-4 items-end justify-between">
-              {/* <button
+            {/* <button
                 onClick={() => exportToExcel()}
                 // className="py-2 px-3 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition duration-300"
                 className='pr-4'
               >
                 <RiFileExcel2Line size={28} color='green'/>
               </button> */}
-              <button
-                onClick={() => setFilterModal(true)}
-                className="py-2 px-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg transition duration-300"
-              >
-                Filter
-              </button>
+            <button
+              onClick={() => setFilterModal(true)}
+              className="py-2 px-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg transition duration-300"
+            >
+              Filter
+            </button>
           </div>
 
           {/* Filter Modal */}
@@ -149,7 +159,10 @@ const Attendance = () => {
                 </div>
                 <div className="mt-6 flex justify-end gap-4">
                   <button
-                    onClick={() => { handleReset(); setFilterModal(false) }}
+                    onClick={() => {
+                      handleReset();
+                      setFilterModal(false);
+                    }}
                     className="p-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-lg"
                   >
                     Cancel
@@ -169,14 +182,14 @@ const Attendance = () => {
           <div className="mb-4">
             <div className="flex gap-4 border-b border-gray-200">
               <button
-                onClick={() => setActiveTab('attendance')}
-                cclassName={`py-2 px-4 font-semibold ${activeTab === 'attendance' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-blue-500'}`}
+                onClick={() => setActiveTab("attendance")}
+                cclassName={`py-2 px-4 font-semibold ${activeTab === "attendance" ? "border-b-2 border-blue-500 text-blue-500" : "text-gray-500 hover:text-blue-500"}`}
               >
                 Attendance
               </button>
               <button
-                onClick={() => setActiveTab('leave')}
-                className={`py-2 px-4 font-semibold ${activeTab === 'leave' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-blue-500'}`}
+                onClick={() => setActiveTab("leave")}
+                className={`py-2 px-4 font-semibold ${activeTab === "leave" ? "border-b-2 border-blue-500 text-blue-500" : "text-gray-500 hover:text-blue-500"}`}
               >
                 Leave
               </button>
@@ -184,24 +197,37 @@ const Attendance = () => {
           </div>
 
           {/* Attendance Table */}
-          {activeTab === 'attendance' && (
+          {activeTab === "attendance" && (
             <div className="overflow-x-auto scrollbar-hide rounded-xl">
               <table className="w-full overflow-x-auto scrollbar-hide">
                 <thead className="bg-gradient-to-r from-blue-400 to-purple-400">
                   <tr>
-                    <th className="p-3 text-left text-white font-semibold">Date</th>
-                    <th className="p-3 text-left text-white font-semibold">Time</th>
-                    <th className="p-3 text-left text-white font-semibold">Status</th>
+                    <th className="p-3 text-left text-white font-semibold">
+                      Date
+                    </th>
+                    <th className="p-3 text-left text-white font-semibold">
+                      Time
+                    </th>
+                    <th className="p-3 text-left text-white font-semibold">
+                      Status
+                    </th>
                   </tr>
                 </thead>
-                <tbody className='bg-gradient-to-br from-blue-50 to-purple-50'>
+                <tbody className="bg-gradient-to-br from-blue-50 to-purple-50">
                   {filteredAttendance.map((record, index) => (
-                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
-                      <td className="p-3 text-gray-700">{moment(record.date).format('DD MMM YYYY')}</td>
-                      <td className="p-3 text-gray-700">{record.timeIn || 'N/A'}</td>
+                    <tr
+                      key={index}
+                      className="border-b border-gray-200 hover:bg-gray-50 transition duration-200"
+                    >
+                      <td className="p-3 text-gray-700">
+                        {moment(record.date).format("DD MMM YYYY")}
+                      </td>
+                      <td className="p-3 text-gray-700">
+                        {record.timeIn || "N/A"}
+                      </td>
                       <td className="p-3">
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-semibold ${record.status.toLowerCase() === 'present' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                          className={`px-3 py-1 rounded-full text-sm font-semibold ${record.status.toLowerCase() === "present" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
                         >
                           {record.status.toUpperCase()}
                         </span>
@@ -214,26 +240,62 @@ const Attendance = () => {
           )}
 
           {/* Leave Table */}
-          {activeTab === 'leave' && (
+          {activeTab === "leave" && (
             <div className="overflow-x-auto scrollbar-hide rounded-xl">
               <table className="w-full overflow-x-auto scrollbar-hide">
                 <thead className="bg-gradient-to-r from-blue-400 to-purple-400">
                   <tr>
-                    <th className="p-3 text-left text-white font-semibold">From</th>
-                    <th className="p-3 text-left text-white font-semibold">Reporting Date</th>
-                    <th className="p-3 text-left text-white font-semibold">Reason</th>
-                    <th className="p-3 text-left text-white font-semibold">Approval</th>
-                    <th className="p-3 text-left text-white font-semibold">Reported At</th>
+                    <th className="p-3 text-left text-white font-semibold">
+                      From
+                    </th>
+                    <th className="p-3 text-left text-white font-semibold">
+                      Reporting Date
+                    </th>
+                    <th className="p-3 text-left text-white font-semibold">
+                      Reason
+                    </th>
+                    <th className="p-3 text-left text-white font-semibold">
+                      Approval
+                    </th>
+                    <th className="p-3 text-left text-white font-semibold">
+                      Reported At
+                    </th>
+                    <th className="p-3 text-left text-white font-semibold">
+                      Action
+                    </th>
                   </tr>
                 </thead>
-                <tbody className='bg-gradient-to-br from-blue-50 to-purple-50'>
+                <tbody className="bg-gradient-to-br from-blue-50 to-purple-50">
                   {filteredLeaves.map((record, index) => (
-                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition duration-200">
-                      <td className="p-3 text-gray-700">{moment(record.from).format('DD MMM YYYY')}</td>
-                      <td className="p-3 text-gray-700">{moment(record.reportingDate).format('DD MMM YYYY')}</td>
-                      <td className="p-3 text-gray-700">{record.reason || 'N/A'}</td>
-                      <td className="p-3 text-gray-700">{record.approval || 'N/A'}</td>
-                      <td className="p-3 text-gray-700">{moment(record.reportedAt).format('DD MMM YYYY')}</td>
+                    <tr
+                      key={index}
+                      className="border-b border-gray-200 hover:bg-gray-50 transition duration-200"
+                    >
+                      <td className="p-3 text-gray-700">
+                        {moment(record.from).format("DD MMM YYYY")}
+                      </td>
+                      <td className="p-3 text-gray-700">
+                        {moment(record.reportingDate).format("DD MMM YYYY")}
+                      </td>
+                      <td className="p-3 text-gray-700">
+                        {record.reason || "N/A"}
+                      </td>
+                      <td className="p-3 text-gray-700">
+                        {record.approval || "N/A"}
+                      </td>
+                      <td className="p-3 text-gray-700">
+                        {moment(record.reportedAt).format("DD MMM YYYY")}
+                      </td>
+                      <td className="p-3 text-gray-700">
+                        {record?.status !== "Approved" && (
+                          <button
+                            onClick={() => handleEdit(record?._id)}
+                            className="text-blue-600"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -242,8 +304,12 @@ const Attendance = () => {
           )}
 
           {/* Leave Modal */}
-          <Modal isOpen={editModal} onClose={() => setEditModal(false)} head='Create Leave'>
-            <CreateLeave onClose={() => setEditModal(false)} isEdit={editId} />
+          <Modal
+            isOpen={editModal}
+            onClose={() => setEditModal(false)}
+            head={editId ? "Update Leave" : "Create Leave"}
+          >
+            <CreateLeave onClose={() => setEditModal(false)} editId={editId} />
           </Modal>
         </div>
       </section>
@@ -252,6 +318,3 @@ const Attendance = () => {
 };
 
 export default Attendance;
-
-
-

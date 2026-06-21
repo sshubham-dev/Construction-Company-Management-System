@@ -111,9 +111,7 @@ const CollectionEntry = ({ onClose, editId }) => {
     arr.map((l) => ({
       value: l._id,
       label: `${l.name} (${
-        l.mailingDetails?.phoneNo ||
-        l.referenceType ||
-        l?.groupId?.name
+        l.mailingDetails?.phoneNo || l.referenceType || l?.groupId?.name
       })`,
     }));
 
@@ -201,13 +199,14 @@ const CollectionEntry = ({ onClose, editId }) => {
         value={form.date}
         onChange={(e) => updateForm("date", e.target.value)}
         className="border p-2 rounded w-full"
+        required
       />
 
       {/* CLIENT */}
       <Select
         options={mapOptions(partyLedgers)}
         value={findOption(mapOptions(partyLedgers), form.clientLedgerId)}
-        placeholder="Select Client"
+        placeholder="Select Client*"
         onChange={(v) => updateForm("clientLedgerId", v?.value || "")}
       />
 
@@ -215,13 +214,13 @@ const CollectionEntry = ({ onClose, editId }) => {
       <Select
         options={mapOptions(cashBankLedgers)}
         value={findOption(mapOptions(cashBankLedgers), form.receivedInto)}
-        placeholder="Select Bank"
+        placeholder="Select Bank*"
         onChange={(v) => updateForm("receivedInto", v?.value || "")}
       />
 
       <Select
         options={mapOptions(departments)}
-        placeholder="Select Department"
+        placeholder="Select Department*"
         value={findOption(mapOptions(departments), form.departmentId)}
         onChange={(v) => {
           setDepartmentId(v?.value || "");
@@ -239,10 +238,11 @@ const CollectionEntry = ({ onClose, editId }) => {
       {/* AMOUNT */}
       <input
         type="number"
-        placeholder="Amount"
+        placeholder="Amount*"
         value={form.amount}
         onChange={(e) => updateForm("amount", e.target.value)}
         className="border p-2 rounded w-full"
+        required
       />
 
       {/* PURPOSE */}
@@ -259,6 +259,7 @@ const CollectionEntry = ({ onClose, editId }) => {
         value={form.medium}
         onChange={(e) => updateForm("medium", e.target.value)}
         className="border p-2 rounded w-full"
+        required
       >
         <option value="">Payment Medium</option>
         <option value="cash">Cash</option>
@@ -290,6 +291,7 @@ const CollectionEntry = ({ onClose, editId }) => {
         value={form.narration}
         onChange={(e) => updateForm("narration", e.target.value)}
         className="border p-2 rounded w-full"
+        required
       />
 
       <div className="flex justify-end gap-3">

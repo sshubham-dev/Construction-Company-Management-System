@@ -129,7 +129,7 @@ const CreateClient = ({ onClose, isEdit }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-600">
-            Name:
+            Name*:
           </label>
           <input
             type="text"
@@ -164,7 +164,7 @@ const CreateClient = ({ onClose, isEdit }) => {
             htmlFor="phone"
             className="block text-sm font-medium text-gray-600"
           >
-            Contact Number:
+            Contact Number*:
           </label>
           <input
             className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
@@ -174,6 +174,7 @@ const CreateClient = ({ onClose, isEdit }) => {
             placeholder="Enter Your Contact Number"
             value={client.phone}
             onChange={handleChange}
+            required
           />
         </div>
 
@@ -182,7 +183,7 @@ const CreateClient = ({ onClose, isEdit }) => {
             htmlFor="whatsapp"
             className="block text-sm font-medium text-gray-600"
           >
-            Whatsapp Number:
+            Whatsapp Number*:
           </label>
           <input
             className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
@@ -205,7 +206,7 @@ const CreateClient = ({ onClose, isEdit }) => {
                 htmlFor="street"
                 className="block text-sm font-medium text-gray-600"
               >
-                Street
+                Street*
               </label>
               <input
                 type="text"
@@ -214,6 +215,7 @@ const CreateClient = ({ onClose, isEdit }) => {
                 placeholder="Street"
                 value={client.address.street}
                 onChange={handleChange}
+                required
                 className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -223,7 +225,7 @@ const CreateClient = ({ onClose, isEdit }) => {
                 htmlFor="city"
                 className="block text-sm font-medium text-gray-600"
               >
-                City
+                City*
               </label>
               <input
                 type="text"
@@ -232,6 +234,7 @@ const CreateClient = ({ onClose, isEdit }) => {
                 value={client.address.city}
                 placeholder="City"
                 onChange={handleChange}
+                required
                 className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -241,7 +244,7 @@ const CreateClient = ({ onClose, isEdit }) => {
                 htmlFor="district"
                 className="block text-sm font-medium text-gray-600"
               >
-                District
+                District*
               </label>
               <input
                 type="text"
@@ -250,6 +253,7 @@ const CreateClient = ({ onClose, isEdit }) => {
                 value={client.address.district}
                 placeholder="District"
                 onChange={handleChange}
+                required
                 className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -259,7 +263,7 @@ const CreateClient = ({ onClose, isEdit }) => {
                 htmlFor="state"
                 className="block text-sm font-medium text-gray-600"
               >
-                State
+                State*
               </label>
               <input
                 type="text"
@@ -268,6 +272,7 @@ const CreateClient = ({ onClose, isEdit }) => {
                 value={client.address.state}
                 placeholder="State"
                 onChange={handleChange}
+                required
                 className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -279,7 +284,7 @@ const CreateClient = ({ onClose, isEdit }) => {
             htmlFor="service"
             className="block text-sm font-medium text-gray-600"
           >
-            Service Required
+            Service Required*
           </label>
           <select
             name="service"

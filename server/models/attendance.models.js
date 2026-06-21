@@ -36,6 +36,7 @@ const leaveSchema = new mongoose.Schema(
     },
     reason: {
       type: String,
+      required: true,
     },
     from: {
       type: String,
@@ -45,6 +46,7 @@ const leaveSchema = new mongoose.Schema(
     },
     approval: {
       type: String,
+      enum: ["Pending", "Approved", "Rejected"],
       default: "Pending",
     },
     reportedAt: {

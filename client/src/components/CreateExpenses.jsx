@@ -208,7 +208,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
       {/* Date */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Date
+          Date*
         </label>
         <input
           type="date"
@@ -224,7 +224,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
       {/* Expense Category */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Expense Department
+          Expense Department*
         </label>
         <Select
           options={expenseCategoryOptions}
@@ -246,7 +246,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
       {/* Expense Ledger */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Expense Type
+          Expense Type*
         </label>
         <Select
           options={expenseLedgerOptions}
@@ -291,7 +291,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
       {/* Amount */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Amount
+          Amount*
         </label>
         <input
           type="number"
@@ -307,7 +307,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
       {/* Narration */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Narration
+          Narration*
         </label>
         <textarea
           name="narration"
@@ -318,13 +318,14 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
                    focus:outline-none focus:ring-2 focus:ring-green-500"
           placeholder="Optional description of the expense"
+          required
         />
       </div>
 
       {/* Attachments */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Attachments
+          Attachments*
         </label>
 
         <input

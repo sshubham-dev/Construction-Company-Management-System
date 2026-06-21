@@ -66,8 +66,8 @@ const getEmployeeAttendance = async (req, res) => {
 
     // find attendance
     const attendance = await Attendance.find()
-    .where("user.id").equals(userId)
-    .exec();
+      .where("user.id").equals(userId)
+      .exec();
 
     res.json(attendance);
   } catch (error) {
@@ -107,16 +107,12 @@ const getLeave = async (req, res) => {
   }
 };
 
-const getLeaveByUser = async (req, res) => {
+const getLeaveById = async (req, res) => {
   try {
-    const id = req.id;
-    const leaves = await Leave.find()
-      .where("user.id")
-      .equals(id)
-      .sort({ from: -1 }) // Sort by 'from' date in descending order
-      .exec();
-    if (!leaves) return res.status(404).json({ message: "No Leaves Found" });
-    return res.status(201).json(leaves);
+    const { id } = req.params;
+    const leave = await Leave.findById(id)
+    if (!leave) return res.status(404).json({ message: "No Leaves Found" });
+    return res.status(201).json(leave);
   } catch (error) {
     console.log(error);
     return res.status(501).json({ message: error.message });
@@ -194,6 +190,7 @@ const createLeave = async (req, res) => {
     const { reason, from, reportingDate } = req.body;
     const user = req.user;
 
+    if (!reason || !from || !reportingDate) return res.status(400).json({ message: "All the field is required." });
     const existingUser = await User.findById(user._id);
     const newLeave = new Leave({
       user: {
@@ -245,9 +242,19 @@ const updateAttendance = async (req, res) => {
 const updateLeave = async (req, res) => {
   try {
     const id = req.params.id;
-    const existingLeave = await Leave.findById(id).populate("user.id").exec();
+    const user = req.user;
+    const { reportingDate, from, reason } = req.body;
+    const existingLeave = await Leave.findById(id);
     if (!existingLeave)
       return res.status(404).json({ message: "No Leave Found" });
+    if (existingLeave?.approval === "Approved") return res.status(404).json({ message: "Approved Leave can't be updated" });
+    existingLeave.reportingDate = reportingDate
+    existingLeave.from = from
+    existingLeave.reason = reason
+    await existingLeave.save({ validateBeforeSave: false });
+    if (existingLeave.approval === "Rejected") {
+      sendApproveByAdmin(existingLeave, "Leave", user._id);
+    }
     return res.status(201).json({ message: "Updated Successfuly" });
   } catch (error) {
     console.log(error);
@@ -287,7 +294,7 @@ module.exports = {
   getAttendanceByUser,
   getLeave,
   getLeaves,
-  getLeaveByUser,
+  getLeaveById,
   createAttendance,
   createLeave,
   updateAttendance,

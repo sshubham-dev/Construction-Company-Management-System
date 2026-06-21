@@ -8,7 +8,7 @@ const {
   getAttendanceByUser,
   getLeave,
   getLeaves,
-  getLeaveByUser,
+  getLeaveById,
   createAttendance,
   createLeave,
   updateAttendance,
@@ -38,15 +38,14 @@ Leaves.route("/").get(userAuth, getLeave).post(userAuth, createLeave);
 
 Attendances.get("/report", getAttendances);
 Attendances.get("/employee", getEmployeeAttendance);
-Attendances.route("/:id")
-  .put(userAuth, updateAttendance)
-  .get(userAuth, getAttendanceByUser)
-  .delete(userAuth, deleteAttendance);
-
 Leaves.get("/report", getLeaves);
 
+Attendances.route("/:id")
+  .get(userAuth, getAttendanceByUser)
+  .put(userAuth, updateAttendance)
+  .delete(userAuth, deleteAttendance);
 Leaves.route("/:id")
-  .get(userAuth, getLeaveByUser)
+  .get(getLeaveById)
   .put(userAuth, updateLeave)
   .delete(userAuth, deleteLeave);
 
