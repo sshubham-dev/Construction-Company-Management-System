@@ -34,7 +34,7 @@ const CostCenterModal = ({ isOpen, onClose, costCenters, onSave, editId }) => {
           name: selected.name || "",
           companyId: selected.companyId?._id || "",
           type: selected.type || "",
-          parentId: selected.parentId || null,
+          parentId: selected.parentId?._id || selected.parentId || null,
           isActive: selected.isActive ?? true,
           reference: selected.reference || null,
         });
@@ -82,7 +82,7 @@ const CostCenterModal = ({ isOpen, onClose, costCenters, onSave, editId }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name & Alias */}
         <div>
-          <label className="block text-sm font-medium">Name</label>
+          <label className="block text-sm font-medium">Name*</label>
           <input
             type="text"
             name="name"
@@ -94,7 +94,7 @@ const CostCenterModal = ({ isOpen, onClose, costCenters, onSave, editId }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium">Company</label>
+          <label className="block text-sm font-medium">Company*</label>
           <select
             className={inputClass}
             name="companyId"
@@ -112,7 +112,7 @@ const CostCenterModal = ({ isOpen, onClose, costCenters, onSave, editId }) => {
 
         {/* Parent Cost Center Selection */}
         <div>
-          <label className="block text-sm font-medium">Under</label>
+          <label className="block text-sm font-medium">Under*</label>
           <select
             name="parentId"
             value={costCenter.parentId}
@@ -130,12 +130,13 @@ const CostCenterModal = ({ isOpen, onClose, costCenters, onSave, editId }) => {
 
         {/* Type of Cost Center */}
         <div>
-          <label className="block text-sm font-medium">Type</label>
+          <label className="block text-sm font-medium">Type*</label>
           <input
             name="type"
             value={costCenter.type}
             onChange={handleChange}
             className="w-full border px-3 py-2 rounded-md"
+            required
           />
         </div>
 
@@ -201,6 +202,7 @@ const CostCenter = () => {
         const res = await axios.get("/api/v1/cost-center", {
           params: { companyId: user.companyId },
         });
+        console.log(res.data);
         setCostCenters(res.data);
       } catch (error) {
         console.log(error);
@@ -244,7 +246,9 @@ const CostCenter = () => {
   };
 
   const filtered = costCenters.filter((cc) => {
-    const matchSearch = cc.name?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch =
+      cc?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      cc?.parentId?.name.toLowerCase().includes(search.toLowerCase());
     return matchSearch;
   });
 
@@ -256,7 +260,7 @@ const CostCenter = () => {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search ledger..."
+          placeholder="Search..."
           className="border px-3 py-2 rounded w-72"
         />
       </div>
@@ -285,7 +289,9 @@ const CostCenter = () => {
                 </button>
               </div>
             </div>
-            <div className="text-sm text-gray-600">Under: {center.under}</div>
+            <div className="text-sm text-gray-600">
+              Under: {center?.parentId?.name || "Primary"}
+            </div>
             <div className="text-sm text-gray-600">
               {/* Manager: {center.manager} */}
             </div>

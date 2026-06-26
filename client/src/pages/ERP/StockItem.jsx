@@ -199,7 +199,7 @@ const StockItem = () => {
                     <td className="p-2">{i.groupId?.name}</td>
                     <td className="p-2">{i.categoryId?.name}</td>
                     <td className="p-2">{i.unit}</td>
-                    <td className="p-2">₹ {i.purchasePrice}</td>
+                    <td className="p-2">₹ {i.defaultPurchaseRate}</td>
                     <td className="p-2">
                       <span
                         className={`px-2 py-1 text-xs rounded ${

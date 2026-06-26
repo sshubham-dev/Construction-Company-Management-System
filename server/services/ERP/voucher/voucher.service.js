@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Voucher = require("../../../models/voucher.models");
 const { generateVoucherNo } = require("../../../utils/voucherNoGenerator");
+const getFinancialYear = require("../../../utils/getFinancialYear.js");
 
 const validateEntries = (entries) => {
   if (!entries || entries.length < 2) {
@@ -46,16 +47,20 @@ const createVoucher = async (data) => {
 
   const { debit, credit } = validateEntries(entries);
 
+  const fy = getFinancialYear(date);
+
   // 🔥 generate number
   const voucherNo = await generateVoucherNo({
     companyId,
     type,
+    fy: fy.code,
   });
 
   const voucher = await Voucher.create({
     voucherNo,
     companyId,
     type,
+    fy: fy.code,
     date,
     narration,
     entries,

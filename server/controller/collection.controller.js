@@ -14,7 +14,7 @@ const {
   postVoucher,
   cancelVoucher,
 } = require("../services/ERP/voucher/voucher.service.js");
-const { getFinancialYear } = require("../utils/getFinancialYear.js");
+const  getFinancialYear = require("../utils/getFinancialYear.js");
 const { generateVoucherNo } = require("../utils/voucherNoGenerator.js");
 
 /* ---------------- CREATE COLLECTION ENTRY ---------------- */
@@ -24,12 +24,13 @@ const createCollection = async (req, res) => {
     const data = req.body;
     console.log(data);
     const user = req.user;
-    let upload;
-    if (req.file.buffer) {
+    let upload = null;
+    if (req.file?.buffer) {
       upload = await uploadOnCloudinary(req.file.buffer, {
         folder: "collections",
         public_id: `${data.clientLedgerId}-${Date.now()}`,
       });
+      if (!upload) return res.status(404).json({ message: "Some thing went wrong!" })
       console.log("File uploaded to Cloudinary:", upload);
     }
 
@@ -398,20 +399,10 @@ const postCollection = async (req, res) => {
       throw new Error("Already processed");
     }
 
-    const fy = getFinancialYear(collection.date);
-
-    const voucherNo = await generateVoucherNo({
-      companyId: collection.companyId,
-      type: "RECEIPT",
-      fy: fy.code,
-    });
-
     // 🔥 CREATE VOUCHER
     const voucher = await createVoucher({
-      voucherNo,
       type: "RECEIPT",
       date: collection.date,
-      fy: fy.code,
       companyId: collection.companyId,
       narration: collection.narration,
       costCenterId: collection.costCenterId,
@@ -442,6 +433,7 @@ const postCollection = async (req, res) => {
 
     res.json(collection);
   } catch (err) {
+    console.log(err)
     res.status(500).json({ error: err.message });
   }
 };
@@ -493,8 +485,8 @@ const updateCollection = async (req, res) => {
 
     // optional file update
     let upload = null;
-    if (req.file.buffer) {
-      upload = await uploadOnCloudinary(req.file.buffer, {
+    if (req.file?.buffer) {
+      upload = await uploadOnCloudinary(req.file?.buffer, {
         folder: "collections",
         public_id: `${collection.clientLedgerId}-${Date.now()}`,
       });

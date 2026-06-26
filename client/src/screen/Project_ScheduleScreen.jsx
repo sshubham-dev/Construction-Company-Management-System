@@ -198,7 +198,7 @@ const Project_ScheduleScreen = () => {
           </button>
           <PDFDownloadLink
             document={<ProjectSchedulePdf ProjectSchedule={projectSchedule} />}
-            fileName={`PS-${projectSchedule?._id || "download"}.pdf`}
+            fileName={`PS-${projectSchedule.site?.name || "download"}.pdf`}
           >
             {({ loading }) => (
               <button

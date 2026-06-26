@@ -8,7 +8,6 @@ import { MdDelete, MdAdd } from "react-icons/md";
 
 const LedgerList = () => {
   const [ledgers, setLedgers] = useState([]);
-  const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedLedger, setSelectedLedger] = useState(null);
   const [editLedger, setEditLedger] = useState(null);
@@ -28,11 +27,12 @@ const LedgerList = () => {
     fetchLedgers();
   }, []);
 
-  const handleSearch = (e) => {
-    const keyword = e.target.value.toLowerCase();
-    setSearch(keyword);
-    setFiltered(ledgers.filter((l) => l.name.toLowerCase().includes(keyword)));
-  };
+  const filtered = ledgers.filter((l) => {
+    const matchSearch =
+      l?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      l?.groupId?.name.toLowerCase().includes(search.toLowerCase());
+    return matchSearch;
+  });
 
   const handleDelete = async (id) => {
     try {
@@ -54,7 +54,7 @@ const LedgerList = () => {
         <input
           type="text"
           value={search}
-          onChange={handleSearch}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Search ledger..."
           className="border px-3 py-2 rounded w-72"
         />

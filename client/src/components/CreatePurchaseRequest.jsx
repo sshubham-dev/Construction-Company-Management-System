@@ -44,7 +44,6 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
   /* =========================
      LOAD MASTER
   ========================== */
-
   useEffect(() => {
     loadMasters();
 
@@ -113,7 +112,6 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
   /* =========================
      LOAD EDIT
   ========================== */
-
   const loadPR = async (id) => {
     try {
       const res = await axios.get(`/api/v1/purchase-request/${id}`);
@@ -158,7 +156,6 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
   /* =========================
      ITEM HANDLING
   ========================== */
-
   const addItem = (e) => {
     e.preventDefault();
     setForm((prev) => ({
@@ -221,7 +218,6 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
   /* =========================
      TOTALS
   ========================== */
-
   const totalQty = useMemo(() => {
     return form.items.reduce((a, i) => a + Number(i.requestedQty || 0), 0);
   }, [form.items]);
@@ -262,7 +258,6 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
   /* =========================
      VALIDATE
   ========================== */
-
   const validate = () => {
     if (!form.site) {
       toast.error("Site required");
@@ -320,7 +315,6 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
 
     return true;
   };
-
   useEffect(() => {
     setForm((prev) => ({
       ...prev,
@@ -328,10 +322,10 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
       category: "",
     }));
   }, [form.group]);
+
   /* =========================
      SUBMIT
   ========================== */
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
@@ -661,7 +655,6 @@ export default CreatePurchaseRequest;
 /* =========================
    HELPERS
 ========================= */
-
 const Section = ({ title, children }) => (
   <div className="bg-white border rounded-xl p-4 space-y-4">
     <h2 className="font-medium">{title}</h2>

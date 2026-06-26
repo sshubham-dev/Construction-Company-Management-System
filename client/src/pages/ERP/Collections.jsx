@@ -100,13 +100,13 @@ const Collections = () => {
   /* ---------------- ACTIONS ---------------- */
 
   const approve = async (id) => {
-    await axios.post(`/api/v1/collection/${id}/approve`);
+    await axios.put(`/api/v1/collection/approve/${id}`);
     loadData();
     setSelected(null);
   };
 
   const reject = async (id) => {
-    await axios.post(`/api/v1/collection/${id}/reject`);
+    await axios.put(`/api/v1/collection/${id}/reject`);
     loadData();
     setSelected(null);
   };

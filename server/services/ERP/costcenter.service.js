@@ -9,7 +9,10 @@ const createCostCenter = async (data) => {
 
 // ✅
 const getCostCenters = async (companyId) => {
-  return await CostCenter.find().sort({ createdAt: -1 }).populate("companyId").exec();
+  return await CostCenter.find()
+    .sort({ name: 1 })
+    .populate("companyId parentId")
+    .exec();
 };
 
 const updateCostCenter = async (id, data) => {
@@ -21,17 +24,18 @@ const deleteCostCenter = async (id) => {
 };
 
 // ✅
-const syncCostCenter = async (store) => {
+const syncCostCenter = async (store, type) => {
   const filter = {
     companyId: store.companyId,
     reference: store._id,
+    name: store.name,
   };
 
   const update = {
     $setOnInsert: {
       companyId: store.companyId,
       reference: store._id,
-      type: store.type,
+      type: type,
     },
     $set: {
       name: store.name,

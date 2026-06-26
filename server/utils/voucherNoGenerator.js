@@ -37,6 +37,7 @@ const generateVoucherNo = async ({
   const prefix =
     TYPE_PREFIX[type] || "VCH";
 
+    console.log("Voucher No geenrated")
   return `${prefix}-${fy}-${String(
     counter.seq
   ).padStart(5, "0")}`;

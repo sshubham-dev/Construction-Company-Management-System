@@ -23,11 +23,10 @@ const StockCategory = () => {
   const fetchData = async () => {
     try {
       const res = await axios.get("/api/v1/stock-category");
-      console.log(res)
+      console.log(res.data.data);
       setData(res.data.data);
-
-    } catch(err) {
-      console.log(err)
+    } catch (err) {
+      console.log(err);
       // toast.error("Failed to load");
     }
   };
@@ -96,7 +95,7 @@ const StockCategory = () => {
         <thead className="bg-gray-100">
           <tr>
             <th className="p-2 text-left">Name</th>
-            <th className="p-2">Parent</th>
+            <th className="p-2">Group</th>
             <th className="p-2">Status</th>
             <th className="p-2 text-right">Actions</th>
           </tr>
@@ -106,7 +105,7 @@ const StockCategory = () => {
           {filtered.map((c) => (
             <tr key={c._id} className="border-t">
               <td className="p-2">{c.name}</td>
-              <td className="p-2">{c?.parentId?.name || "-"}</td>
+              <td className="p-2">{c?.groupId?.name || "-"}</td>
 
               <td className="p-2">
                 <span

@@ -15,7 +15,7 @@ const lightBg = "#f9f9f9";
 
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 30,
     fontSize: 11,
     fontFamily: "Helvetica",
     color: "#333",
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
 
 const ProjectSchedulePdf = ({ ProjectSchedule }) => {
   if (!ProjectSchedule) return <Document />;
-console.log(ProjectSchedule)
+  console.log(ProjectSchedule);
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -133,118 +133,132 @@ console.log(ProjectSchedule)
           {/* ✅ Fix logo src to use public folder */}
           <Image src={logo} style={styles.logo} />
           <Text style={styles.companyName}>Bhuvi Consultants</Text>
-          <Text style={styles.contact}>123 Main Street, Ranchi, Jharkhand</Text>
           <Text style={styles.contact}>
-            Contact: +91 9876543210 | info@bhuvi.com
+            3rd floor, The Westend Tower Ratu Road, Ranchi, Jharkhand 834001
+          </Text>
+          <Text style={styles.contact}>
+            Contact: +91-8986699600, +91-7019943376 | homes.bhuvi@gmail.com
           </Text>
         </View>
 
         {/* ProjectSchedule Info */}
-        {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ProjectSchedule Information</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Project Schedule Information</Text>
+
           <View style={styles.row}>
-            <Text style={styles.label}>ProjectSchedule To:</Text>
-            <Text style={styles.value}>{ProjectSchedule?.contractor?.name || "-"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Site:</Text>
-            <Text style={styles.value}>{ProjectSchedule?.site?.name || "-"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Date:</Text>
+            <Text style={styles.label}>Site</Text>
             <Text style={styles.value}>
-              {ProjectSchedule?.startdate
-                ? moment(ProjectSchedule.startdate).format("DD-MM-YYYY")
-                : "-"}
+              {ProjectSchedule?.site?.name || "-"}
             </Text>
           </View>
+
           <View style={styles.row}>
-            <Text style={styles.label}>Duration:</Text>
+            <Text style={styles.label}>Schedule Date</Text>
             <Text style={styles.value}>
-              {ProjectSchedule?.duration
-                ? moment(ProjectSchedule.duration).format("MM-YYYY")
-                : "-"}
+              {moment(ProjectSchedule?.date).format("DD-MM-YYYY")}
             </Text>
           </View>
+
+          {/* <View style={styles.row}>
+            <Text style={styles.label}>Approval Status</Text>
+            <Text style={styles.value}>{ProjectSchedule?.approvalStatus}</Text>
+          </View>
+
           <View style={styles.row}>
-            <Text style={styles.label}>ProjectSchedule No:</Text>
+            <Text style={styles.label}>Incharge</Text>
+            <Text style={styles.value}>{ProjectSchedule?.inchargeApprove}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Account Head</Text>
             <Text style={styles.value}>
-              {ProjectSchedule.ProjectScheduleNo ? `BHC/${ProjectSchedule?.ProjectScheduleNo}` : "-"}
+              {ProjectSchedule?.accountheadApprove}
             </Text>
           </View>
-        </View> */}
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Admin</Text>
+            <Text style={styles.value}>{ProjectSchedule?.adminApprove}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Client</Text>
+            <Text style={styles.value}>{ProjectSchedule?.clientApprove}</Text>
+          </View> */}
+        </View>
 
         {/* Work Details */}
-        {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Work Details</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Project Timeline</Text>
+
           <View style={styles.table}>
             <View style={styles.tableRow}>
-              <Text style={styles.tableHeader}>Description</Text>
-              <Text style={styles.tableHeader}>Rate</Text>
-              <Text style={styles.tableHeader}>Quantity</Text>
-              <Text style={styles.tableHeader}>Total</Text>
+              <Text style={[styles.tableHeader, { flex: 2 }]}>Activity</Text>
+              <Text style={styles.tableHeader}>Planned</Text>
+              {/* <Text style={styles.tableHeader}>Actual</Text>
+              <Text style={styles.tableHeader}>Status</Text> */}
             </View>
-            <View style={styles.tableRow}>
-              <Text style={styles.tableCell}>
-                {ProjectSchedule?.ProjectScheduleOf?.workDetail || "-"}
-              </Text>
-              <Text style={styles.tableCell}>
-                ₹{ProjectSchedule?.ProjectScheduleOf?.rate || "0"}/{ProjectSchedule?.ProjectScheduleOf?.unit}
-              </Text>
-              <Text style={styles.tableCell}>
-                {ProjectSchedule?.ProjectScheduleOf?.area || "0"} {ProjectSchedule?.ProjectScheduleOf?.unit}
-              </Text>
-              <Text style={styles.tableCell}>
-                ₹{ProjectSchedule?.ProjectScheduleOf?.amount || "0"}
-              </Text>
-            </View>
+
+            {ProjectSchedule?.projectDetail?.map((item, index) => (
+              <View style={styles.tableRow} key={index}>
+                <Text style={[styles.tableCell, { flex: 2 }]}>
+                  {item.workDetail}
+                </Text>
+
+                <Text style={styles.tableCell}>
+                  {item.planned ? moment(item.planned).format("DD-MM-YY") : "-"}
+                </Text>
+
+                {/* <Text style={styles.tableCell}>
+                  {item.actual ? moment(item.actual).format("DD-MM-YY") : "-"}
+                </Text>
+
+                <Text style={styles.tableCell}>{item.status}</Text> */}
+              </View>
+            ))}
           </View>
         </View>
 
         {/* Payment Details */}
         {/* <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Details</Text>
-          <View style={styles.row}>
-            <Text style={styles.label}>Payment Date:</Text>
-            <Text style={styles.value}>
-              {ProjectSchedule?.dateOfPayment
-                ? moment(ProjectSchedule.dateOfPayment).format("DD-MM-YYYY")
-                : "-"}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Total Amount:</Text>
-            <Text style={styles.value}>₹{ProjectSchedule?.amount || "0"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>To Pay:</Text>
-            <Text style={styles.value}>₹{ProjectSchedule?.toPay || "0"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Paid:</Text>
-            <Text style={styles.value}>₹{ProjectSchedule?.paidAmount || "0"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Due:</Text>
-            <Text style={styles.value}>₹{ProjectSchedule?.dueAmount || "0"}</Text>
-          </View>
+          <Text style={styles.sectionTitle}>Delay / Remarks</Text>
+
+          {ProjectSchedule.projectDetail.map(
+            (item, index) =>
+              item.reason && (
+                <View
+                  key={index}
+                  style={{
+                    marginBottom: 8,
+                    borderBottom: "1 solid #ddd",
+                    paddingBottom: 4,
+                  }}
+                >
+                  <Text>
+                    <Text style={styles.label}>{item.workDetail}</Text>
+                  </Text>
+
+                  <Text>Reason : {item.reason}</Text>
+                </View>
+              ),
+          )}
         </View> */}
 
         {/* Notes */}
-        {/* {ProjectSchedule?.reason && (
+        {ProjectSchedule?.reason && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Notes</Text>
             <Text style={styles.notes}>{ProjectSchedule?.reason}</Text>
           </View>
-        )} */}
+        )}
 
         {/* Signature */}
-        {/* <View style={styles.signatures}>
+        <View style={styles.signatures}>
           <View style={styles.signatureBox}>
             <Text style={styles.signatureLine}>Contractor</Text>
           </View>
           <View style={styles.signatureBox}>
-            <Text style={styles.signatureLine}>ProjectScheduleing Manager</Text>
+            <Text style={styles.signatureLine}>Project Manager</Text>
           </View>
           <View style={styles.signatureBox}>
             <Text style={styles.signatureLine}>Quality</Text>
@@ -252,12 +266,12 @@ console.log(ProjectSchedule)
           <View style={styles.signatureBox}>
             <Text style={styles.signatureLine}>Authority</Text>
           </View>
-        </View>  */}
+        </View>
 
         {/* Footer */}
         <Text style={styles.footer}>
-          This is a system-generated ProjectSchedule. For any queries contact Bhuvi
-          Consultants office.
+          This is a system-generated ProjectSchedule. For any queries contact
+          Bhuvi Consultants office.
         </Text>
       </Page>
     </Document>

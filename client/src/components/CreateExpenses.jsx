@@ -33,13 +33,18 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
         console.log(
           res.data?.filter(
             (g) =>
-              g.name !== "Indirect Expenses" && g.name !== "Direct Expenses",
+              g.name !== "Indirect Expenses" &&
+              g.name !== "Direct Expenses" &&
+              g.name !== "Employee Expenses",
           ),
         );
         setExpenseGroups(
           res.data?.filter(
             (g) =>
-              g.name !== "Indirect Expenses" && g.name !== "Direct Expenses",
+              g.name !== "Indirect Expenses" &&
+              g.name !== "Direct Expenses" &&
+              g.name !== "Employee Expenses" &&
+              g.name !== "Purchase Account",
           ),
         );
       } catch (error) {
@@ -318,7 +323,6 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
                    focus:outline-none focus:ring-2 focus:ring-green-500"
           placeholder="Optional description of the expense"
-          required
         />
       </div>
 

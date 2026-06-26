@@ -25,7 +25,7 @@ const stockCategorySchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// stockCategorySchema.index({ name: 1, groupId: 1 });
+stockCategorySchema.index({ name: 1, groupId: 1 });
 
 const stockGroupSchema = new mongoose.Schema(
   {

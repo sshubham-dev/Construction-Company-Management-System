@@ -56,10 +56,10 @@ const SyncStore_CostCenter = async (site) => {
             store.businessUnitId = businessUnitId || store.businessUnitId;
 
             if (!store.costCenterId) {
-
                 let costCenterId = site.costCenterId;
-
+                
                 if (!costCenterId) {
+                    console.log("Cost Center not exist creating one.");
                     const costCenter = await syncCostCenter(site, "SITE");
 
                     costCenterId = costCenter._id;

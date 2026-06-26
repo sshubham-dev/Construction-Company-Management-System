@@ -12,6 +12,7 @@ const getFinancialYear = (date) => {
         startYear = year - 1;
     }
 
+    console.log("Fy Generated")
     return {
         startYear,
         endYear: startYear + 1,

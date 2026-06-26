@@ -21,7 +21,7 @@ const {
   cancelVoucher,
   updateVoucher,
 } = require("../services/ERP/voucher/voucher.service.js");
-const { getFinancialYear } = require("../utils/getFinancialYear.js");
+const  getFinancialYear = require("../utils/getFinancialYear.js");
 const { generateVoucherNo } = require("../utils/voucherNoGenerator.js");
 
 const resolvePaidByLedger = async (userId) => {
@@ -150,21 +150,10 @@ const postExpense = async (req, res) => {
         .json({ message: "Only Draft expense can be posted" });
     }
 
-    const fy = getFinancialYear(expense.date);
-
-    const voucherNo = await generateVoucherNo({
-      companyId: expense.companyId,
-      type: "JOURNAL",
-      fy: fy.code,
-    });
-
-
     // 🔥 Create voucher
     const voucher = await createVoucher({
-      voucherNo,
       type: "JOURNAL",
       date: expense.date,
-      fy: fy.code,
       companyId: expense.companyId,
       narration: expense.narration,
 

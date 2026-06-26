@@ -36,8 +36,8 @@ const createCategory = async (req, res) => {
 
     // validate parent
     if (groupId) {
-      const parent = await Stock_Category.findById(groupId);
-      if (!parent) throw new Error("Invalid parent category");
+      const parent = await Stock_Group.findById(groupId);
+      if (!parent) throw new Error("Invalid Parent Group");
     }
 
     const category = await Stock_Category.create({
@@ -49,6 +49,7 @@ const createCategory = async (req, res) => {
 
     res.status(201).json({ success: true, data: category });
   } catch (err) {
+    console.log(err)
     res.status(400).json({ success: false, message: err.message });
   }
 };

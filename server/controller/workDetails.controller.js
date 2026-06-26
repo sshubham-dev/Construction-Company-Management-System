@@ -245,9 +245,9 @@ const updateDescription = async (req, res) => {
       return res.status(404).json({ message: "No Work detail found" });
     }
     console.log(description);
-    (existingWorkDetail.description[index] =
-      description[0] || existingWorkDetail.description[index]),
-      await existingWorkDetail.save();
+    existingWorkDetail.description[index] = description[0] || existingWorkDetail.description[index];
+    existingWorkDetail.markModified("description");
+    await existingWorkDetail.save();
 
     return res
       .status(200)

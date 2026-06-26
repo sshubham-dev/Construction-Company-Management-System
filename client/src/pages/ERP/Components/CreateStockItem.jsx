@@ -1,16 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import Select from "react-select";
 import toast from "react-hot-toast";
 
 const CreateStockItem = ({ onClose, editId }) => {
   const isEdit = Boolean(editId);
-
   const [loading, setLoading] = useState(false);
-
   const [groups, setGroups] = useState([]);
   const [categories, setCategories] = useState([]);
-
   const [form, setForm] = useState({
     name: "",
     code: "",
@@ -21,7 +18,7 @@ const CreateStockItem = ({ onClose, editId }) => {
     unit: "",
 
     itemType: "INVENTORY",
-    procurementMode:"STORE_STOCK",
+    procurementMode: "STORE_STOCK",
 
     defaultPurchaseRate: 0,
 
@@ -35,11 +32,9 @@ const CreateStockItem = ({ onClose, editId }) => {
   /* =========================
      LOAD MASTERS
   ========================== */
-
   useEffect(() => {
     fetchMasters();
   }, []);
-
   const fetchMasters = async () => {
     try {
       const [groupRes, categoryRes] = await Promise.all([
@@ -47,19 +42,10 @@ const CreateStockItem = ({ onClose, editId }) => {
         axios.get("/api/v1/stock-category"),
       ]);
 
-      setGroups(
-        (groupRes.data.data || []).map((g) => ({
-          value: g._id,
-          label: g.name,
-        })),
-      );
+      setGroups(groupRes.data.data || []);
+      console.log(groupRes.data.data);
 
-      setCategories(
-        (categoryRes.data.data || []).map((c) => ({
-          value: c._id,
-          label: c.name,
-        })),
-      );
+      setCategories(categoryRes.data.data || []);
     } catch (err) {
       toast.error("Failed to load master data");
     }
@@ -68,7 +54,6 @@ const CreateStockItem = ({ onClose, editId }) => {
   /* =========================
      LOAD EDIT ITEM
   ========================== */
-
   useEffect(() => {
     if (!isEdit) return;
 
@@ -77,6 +62,7 @@ const CreateStockItem = ({ onClose, editId }) => {
         const res = await axios.get(`/api/v1/stock-item/${editId}`);
 
         const data = res.data.data;
+        console.log(data)
 
         setForm({
           name: data.name || "",
@@ -111,6 +97,17 @@ const CreateStockItem = ({ onClose, editId }) => {
   /* =========================
      HANDLERS
   ========================== */
+  const filteredCategories = useMemo(() => {
+    if (!form.groupId) {
+      return categories;
+    }
+
+    return categories.filter(
+      (category) =>
+        String(category.groupId?._id || category.groupId) ===
+        String(form.groupId),
+    );
+  }, [categories, form.groupId]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -120,7 +117,6 @@ const CreateStockItem = ({ onClose, editId }) => {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-
   const handleNumber = (field, value) => {
     setForm((prev) => ({
       ...prev,
@@ -131,7 +127,6 @@ const CreateStockItem = ({ onClose, editId }) => {
   /* =========================
      VALIDATION
   ========================== */
-
   const validate = () => {
     if (!form.name.trim()) {
       toast.error("Name required");
@@ -155,11 +150,10 @@ const CreateStockItem = ({ onClose, editId }) => {
 
     return true;
   };
-
+  
   /* =========================
      SUBMIT
   ========================== */
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -198,7 +192,6 @@ const CreateStockItem = ({ onClose, editId }) => {
   /* =========================
      UI
   ========================== */
-
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       {/* HEADER */}
@@ -248,26 +241,51 @@ const CreateStockItem = ({ onClose, editId }) => {
         <Section title="Classification">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <SelectField
-              label="Stock Group"
-              options={groups}
-              value={groups.find((g) => g.value === form.groupId)}
+              label="Group*"
+              options={groups.map((g) => ({
+                value: g._id,
+                label: g.name,
+              }))}
+              value={groups
+                .map((g) => ({
+                  value: g._id,
+                  label: g.name,
+                }))
+                .find((g) => g.value === form.groupId)}
               onChange={(v) =>
                 setForm((p) => ({
                   ...p,
                   groupId: v?.value || "",
+                  categoryId: "",
                 }))
               }
             />
 
             <SelectField
-              label="Stock Category"
-              options={categories}
-              value={categories.find((c) => c.value === form.categoryId)}
+              label="Category*"
+              isDisabled={!form.groupId}
+              options={filteredCategories.map((c) => ({
+                value: c._id,
+                label: c.name,
+              }))}
+              value={filteredCategories
+                .map((c) => ({
+                  value: c._id,
+                  label: c.name,
+                }))
+                .find((c) => c.value === form.categoryId)}
               onChange={(v) =>
                 setForm((p) => ({
                   ...p,
                   categoryId: v?.value || "",
                 }))
+              }
+              placeholder={
+                !form.groupId
+                  ? "Select Group First*"
+                  : !form.categoryId
+                    ? "Select Category First*"
+                    : "Select Item*"
               }
             />
           </div>
@@ -430,10 +448,10 @@ const Toggle = ({ label, checked, name, onChange }) => (
   </label>
 );
 
-const SelectField = ({ label, options, value, onChange }) => (
+const SelectField = ({ label, ...props }) => (
   <div className="space-y-1">
     <label className="text-sm text-gray-600">{label}</label>
 
-    <Select options={options} value={value} onChange={onChange} isClearable />
+    <Select {...props} isClearable />
   </div>
 );

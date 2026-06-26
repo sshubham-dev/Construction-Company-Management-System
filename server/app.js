@@ -62,6 +62,13 @@ const Stock_Transaction = require("./routes/stockTransaction.routes");
 const Item = require("./routes/item.routes");
 const StockAudit = require("./routes/stockaudit.routes");
 const RFQs = require("./routes/rfq.routes");
+
+const cron = require("node-cron");
+
+// cron.schedule('* * * * * *', () => {
+//   console.log("Running a task every 5 seconds")
+// });
+
 // midellware
 
 const allowedOrigins = process.env.CORS_ORIGIN.split(",");

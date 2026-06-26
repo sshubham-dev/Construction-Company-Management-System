@@ -59,7 +59,7 @@ const CollectionEntry = ({ onClose, editId }) => {
     }
   }, []);
 
-  console.log(ledgers);
+  // console.log(ledgers);
   const departments = useMemo(
     () => costCenters.filter((cc) => cc.type === "Department"),
     [costCenters],
@@ -102,7 +102,8 @@ const CollectionEntry = ({ onClose, editId }) => {
   const filteredCostCenters = useMemo(() => {
     // console.log("Filtering cost centers for departmentId:", departmentId);
     if (!form.departmentId) return [];
-    return costCenters.filter((cc) => cc.parentId === form.departmentId);
+    console.log(costCenters);
+    return costCenters.filter((cc) => cc.parentId?._id === form.departmentId);
   }, [costCenters, form.departmentId]);
 
   const findOption = (options, value) => options.find((o) => o.value === value);
@@ -111,7 +112,10 @@ const CollectionEntry = ({ onClose, editId }) => {
     arr.map((l) => ({
       value: l._id,
       label: `${l.name} (${
-        l.mailingDetails?.phoneNo || l.referenceType || l?.groupId?.name
+        l.mailingDetails?.phoneNo ||
+        l.referenceType ||
+        l?.groupId?.name ||
+        l?.type
       })`,
     }));
 

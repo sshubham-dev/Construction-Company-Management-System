@@ -319,22 +319,26 @@ const updateSite = async (req, res) => {
         public_id: upload.public_id,
       };
 
-    const storeData = {
-      businessUnitId: existingSite.businessUnitId,
-      address: { line1: existingSite?.address },
-      storeHead: existingSite.incharge?.id,
-      storeIncharge: existingSite.supervisor?.id,
-      companyId: existingSite.companyId,
-      type: "SITE",
-      name: existingSite.name,
+
+    if (!existingSite.store) {
+      const storeData = {
+        businessUnitId: existingSite.businessUnitId,
+        address: { line1: existingSite?.address },
+        storeHead: existingSite.incharge?.id,
+        storeIncharge: existingSite.supervisor?.id,
+        companyId: existingSite.companyId,
+        type: "SITE",
+        name: existingSite.name,
+        costCenterId: existingSite.costcenter,
+      }
+      const siteStore = existingSite.store;
+
+      const store_costCenter = await SyncStore_CostCenter(storeData)
+      existingSite.costcenter = store_costCenter?.costCenterId;
+      existingSite.store = store_costCenter?._id;
+      console.log("store_costCenter", store_costCenter)
     }
-    const siteStore = existingSite.store;
 
-    const store_costCenter = await SyncStore_CostCenter(storeData)
-    existingSite.costcenter = store_costCenter?.costCenterId;
-    existingSite.store = store_costCenter?._id;
-
-    console.log("store_costCenter", store_costCenter)
     const updated = await existingSite.save();
     await assignSiteToUsers(updated, existingIncharge, existingSupervisor);
 
