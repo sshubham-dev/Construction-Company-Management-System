@@ -7,6 +7,12 @@ const collectionSchema = new mongoose.Schema(
       required: true,
     },
 
+    settlementTo: {
+      type: String,
+      enum: ["COMPANY", "OTHER"],
+      default: "COMPANY",
+    },
+
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",

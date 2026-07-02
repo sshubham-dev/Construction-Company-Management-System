@@ -25,11 +25,11 @@ export default function Schedule() {
       try {
         const projectRes = await axios.get(`/api/v1/project-schedule/monthly`);
         setProjectSchedule(projectRes.data);
-        console.log("Project Schedule:", projectRes.data);
+        // console.log("Project Schedule:", projectRes.data);
 
         const qualityRes = await axios.get(`/api/v1/quality-schedule/monthly`);
         setQualitySchedule(qualityRes.data);
-        console.log("Quality:", qualityRes.data);
+        // console.log("Quality:", qualityRes.data);
       } catch (error) {
         console.error("Error fetching schedules:", error);
       }

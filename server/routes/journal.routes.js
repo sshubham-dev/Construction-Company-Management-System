@@ -13,9 +13,9 @@ const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 // Journal Routes
 Journal.post('/', userAuth, createJournal);
 Journal.get('/', userAuth, getJournals);
-Journal.get('/:id', userAuth, getJournalById);
 Journal.put('/post/:id', userAuth, postJournal);
 Journal.put('/cancel/:id', userAuth, cancelJournal);
+Journal.get('/:id', userAuth, getJournalById);
 Journal.put('/:id', userAuth, updateJournal);
 Journal.delete('/:id', userAuth, deleteJournal);
 // Journal.get("/next-voucher", getNextJournalNo);

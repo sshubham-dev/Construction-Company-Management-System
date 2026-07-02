@@ -5,17 +5,14 @@ const {
   sendPushNotification,
   notifyRole,
 } = require("../utils/pushNotification.js");
-// const {
-//   postVoucher,
-//   cancelVoucher,
-// } = require("../services/ERP/posting.service.js");
 const {
   createVoucher,
   postVoucher,
   cancelVoucher,
 } = require("../services/ERP/voucher/voucher.service.js");
-const  getFinancialYear = require("../utils/getFinancialYear.js");
+const getFinancialYear = require("../utils/getFinancialYear.js");
 const { generateVoucherNo } = require("../utils/voucherNoGenerator.js");
+const { getCollectionDashboard } = require("../services/ERP/collection.service.js")
 
 /* ---------------- CREATE COLLECTION ENTRY ---------------- */
 
@@ -36,6 +33,7 @@ const createCollection = async (req, res) => {
 
     const collection = await Collection({
       date: data.date,
+      settlementTo: data.settlementTo,
       companyId: user.companyId,
       businessUnitId: user.businessUnitId,
       departmentId: data.departmentId,
@@ -43,7 +41,6 @@ const createCollection = async (req, res) => {
       clientLedgerId: data.clientLedgerId,
       receivedInto: data.receivedInto,
       amount: data.amount,
-
       medium: data.medium,
       referenceNo: data.referenceNo,
       narration: data.narration,
@@ -72,126 +69,47 @@ const createCollection = async (req, res) => {
 
 /* ---------------- GET ALL (ACCOUNT SIDE) ---------------- */
 
-// const getCollections = async (req, res) => {
-//   try {
-//     const {
-//       companyId,
-//       page = 1,
-//       limit = 10,
-//       search = "",
-//       status,
-//       date,
+const CollectionDashboard = async (req, res) => {
+  try {
+    const {
+      companyId,
+      fromDate,
+      toDate,
+      departmentId,
+      businessUnitId,
+      costCenterId,
+    } = req.query;
 
-//       // ✅ advanced filters
-//       fromDate,
-//       toDate,
-//       bank,
-//       costCenter,
-//       businessUnit,
-//     } = req.query;
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Company Id is required",
+      });
+    }
 
-//     const skip = (page - 1) * limit;
+    const data = await getCollectionDashboard({
+      companyId,
+      fromDate,
+      toDate,
+      departmentId,
+      businessUnitId,
+      costCenterId,
+    });
 
-//     /* ---------------- BASE FILTER ---------------- */
-//     // const filter = {
-//     //   companyId,
-//     // };
-//     const filter = {};
+    return res.status(200).json({
+      success: true,
+      message: "Dashboard fetched successfully",
+      data,
+    });
+  } catch (err) {
+    console.error("Collection Dashboard:", err);
 
-//     /* ---------------- STATUS ---------------- */
-//     if (status) {
-//       filter.status = status;
-//     }
-
-//     /* ---------------- QUICK DATE FILTER ---------------- */
-//     if (date && !fromDate && !toDate) {
-//       const now = new Date();
-
-//       if (date === "today") {
-//         filter.date = {
-//           $gte: new Date(now.setHours(0, 0, 0, 0)),
-//         };
-//       }
-
-//       if (date === "week") {
-//         const firstDay = new Date();
-//         firstDay.setDate(now.getDate() - 7);
-
-//         filter.date = { $gte: firstDay };
-//       }
-
-//       if (date === "month") {
-//         const firstDay = new Date(
-//           now.getFullYear(),
-//           now.getMonth(),
-//           1
-//         );
-
-//         filter.date = { $gte: firstDay };
-//       }
-//     }
-
-//     /* ---------------- CUSTOM DATE RANGE ---------------- */
-//     if (fromDate || toDate) {
-//       filter.date = {};
-
-//       if (fromDate) {
-//         filter.date.$gte = new Date(fromDate);
-//       }
-
-//       if (toDate) {
-//         const end = new Date(toDate);
-//         end.setHours(23, 59, 59, 999); // full day
-//         filter.date.$lte = end;
-//       }
-//     }
-
-//     /* ---------------- ADVANCED FILTERS ---------------- */
-//     // if (bank) {
-//     //   filter.receivedInto = bank;
-//     // }
-
-//     // if (costCenter) {
-//     //   filter.costCenterId = costCenter;
-//     // }
-
-//     // if (businessUnit) {
-//     //   filter.businessUnitId = businessUnit;
-//     // }
-
-//     /* ---------------- SEARCH ---------------- */
-//     if (search) {
-//       filter.$or = [
-//         { purpose: { $regex: search, $options: "i" } },
-//         { narration: { $regex: search, $options: "i" } },
-//       ];
-//     }
-
-//     /* ---------------- QUERY ---------------- */
-//     const [data, total] = await Promise.all([
-//       Collection.find(filter)
-//         .populate("clientLedgerId", "name")
-//         .populate("receivedInto", "name")
-//         .sort({ createdAt: -1 })
-//         .skip(skip)
-//         .limit(Number(limit))
-//         .lean(), // ✅ performance boost
-
-//       Collection.countDocuments(filter),
-//     ]);
-
-//     /* ---------------- RESPONSE ---------------- */
-//     res.json({
-//       data,
-//       total,
-//       page: Number(page),
-//       totalPages: Math.ceil(total / limit),
-//     });
-//   } catch (err) {
-//     console.log(err);
-//     res.status(500).json({ message: err.message });
-//   }
-// };
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 
 
 const getCollections = async (req, res) => {
@@ -302,6 +220,21 @@ const getCollections = async (req, res) => {
       {
         $unwind: {
           path: "$costCenter",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      /* ---- JOIN DEPARTMENT ---- */
+      {
+        $lookup: {
+          from: "costcenters",
+          localField: "departmentId",
+          foreignField: "_id",
+          as: "department",
+        },
+      },
+      {
+        $unwind: {
+          path: "$department",
           preserveNullAndEmptyArrays: true,
         },
       },
@@ -500,6 +433,7 @@ const updateCollection = async (req, res) => {
     collection.businessUnitId = user.businessUnitId
     collection.costCenterId = data.costCenterId;
     collection.departmentId = data.departmentId;
+    collection.settlementTo = data.settlementTo;
 
     if (upload) {
       collection.proofImage = {
@@ -568,4 +502,5 @@ module.exports = {
   updateCollection,
   deleteCollection,
   getCollection,
+  CollectionDashboard,
 };

@@ -18,12 +18,12 @@ const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 QualitySchedule.get('/', getQualitySchedules);
 QualitySchedule.get('/monthly', userAuth, getMonthlyQualitySchedule);
 QualitySchedule.post('/', userAuth, createQualitySchedule);
+QualitySchedule.get('/site/:id', getQualitySchedulesBySite);
+QualitySchedule.put('/save/:id', userAuth, saveQualitySchedule);
 QualitySchedule.route('/:id')
     .get(getQualitySchedule)
     .put(updateQualitySchedule)
     .delete(userAuth, deleteQualitySchedule);
-QualitySchedule.get('/site/:id', getQualitySchedulesBySite);
-QualitySchedule.put('/save/:id', userAuth, saveQualitySchedule);
 
 
 QualitySchedule.get('/:id/workDetails', getWorkDetails);

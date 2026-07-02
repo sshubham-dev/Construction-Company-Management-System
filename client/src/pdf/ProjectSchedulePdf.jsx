@@ -15,7 +15,10 @@ const lightBg = "#f9f9f9";
 
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
+    paddingTop: 15,
+    paddingBottom: 10,
+    paddingLeft: 30,
+    paddingHorizontal: 30,
     fontSize: 11,
     fontFamily: "Helvetica",
     color: "#333",
@@ -97,9 +100,9 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   footer: {
-    marginTop: 30,
+    marginTop: 15,
     borderTop: "1px solid #eee",
-    paddingTop: 8,
+    paddingTop: 6,
     fontSize: 9,
     textAlign: "center",
     color: "#777",
@@ -107,7 +110,7 @@ const styles = StyleSheet.create({
   signatures: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 40,
+    marginTop: 30,
   },
   signatureBox: {
     width: "22%", // 4 boxes fit in one row with spacing

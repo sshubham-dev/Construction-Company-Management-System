@@ -47,11 +47,13 @@ async function createPaymentVoucher(data, user) {
 
   const fy = getFinancialYear(date);
 
+  console.log("Generating...");
   const voucherNo = await generateVoucherNo({
     companyId: user.companyId,
     type: "PAYMENT",
     fy: fy.code,
   });
+  console.log(voucherNo);
 
   const voucher = await Voucher.create({
     voucherNo,
@@ -60,26 +62,12 @@ async function createPaymentVoucher(data, user) {
     fy: fy.code,
     entries,
     narration,
+    paidBy: "COMPANY",
     costCenterId: costCenterId || null,
     status: "DRAFT",
     companyId: user.companyId,
     createdBy: user._id,
   });
-
-  /* ======================
-     SAVE INVOICE ALLOCATION (DRAFT)
-  ====================== */
-
-  // if (invoices.length > 0) {
-  //   const allocations = invoices.map((inv) => ({
-  //     voucherId: voucher._id,
-  //     invoiceId: inv.invoiceId,
-  //     amount: inv.amount,
-  //     type: "PAYMENT",
-  //   }));
-
-  //   await InvoiceAllocation.insertMany(allocations);
-  // }
 
   return voucher;
 }

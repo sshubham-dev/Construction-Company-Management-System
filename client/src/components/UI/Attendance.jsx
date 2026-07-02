@@ -149,8 +149,8 @@ const workingDaysInMonth = (weeklyOffDay = 0, extraHolidays = []) => {
 };
 
 // ✅ Example usage:
-console.log("Working days (excluding Sunday):", workingDaysInMonth(0));
-console.log("Working days (excluding Tuesday):", workingDaysInMonth(2));
+// console.log("Working days (excluding Sunday):", workingDaysInMonth(0));
+// console.log("Working days (excluding Tuesday):", workingDaysInMonth(2));
 
 return (
     <>

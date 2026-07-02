@@ -13,6 +13,9 @@ const CollectionEntry = ({ onClose, editId }) => {
   });
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
+
+    settlementTo: "COMPANY",
+
     costCenterId: "",
     clientLedgerId: "",
     receivedInto: "",
@@ -27,8 +30,9 @@ const CollectionEntry = ({ onClose, editId }) => {
   const [departmentId, setDepartmentId] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  const PARTY_UNDER = ["Sundry Debtors", "Direct Income", "Indirect Income"];
-  const CASH_BANK_UNDER = ["Cash-in-Hand", "Bank Accounts"];
+  const PARTY_UNDER = ["Sundry Debtors"];
+  const CASH_BANK_UNDER = ["Cash-in-Hand", "Bank Accounts", "Capital Account"];
+  const INCLUDED_GROUPS = ["Sundry Creditors", "Indirect Income"];
 
   useEffect(() => {
     axios
@@ -73,6 +77,7 @@ const CollectionEntry = ({ onClose, editId }) => {
 
       setForm({
         date: data.date?.slice(0, 10),
+        settlementTo: data.settlementTo || "COMPANY",
         costCenterId: data.costCenterId?._id || null,
         departmentId: data.departmentId?._id || null,
         clientLedgerId: data.clientLedgerId?._id || "",
@@ -80,8 +85,8 @@ const CollectionEntry = ({ onClose, editId }) => {
         amount: data.amount || "",
         medium: data.medium || "",
         referenceNo: data.referenceNo || "",
-        narration: data.narration || data.purpose || "",
-        proofImage: null, // don't prefill file
+        narration: data.narration || "",
+        proofImage: null,
       });
     } catch (err) {
       console.error(err);
@@ -96,6 +101,11 @@ const CollectionEntry = ({ onClose, editId }) => {
 
   const cashBankLedgers = useMemo(
     () => ledgers.filter((l) => CASH_BANK_UNDER.includes(l?.groupId?.name)),
+    [ledgers],
+  );
+
+  const otherLedgers = useMemo(
+    () => ledgers.filter((l) => INCLUDED_GROUPS.includes(l?.groupId?.name)),
     [ledgers],
   );
 
@@ -193,101 +203,144 @@ const CollectionEntry = ({ onClose, editId }) => {
     setLoading(false);
   };
 
+  const receivedIntoOptions =
+    form.settlementTo === "COMPANY" ? cashBankLedgers : otherLedgers;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <h2 className="text-lg font-semibold">Record Client Payment</h2>
 
-      {/* DATE */}
-      <input
-        type="date"
-        value={form.date}
-        onChange={(e) => updateForm("date", e.target.value)}
-        className="border p-2 rounded w-full"
-        required
-      />
+      <div className="flex rounded-lg border overflow-hidden">
+        <button
+          type="button"
+          onClick={() => {
+            updateForm("settlementTo", "COMPANY");
+            updateForm("receivedInto", "");
+          }}
+          className={`flex-1 py-2 text-sm font-medium transition ${
+            form.settlementTo === "COMPANY"
+              ? "bg-green-600 text-white"
+              : "bg-white"
+          }`}
+        >
+          Company
+        </button>
 
-      {/* CLIENT */}
-      <Select
-        options={mapOptions(partyLedgers)}
-        value={findOption(mapOptions(partyLedgers), form.clientLedgerId)}
-        placeholder="Select Client*"
-        onChange={(v) => updateForm("clientLedgerId", v?.value || "")}
-      />
+        <button
+          type="button"
+          onClick={() => {
+            updateForm("settlementTo", "OTHER");
+            updateForm("receivedInto", "");
+          }}
+          className={`flex-1 py-2 text-sm font-medium transition ${
+            form.settlementTo === "OTHER"
+              ? "bg-green-600 text-white"
+              : "bg-white"
+          }`}
+        >
+          Other
+        </button>
+      </div>
 
-      {/* RECEIVED INTO */}
-      <Select
-        options={mapOptions(cashBankLedgers)}
-        value={findOption(mapOptions(cashBankLedgers), form.receivedInto)}
-        placeholder="Select Bank*"
-        onChange={(v) => updateForm("receivedInto", v?.value || "")}
-      />
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* CLIENT */}
+        <Select
+          options={mapOptions(partyLedgers)}
+          value={findOption(mapOptions(partyLedgers), form.clientLedgerId)}
+          placeholder="Client *"
+          onChange={(v) => updateForm("clientLedgerId", v?.value || "")}
+        />
 
-      <Select
-        options={mapOptions(departments)}
-        placeholder="Select Department*"
-        value={findOption(mapOptions(departments), form.departmentId)}
-        onChange={(v) => {
-          setDepartmentId(v?.value || "");
-          updateForm("departmentId", v?.value || "");
-        }}
-      />
+        {/* RECEIVED INTO */}
+        <Select
+          options={mapOptions(receivedIntoOptions)}
+          value={findOption(mapOptions(receivedIntoOptions), form.receivedInto)}
+          placeholder={
+            form.settlementTo === "COMPANY"
+              ? "Receive Into Account *"
+              : "Paid To *"
+          }
+          onChange={(v) => updateForm("receivedInto", v?.value || "")}
+        />
+      </div>
 
-      <Select
-        options={mapOptions(filteredCostCenters)}
-        value={findOption(mapOptions(filteredCostCenters), form.costCenterId)}
-        placeholder="Payment For"
-        onChange={(v) => updateForm("costCenterId", v?.value || "")}
-      />
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* DATE */}
+        <input
+          type="date"
+          value={form.date}
+          onChange={(e) => updateForm("date", e.target.value)}
+          className="border rounded-lg p-2"
+        />
 
-      {/* AMOUNT */}
-      <input
-        type="number"
-        placeholder="Amount*"
-        value={form.amount}
-        onChange={(e) => updateForm("amount", e.target.value)}
-        className="border p-2 rounded w-full"
-        required
-      />
+        <select
+          value={form.medium}
+          onChange={(e) => updateForm("medium", e.target.value)}
+          className="border rounded-lg p-2"
+        >
+          <option value="">Payment Medium</option>
+          <option value="cash">Cash</option>
+          <option value="bank">Bank Transfer</option>
+          <option value="upi">UPI</option>
+          <option value="cheque">Cheque</option>
+          {form.settlementTo === "OTHER" && (
+            <option value="settlement">Settlement</option>
+          )}
+        </select>
+      </div>
 
-      {/* PURPOSE */}
-      {/* <input
-        type="text"
-        placeholder="Purpose"
-        value={form.purpose}
-        onChange={(e) => updateForm("purpose", e.target.value)}
-        className="border p-2 rounded w-full"
-      /> */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Department */}
+        <Select
+          options={mapOptions(departments)}
+          value={findOption(mapOptions(departments), form.departmentId)}
+          placeholder="Department *"
+          onChange={(v) => {
+            updateForm("departmentId", v?.value || "");
+            updateForm("costCenterId", "");
+          }}
+        />
 
-      {/* MEDIUM */}
-      <select
-        value={form.medium}
-        onChange={(e) => updateForm("medium", e.target.value)}
-        className="border p-2 rounded w-full"
-        required
-      >
-        <option value="">Payment Medium</option>
-        <option value="cash">Cash</option>
-        <option value="bank">Bank Transfer</option>
-        <option value="upi">UPI</option>
-        <option value="cheque">Cheque</option>
-      </select>
+        {/* Service/Site */}
+        <Select
+          options={mapOptions(filteredCostCenters)}
+          value={findOption(mapOptions(filteredCostCenters), form.costCenterId)}
+          placeholder="Service / Site"
+          isDisabled={!form.departmentId}
+          onChange={(v) => updateForm("costCenterId", v?.value || "")}
+        />
+      </div>
 
-      {/* REFERENCE */}
-      <input
-        placeholder="Reference No / UTR / Cheque No"
-        value={form.referenceNo}
-        onChange={(e) => updateForm("referenceNo", e.target.value)}
-        className="border p-2 rounded w-full"
-      />
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Amount */}
+        <input
+          type="number"
+          placeholder="Amount"
+          value={form.amount}
+          onChange={(e) => updateForm("amount", e.target.value)}
+          className="border rounded-lg p-2"
+        />
 
-      {/* PROOF IMAGE */}
-      <input
-        type="file"
-        accept="image/*"
-        // onChange={(e) => updateForm("proofImage", e.target.files[0])}
-        onChange={handleUpload}
-        className="border p-2 rounded w-full"
-      />
+        {/* Reference */}
+        <input
+          placeholder="Reference / UTR / Cheque"
+          value={form.referenceNo}
+          onChange={(e) => updateForm("referenceNo", e.target.value)}
+          className="border rounded-lg p-2"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2">Payment Proof</label>
+
+        <input type="file" accept="image/*" onChange={handleUpload} />
+
+        {form.proofImage && (
+          <div className="mt-2 text-xs text-green-600">
+            ✓ {form.proofImage.name}
+          </div>
+        )}
+      </div>
 
       {/* NARRATION */}
       <textarea

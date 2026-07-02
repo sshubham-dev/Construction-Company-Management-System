@@ -14,9 +14,9 @@ BusinessUnit.post("/", createBusinessUnit);
 
 // list all BU
 BusinessUnit.get("/", getBusinessUnits);
+BusinessUnit.patch("/deactivate/:id", deactivateBusinessUnit);
 BusinessUnit.get("/:id", getBusinessUnitById);
 BusinessUnit.put("/:id", updateBusinessUnit);
-BusinessUnit.patch("/deactivate/:id", deactivateBusinessUnit);
 BusinessUnit.delete("/:id", deleteBusinessUnit);
 
 module.exports = BusinessUnit;

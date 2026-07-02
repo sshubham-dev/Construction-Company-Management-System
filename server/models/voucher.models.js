@@ -64,6 +64,15 @@ const voucherSchema = new mongoose.Schema(
       },
     ],
 
+    paidBy: {
+      type: String,
+      enum: [
+        "COMPANY",
+        "CLIENT",
+      ],
+      default: "COMPANY",
+    },
+
     totalDebit: { type: Number, default: 0 },
     totalCredit: { type: Number, default: 0 },
 
@@ -113,7 +122,7 @@ const voucherSchema = new mongoose.Schema(
 );
 
 
-voucherSchema.index({ voucherNo: 1, companyId: 1, fy: 1 }, { unique: true });
+voucherSchema.index({ voucherNo: 1, companyId: 1 }, { unique: true });
 
 voucherSchema.pre("save", function () {
   let debit = 0;

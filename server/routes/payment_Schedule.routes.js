@@ -22,16 +22,17 @@ PaymentSchedule.route('/')
     .post(userAuth, createPaymentSchedule)
 PaymentSchedule.get('/draft', userAuth, getDraftPaymentSchedules);
 
+PaymentSchedule.get('/site/:id', paymentScheduleBySite);
+PaymentSchedule.put('/save/:id', userAuth, savePaymentSchedule);
+
 PaymentSchedule.route('/:id')
     .put(updatePaymentSchedule)
     .delete(deletePaymentSchedule)
     .get(getPaymentSchedule)
 // PaymentSchedule.get('/:id/ClientPaymentSchedule', clientPaymentSchedule);
 // PaymentSchedule.get('/:id/ContractorPaymentSchedule', contractorPaymentSchedule);
-PaymentSchedule.get('/site/:id', paymentScheduleBySite);
 PaymentSchedule.get('/:id/paymentDetails', getPaymentDetails);
 PaymentSchedule.put('/:id/paymentDetails/:index', updatePaymentDetails);
-PaymentSchedule.put('/save/:id', userAuth, savePaymentSchedule);
 PaymentSchedule.delete('/:id/paymentDetails/:index', deletePaymentDetails);
 
 

@@ -7,12 +7,12 @@ const upload = require('../middlewares/Upload');
 
 UserRouter.post('/register', upload.single('avatar'), register);
 UserRouter.get('/lists', users);
-UserRouter.get('/:id', user);
 UserRouter.post('/', createUser);
 UserRouter.post('/login', login);
 UserRouter.post('/refresh', refresh);
 UserRouter.post('/logout', userAuth, logout);
 UserRouter.put('/reset', resetPasswd);
+UserRouter.get('/:id', user);
 UserRouter.put('/:id', upload.single('avatar'), updateUser);
 UserRouter.delete('/:id', adminAuth, deleteUser);
 

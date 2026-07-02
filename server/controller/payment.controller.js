@@ -11,6 +11,7 @@ const createPayment = async (req, res) => {
     const voucher = await paymentService.createPaymentVoucher(req.body, req.user);
     res.status(201).json(voucher);
   } catch (err) {
+    console.log(err);
     res.status(400).json({ error: err.message });
   }
 };
@@ -43,6 +44,7 @@ const getPaymentById = async (req, res) => {
     const data = await paymentService.getPaymentById(req.params.id);
     res.json(data);
   } catch (err) {
+    console.log(err)
     res.status(404).json({ error: err.message });
   }
 };
@@ -53,6 +55,7 @@ const deletePayment = async (req, res) => {
     await paymentService.deletePaymentVoucher(req.params.id);
     res.json({ message: "Deleted successfully" });
   } catch (err) {
+    console.log(err)
     res.status(400).json({ error: err.message });
   }
 };
@@ -64,6 +67,7 @@ const postPayment = async (req, res) => {
     const voucher = await postVoucher(req.params.id, req.user);
     res.json({ message: "Posted successfully", voucher });
   } catch (err) {
+    console.log(err)
     res.status(400).json({ error: err.message });
   }
 };
@@ -74,6 +78,7 @@ const cancelPayment = async (req, res) => {
     const voucher = await cancelVoucher(req.params.id, req.user);
     res.json({ message: "Cancelled successfully", voucher });
   } catch (err) {
+    console.log(err)
     res.status(400).json({ error: err.message });
   }
 };

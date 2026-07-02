@@ -9,12 +9,14 @@ Lead.post('/', createLead);
 // Get all leads
 Lead.get('/', userAuth, getAllLeads);
 
-// Get a lead by ID
-Lead.get('/:id', userAuth, getLeadById);
 
 // Update a lead by ID
 Lead.put('/followup', userAuth, addFollowUp);
 Lead.put('/status', userAuth, changeLeadStatus);
+
+// Get a lead by ID
+Lead.get('/:id', userAuth, getLeadById);
+
 Lead.put('/:id', userAuth, updateLead);
 
 // Delete a lead by ID

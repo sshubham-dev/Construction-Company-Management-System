@@ -2,32 +2,37 @@
 
 const mongoose = require("mongoose");
 
-const voucherCounterSchema = new mongoose.Schema({
-  companyId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Company",
-    required: true,
-  },
+const voucherCounterSchema = new mongoose.Schema(
+  {
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+      unique: true,
+    },
 
-  type: {
-    type: String,
-    required: true,
-  },
+    fy: {
+      type: String,
+      required: true,
+      unique: true,
+    },
 
-  fy: {
-    type: String,
-  },
+    type: {
+      type: String,
+      required: true,
+      unique: true,
+    },
 
-  seq: {
-    type: Number,
-    default: 0,
+    seq: {
+      type: Number,
+      default: 0,
+    },
   },
-});
-
-voucherCounterSchema.index(
-  { companyId: 1, type: 1, fy: 1 },
-  { unique: true }
+  {
+    timestamps: true,
+  }
 );
+
 
 module.exports = mongoose.model(
   "VoucherCounter",

@@ -11,10 +11,10 @@ const {   createReceipt,
 const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 
+Receipt.get('/', userAuth, getAllReceipts);
 Receipt.post('/', userAuth, createReceipt);
 Receipt.put('/post/:id', userAuth, postReceipt);
 Receipt.put('/cancel/:id', userAuth, cancelReceipt);
-Receipt.get('/', userAuth, getAllReceipts);
 // Receipt.get('/next-voucher', generateReceiptNo);
 Receipt.get('/:id', userAuth, getReceiptById);
 Receipt.put('/:id', userAuth, updateReceipt);

@@ -24,13 +24,14 @@ const {
 const { adminAuth, userAuth } = require("../middlewares/auth.middleware");
 
 Ledger.route("/").get(userAuth, getAll).post(userAuth, create);
-Ledger.route("/:id").get(userAuth, getOne).put(userAuth, update).delete(userAuth, remove);
 // Ledger.route("/map/:id").put(mapLedger);
 
 Group.route("/").get(userAuth,getGroups).post(userAuth,createGroup);
-Group.route("/:id").get(getGroup).put(userAuth,updateGroup).delete(userAuth, deleteGroup)
 
 CostCenter.route("/").get(userAuth,getCostCenters).post(userAuth,createCostCenter);
+
+Group.route("/:id").get(getGroup).put(userAuth,updateGroup).delete(userAuth, deleteGroup)
+Ledger.route("/:id").get(userAuth, getOne).put(userAuth, update).delete(userAuth, remove);
 CostCenter.route("/:id").put(userAuth,updateCostCenter).delete(userAuth,deleteCostCenter);
 
 module.exports = { Ledger, Group, CostCenter };

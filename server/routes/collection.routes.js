@@ -9,6 +9,7 @@ const {
   updateCollection,
   deleteCollection,
   getCollection,
+  CollectionDashboard,
 } = require("../controller/collection.controller");
 const upload = require("../middlewares/Upload");
 const { userAuth, adminAuth } = require("../middlewares/auth.middleware");
@@ -23,6 +24,8 @@ CollectionRoute.post(
 // list (accounts)
 CollectionRoute.get("/", userAuth, getCollections);
 
+CollectionRoute.get("/dashboard", userAuth, CollectionDashboard);
+
 // approve
 CollectionRoute.put("/approve/:id", adminAuth, postCollection);
 
@@ -34,7 +37,7 @@ CollectionRoute.put("/cancel/:id", adminAuth, cancelCollection);
 
 // update & delete
 CollectionRoute.get("/:id", userAuth, getCollection);
-CollectionRoute.put("/:id",  upload.single("proofImage"), userAuth, updateCollection);
+CollectionRoute.put("/:id", upload.single("proofImage"), userAuth, updateCollection);
 CollectionRoute.delete("/:id", userAuth, deleteCollection);
 
 module.exports = CollectionRoute;

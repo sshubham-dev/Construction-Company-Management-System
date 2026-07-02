@@ -20,12 +20,12 @@ PurchaseRequest.route("/")
   .post(userAuth, createPurchaseRequest);
 PurchaseRequest.get("/open-pr", userAuth, getOpenPRForDN); // Endpoint to get open PRs for store
 PurchaseRequest.get("/open-rfq", userAuth, getOpenPRForRFQ); // Endpoint to get open PRs for store
+PurchaseRequest.put("/submit/:id", userAuth, submitPurchaseRequest);
+PurchaseRequest.put("/save/:id", userAuth, approvePurchaseRequest);
 PurchaseRequest.route("/:id")
   .get(getPurchaseRequestById)
   .put(updatePurchaseRequest)
   .delete(deletePurchaseRequest);
-PurchaseRequest.put("/submit/:id", userAuth, submitPurchaseRequest);
-PurchaseRequest.put("/save/:id", userAuth, approvePurchaseRequest);
 // PurchaseRequest.put(
 //   "/:id/requirement/:index",
 //   userAuth,

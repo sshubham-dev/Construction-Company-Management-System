@@ -165,6 +165,8 @@ import Sales from "./pages/ERP/Reports/Sales.jsx";
 import TrialBalance from "./pages/ERP/Reports/TrialBalance.jsx"; //
 
 import ProjectEditor from "./components/CreateProject.jsx";
+import CollectionReport from "./pages/ERP/Reports/CollectionReport.jsx";
+import SiteProfitDetail from "./pages/ERP/Reports/SiteProfit/SiteProfitDetail.jsx";
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -363,10 +365,12 @@ const App = () => {
         <Route path="/erp/outstanding" element={<Outstanding />} />
         <Route path="/erp/p&l" element={<ProfitLoss />} />
         <Route path="/erp/site-analysis" element={<SiteProfit />} />
+        <Route path="/erp/site-analysis/:id" element={<SiteProfitDetail />} />
         <Route path="/erp/cost-analysis" element={<CostCenterReport />} />
         <Route path="/erp/cost-analysis/:id" element={<CostCenterReport />} />
         <Route path="/erp/bu-analysis" element={<BusinessUnitReport />} />
         <Route path="/erp/trial-balance" element={<TrialBalance />} />
+        <Route path="/erp/collections-report" element={<CollectionReport />} />
 
         <Route path="/erp/inventory" element={<Store />} />
         <Route path="/erp/inventory/grn" element={<GRN />} />

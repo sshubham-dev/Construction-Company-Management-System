@@ -13,6 +13,8 @@ const {
   getDashboard,
 } = require("../services/ERP/report.service");
 
+const { getMonthlyFinancialSummary } = require("../services/ERP/monthly.service");
+
 
 const Dashboard = async (req, res) => {
   try {
@@ -37,7 +39,6 @@ const Dashboard = async (req, res) => {
     });
   }
 };
-
 
 const Outstanding = async (req, res) => {
   try {
@@ -206,7 +207,65 @@ const CashFlowDetails = async (req, res) => {
   }
 };
 
-const SiteAnalysis = async (req, res) => { };
+const SiteAnalysis = async (req, res) => {
+  try {
+    const {
+      companyId,
+      fromDate,
+      toDate,
+    } = req.query;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Company Id is required",
+      });
+    }
+
+    const data = await getSiteAnalysis(
+      companyId,
+      fromDate,
+      toDate
+    );
+
+    return res.status(200).json({
+      success: true,
+      summary: data.summary,
+      sites: data.sites || [],
+      trend: data.trend || [],
+    });
+  } catch (error) {
+    console.error(error);
+
+  }
+};
+
+const FinancialSummary = async (req, res) => {
+  try {
+    const {
+      companyId,
+      fromDate,
+      toDate,
+    } = req.query;
+
+    const data = await getMonthlyFinancialSummary(
+      companyId,
+      fromDate,
+      toDate
+    );
+
+    res.json({
+      success: true,
+      summary: data.summary,
+      trend: data.trend || [],
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
 
 module.exports = {
   Dashboard,
@@ -217,7 +276,9 @@ module.exports = {
   ProfitAndLoss,
   Summary,
   TrialBalance,
+  SiteAnalysis,
   CostCenterReport,
   CashFlowReport,
-  CashFlowDetails
+  CashFlowDetails,
+  FinancialSummary
 };

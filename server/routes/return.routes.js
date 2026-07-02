@@ -19,14 +19,16 @@ Return.post('/', userAuth, createReturn);
 // Get all returns
 Return.get('/', getReturns);
 
-// Get a return by ID
-Return.get('/:id', getReturnById);
-Return.get('/:id/item', getReturnItem);
 
 // Update a return
 Return.put('/verify/:id', verifyReturn);
 Return.put('/post/:id', postReturnController);
 Return.put('/save/:id', updateReturn);
+
+// Get a return by ID
+Return.get('/:id', getReturnById);
+Return.get('/:id/item', getReturnItem);
+
 Return.put('/:id', updateReturn);
 Return.put('/:id/item/:index', updateReturnItem);
 

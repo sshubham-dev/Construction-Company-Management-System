@@ -14,9 +14,9 @@ const FAQs = express.Router();
 /* admin */
 
 FAQs.post("/", createFaq);
+FAQs.get("/admin", getAllFaqs);
 FAQs.put("/:id", updateFaq);
 FAQs.delete("/:id", deleteFaq);
-FAQs.get("/admin", getAllFaqs);
 
 /* website */
 

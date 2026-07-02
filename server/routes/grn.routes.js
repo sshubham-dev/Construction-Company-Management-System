@@ -11,9 +11,9 @@ const {
 
 GRN.post("/", createGRN);
 GRN.get("/", listGRN);
+GRN.patch("/post/:id", postGRN);
 GRN.get("/:id", getGRN);
 GRN.put("/:id", updateGRN);
-GRN.patch("/post/:id", postGRN);
 GRN.delete("/:id", cancelGRN);
 
 module.exports = GRN;

@@ -19,12 +19,12 @@ ProjectSchedule.get('/', userAuth, getProjectSchedules);
 ProjectSchedule.get('/monthly', userAuth, getMonthlyProjectSchedule);
 ProjectSchedule.get('/draft', userAuth, getDraftProjectSchedules);
 ProjectSchedule.post('/', userAuth, createProjectSchedule);
+ProjectSchedule.put('/save/:id', userAuth, saveProjectSchedule);
 
 ProjectSchedule.route('/:id')
     .get(getProjectSchedule)
     .put(updateProjectSchedule)
     .delete(deleteProjectSchedule);
-ProjectSchedule.put('/save/:id', userAuth, saveProjectSchedule);
 // ProjectSchedule.put('/site/:id', userAuth, );
 // ProjectSchedule.put('/updateDetail/:projectId', updateProjectDetail);
 // ProjectSchedule.delete('/removeDetail/:projectId', deleteProjectDetail);

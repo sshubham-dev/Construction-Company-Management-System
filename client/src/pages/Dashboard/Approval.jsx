@@ -323,6 +323,7 @@ const Approval = () => {
       console.log(id);
       const response = await axios.delete(`/api/v1/approval/approved/${id}`);
       setApproved(approved.filter((approved) => approved._id !== id));
+      toast.success(response.data.message);
     } catch (error) {
       console.error(error);
     }
@@ -333,6 +334,7 @@ const Approval = () => {
       console.log(id);
       const response = await axios.delete(`/api/v1/approval/approval/${id}`);
       setApproved(approved.filter((approved) => approved._id !== id));
+      toast.success(response.data.message);
     } catch (error) {
       console.error(error);
     }

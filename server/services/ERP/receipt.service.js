@@ -60,6 +60,7 @@ async function createReceiptVoucher(data, user) {
     date,
     fy: fy.code,
     entries,
+    paidBy: "CLIENT",
     narration,
     costCenterId: costCenterId || null,
     status: "DRAFT",

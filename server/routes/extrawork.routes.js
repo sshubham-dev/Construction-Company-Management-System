@@ -16,11 +16,11 @@ getExtraBySiteAndContractor
 const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 ExtraWork.get('/', getExtraWorks);
-ExtraWork.get('/:id/work', getWork);
 ExtraWork.get('/site/:id', siteExtraWork);
-ExtraWork.get('/:site/:contractor', getExtraBySiteAndContractor);
 ExtraWork.post('/', userAuth, createExtraWork);
 ExtraWork.put('/save/:id', userAuth, saveExtraWork);
+ExtraWork.get('/:site/:contractor', getExtraBySiteAndContractor);
+ExtraWork.get('/:id/work', getWork);
 ExtraWork.route('/:id')
     .get(getExtraWork)
     .put(updateExtraWork)

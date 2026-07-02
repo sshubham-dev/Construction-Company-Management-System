@@ -40,15 +40,6 @@ Attendances.get("/report", getAttendances);
 Attendances.get("/employee", getEmployeeAttendance);
 Leaves.get("/report", getLeaves);
 
-Attendances.route("/:id")
-  .get(userAuth, getAttendanceByUser)
-  .put(userAuth, updateAttendance)
-  .delete(userAuth, deleteAttendance);
-Leaves.route("/:id")
-  .get(getLeaveById)
-  .put(userAuth, updateLeave)
-  .delete(userAuth, deleteLeave);
-
 Attendances.get("/export-data/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -72,6 +63,16 @@ Attendances.get("/export-data/:id", async (req, res) => {
     return res.status(501).json({ message: error.message });
   }
 });
+
+Attendances.route("/:id")
+  .get(userAuth, getAttendanceByUser)
+  .put(userAuth, updateAttendance)
+  .delete(userAuth, deleteAttendance);
+Leaves.route("/:id")
+  .get(getLeaveById)
+  .put(userAuth, updateLeave)
+  .delete(userAuth, deleteLeave);
+
 LabourAttendances.route("/:site").get(getSiteLabourAttendance);
 LabourAttendances.route("/:id")
   .get(getLabourAttendance)

@@ -268,7 +268,7 @@ const createCostCenter = async (req, res) => {
 const getCostCenters = async (req, res) => {
   try {
     const costCenter = await CostCenterService.getCostCenters(
-      req.query.companyId,
+      req.query,
     );
 
     if (costCenter.length === 0) {

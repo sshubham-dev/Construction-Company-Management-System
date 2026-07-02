@@ -233,6 +233,22 @@ const Sidebar = ({ isOpen, onClose }) => {
       ],
     },
     {
+      to: "/erp/collections-report",
+      name: "Collection Report",
+      icon: <FaWallet />,
+      role: [
+        "Company",
+        "Ceo",
+        "Account Head",
+        "Accountant",
+        "Design Head",
+        "Design Engineer",
+        "Site Incharge",
+        "Quality Head",
+        "Quality Engineer",
+      ],
+    },
+    {
       to: "/erp/balance-sheet",
       name: "Balance Sheet",
       icon: <FaBalanceScale />,
@@ -275,12 +291,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       // icon: <TbReportAnalytics />,
       role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
     },
-    // {
-    //   to: "/erp/site-analysis",
-    //   name: "Site Analysis",
-    //   icon: <FaBalanceScale />,
-    //   role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
-    // },
+    {
+      to: "/erp/site-analysis",
+      name: "Site Analysis",
+      icon: <FaBalanceScale />,
+      role: ["Admin", "Company", "Ceo", "Account Head", "Accountant"],
+    },
     {
       to: "/erp/cost-analysis",
       name: "Cost Analysis",

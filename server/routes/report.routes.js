@@ -12,6 +12,8 @@ const {
   TrialBalance,
   CostCenterReport,
   CashFlowDetails,
+  FinancialSummary,
+  SiteAnalysis
 } = require("../controller/voucher.controller");
 const { adminAuth, userAuth } = require("../middlewares/auth.middleware");
 
@@ -26,6 +28,11 @@ Reports.get("/trial-balance", userAuth, TrialBalance);
 Reports.get("/cost-center", userAuth, CostCenterReport);
 Reports.get("/cash-flow", userAuth, CashFlowReport);
 Reports.get("/cash-flow-details", userAuth, CashFlowDetails);
-Reports.get("/site-profit", userAuth);
+Reports.get("/site-profit", userAuth, SiteAnalysis);
+Reports.get("site-profit/:costCenterId", userAuth);
+Reports.get(
+  "/financial-summary",
+  FinancialSummary
+);
 
 module.exports = Reports;

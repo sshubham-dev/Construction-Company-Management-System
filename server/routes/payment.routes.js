@@ -13,9 +13,9 @@ const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 // Routes for payments
 Payment.post('/', userAuth, createPayment);  // Create
+Payment.get('/', userAuth, getPayments);  // Read all
 Payment.put('/post/:id', userAuth, postPayment);  // Create
 Payment.put('/cancel/:id', userAuth, cancelPayment);  // Create
-Payment.get('/', userAuth, getPayments);  // Read all
 // Payment.get('/next-voucher', generatePaymentNo);
 Payment.get('/:id', userAuth, getPaymentById);  // Read by ID
 Payment.put('/:id', userAuth, updatePayment);  // Update

@@ -19,7 +19,8 @@ Contra.post("/", userAuth, createContra);
 Contra.get("/", userAuth, getAllContra);
 
 // Get next voucher number
-// Contra.get("/next-voucher", getNextContraNo);
+Contra.put("/post/:id", userAuth, postContra);
+Contra.put("/cancel/:id", userAuth, cancelContra);
 
 // Get Contra voucher by voucherNo
 Contra.get("/:id", userAuth, getContra);
@@ -28,8 +29,6 @@ Contra.get("/:id", userAuth, getContra);
 Contra.get("/:voucherNo", userAuth, getContraByVoucher);
 
 // Update Contra voucher
-Contra.put("/post/:id", userAuth, postContra);
-Contra.put("/cancel/:id", userAuth, cancelContra);
 Contra.put("/:id", userAuth, updateContra);
 
 // Delete Contra voucher

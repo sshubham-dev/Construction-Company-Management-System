@@ -519,9 +519,19 @@ const saveApproved = async (data, by, approvalOf) => {
 const deleteApproved = async (req, res) => {
   try {
     const id = req.params.id;
+    const user = req.user;
     const approval = await Approved.findByIdAndDelete(id);
     if (!approval)
       return res.status(400).json({ message: "No Approval Avaliable" });
+
+    const employees = await User.find({ role: "Employee" });
+    for (let emp of employees) {
+      sendPushNotification(
+        emp._id,
+        `${approval.approvalOf} of has been deleted By ${user.userName}.`,
+      );
+      await emp.save();
+    }
     return res.status(201).json({ message: "Deleted Sucessfully" });
   } catch (error) {
     console.log(error);
@@ -532,9 +542,19 @@ const deleteApproved = async (req, res) => {
 const deleteApproval = async (req, res) => {
   try {
     const id = req.params.id;
+    const user = req.user;
     const approval = await Approval.findByIdAndDelete(id);
     if (!approval)
       return res.status(400).json({ message: "No Approval Avaliable" });
+
+    const employees = await User.find({ role: "Employee" });
+    for (let emp of employees) {
+      sendPushNotification(
+        emp._id,
+        `${approval.approvalOf} of has been deleted By ${user.userName}.`,
+      );
+      await emp.save();
+    }
     return res.status(201).json({ message: "Deleted Sucessfully" });
   } catch (error) {
     console.log(error);

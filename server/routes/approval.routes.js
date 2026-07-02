@@ -15,11 +15,11 @@ const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 Approval.get('/pending/user/:id', userAuth, getAllApprovals);
 Approval.get('/rejected/user/:id', userAuth, getAllRejects);
 Approval.get('/approved/user/:id', userAuth, getAllApproved);
-Approval.delete('/approved/:id', deleteApproved);
-Approval.delete('/approval/:id', deleteApproval);
-Approval.put('/:id', userAuth, approve);
+Approval.delete('/approved/:id', userAuth, deleteApproved);
+Approval.delete('/approval/:id', userAuth, deleteApproval);
 Approval.put('/reject/:id', userAuth, reject);
 Approval.get('/pending/:id', getApprovalById);
+Approval.put('/:id', userAuth, approve);
 
 
 module.exports = Approval;

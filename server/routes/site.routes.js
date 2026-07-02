@@ -8,10 +8,10 @@ const upload = require('../middlewares/Upload');
 // GET /api/sites - Get all sites
 Site.get('/', userAuth, getSites);
 Site.post('/', upload.single('agreement'), adminAuth, createSite);
+Site.get('/user/:userId', userAuth, siteByUser);
 Site.get('/:id', userAuth, getSite);
 Site.put('/:id', upload.single('agreement'), userAuth, updateSite);
 Site.delete('/:id', adminAuth, deleteSite);
-Site.get('/user/:userId', userAuth, siteByUser);
 
 
 module.exports = Site;

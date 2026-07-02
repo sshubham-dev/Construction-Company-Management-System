@@ -17,14 +17,14 @@ const {
 const { adminAuth, userAuth } = require('../middlewares/auth.middleware');
 
 PurchaseOrder.get('/', getPurchaseOrders);
+PurchaseOrder.post('/', userAuth, createPurchaseOrder);
 PurchaseOrder.get('/draft', draftPurchaseOrders);
 PurchaseOrder.get('/open', getOpenPurchaseOrders);
-PurchaseOrder.get('/:id/requirement', getRequirements);
 PurchaseOrder.get('/site/:id', sitePurchaseOrders,);
+PurchaseOrder.get('/:id/requirement', getRequirements);
 PurchaseOrder.put('/:id/requirement/:index', userAuth, updateRequirement);
 // PurchaseOrder.put('/save/:id', userAuth, approvePurchaseOrder);
 PurchaseOrder.delete('/:id/requirement/:index', userAuth, deleteRequirement);
-PurchaseOrder.post('/', userAuth, createPurchaseOrder);
 PurchaseOrder.route('/:id')
     .get(getPurchaseOrder)
     .put(userAuth, updatePurchaseOrder)

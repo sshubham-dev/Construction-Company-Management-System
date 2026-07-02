@@ -32,6 +32,8 @@ import {
   Bar,
   CartesianGrid,
 } from "recharts";
+import FinancialSummary from "./components/FinancialSummary";
+import { getCurrentMonth } from "../../helper/dateFormater";
 
 const getCurrentFY = () => {
   const today = new Date();
@@ -48,49 +50,8 @@ export default function CEO() {
   const fy = getCurrentFY();
   const [showApprovals, setShowApprovals] = useState(false);
   const approvals = [];
-  const [data, setData] = useState({
-    kpi: {},
-    revenueExpense: {},
-    cashFlow: {},
-    departments: [],
-    topReceivables: [],
-    topPayables: [],
-    recentVouchers: [],
-  });
-  const [fromDate, setFromDate] = useState(fy.from);
-  const [toDate, setToDate] = useState(fy.to);
-  const [summary, setSummary] = useState({});
-  const [revenue, setRevenueData] = useState(null);
-  const [expense, setExpenseData] = useState(null);
-  const [loading, setLoading] = useState(true);
   const { user, isLoggedIn } = useSelector((state) => state.auth);
-  /* ======================
-     FETCH DATA
-  ====================== */
 
-  const fetchDashboard = async () => {
-    try {
-      setLoading(true);
-      const summaryRes = await axios.get("/api/v1/reports/dashboard", {
-        params: {
-          companyId: user.companyId,
-          fromDate,
-          toDate,
-        },
-      });
-      console.log(summaryRes.data);
-      setData(summaryRes.data);
-    } catch (err) {
-      console.error(err);
-      setLoading(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDashboard();
-  }, [user.companyId]);
 
   return (
     <Layout title="Dashboard">
@@ -103,88 +64,11 @@ export default function CEO() {
             <Schedule />
             <ProjectProgress />
 
-            {/* Monthly Revenue */}
-            <Section
-              title="Monthly Revenue"
-              className="md:col-span-1 lg:col-span-2"
-            >
-              <div className="grid sm:grid-cols-3 gap-4 items-start">
-                <div className="grid grid-cols-2">
-                  <KPI
-                    label="Revenue"
-                    value={data?.revenueExpense.revenue}
-                    // sub="This Month +15%"
-                    positive
-                  />
-                  <KPI
-                    label="Expense"
-                    value={data?.revenueExpense.expense}
-                    // sub="This Month +15%"
-                    positive
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <ResponsiveContainer
-                    width="100%"
-                    height={280}
-                    style={{ margin: "auto", overflow: "hidden" }}
-                  >
-                    <BarChart
-                      data={[
-                        {
-                          name: "Revenue",
-                          value: data?.revenueExpense.revenue,
-                        },
-                        {
-                          name: "Expense",
-                          value: data?.revenueExpense.expense,
-                        },
-                      ]}
-                      responsive
-                      margin={{
-                        top: 10,
-                        right: 0,
-                        bottom: 0,
-                        left: 15,
-                      }}
-                    >
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="value" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </Section>
-
-            {/* Profit */}
-            <Section title="Profit" className="lg:col-span-3">
-              <div className="grid sm:grid-cols-3 gap-4 items-start">
-                <KPI
-                  label="Profit"
-                  value={data?.kpi.profit}
-                  sub="This Month +10%"
-                  positive
-                />
-                <div className="sm:col-span-2"></div>
-              </div>
-            </Section>
-
             {/* Finance */}
-            <Section title="Financials" className="lg:col-span-2">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <KPI label="Marketing" value="$4,000" />
-                <KPI label="Office Expenses" value="$2,000" />
-                <KPI label="Investment" value="$15,000" />
-                <KPI label="Balance" value="$50,000" />
-                <KPI label="Other Income" value="$5,000" />
-                <KPI label="Supplier Dues" value="$10,000" positive={false} />
-              </div>
-            </Section>
+            <FinancialSummary />
 
             {/* Site Status */}
-            <Section title="Site Status">
+            {/* <Section title="Site Status">
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-1 text-xs">
@@ -201,7 +85,7 @@ export default function CEO() {
                   <ProgressBar value={60} />
                 </div>
               </div>
-            </Section>
+            </Section> */}
 
             {/* Project Profitability */}
             <Section title="Project Profitability" className="lg:col-span-2">
@@ -270,7 +154,7 @@ export default function CEO() {
             </Section>
 
             {/* Store */}
-            <Section title="Store">
+            {/* <Section title="Store">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <KPI label="Stock Value" value="$30,000" />
                 <div className="text-xs">
@@ -287,7 +171,7 @@ export default function CEO() {
                   </div>
                 </div>
               </div>
-            </Section>
+            </Section> */}
 
             {/* Marketing */}
             <Section title="Marketing" className="lg:col-span-3">

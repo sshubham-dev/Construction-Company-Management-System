@@ -1,5 +1,6 @@
-const { Ledger, Group } = require("../../models/ledger.models");
+const { Ledger, Group, CostCenter } = require("../../models/ledger.models");
 const Voucher = require("../../models/voucher.models");
+const mongoose = require("mongoose");
 
 // ✅
 const getSummary = async (
@@ -448,9 +449,17 @@ const getOutstanding = async (companyId, fromDate, toDate, partyType) => {
       filter.date.$lte = new Date(toDate);
     }
   }
+
+
+  const partyFilter = {};
+
+  if (partyType && partyType !== "ALL") {
+    partyFilter.referenceType = partyType;
+  }
+
   const ledgers = await Ledger.find({
     companyId,
-    referenceType: partyType,
+    ...partyFilter,
   }).lean();
 
   if (!ledgers.length) {
@@ -529,12 +538,44 @@ const getOutstanding = async (companyId, fromDate, toDate, partyType) => {
       a.absoluteBalance
   );
 
+  const receivableRows = results.filter(
+    r => r.balanceType === "RECEIVABLE"
+  );
+
+  const payableRows = results.filter(
+    r => r.balanceType === "PAYABLE"
+  );
+
+  const settledRows = results.filter(
+    r => r.balanceType === "SETTLED"
+  );
+
+  const totalReceivable = receivableRows.reduce(
+    (sum, r) => sum + r.absoluteBalance,
+    0
+  );
+
+  const totalPayable = payableRows.reduce(
+    (sum, r) => sum + r.absoluteBalance,
+    0
+  );
+
   return {
-    partyType,
+    summary: {
+      receivable: Number(totalReceivable.toFixed(2)),
+      payable: Number(totalPayable.toFixed(2)),
+      netBalance: Number(
+        (totalReceivable - totalPayable).toFixed(2)
+      ),
 
-    totalBalance: Number(totalBalance.toFixed(2)),
+      totalParties: results.length,
 
-    count: results.length,
+      receivableCount: receivableRows.length,
+
+      payableCount: payableRows.length,
+
+      settledCount: settledRows.length,
+    },
 
     rows: results,
   };
@@ -1128,81 +1169,669 @@ const getCashFlowDetails = async (
   );
 };
 
-// 
-const getSiteAnalysis = async (
-  companyId,
-  siteId
-) => {
+// ✅
+async function getSiteTable(match) {
+  return await Voucher.aggregate([
+    {
+      $match: match,
+    },
 
-  const site =
-    await CostCenter.findById(siteId);
+    {
+      $lookup: {
+        from: "costcenters",
+        localField: "costCenterId",
+        foreignField: "_id",
+        as: "costCenter",
+      },
+    },
 
-  const vouchers =
-    await Voucher.find({
-      companyId,
-      costCenterId: siteId,
-      // status: "POSTED",
-    })
-      .populate({
-        path: "entries.ledgerId",
-        populate: {
-          path: "groupId",
+    {
+      $unwind: "$costCenter",
+    },
+
+    {
+      $match: {
+        "costCenter.type": {
+          $regex: /^SITE$/i
         },
-      });
+      },
+    },
 
-  let income = 0;
-  let expense = 0;
+    {
+      $group: {
+        _id: "$costCenterId",
 
-  const expenseBreakup = {};
+        siteName: {
+          $first: "$costCenter.name",
+        },
 
-  for (const voucher of vouchers) {
-    for (const entry of voucher.entries) {
+        // =====================================================
+        // Revenue Logic
+        //
+        // Current
+        // --------
+        // Receipt Voucher
+        //
+        // Future
+        // --------
+        // Receipt Voucher
+        // +
+        // Payment Voucher
+        // where paidBy == CLIENT
+        //
+        // A client-paid payment increases project revenue
+        // because the client settled the project amount
+        // directly with a supplier, contractor, employee,
+        // consultant, or other approved party.
+        // =====================================================
 
-      const group =
-        entry.ledgerId?.groupId;
+        revenue: {
+          $sum: {
+            $cond: [
+              {
+                $eq: [
+                  "$type",
+                  "RECEIPT",
+                ],
+              },
+              "$totalDebit",
+              0,
+            ],
+          },
+        },
 
-      if (!group) continue;
+        // future revenue: {
+        //   $sum: {
+        //     $cond: [
+        //       {
+        //         $or: [
+        //           {
+        //             $eq: ["$type", "RECEIPT"],
+        //           },
+        //           {
+        //             $and: [
+        //               {
+        //                 $eq: ["$type", "PAYMENT"],
+        //               },
+        //               {
+        //                 $eq: [
+        //                   {
+        //                     $ifNull: [
+        //                       "$paidBy",
+        //                       "COMPANY",
+        //                     ],
+        //                   },
+        //                   "CLIENT",
+        //                 ],
+        //               },
+        //             ],
+        //           },
+        //         ],
+        //       },
+        //       "$totalDebit",
+        //       0,
+        //     ],
+        //   },
+        // },
 
-      if (
-        group.nature === "INCOME" &&
-        entry.type === "CREDIT"
-      ) {
-        income += entry.amount;
+        // =====================================================
+        // Expense Logic
+        //
+        // Every Payment Voucher is treated as a project expense.
+        //
+        // paidBy = COMPANY
+        //      Company paid.
+        //
+        // paidBy = CLIENT
+        //      Client paid directly on behalf of company.
+        //
+        // Both increase project expense.
+        // =====================================================
+
+
+        expense: {
+          $sum: {
+            $cond: [
+              {
+                $eq: ["$type", "PAYMENT"],
+              },
+              "$totalDebit",
+              0,
+            ],
+          },
+        },
+
+        receiptCount: {
+          $sum: {
+            $cond: [
+              {
+                $eq: [
+                  "$type",
+                  "RECEIPT",
+                ],
+              },
+              1,
+              0,
+            ],
+          },
+        },
+
+        // future receiptCount: {
+        //   $sum: {
+        //     $cond: [
+        //       {
+        //         $or: [
+        //           {
+        //             $eq: ["$type", "RECEIPT"],
+        //           },
+        //           {
+        //             $and: [
+        //               {
+        //                 $eq: ["$type", "PAYMENT"],
+        //               },
+        //               {
+        //                 $eq: [
+        //                   {
+        //                     $ifNull: [
+        //                       "$paidBy",
+        //                       "COMPANY",
+        //                     ],
+        //                   },
+        //                   "CLIENT",
+        //                 ],
+        //               },
+        //             ],
+        //           },
+        //         ],
+        //       },
+        //       1,
+        //       0,
+        //     ],
+        //   },
+        // },
+
+        paymentCount: {
+          $sum: {
+            $cond: [
+              {
+                $eq: [
+                  "$type",
+                  "PAYMENT",
+                ],
+              },
+              1,
+              0,
+            ],
+          },
+        },
+
+        voucherCount: {
+          $sum: 1,
+        },
+
+        clientPaid: {
+          $sum: {
+            $cond: [
+              {
+                $eq: [
+                  {
+                    $ifNull: [
+                      "$paidBy",
+                      "COMPANY",
+                    ],
+                  },
+                  "CLIENT",
+                ],
+              },
+              "$totalDebit",
+              0,
+            ],
+          },
+        },
+
+        companyPaid: {
+          $sum: {
+            $cond: [
+              {
+                $eq: [
+                  {
+                    $ifNull: [
+                      "$paidBy",
+                      "COMPANY",
+                    ],
+                  },
+                  "COMPANY",
+                ],
+              },
+              "$totalDebit",
+              0,
+            ],
+          },
+        },
+      },
+    },
+
+    {
+      $addFields: {
+        profit: {
+          $subtract: [
+            "$revenue",
+            "$expense",
+          ],
+        },
+      },
+    },
+
+    {
+      $addFields: {
+        margin: {
+          $cond: [
+            {
+              $gt: [
+                "$revenue",
+                0,
+              ],
+            },
+            {
+              $round: [
+                {
+                  $multiply: [
+                    {
+                      $divide: [
+                        "$profit",
+                        "$revenue",
+                      ],
+                    },
+                    100,
+                  ],
+                },
+                2,
+              ],
+            },
+            0,
+          ],
+        },
+      },
+    },
+
+    {
+      $project: {
+        _id: 0,
+
+        costCenterId: "$_id",
+
+        siteName: 1,
+
+        revenue: 1,
+
+        expense: 1,
+
+        profit: 1,
+
+        margin: 1,
+
+        voucherCount: 1,
+
+        receiptCount: 1,
+
+        paymentCount: 1,
+      },
+    },
+
+    {
+      $sort: {
+        revenue: -1,
+      },
+    },
+  ]);
+}
+
+// ✅
+async function getSiteTrend(match, fromDate, toDate) {
+
+  const days =
+    fromDate && toDate
+      ? Math.ceil(
+        (new Date(toDate) -
+          new Date(fromDate)) /
+        (1000 * 60 * 60 * 24)
+      )
+      : 30;
+
+  const groupBy =
+    days <= 31
+      ? {
+        year: {
+          $year: "$date",
+        },
+        month: {
+          $month: "$date",
+        },
+        day: {
+          $dayOfMonth: "$date",
+        },
       }
+      : {
+        year: {
+          $year: "$date",
+        },
+        month: {
+          $month: "$date",
+        },
+      };
 
-      if (
-        group.nature === "EXPENSES" &&
-        entry.type === "DEBIT"
-      ) {
+  return await Voucher.aggregate([
+    {
+      $match: match,
+    },
 
-        expense += entry.amount;
+    {
+      $lookup: {
+        from: "costcenters",
+        localField: "costCenterId",
+        foreignField: "_id",
+        as: "costCenter",
+      },
+    },
 
-        const ledgerName =
-          entry.ledgerId.name;
+    {
+      $unwind: "$costCenter",
+    },
 
-        expenseBreakup[
-          ledgerName
-        ] =
-          (expenseBreakup[
-            ledgerName
-          ] || 0) +
-          entry.amount;
-      }
-    }
+    {
+      $match: {
+        "costCenter.type":
+          "SITE",
+      },
+    },
+
+    {
+      $group: {
+        _id: groupBy,
+
+        revenue: {
+          $sum: {
+            $cond: [
+              {
+                $eq: [
+                  "$type",
+                  "RECEIPT",
+                ],
+              },
+              "$totalDebit",
+              0,
+            ],
+          },
+        },
+
+        // future revenue: {
+        //   $sum: {
+        //     $cond: [
+        //       {
+        //         $or: [
+        //           {
+        //             $eq: ["$type", "RECEIPT"],
+        //           },
+        //           {
+        //             $and: [
+        //               {
+        //                 $eq: ["$type", "PAYMENT"],
+        //               },
+        //               {
+        //                 $eq: [
+        //                   {
+        //                     $ifNull: [
+        //                       "$paidBy",
+        //                       "COMPANY",
+        //                     ],
+        //                   },
+        //                   "CLIENT",
+        //                 ],
+        //               },
+        //             ],
+        //           },
+        //         ],
+        //       },
+        //       "$totalDebit",
+        //       0,
+        //     ],
+        //   },
+        // },
+
+        expense: {
+          $sum: {
+            $cond: [
+              {
+                $eq: ["$type", "PAYMENT"],
+              },
+              "$totalDebit",
+              0,
+            ],
+          },
+        },
+      },
+    },
+
+    {
+      $addFields: {
+        profit: {
+          $subtract: [
+            "$revenue",
+            "$expense",
+          ],
+        },
+      },
+    },
+
+    {
+      $project: {
+        _id: 0,
+
+        period: {
+          $cond: [
+            {
+              $ifNull: [
+                "$_id.day",
+                false,
+              ],
+            },
+
+            {
+              $dateToString: {
+                format:
+                  "%d %b",
+                date: {
+                  $dateFromParts:
+                  {
+                    year: "$_id.year",
+                    month:
+                      "$_id.month",
+                    day: "$_id.day",
+                  },
+                },
+              },
+            },
+
+            {
+              $dateToString: {
+                format:
+                  "%b %Y",
+                date: {
+                  $dateFromParts:
+                  {
+                    year: "$_id.year",
+                    month:
+                      "$_id.month",
+                    day: 1,
+                  },
+                },
+              },
+            },
+          ],
+        },
+
+        revenue: 1,
+
+        expense: 1,
+
+        profit: 1,
+      },
+    },
+
+    {
+      $sort: {
+        period: 1,
+      },
+    },
+  ]);
+}
+
+// ✅
+async function getSiteAnalysis(companyId, fromDate, toDate) {
+  const match = {
+    companyId: new mongoose.Types.ObjectId(companyId),
+    costCenterId: { $ne: null },
+  };
+
+  if (fromDate || toDate) {
+    match.date = {};
+
+    if (fromDate) match.date.$gte = new Date(fromDate);
+
+    if (toDate) match.date.$lte = new Date(toDate);
   }
 
+  const sites = await getSiteTable(match);
+
+  const trend = await getSiteTrend(match, fromDate, toDate);
+
+  const summary = sites.reduce(
+    (acc, site) => {
+      acc.revenue += site.revenue;
+      acc.expense += site.expense;
+      acc.profit += site.profit;
+
+      return acc;
+    },
+    {
+      revenue: 0,
+      expense: 0,
+      profit: 0,
+    }
+  );
+
+  summary.margin = summary.revenue > 0 ? Number(
+    (
+      (summary.profit / summary.revenue) *
+      100
+    ).toFixed(2)
+  ) : 0;
+
+  summary.totalSites = sites.length;
+
+  summary.profitableSites = sites.filter(
+    (x) => x.profit > 0
+  ).length;
+  summary.lossMakingSites = sites.filter(
+    (x) => x.profit < 0
+  ).length;
+
   return {
-    siteName: site.name,
-
-    income,
-    expense,
-
-    profit:
-      income - expense,
-
-    expenseBreakup,
+    summary,
+    sites,
+    trend,
   };
-};
+}
+
+// 
+async function getFinancialSummary(
+  companyId,
+  fromDate,
+  toDate
+) {
+  const [
+    pnl,
+    summary,
+    investment,
+  ] = await Promise.all([
+    getProfitAndLoss(
+      companyId,
+      fromDate,
+      toDate
+    ),
+
+    getSummary(
+      companyId,
+      fromDate,
+      toDate
+    ),
+
+    Ledger.aggregate([
+      {
+        $match: {
+          companyId: new mongoose.Types.ObjectId(
+            companyId
+          ),
+        },
+      },
+
+      {
+        $lookup: {
+          from: "groups",
+          localField: "groupId",
+          foreignField: "_id",
+          as: "group",
+        },
+      },
+
+      {
+        $unwind: "$group",
+      },
+
+      {
+        $match: {
+          "group.name": {
+            $in: [
+              "Fixed Assets",
+              "Investments",
+            ],
+          },
+        },
+      },
+
+      {
+        $group: {
+          _id: null,
+
+          total: {
+            $sum: "$currentBalance",
+          },
+        },
+      },
+    ]),
+  ]);
+
+  return {
+    income: pnl.totalIncome || 0,
+
+    expenses: pnl.totalExpense || 0,
+
+    profit: pnl.netProfit || 0,
+
+    balance: {
+      cash: summary.cash || 0,
+
+      bank: summary.bank || 0,
+
+      total:
+        (summary.cash || 0) +
+        (summary.bank || 0),
+    },
+
+    investment:
+      investment[0]?.total || 0,
+  };
+}
 
 // 
 const getDashboard = async (
@@ -1236,7 +1865,8 @@ const getDashboard = async (
     suppliers,
     contractors,
     employees,
-    recentVouchers
+    recentVouchers,
+    financialSummary,
   ] = await Promise.all([
 
     getSummary(companyId, fromDate,
@@ -1262,6 +1892,11 @@ const getDashboard = async (
 
     getOutstanding(companyId, fromDate,
       toDate, "Employee"),
+    getFinancialSummary(
+      companyId,
+      fromDate,
+      toDate
+    ),
 
     Voucher.find(filter)
       // status: "POSTED")
@@ -1306,15 +1941,15 @@ const getDashboard = async (
       );
 
   return {
-
+    financialSummary,
     kpi: {
 
       cash:
         Number(summary.cash.toFixed(2)) || 0,
 
-      receivable: Number(receivable.toFixed(2)),
+      receivable: Number(receivable?.toFixed(2)),
 
-      payable: Number(payable.toFixed(2)),
+      payable: Number(payable),
 
       profit:
         Number(pnl.netProfit.toFixed(2)) || 0,
@@ -1380,6 +2015,9 @@ const getDashboard = async (
     recentVouchers
   };
 };
+
+
+
 
 
 module.exports = {

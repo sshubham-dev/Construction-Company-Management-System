@@ -65,8 +65,8 @@ const EmployeeAttendance = () => {
       const presentIds = attendances
         .filter((a) => a.status?.toLowerCase() === "present")
         .map((a) => a.user?.id);
-      console.log(attendances);
-      console.log(employees);
+      // console.log(attendances);
+      // console.log(employees);
 
       // Employees who are not marked as present today
       const absent = employees.filter(

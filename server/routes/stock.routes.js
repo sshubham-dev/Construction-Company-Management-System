@@ -19,9 +19,9 @@ Stock.get("/", getStocks);
 
 Stock.get("/summary", getStockSummary);
 
-Stock.get("/:itemId", getItemStock);
 
 Stock.get("/store/:storeId", getStoreStock);
+Stock.get("/:itemId", getItemStock);
 
 Stock.get("/:id", getStockById);
 module.exports = Stock;

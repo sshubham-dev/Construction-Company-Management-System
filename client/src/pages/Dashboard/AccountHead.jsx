@@ -6,6 +6,7 @@ import EmployeeAttendance from "../../components/UI/EmployeeAttendance";
 import Section from "../../components/UI/Section";
 import Actions from "../../components/UI/Actions";
 import Schedule from "../../components/UI/Schedule";
+import FinancialSummary from "./components/FinancialSummary";
 axios.defaults.withCredentials = true;
 
 const Account_Head = () => {
@@ -15,6 +16,7 @@ const Account_Head = () => {
     <Layout>
       <EmployeeAttendance />
       <Schedule />
+      <FinancialSummary />
       <Section title="H.R Action">
         <Actions role="HR" />
       </Section>

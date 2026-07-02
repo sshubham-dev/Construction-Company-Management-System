@@ -5,13 +5,13 @@ const {createSalesInvoice, postSalesInvoice, getSalesInvoices, getSalesInvoiceBy
 // CREATE Sales Invoice
 SalesInvoice.post("/", createSalesInvoice);
 
-// GET Returnable Sales Invoices
-SalesInvoice.get("/site/:siteId/returnable", getReturnableSalesInvoices);
 // GET All Sales Invoices
 SalesInvoice.get("/", getSalesInvoices);
-// GET Sales Invoice by ID
-SalesInvoice.get("/:id", getSalesInvoiceById);
 // CREATE Sales Invoice from Delivery Note
 SalesInvoice.post("/from-dn", createSalesInvoiceFromDN);
+// GET Returnable Sales Invoices
+SalesInvoice.get("/site/:siteId/returnable", getReturnableSalesInvoices);
+// GET Sales Invoice by ID
+SalesInvoice.get("/:id", getSalesInvoiceById);
 
 module.exports = SalesInvoice;

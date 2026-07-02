@@ -94,9 +94,9 @@ export default function Approvals({ showApprovals, setShowApprovals }) {
 
   const fetchApproval = async (id) => {
     try {
-      console.log(id);
+      // console.log(id);
       const response = await axios.get(`/api/v1/approval/pending/user/${id}`);
-      console.log(response.data);
+      // console.log(response.data);
       const approvalData = response.data;
       // const sites = async (id)=>{
       //     return await axios.get(`/api/v1/site/${id}`);
@@ -119,7 +119,7 @@ export default function Approvals({ showApprovals, setShowApprovals }) {
       //   approvalData?.data.contractor = contractorData.data;
       // }
       setApprovals(approvalData);
-      console.log(approvalData);
+      // console.log(approvalData);
     } catch (error) {
       console.error(error);
     }
@@ -135,7 +135,7 @@ export default function Approvals({ showApprovals, setShowApprovals }) {
   };
 
   const navigateTo = (approvalOf, id, data, approvalId) => {
-    console.log(approvalOf, approvalId, id)
+    // console.log(approvalOf, approvalId, id)
     switch (approvalOf) {
       case "Bill":
         navigate(`/bill/${id}/approval/${approvalId}`);
