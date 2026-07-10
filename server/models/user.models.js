@@ -65,7 +65,7 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Active", "Inactive", "Blacklisted"],
+      enum: ["Active", "Inactive", "Resigned"],
       default: "Active",
     },
     notificationPreference: Boolean,
@@ -123,12 +123,6 @@ const userSchema = new mongoose.Schema(
     message: [
       {
         type: String,
-      },
-    ],
-    account: [
-      {
-        type: String,
-        date: Date,
       },
     ],
     site: [

@@ -23,9 +23,9 @@ const employeeById = async (req, res) => {
 const employees = async (req, res) => {
   try {
     const employees = await Employee.find()
-      .where("status")
-      .equals("Active")
-      .sort({ name: 1 })
+      // .where("status")
+      // .equals("Active")
+      .sort({ name: 1, status: 1 })
       .exec();
 
     if (employees.length === 0)
@@ -255,6 +255,7 @@ const updateEmployeeData = async (req, res) => {
       bank,
     });
 
+    console.log("Updating Employee:", employee.status);
     // Boolean safety
     employee.isUser = isUser === true || isUser === "true";
 
@@ -273,6 +274,22 @@ const updateEmployeeData = async (req, res) => {
     }
 
     await employee.save();
+
+    if (employee.status !== req.body.status) {
+      // Notify the employee about their status change
+      const existingUser = await User.findById(employee.userId);
+      if (existingUser) {
+        const notificationMessage = `Your account status has been changed to ${employee.status}. Please contact your administrator for more details.`;
+        existingUser.status = employee.status; // Update the status in the User model as well
+        await existingUser.save();
+        await sendPushNotification(
+          existingUser._id,
+          "Account Status Update",
+          notificationMessage,
+          null
+        );
+      }
+    }
 
     // 🔐 Convert / update user if needed
     if (employee.isUser === true) {

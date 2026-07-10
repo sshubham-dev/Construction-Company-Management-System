@@ -135,6 +135,7 @@ const convertToUser = async (id, role, password, status) => {
           employeeUser.department =
             employee.department || employeeUser.department;
           employeeUser.role = role || employeeUser.role;
+          employeeUser.status = employee.status || employeeUser.status;
           // employeeUser.password = password || employeeUser.password;
           employeeUser.companyId = employee.companyId || employeeUser.companyId;
           employeeUser.ledger = employee.ledger || employeeUser.ledger;

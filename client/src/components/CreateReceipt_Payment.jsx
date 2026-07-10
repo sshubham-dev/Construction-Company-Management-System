@@ -231,6 +231,7 @@ const CreateReceipt_Payment = ({
       {/* NARRATION */}
       <textarea
         placeholder="Narration"
+        required
         value={form.narration}
         onChange={(e) => updateForm("narration", e.target.value)}
         className="border p-2 rounded w-full"

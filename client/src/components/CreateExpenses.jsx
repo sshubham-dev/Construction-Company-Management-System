@@ -76,7 +76,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
       setLedgers(data.data);
     };
     loadLedgers();
-  }, [form.expenseCategory]);
+  }, []);
 
   /* ---------------------------------- EDIT MODE ---------------------------------- */
   useEffect(() => {
@@ -89,8 +89,8 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
         date: data.date?.slice(0, 10),
         amount: data.amount,
         narration: data.narration,
-        expenseCategory: data.expenseCategory._id || data.expenseCategory,
-        expenseLedger: data.expenseLedger?._id || data.expenseLedger || "",
+        expenseCategory: data.expenseCategory._id,
+        expenseLedger: data.expenseLedger?._id || data.expenseLedger,
         expenseFor: data.expenseFor?._id || data.expenseFor || null,
         attachments: [...(data?.attachments || null)],
       });
@@ -132,14 +132,14 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
   }, [costCenters]);
 
   const expenseLedgerOptions = useMemo(() => {
-    if (!expenseCategory) return [];
+    if (!form.expenseCategory) return [];
     return ledgers
       .filter((l) => l?.groupId?._id === form?.expenseCategory)
       .map((l) => ({
         value: l._id,
         label: `${l.name} (${l.referenceType || l?.groupId?.name || l.type})`,
       }));
-  }, [ledgers, form?.expenseCategory]);
+  }, [form.expenseCategory, ledgers]);
 
   const handleFile = (e) => {
     const MAX_MB = 5;
@@ -256,7 +256,7 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
         <Select
           options={expenseLedgerOptions}
           value={expenseLedgerOptions.find(
-            (o) => o.value === form.expenseLedger || form.expenseLedger?._id,
+            (option) => option.value === form.expenseLedger,
           )}
           onChange={(opt) =>
             setForm((prev) => ({
@@ -264,9 +264,11 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
               expenseLedger: opt?.value || "",
             }))
           }
-          isDisabled={!expenseCategory}
+          isDisabled={!form.expenseCategory}
           placeholder={
-            expenseCategory ? "Select Expense Type" : "Select Category First"
+            form.expenseCategory
+              ? "Select Expense Type"
+              : "Select Category First"
           }
           isClearable
         />

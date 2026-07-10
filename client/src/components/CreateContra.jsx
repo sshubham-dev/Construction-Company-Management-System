@@ -216,6 +216,7 @@ const CreateContra = ({ onClose, refresh, editId }) => {
           value={form.narration}
           onChange={handleChange}
           className="border p-2 w-full rounded"
+          required
         />
       </div>
 

@@ -42,8 +42,8 @@ const createExpense = async (req, res) => {
     const { date, amount, narration, expenseCategory } = req.body;
     const user = req.user;
     const files = req.files || (req.file ? [req.file] : []);
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
+    // console.log("BODY:", req.body);
+    // console.log("FILES:", req.files);
     console.log("STEP 1: Start");
 
     if (!req.body.expenseLedger) {
@@ -56,7 +56,7 @@ const createExpense = async (req, res) => {
       return res.status(400).json({ message: "PaidBy ledger not found" });
     }
     console.log("STEP 3: Resolve expense ledgers");
-    console.log("Expense Ledger ID:", req.body.expenseLedger);
+    // console.log("Expense Ledger ID:", req.body.expenseLedger);
     const expenseLedger = await Ledger.findById(req.body.expenseLedger);
     let expenseFor = null;
     const expenseForId =
@@ -68,7 +68,7 @@ const createExpense = async (req, res) => {
       expenseFor = await CostCenter.findById(req.body.expenseFor);
       console.log("found expense for")
     }
-    console.log("Expense For Ledger ID:", req.body.expenseFor);
+    // console.log("Expense For Ledger ID:", req.body.expenseFor);
 
     if (!expenseLedger) {
       return res.status(400).json({ message: "Invalid ledger selected" });
@@ -126,7 +126,7 @@ const createExpense = async (req, res) => {
       .populate("expenseLedger")
       .populate("expenseFor")
       .lean();
-    console.log(newExpense)
+    // console.log(newExpense)
     sendApproveByAdmin(newExpense, "Expense", user._id);
     sendApproveByAccountant(newExpense, "Expense", user._id);
 
@@ -309,6 +309,7 @@ const getExpenseById = async (req, res) => {
     .populate("expenseLedger")
     .populate("paidByLedger")
     .populate("expenseFor")
+    .populate("expenseCategory")
     .exec();
   if (!expense) return res.status(404).json({ message: "Expense not found" });
   res.json(expense);
@@ -325,9 +326,9 @@ const updateExpense = async (req, res) => {
       return res.status(404).json({ message: "Expense not found" });
     }
 
-    // if (expense.createdBy !== user._id){
-    //   return res.status(410).json("Permission deined");
-    // }
+    if (expense.createdBy !== user._id){
+      return res.status(410).json("Permission deined");
+    }
 
     /* ----------------------------------
        EDIT PERMISSION CHECK

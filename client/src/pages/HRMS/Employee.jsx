@@ -22,6 +22,7 @@ const Employee = () => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Active");
   const employees = useSelector((state) => state.employee.all);
   useEffect(() => {
     dispatch(fetchEmployees());
@@ -35,13 +36,18 @@ const Employee = () => {
   };
 
   const filtered = useMemo(() => {
-    if (!search) return employees;
-
     return employees.filter((employee) => {
-      const text = `${employee?.name}`.toLowerCase();
-      return text.includes(search.toLowerCase());
+      const matchesSearch = !search
+        ? true
+        : employee?.name?.toLowerCase().includes(search.toLowerCase());
+
+      const matchesStatus = !statusFilter
+        ? true
+        : employee?.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
     });
-  }, [employees, search]);
+  }, [employees, search, statusFilter]);
 
   const handleDelete = async (id) => {
     try {
@@ -68,13 +74,25 @@ const Employee = () => {
             <MdAdd className="text-xl" />
           </button>
         </div>
-        <div className="bg-white border rounded-xl p-2 mb-6 shadow-sm">
-          <input
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full outline-none text-sm"
-          />
+        <div className=" flex flex-row justify-between items-center gap-4">
+          <div className="flex-1 bg-white border rounded-xl p-2 mb-6 shadow-sm ">
+            <input
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full outline-none text-sm"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-white border rounded-xl p-2 mb-6 shadow-sm text-sm"
+          >
+            <option value="">All</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Resigned">Resigned</option>
+          </select>
         </div>
 
         <div

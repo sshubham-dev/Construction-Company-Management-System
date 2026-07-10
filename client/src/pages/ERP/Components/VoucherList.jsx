@@ -328,9 +328,9 @@ const VoucherList = ({ type, onCreate }) => {
               No vouchers found
             </div>
           ) : (
-            data.map((v) => (
+            data.map((v, index) => (
               <div
-                key={v._id}
+                key={index}
                 className="rounded-xl border bg-white p-4 shadow-sm hover:shadow-md transition"
               >
                 {/* Header */}

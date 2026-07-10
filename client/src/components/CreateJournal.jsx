@@ -234,6 +234,7 @@ const CreateJournal = ({ onClose, refresh, editData }) => {
       {/* NARRATION */}
       <textarea
         value={narration}
+        required
         onChange={(e) => setNarration(e.target.value)}
         placeholder="Narration"
         className="w-full border rounded-lg p-2 text-sm"

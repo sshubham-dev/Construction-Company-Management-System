@@ -10,6 +10,7 @@ const voucherSchema = new mongoose.Schema(
       type: String,
       required: true,
       index: true,
+      unique: true,
     },
 
     companyId: {
@@ -122,7 +123,7 @@ const voucherSchema = new mongoose.Schema(
 );
 
 
-voucherSchema.index({ voucherNo: 1, companyId: 1 }, { unique: true });
+// voucherSchema.index({ voucherNo: 1, companyId: 1 }, { unique: true });
 
 voucherSchema.pre("save", function () {
   let debit = 0;
