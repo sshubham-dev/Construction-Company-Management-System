@@ -425,7 +425,7 @@ const refresh = async (req, res) => {
 
 const users = async (req, res) => {
   try {
-    const users = await User.find({ status: "Active" })
+    const users = await User.find()
       .select("-password -refreshToken")
       .populate("site")
       .sort({ userName: 1 })
