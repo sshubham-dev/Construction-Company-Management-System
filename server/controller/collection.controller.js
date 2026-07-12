@@ -7,7 +7,7 @@ const {
 } = require("../utils/pushNotification.js");
 const {
   createVoucher,
-  postVoucher,
+  updateVoucher,
   cancelVoucher,
 } = require("../services/ERP/voucher/voucher.service.js");
 const getFinancialYear = require("../utils/getFinancialYear.js");
@@ -328,7 +328,7 @@ const postCollection = async (req, res) => {
 
     if (!collection) throw new Error("Collection not found");
 
-    if (collection.status !== "pending") {
+    if (collection.status === "approved") {
       throw new Error("Already processed");
     }
 
@@ -402,15 +402,32 @@ const updateCollection = async (req, res) => {
     const { id } = req.params;
     const user = req.user;
 
+    console.log("User attempting to update collection");
     const collection = await Collection.findById(id);
 
     if (!collection) {
       return res.status(404).json({ error: "Not found" });
     }
+    console.log("Collection found");
 
-    if (collection.status !== "pending") {
+    // if (collection.status !== "pending" || collection.status !== "rejected") {
+    //   console.log("Attempt to edit collection with status:", collection.status);
+    //   return res.status(400).json({
+    //     message: "Cannot edit approved/rejected collection",
+    //   });
+    // } else if (user.department === "Account Head") {
+    //   console.log("Unauthorized user");
+    //   return res.status(403).json({ message: "Unauthorized" });
+    // }
+
+    if (collection.status === "approved" && user.department !== "Account Head") {
+      console.log("Attempt to edit collection with status:", collection.status);
+      console.log("Unauthorized user");
+      // if (user.department !== "Account Head") {
+      //   return res.status(403).json({ message: "Unauthorized" });
+      // }
       return res.status(400).json({
-        error: "Cannot edit approved/rejected collection",
+        message: "Unauthorized to edit approved collection",
       });
     }
 
@@ -443,6 +460,34 @@ const updateCollection = async (req, res) => {
     }
 
     await collection.save();
+    console.log("Collection updated successfully");
+
+    // Update voucher if collection is approved and has a voucher
+
+    if (collection.status !== "approved" && collection.voucherId) {
+
+      const existingVoucher = {
+        // type: "RECEIPT",
+        date: collection.date,
+        narration: collection.narration,
+        costCenterId: collection.costCenterId,
+
+        entries: [
+          {
+            ledgerId: collection.receivedInto,
+            type: "DEBIT",
+            amount: collection.amount,
+          },
+          {
+            ledgerId: collection.clientLedgerId,
+            type: "CREDIT",
+            amount: collection.amount,
+          },
+        ],
+      };
+
+      const voucher = await updateVoucher(collection.voucherId, existingVoucher);
+    }
 
     res.json(collection);
   } catch (err) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 axios.defaults.withCredentials = true;
 
@@ -280,7 +280,6 @@ const CreateSupplier = ({ onClose, isEdit }) => {
         </div>
       </form>
       {error && <p className="text-red-500">{error}</p>}
-      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };

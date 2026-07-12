@@ -106,7 +106,7 @@ const Collections = () => {
   };
 
   const reject = async (id) => {
-    await axios.put(`/api/v1/collection/${id}/reject`);
+    await axios.put(`/api/v1/collection/reject/${id}`);
     loadData();
     setSelected(null);
   };
@@ -237,7 +237,7 @@ const Collections = () => {
                   View
                 </button>
 
-                {row.status === "pending" && (
+                {row.status !== "approved" && (
                   <div className="flex gap-4">
                     <button onClick={() => handleEdit(row._id)}>
                       <GrEdit className="text-blue-500" />
@@ -371,13 +371,15 @@ const Collections = () => {
 
               {selected.costCenterId && (
                 <div>
-                  <b>Cost Center:</b> {selected.costCenterId?.name}
+                  <b>Cost Center:</b>{" "}
+                  {selected.costCenterId?.name || selected.costCenter?.name}
                 </div>
               )}
 
               {selected.businessUnitId && (
                 <div>
-                  <b>Business Unit:</b> {selected.businessUnitId?.name}
+                  <b>Business Unit:</b>{" "}
+                  {selected.businessUnitId?.name || selected.businessUnit?.name}
                 </div>
               )}
             </div>
@@ -403,22 +405,24 @@ const Collections = () => {
               {user?.department === "Accountant" ||
                 (user?.department === "Account Head" && (
                   <>
-                    {selected.status === "pending" && (
-                      <>
-                        <button
-                          onClick={() => reject(selected._id)}
-                          className="flex-1 bg-red-500 text-white py-2 rounded-lg"
-                        >
-                          Reject
-                        </button>
+                    {(selected.status === "pending" ||
+                      selected.status === "approved") && (
+                      <button
+                        onClick={() => reject(selected._id)}
+                        className="flex-1 bg-red-500 text-white py-2 rounded-lg"
+                      >
+                        Reject
+                      </button>
+                    )}
 
-                        <button
-                          onClick={() => approve(selected._id)}
-                          className="flex-1 bg-green-600 text-white py-2 rounded-lg"
-                        >
-                          Post
-                        </button>
-                      </>
+                    {(selected.status === "pending" ||
+                      selected.status === "rejected") && (
+                      <button
+                        onClick={() => approve(selected._id)}
+                        className="flex-1 bg-green-600 text-white py-2 rounded-lg"
+                      >
+                        Post
+                      </button>
                     )}
                   </>
                 ))}

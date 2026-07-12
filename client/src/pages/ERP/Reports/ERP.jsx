@@ -346,9 +346,9 @@ export default function ERP() {
       <div className="rounded-xl border bg-white shadow-sm">
         <div className="border-b p-4">Recent Activity</div>
 
-        {data?.recentVouchers.map((voucher) => (
+        {data?.recentVouchers?.map((voucher, index) => (
           <div
-            key={voucher._id}
+            key={index}
             className="
           flex
           justify-between

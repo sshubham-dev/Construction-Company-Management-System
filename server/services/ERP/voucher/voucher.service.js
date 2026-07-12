@@ -131,6 +131,7 @@ const updateVoucher = async (voucherId, data) => {
 
   if (data.narration) voucher.narration = data.narration;
   if (data.date) voucher.date = data.date;
+  if (data.costCenterId) voucher.costCenterId = data.costCenterId;
 
   await voucher.save();
 

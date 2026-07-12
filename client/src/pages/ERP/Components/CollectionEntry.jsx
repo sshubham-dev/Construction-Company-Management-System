@@ -196,7 +196,7 @@ const CollectionEntry = ({ onClose, editId }) => {
       onClose();
     } catch (err) {
       // ❌ error toast (replaces loading)
-      toast.error("Failed. Try again.", { id: toastId });
+      toast.error(err.message || "Failed. Try again.", { id: toastId });
       console.log(err);
     }
 

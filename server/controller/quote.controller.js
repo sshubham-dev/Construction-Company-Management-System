@@ -11,21 +11,21 @@ const PACKAGES = [
     // 1) RATE ITEMS (these drive calculateQuote)
     items: [
       { label: "Footing", unit: "SQFT", rate: 700 },
-      { label: "Basement (per sqft)", unit: "SQFT", rate: 1900 },
-      { label: "Parking", unit: "SQFT", rate: 1236.18 },
+      { label: "Basement (per sqft)", unit: "SQFT", rate: 2000 },
+      { label: "Parking", unit: "SQFT", rate: 1296.18 },
 
       // MAIN FLOOR WORK
-      { label: "Floor (Residential)", unit: "SQFT", rate: 1873 },
-      { label: "Floor (Commercial)", unit: "SQFT", rate: 1400 },
+      { label: "Floor (Residential)", unit: "SQFT", rate: 1950 },
+      { label: "Floor (Commercial)", unit: "SQFT", rate: 1500 },
 
       // HEADROOM & PARAPET
-      { label: "Headroom", unit: "SQFT", rate: 1873 },
-      { label: "Parapet Wall", unit: "SQFT", rate: 220},
+      { label: "Headroom", unit: "SQFT", rate: 1950 },
+      { label: "Parapet Wall", unit: "SQFT", rate: 240},
 
       // WALLS & TANKS
-      { label: "Boundary Wall", unit: "SQFT", rate: 350 },
+      { label: "Boundary Wall", unit: "SQFT", rate: 400 },
       { label: "Septic Tank", unit: "CFT", rate: 170 },
-      { label: "Underground Water Tank", unit: "Ltr", rate: 25 },
+      { label: "Underground Water Tank", unit: "Ltr", rate: 26 },
     ],
 
     // 2) MATERIAL OPTIONS (drives selectedCustomizations)
@@ -33,11 +33,11 @@ const PACKAGES = [
       {
         key: "bricks",
         title: "Bricks",
-        default: { label: "AAC Blocks", rateImpact: 0 },
+        default: { label: "Red Bricks", rateImpact: 0 },
         options: [
-          { label: "AAC Blocks", rateImpact: 0 },
-          { label: "Fly Ash Bricks", rateImpact: 0 },
-          { label: "Red Bricks", rateImpact: 35 },
+          { label: "AAC Blocks", rateImpact: -40 },
+          { label: "Fly Ash Bricks", rateImpact: -20 },
+          { label: "Red Bricks", rateImpact: 0 },
         ],
       },
       {
@@ -146,6 +146,7 @@ const PACKAGES = [
       kitchenPoints: "...as per PDF",
       bathroomPoints: "...as per PDF",
     },
+    
     others: {
       earthingPit: 6000,
       lift: "As per vendor",
@@ -165,15 +166,15 @@ const PACKAGES = [
     type: "construction",
 
     items: [
-      { label: "Footing", unit: "SQFT", rate: 590 },
+      { label: "Footing", unit: "SQFT", rate: 580 },
       { label: "Basement (per sqft)", unit: "SQFT", rate: 1750 },
-      { label: "Parking", unit: "SQFT", rate: 1155},
+      { label: "Parking", unit: "SQFT", rate: 1205},
 
-      { label: "Floor (Residential)", unit: "SQFT", rate: 1650 },
-      { label: "Floor (Commercial)", unit: "SQFT", rate: 1238 },
+      { label: "Floor (Residential)", unit: "SQFT", rate: 1723 },
+      { label: "Floor (Commercial)", unit: "SQFT", rate: 1311 },
 
-      { label: "Headroom", unit: "SQFT", rate: 1650 },
-      { label: "Parapet Wall", unit: "SQFT", rate: 217 },
+      { label: "Headroom", unit: "SQFT", rate: 1723 },
+      { label: "Parapet Wall", unit: "SQFT", rate: 220 },
 
       { label: "Boundary Wall", unit: "SQFT", rate: 350 },
       { label: "Septic Tank", unit: "CFT", rate: 170 },
@@ -451,10 +452,10 @@ const calculateQuote = async (req, res) => {
 
       // CASE 1: Starts with Basement
       if (parts[0].includes("B")) {
-        // each basement = 5 months
-        if (basementCount >= 1) duration += basementCount * 5;
-        // floors above basement = 4.5 months each
-        if (aboveFloors > 0) duration += aboveFloors * 4.5;
+        // each basement = 6 months
+        if (basementCount >= 1) duration += basementCount * 6;
+        // floors above basement = 6.5 months each
+        if (aboveFloors > 0) duration += aboveFloors * 6.5;
         return duration;
       }
 
@@ -462,14 +463,14 @@ const calculateQuote = async (req, res) => {
       if (parts[0] === "G") {
         // Ground floor = 6 months
         duration += 6;
-        // additional above floors (if any) = 4.5 months each
-        if (aboveFloors > 1) duration += (aboveFloors - 1) * 4.5;
+        // additional above floors (if any) = 6.5 months each
+        if (aboveFloors > 1) duration += (aboveFloors - 1) * 6.5;
         return duration;
       }
 
       // CASE 3: Starts directly with numeric floors (no G/B)
       if (aboveFloors >= 1) {
-        duration += aboveFloors * 4.5;
+        duration += aboveFloors * 6.5;
       }
 
       return duration;
