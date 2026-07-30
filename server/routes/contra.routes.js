@@ -6,6 +6,7 @@ const {
   deleteContra,
   getAllContra,
   getContra,
+ getContraDetailByID,
   getContraByVoucher,
   postContra,
   cancelContra,
@@ -23,6 +24,7 @@ Contra.put("/post/:id", userAuth, postContra);
 Contra.put("/cancel/:id", userAuth, cancelContra);
 
 // Get Contra voucher by voucherNo
+Contra.get("/detail/:id", userAuth, getContraDetailByID);
 Contra.get("/:id", userAuth, getContra);
 
 // Get Contra voucher by voucherNo

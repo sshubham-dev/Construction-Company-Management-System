@@ -65,8 +65,8 @@ export default function FinancialSummary() {
 
   // if(!loading) return;
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-6 py-4">
+      <div className="ml-6">
         <h2 className="text-xl font-semibold">Monthly Financial Summary</h2>
 
         <p className="text-sm text-gray-500">

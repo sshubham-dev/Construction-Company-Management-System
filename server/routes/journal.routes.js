@@ -5,6 +5,7 @@ const { createJournal,
   deleteJournal,
   getJournals,
   getJournalById,
+  getJournal,
   getJournalByVoucherNo,
   postJournal,
   cancelJournal, } = require('../controller/journal.controller');
@@ -15,6 +16,7 @@ Journal.post('/', userAuth, createJournal);
 Journal.get('/', userAuth, getJournals);
 Journal.put('/post/:id', userAuth, postJournal);
 Journal.put('/cancel/:id', userAuth, cancelJournal);
+Journal.get('/detail/:id', userAuth, getJournal);
 Journal.get('/:id', userAuth, getJournalById);
 Journal.put('/:id', userAuth, updateJournal);
 Journal.delete('/:id', userAuth, deleteJournal);

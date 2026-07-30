@@ -12,6 +12,10 @@ const contractorSchema = new mongoose.Schema(
     whatsapp: { type: Number },
 
     address: { type: String },
+    state: {
+      type: String,
+      required: true,
+    },
 
     addhar: { type: String },
 
@@ -156,6 +160,7 @@ contractorSchema.pre("save", async function () {
         phoneNo: doc.phone,
         email: doc.email,
         address: doc?.address,
+        state: doc?.state,
       }),
 
       getTaxDetails: (doc) => ({

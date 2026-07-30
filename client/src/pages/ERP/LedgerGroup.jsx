@@ -67,8 +67,8 @@ const LedgerGroup = () => {
 
   const filtered = ledgerGroups.filter((lg) => {
     const matchSearch =
-      lg?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      lg?.parentId?.name.toLowerCase().includes(search.toLowerCase()) ||
+      lg?.name?.toLowerCase().includes(search?.toLowerCase()) ||
+      lg?.parentId?.name?.toLowerCase().includes(search?.toLowerCase()) ||
       lg?.nature.toLowerCase().includes(search.toLowerCase())
     return matchSearch;
   });

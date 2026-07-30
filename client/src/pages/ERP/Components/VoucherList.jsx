@@ -2,17 +2,29 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import toast from "react-hot-toast";
-import Modal from "../../../components/Modal";
-import CreateContra from "../../../components/CreateContra";
-import CreateReceipt_Payment from "../../../components/CreateReceipt_Payment";
-import CreateJournal from "../../../components/CreateJournal";
 import Select from "react-select";
+import { FiPlus, FiFilter, FiRotateCcw, FiSearch } from "react-icons/fi";
+import CreateReceipt_Payment from "../../../components/CreateReceipt_Payment";
+import CreateContra from "../../../components/CreateContra";
+import CreateJournal from "../../../components/CreateJournal";
+import {
+  FiEdit3,
+  FiCheckCircle,
+  FiXCircle,
+  FiDollarSign,
+  FiCreditCard,
+} from "react-icons/fi";
+import Modal from "../../../components/Modal";
+import VoucherCard from "./Voucher/VoucherCard";
+import { useNavigate } from "react-router-dom";
 
 const API_MAP = {
   contra: "/api/v1/contra",
   journal: "/api/v1/journal",
   payment: "/api/v1/payment",
   receipt: "/api/v1/receipt",
+  purchase: "/api/v1/purchase",
+  sales: "/api/v1/sales",
 };
 
 const STATUS_OPTIONS = ["DRAFT", "POSTED", "CANCELLED"];
@@ -41,6 +53,9 @@ const VoucherList = ({ type, onCreate }) => {
   const [ledgers, setLedgers] = useState([]);
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
+  const [voucherSeries, setVoucherSeries] = useState("");
+  const [narration, setNarration] = useState("");
+  const [reference, setReference] = useState("");
   const [isEdit, setIsEdit] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -48,8 +63,20 @@ const VoucherList = ({ type, onCreate }) => {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
-
+  const navigate = useNavigate();
   const totalPages = Math.ceil(total / limit);
+
+  const filterConfig = {
+    common: ["ledger", "status", "date", "amount"],
+
+    purchase: ["supplier", "site", "costCenter", "po", "grn"],
+
+    sales: ["client", "site"],
+
+    payment: ["paidTo"],
+
+    receipt: ["receivedFrom"],
+  };
 
   /* FETCH */
   useEffect(() => {
@@ -71,6 +98,8 @@ const VoucherList = ({ type, onCreate }) => {
           ledger: ledgerId,
           minAmount,
           maxAmount,
+          narration,
+          reference,
         },
       });
       console.log(res.data);
@@ -128,6 +157,8 @@ const VoucherList = ({ type, onCreate }) => {
     minAmount,
     maxAmount,
     type,
+    reference,
+    narration,
   ]);
 
   /* ACTIONS */
@@ -274,47 +305,158 @@ const VoucherList = ({ type, onCreate }) => {
       <Modal
         isOpen={showFilters}
         onClose={() => setShowFilters(false)}
-        head="Filter"
+        head="Advanced Filters"
       >
-        <div className="grid grid-cols-1 gap-3">
-          <select
-            className="w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-400 outline-none text-sm"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="">Status</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
+        <div className="space-y-5">
+          {/* General */}
 
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-400 outline-none text-sm"
-          />
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-400 outline-none text-sm"
-          />
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">
+              General
+            </h3>
 
-          <input
-            placeholder="Min ₹"
-            value={minAmount}
-            onChange={(e) => setMinAmount(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-400 outline-none text-sm"
-          />
-          <input
-            placeholder="Max ₹"
-            value={maxAmount}
-            onChange={(e) => setMaxAmount(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-400 outline-none text-sm"
-          />
+            <div className="grid gap-3">
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="rounded-lg border p-2"
+              >
+                <option value="">Status</option>
+
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Date */}
+
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">Date</h3>
+
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="rounded-lg border p-2"
+              />
+
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="rounded-lg border p-2"
+              />
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  const fy = getCurrentFY();
+                  setFromDate(fy.from);
+                  setToDate(fy.to);
+                }}
+                className="rounded-lg border px-3 py-2 text-sm"
+              >
+                Current FY
+              </button>
+
+              <button
+                onClick={() => {
+                  const today = new Date();
+
+                  setFromDate(`${today.getFullYear()}-01-01`);
+
+                  setToDate(today.toISOString().split("T")[0]);
+                }}
+                className="rounded-lg border px-3 py-2 text-sm"
+              >
+                Current Year
+              </button>
+            </div>
+          </div>
+
+          {/* Amount */}
+
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">Amount</h3>
+
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                placeholder="Min Amount"
+                value={minAmount}
+                onChange={(e) => setMinAmount(e.target.value)}
+                className="rounded-lg border p-2"
+              />
+
+              <input
+                placeholder="Max Amount"
+                value={maxAmount}
+                onChange={(e) => setMaxAmount(e.target.value)}
+                className="rounded-lg border p-2"
+              />
+            </div>
+          </div>
+
+          {/* Reference */}
+
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">
+              Reference
+            </h3>
+
+            <div className="grid gap-3">
+              {/* <input
+                placeholder="Voucher Series"
+                className="rounded-lg border p-2"
+              /> */}
+
+              <input
+                placeholder="Reference"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                className="rounded-lg border p-2"
+              />
+
+              <input
+                placeholder="Narration"
+                value={narration}
+                onChange={(e) => setNarration(e.target.value)}
+                className="rounded-lg border p-2"
+              />
+            </div>
+          </div>
+
+          {/* Footer */}
+
+          <div className="flex justify-end gap-2 border-t pt-4">
+            <button
+              onClick={() => {
+                setStatus("");
+                setLedgerId("");
+                setFromDate("");
+                setToDate("");
+                setMinAmount("");
+                setMaxAmount("");
+              }}
+              className="rounded-lg border px-4 py-2"
+            >
+              Reset
+            </button>
+
+            <button
+              onClick={() => setShowFilters(false)}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-white"
+            >
+              Apply Filters
+            </button>
+          </div>
         </div>
       </Modal>
+
+      {/* KPI */}
 
       {/* LIST */}
       {loading ? (
@@ -334,7 +476,10 @@ const VoucherList = ({ type, onCreate }) => {
                 className="rounded-xl border bg-white p-4 shadow-sm hover:shadow-md transition"
               >
                 {/* Header */}
-                <div className="flex items-start justify-between">
+                <div
+                  className="flex items-start justify-between cursor-pointer"
+                  onClick={() => navigate(`/erp/${v?.type}/${v._id}`)}
+                >
                   <div>
                     <h3 className="font-semibold text-gray-900">
                       {v.voucherNo}

@@ -49,10 +49,8 @@ const GRN = require("./routes/grn.routes");
 const DN = require("./routes/dn.routes");
 const SalesInvoice = require("./routes/salesinvoice.routes");
 const CollectionRoute = require("./routes/collection.routes");
-const FAQs = require("./routes/faq.routes");
 const Payroll = require("./routes/payroll.routes");
 const PayChallan = require("./routes/paychallan.routes");
-const Projects = require("./routes/project.routes");
 const Company = require("./routes/company.routes");
 const Reports = require("./routes/report.routes");
 const Stock = require("./routes/stock.routes")
@@ -64,6 +62,9 @@ const StockAudit = require("./routes/stockaudit.routes");
 const RFQs = require("./routes/rfq.routes");
 
 const cron = require("node-cron");
+const PurchaseInv = require("./routes/purchaseInv.routes");
+const Purchase = require("./routes/purchase.routes");
+const GSTLedger = require("./routes/gstLedgerConfig.routes");
 
 // cron.schedule('* * * * * *', () => {
 //   console.log("Running a task every 5 seconds")
@@ -141,6 +142,8 @@ app.use("/api/v1/journal", Journal);
 app.use("/api/v1/contra", Contra);
 app.use("/api/v1/payment", Payment);
 app.use("/api/v1/receipt", Receipt);
+app.use("/api/v1/gst-ledger", GSTLedger);
+app.use("/api/v1/purchase", Purchase);
 app.use("/api/v1/stock-group", Stock_Group);
 app.use("/api/v1/stock-category", Stock_Category);
 app.use("/api/v1/stock-item", Item);
@@ -166,11 +169,10 @@ app.use("/api/v1/monthly-performance", MonthlyPerformance);
 app.use("/api/v1/grn", GRN);
 app.use("/api/v1/delivery-note", DN);
 app.use("/api/v1/sales-invoice", SalesInvoice);
+app.use("/api/v1/purchase-invoice", PurchaseInv);
 app.use("/api/v1/collection", CollectionRoute);
-app.use("/api/v1/faq", FAQs);
 app.use("/api/v1/payroll", Payroll);
 app.use("/api/v1/payment-challans", PayChallan);
-app.use("/api/v1/projects", Projects);
 app.use("/api/v1/company", Company);
 app.use("/api/v1/reports", Reports)
 app.use("/api/v1/rfq", RFQs)

@@ -7,6 +7,7 @@ import Section from "../../components/UI/Section";
 import Actions from "../../components/UI/Actions";
 import Schedule from "../../components/UI/Schedule";
 import FinancialSummary from "./components/FinancialSummary";
+import OutstandingOverview from "./components/OutstandingOverview";
 axios.defaults.withCredentials = true;
 
 const Account_Head = () => {
@@ -17,6 +18,7 @@ const Account_Head = () => {
       <EmployeeAttendance />
       <Schedule />
       <FinancialSummary />
+      <OutstandingOverview />
       <Section title="H.R Action">
         <Actions role="HR" />
       </Section>

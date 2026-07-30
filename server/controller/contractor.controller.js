@@ -1,12 +1,12 @@
 const Site = require('../models/site.models');
 const Contractor = require('../models/contractor.models');
-const{ WorkOrder} = require('../models/workorder.models');
+const { WorkOrder } = require('../models/workorder.models');
 const Bill = require('../models/bill.models.js');
 const ExtraWork = require('../models/extrawork.models.js');
 const { convertToUser } = require('./user.controller.js');
 const { addLedger } = require('./ledger.controller.js');
 const User = require('../models/user.models.js');
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
+const { sendPushNotification, notifyRole } = require("../utils/pushNotification.js");
 
 const getContractors = async (req, res) => {
     try {
@@ -50,6 +50,7 @@ const createContractor = async (req, res) => {
             phone,
             whatsapp,
             address,
+            state,
             addhar,
             pan,
             bank,
@@ -64,6 +65,7 @@ const createContractor = async (req, res) => {
             phone: phone ? phone : '', // Ensure phone is not undefined
             whatsapp,
             address,
+            state,
             addhar: addhar ? addhar : '', // Ensure addhar is not undefined
             panNo: pan ? pan : '', // Ensure pan is not undefined
             bank: bank ? bank : '', // Ensure bank is not undefined
@@ -105,57 +107,59 @@ const createContractor = async (req, res) => {
 };
 
 const updateContractor = async (req, res) => {
-  try {
-    const id = req.params.id;
-    const {
-      name,
-      email,
-      phone,
-      whatsapp,
-      address,
-      addhar,
-      pan,
-      bank,
-      jobWork,
-      isUser,
-      gstNo,
-    } = req.body;
+    try {
+        const id = req.params.id;
+        const {
+            name,
+            email,
+            phone,
+            whatsapp,
+            address,
+            state,
+            addhar,
+            pan,
+            bank,
+            jobWork,
+            isUser,
+            gstNo,
+        } = req.body;
 
-    // 🧠 Fetch contractor to trigger pre-save hook
-    const contractor = await Contractor.findById(id);
-    if (!contractor) return res.status(404).json({ error: 'Contractor not found' });
+        // 🧠 Fetch contractor to trigger pre-save hook
+        const contractor = await Contractor.findById(id);
+        if (!contractor) return res.status(404).json({ error: 'Contractor not found' });
 
-    // 🛠️ Update fields
-    contractor.name = name?.trim() || '';
-    contractor.email = email?.trim() || '';
-    contractor.phone = phone || '';
-    contractor.whatsapp = whatsapp || '';
-    contractor.address = address || '';
-    contractor.addhar = addhar?.trim() || '';
-    contractor.panNo = pan?.trim() || '';
-    contractor.bank = bank || '';
-    contractor.jobWork = jobWork || '';
-    contractor.gstNo = gstNo?.trim() || '';
-    contractor.isUser = isUser === true || isUser === 'true';
-    contractor.companyId = req.user.companyId || contractor.companyId; // Ensure companyId is set to the user's companyId
+        // 🛠️ Update fields
+        contractor.name = name?.trim() || '';
+        contractor.email = email?.trim() || '';
+        contractor.phone = phone || '';
+        contractor.whatsapp = whatsapp || '';
+        contractor.address = address || '';
+        contractor.state = state || '';
+        contractor.addhar = addhar?.trim() || '';
+        contractor.panNo = pan?.trim() || '';
+        contractor.bank = bank || '';
+        contractor.jobWork = jobWork || '';
+        contractor.gstNo = gstNo?.trim() || '';
+        contractor.isUser = isUser === true || isUser === 'true';
+        contractor.companyId = req.user.companyId || contractor.companyId; // Ensure companyId is set to the user's companyId
 
-    // 💾 Save (triggers ledger sync)
-    const updatedContractor = await contractor.save();
+        // 💾 Save (triggers ledger sync)
+        const updatedContractor = await contractor.save();
 
-    // 🔑 Convert to user if needed
-    if (updatedContractor.isUser && !updatedContractor.userId) {
-      const password = `${updatedContractor.name}@${updatedContractor.phone}`;
-      await convertToUser(updatedContractor._id, 'Contractor', password);
+        // 🔑 Convert to user if needed
+        if (updatedContractor.isUser && !updatedContractor.userId) {
+            const password = `${updatedContractor.name}@${updatedContractor.phone}`;
+            await convertToUser(updatedContractor._id, 'Contractor', password);
+        }
+
+        return res.status(200).json({
+            message: 'Contractor updated successfully',
+            updatedContractor,
+        });
+    } catch (error) {
+        console.error('Error updating contractor:', error);
+        return res.status(500).json({ error: 'Something went wrong' });
     }
-
-    return res.status(200).json({
-      message: 'Contractor updated successfully',
-      updatedContractor,
-    });
-  } catch (error) {
-    console.error('Error updating contractor:', error);
-    return res.status(500).json({ error: 'Something went wrong' });
-  }
 };
 
 const deleteContractor = async (req, res) => {

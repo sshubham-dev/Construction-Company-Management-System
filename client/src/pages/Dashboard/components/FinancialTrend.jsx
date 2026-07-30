@@ -19,36 +19,31 @@ const formatMoney = (value = 0) =>
 export default function FinancialTrend({ data = [] }) {
   return (
     <div className="bg-white border rounded-xl shadow-sm p-5">
-
       <div className="mb-5">
-
-        <h2 className="text-lg font-semibold">
-          Revenue vs Expense
-        </h2>
+        <h2 className="text-lg font-semibold">Revenue vs Expense</h2>
 
         <p className="text-sm text-gray-500 mt-1">
           Monthly financial performance.
         </p>
-
       </div>
 
       <div className="h-[350px]">
-
-        <ResponsiveContainer width="100%" height="100%">
-
-          <LineChart data={data}>
-
+        <ResponsiveContainer width="100%" height="100%" style={{ margin: "auto", overflow: "hidden" }}>
+          <LineChart
+            data={data}
+            responsive
+            margin={{
+              top: 10,
+              right: 0,
+              bottom: 0,
+              left: -18,
+            }}
+          >
             <CartesianGrid strokeDasharray="3 3" />
 
-            <XAxis
-              dataKey="period"
-              tick={{ fontSize: 12 }}
-            />
+            <XAxis dataKey="period" tick={{ fontSize: 12 }} />
 
-            <YAxis
-              tickFormatter={formatMoney}
-              tick={{ fontSize: 12 }}
-            />
+            <YAxis tickFormatter={formatMoney} tick={{ fontSize: 12 }} />
 
             <Tooltip
               formatter={(value) =>
@@ -79,13 +74,9 @@ export default function FinancialTrend({ data = [] }) {
               strokeWidth={3}
               dot={false}
             />
-
           </LineChart>
-
         </ResponsiveContainer>
-
       </div>
-
     </div>
   );
 }

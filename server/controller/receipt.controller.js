@@ -49,6 +49,15 @@ const getReceiptById = async (req, res) => {
   }
 };
 
+const getReceipt = async (req, res) => {
+  try {
+    const data = await receiptService.getReceipt(req.params.id);
+    res.json(data);
+  } catch (err) {
+    res.status(404).json({ error: err.message });
+  }
+};
+
 /* DELETE */
 // ✅
 const deleteReceipt = async (req, res) => {
@@ -85,6 +94,7 @@ module.exports = {
   updateReceipt,
   getAllReceipts,
   getReceiptById,
+  getReceipt,
   deleteReceipt,
   postReceipt,
   cancelReceipt,

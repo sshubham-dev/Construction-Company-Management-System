@@ -5,6 +5,7 @@ const {
   updatePayment,
   getPayments,
   getPaymentById,
+  getPayment,
   deletePayment,
   postPayment,
   cancelPayment,
@@ -17,6 +18,7 @@ Payment.get('/', userAuth, getPayments);  // Read all
 Payment.put('/post/:id', userAuth, postPayment);  // Create
 Payment.put('/cancel/:id', userAuth, cancelPayment);  // Create
 // Payment.get('/next-voucher', generatePaymentNo);
+Payment.get('/detail/:id', userAuth, getPayment);  // Read by ID
 Payment.get('/:id', userAuth, getPaymentById);  // Read by ID
 Payment.put('/:id', userAuth, updatePayment);  // Update
 Payment.delete('/:id', userAuth, deletePayment);  // Delete

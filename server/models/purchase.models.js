@@ -1,136 +1,376 @@
 const mongoose = require("mongoose");
 
-/* =========================
-   ITEM SUBDOC
-========================= */
-const purchaseItemSchema = new mongoose.Schema({
-  itemId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Item",
+/* ==========================================
+   PURCHASE ITEM
+========================================== */
+
+const itemSchema = new mongoose.Schema(
+  {
+    itemType: {
+      type: String,
+      enum: ["INVENTORY", "SERVICE", "ASSET", "MATERIAL"],
+      required: true,
+    },
+    itemId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Item",
+      default: null,
+    },
+    ledgerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger",
+      default: null,
+    },
+    itemName: String,
+    description: String,
+    hsnSac: String,
+    quantity: {
+      type: Number,
+      default: 1,
+    },
+    unit: String,
+    rate: {
+      type: Number,
+      default: 0,
+    },
+    discount: {
+      type: Number,
+      default: 0,
+    },
+    taxableAmount: {
+      type: Number,
+      default: 0,
+    },
+    gstRate: Number,
+    cgstRate: Number,
+    sgstRate: Number,
+    igstRate: Number,
+    cessRate: {
+      type: Number,
+      default: 0,
+    },
+    cgstAmount: Number,
+    sgstAmount: Number,
+    igstAmount: Number,
+    cessAmount: {
+      type: Number,
+      default: 0,
+    },
+    amount: {
+      type: Number,
+      required: true,
+    },
   },
-
-  quantity: Number,
-  rate: Number,
-
-  amount: Number,
-
-  taxRate: {
-    type: Number,
-    default: 0,
-  },
-
-  taxAmount: {
-    type: Number,
-    default: 0,
-  },
-});
-
-/* =========================
-   JOURNAL ENTRY
-========================= */
-const entrySchema = new mongoose.Schema({
-  ledgerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Ledger",
-    required: true,
-  },
-
-  type: {
-    type: String,
-    enum: ["DEBIT", "CREDIT"],
-    required: true,
-  },
-
-  amount: {
-    type: Number,
-    required: true,
-  },
-});
-
-/* =========================
-   MAIN SCHEMA
-========================= */
-const purchaseVoucherSchema = new mongoose.Schema(
-{
-  voucherNo: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true,
-  },
-
-  date: {
-    type: Date,
-    default: Date.now,
-  },
-
-  supplierLedgerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Ledger",
-    required: true,
-  },
-
-  grnId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "GRN",
-    required: true,
-    unique: true, // 🔥 prevent duplicate
-  },
-
-  items: [purchaseItemSchema],
-
-  totalAmount: Number,
-  taxAmount: Number,
-  netAmount: Number,
-
-  purchaseLedgerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Ledger",
-    required: true,
-  },
-
-  entries: [entrySchema], // 🔥 accounting core
-
-  status: {
-    type: String,
-    enum: ["DRAFT", "POSTED", "CANCELLED"],
-    default: "DRAFT",
-  },
-
-  narration: String,
-
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
-},
-{ timestamps: true }
+  { _id: false }
 );
-  
-purchaseVoucherSchema.pre("validate", function (next) {
-  if (!this.items || !this.items.length) {
-    return next(new Error("Items required"));
-  }
 
-  let total = 0;
-  let tax = 0;
+/* ==========================================
+   ADDITIONAL CHARGES
+========================================== */
 
-  this.items.forEach((item) => {
-    item.amount = item.quantity * item.rate;
+const chargeSchema = new mongoose.Schema(
+  {
+    ledgerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger",
+      required: true,
+    },
 
-    item.taxAmount = (item.amount * (item.taxRate || 0)) / 100;
+    name: String,
 
-    total += item.amount;
-    tax += item.taxAmount;
-  });
+    taxableAmount: {
+      type: Number,
+      default: 0,
+    },
 
-  this.totalAmount = total;
-  this.taxAmount = tax;
-  this.netAmount = total + tax;
+    gstRate: {
+      type: Number,
+      default: 0,
+    },
 
-  next();
-});
+    cgstRate: {
+      type: Number,
+      default: 0,
+    },
+
+    sgstRate: {
+      type: Number,
+      default: 0,
+    },
+
+    igstRate: {
+      type: Number,
+      default: 0,
+    },
+
+    cessRate: {
+      type: Number,
+      default: 0,
+    },
+
+    cgstAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    sgstAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    igstAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    cessAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    amount: {
+      type: Number,
+      required: true,
+    },
+
+    affectsInventoryCost: {
+      type: Boolean,
+      default: true
+    },
+  },
+  { _id: false }
+);
+
+/* ==========================================
+   PURCHASE
+========================================== */
+
+const purchaseSchema = new mongoose.Schema({
+    purchaseNo: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+      index: true,
+    },
+
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      default: null
+    },
+
+    fy: {
+      type: String,
+      required: true,
+    },
+
+    taxType: {
+      type: String,
+      enum: ["INTRA", "INTER"],
+      default: "INTRA",
+      required: true,
+    },
+
+    dueDate: Date,
+
+    partyLedgerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ledger",
+      required: true,
+    },
+
+    invoiceNo: String,
+
+    invoiceDate: Date,
+
+    source: {
+      type: String,
+      enum: ["MANUAL", "GRN"],
+      default: "MANUAL",
+    },
+
+    costCenterId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CostCenter",
+      default: null,
+    },
+
+    purchaseOrderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PurchaseOrder",
+      default: null,
+    },
+
+    grnId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "GRN",
+      default: null,
+    },
+
+    priceType: {
+      type: String,
+      enum: ["EXCLUSIVE", "INCLUSIVE"],
+      default: "EXCLUSIVE",
+      required: true,
+    },
+
+    items: [itemSchema],
+
+    charges: [chargeSchema],
+
+    summary: {
+
+      subTotal: {
+        type: Number,
+        default: 0,
+      },
+
+      discount: {
+        type: Number,
+        default: 0,
+      },
+
+      gstSummary: [{
+        gstRate: {
+          type: Number,
+          default: 0,
+        },
+        taxableAmount: {
+          type: Number,
+          default: 0,
+        },
+
+        cgst: {
+          type: Number,
+          default: 0,
+        },
+        cgstLedgerId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Ledger",
+          required: true,
+        },
+
+        sgst: {
+          type: Number,
+          default: 0,
+        },
+        sgstLedgerId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Ledger",
+          required: true,
+        },
+
+        igst: {
+          type: Number,
+          default: 0,
+        },
+        igstLedgerId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Ledger",
+          required: true,
+        },
+
+        cess: {
+          type: Number,
+          default: 0,
+        },
+        cessLedgerId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Ledger",
+          required: true,
+        },
+      }],
+
+      chargeTotal: {
+        type: Number,
+        default: 0,
+      },
+
+      roundOff: {
+        type: Number,
+        default: 0,
+      },
+
+      grandTotal: {
+        type: Number,
+        required: true,
+      }
+    },
 
 
-const Purchase = mongoose.model('Purchase', purchaseSchema);
+    /* Accounting */
+    voucherId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Voucher",
+      default: null,
+    },
+
+    paidAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    outstandingAmount: {
+      type: Number,
+      default: 0,
+    },
+
+
+    status: {
+      type: String,
+      enum: [
+        "DRAFT",
+        "POSTED",
+        "PARTIALLY_PAID",
+        "PAID",
+        "CANCELLED"
+      ],
+      default: "DRAFT"
+    },
+
+    narration: String,
+
+    paymentTerms: String,
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    postedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    cancelledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    postedAt: Date,
+
+    cancelledAt: Date,
+  }, {
+  timestamps: true,
+}
+);
+
+const Purchase = mongoose.model("Purchase", purchaseSchema);
+
 module.exports = Purchase;

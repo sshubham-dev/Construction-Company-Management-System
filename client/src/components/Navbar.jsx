@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import axios from "axios";
 import logo from "../asset/logo.png";
 import { MdOutlineLogout, MdLogin } from "react-icons/md";
@@ -112,8 +112,7 @@ const Navbar = ({ title, onMenuClick }) => {
             />
           )}
         </div>
-        
-        <Toaster position="top-right" reverseOrder={false} />
+     
       </div>
     </header>
   );

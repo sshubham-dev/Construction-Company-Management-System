@@ -1,79 +1,140 @@
-const Purchase = require('../models/purchase.models'); // Import the Purchase model
-const User = require('../models/user.models'); // Assuming you have a User model
+const { createPurchase, updatePurchase, getPurchases, getPurchaseById, deletePurchase, postPurchase, cancelPurchase } = require("../services/Inventory/purchase.service");
 
-// Create a new purchase
-const createPurchase = async (req, res) => {
+const {
+  successResponse,
+  errorResponse,
+} = require("../utils/responseHandler");
+
+/**
+ * Create Purchase Invoice (Draft)
+ */
+exports.createPurchase = async (req, res) => {
   try {
-    const { voucherNumber, date, supplierName, supplierAccount, items, paymentMode, narration, createdBy } = req.body;
-    const newPurchase = new Purchase({
-      voucherNumber,
-      date,
-      supplierName,
-      supplierAccount,
-      items,
-      paymentMode,
-      narration,
-      // createdBy
-    });
-    await newPurchase.save();
-    res.status(201).json({ message: 'Purchase created successfully', data: newPurchase });
+    const purchase = await createPurchase(req.body, req.user);
+
+    return successResponse(
+      res,
+      purchase,
+      "Purchase invoice created successfully."
+    );
   } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Error creating purchase', error: error.message });
+    return errorResponse(res, error);
   }
 };
 
-// Get all purchases
-const getAllPurchases = async (req, res) => {
+/**
+ * Update Purchase Invoice
+ */
+exports.updatePurchase = async (req, res) => {
   try {
-    const purchases = await Purchase.find().populate('supplierAccount createdBy');
-    res.status(200).json(purchases);
+    const purchase = await updatePurchase(
+      req.params.id,
+      req.body,
+      req.user
+    );
+
+    return successResponse(
+      res,
+      purchase,
+      "Purchase invoice updated successfully."
+    );
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching purchases', error: error.message });
+    return errorResponse(res, error);
   }
 };
 
-// Get purchase by ID
-const getPurchaseById = async (req, res) => {
+/**
+ * Get All Purchase Invoices
+ */
+exports.getPurchases = async (req, res) => {
   try {
-    const purchase = await Purchase.findById(req.params.id).populate('supplierAccount createdBy');
-    if (!purchase) {
-      return res.status(404).json({ message: 'Purchase not found' });
-    }
-    res.status(200).json(purchase);
+    const purchases = await getPurchases(req.query, req.user);
+
+    return successResponse(
+      res,
+      purchases,
+      "Purchase invoices fetched successfully."
+    );
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching purchase', error: error.message });
+    return errorResponse(res, error);
   }
 };
 
-// Update purchase by ID
-const updatePurchase = async (req, res) => {
+/**
+ * Get Purchase Invoice By Id
+ */
+exports.getPurchaseById = async (req, res) => {
   try {
-    const purchase = await Purchase.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!purchase) {
-      return res.status(404).json({ message: 'Purchase not found' });
-    }
-    res.status(200).json({ message: 'Purchase updated successfully', data: purchase });
+    const purchase = await getPurchaseById(
+      req.params.id,
+      req.user
+    );
+
+    return successResponse(
+      res,
+      purchase,
+      "Purchase invoice fetched successfully."
+    );
   } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Error updating purchase', error: error.message });
+    return errorResponse(res, error);
   }
 };
 
-// Delete purchase by ID
-const deletePurchase = async (req, res) => {
+/**
+ * Delete Purchase Invoice
+ * (Only Draft)
+ */
+exports.deletePurchase = async (req, res) => {
   try {
-    const purchase = await Purchase.findByIdAndDelete(req.params.id);
-    if (!purchase) {
-      return res.status(404).json({ message: 'Purchase not found' });
-    }
-    res.status(200).json({ message: 'Purchase deleted successfully' });
+    await deletePurchase(req.params.id, req.user);
+
+    return successResponse(
+      res,
+      null,
+      "Purchase invoice deleted successfully."
+    );
   } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Error deleting purchase', error: error.message });
+    return errorResponse(res, error);
   }
 };
 
-module.exports = {
-  createPurchase, getAllPurchases, getPurchaseById, updatePurchase, deletePurchase
-}
+/**
+ * Post Purchase Invoice
+ * Creates Voucher + Outstanding + Inventory
+ */
+exports.postPurchase = async (req, res) => {
+  try {
+    const purchase = await postPurchase(
+      req.params.id,
+      req.user
+    );
+
+    return successResponse(
+      res,
+      purchase,
+      "Purchase invoice posted successfully."
+    );
+  } catch (error) {
+    return errorResponse(res, error);
+  }
+};
+
+/**
+ * Cancel Posted Purchase
+ */
+exports.cancelPurchase = async (req, res) => {
+  try {
+    const purchase = await cancelPurchase(
+      req.params.id,
+      req.user
+    );
+
+    return successResponse(
+      res,
+      purchase,
+      "Purchase invoice cancelled successfully."
+    );
+  } catch (error) {
+    return errorResponse(res, error);
+  }
+};

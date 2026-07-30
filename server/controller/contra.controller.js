@@ -4,6 +4,7 @@ const {
   deleteContraVoucher,
   getAllContras,
   getContraById,
+  getContraDetail,
   getContraByVoucherNo,
 } = require("../services/ERP/contra.service.js");
 
@@ -78,6 +79,15 @@ const getContra = async (req, res) => {
   }
 };
 
+const getContraDetailByID = async (req, res) => {
+  try {
+    const data = await getContraDetail(req.params.id);
+    res.json(data);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+};
+
 /* ======================
    GET BY VOUCHER NO
 ====================== */
@@ -120,6 +130,7 @@ module.exports = {
   deleteContra,
   getAllContra,
   getContra,
+  getContraDetailByID,
   getContraByVoucher,
   postContra,
   cancelContra,

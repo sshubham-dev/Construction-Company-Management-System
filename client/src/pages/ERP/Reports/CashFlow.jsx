@@ -11,6 +11,12 @@ import {
 } from "recharts";
 import CashFlowDetails from "../Components/CashFlowDetails";
 
+const formatMoney = (value = 0) =>
+  new Intl.NumberFormat("en-IN", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+
 export default function CashFlow() {
   const { user } = useSelector((state) => state.auth);
 
@@ -98,14 +104,22 @@ export default function CashFlow() {
               top: 10,
               right: 0,
               bottom: 0,
-              left: 25,
+              left: -16,
             }}
           >
             <XAxis dataKey="name" />
 
-            <YAxis />
+            <YAxis tickFormatter={formatMoney} tick={{ fontSize: 12 }} />
 
-            <Tooltip />
+            <Tooltip
+              formatter={(value) =>
+                new Intl.NumberFormat("en-IN", {
+                  style: "currency",
+                  currency: "INR",
+                  maximumFractionDigits: 0,
+                }).format(value)
+              }
+            />
 
             <Bar dataKey="amount" radius={[6, 6, 0, 0]} />
           </BarChart>

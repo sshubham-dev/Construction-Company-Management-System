@@ -28,62 +28,11 @@ const create = async (req, res) => {
 const getAll = async (req, res) => {
   try {
 
-    const {
-      companyId,
-      ledgerType,
-      group,
-      isActive,
-      search,
-    } = req.query;
-
-    /* =========================
-       QUERY
-    ========================== */
-
-    const query = {};
-
-    if (companyId) {
-      query.companyId =
-        companyId;
-    }
-
-    if (ledgerType) {
-      query.referenceType =
-        ledgerType;
-    }
-
-    if (group) {
-      query.groupId =
-        group;
-    }
-
-    /* =========================
-       SEARCH
-    ========================== */
-
-    if (search) {
-      query.$or = [
-        {
-          name: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-
-        {
-          ledgerCode: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-      ];
-    }
-
     /* =========================
        DATA
     ========================== */
 
-    const data = await getLedgers(query)
+    const data = await getLedgers(req.query)
 
     return res.json({
       success: true,

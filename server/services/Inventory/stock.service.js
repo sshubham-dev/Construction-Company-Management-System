@@ -21,12 +21,14 @@ async function initializeStockForItem(itemId, storeIds = []) {
       },
     },
   }));
-
+  console.log(bulk);
   try {
-    await Stock.bulkWrite(bulk, { ordered: false });
+    await Stock.bulkWrite(bulk, {
+      ordered: false,
+    });
   } catch (err) {
-    // ignore duplicate errors (already exists)
-    if (err.code !== 11000) throw err;
+    console.log(err);
+    throw err;
   }
 }
 
@@ -228,8 +230,8 @@ async function applyStockTransaction(payload, session) {
       type === "IN"
         ? toStock.quantity
         : type === "OUT"
-        ? fromStock.quantity
-        : toStock.quantity,
+          ? fromStock.quantity
+          : toStock.quantity,
     createdBy: userId,
   }], { session });
 }
@@ -280,8 +282,8 @@ async function reverseStockTransaction(referenceId, source) {
             txn.type === "IN"
               ? "OUT"
               : txn.type === "OUT"
-              ? "IN"
-              : "TRANSFER",
+                ? "IN"
+                : "TRANSFER",
           source: "REVERSAL",
           referenceId: txn._id,
         },
@@ -299,7 +301,7 @@ async function reverseStockTransaction(referenceId, source) {
 }
 
 module.exports = {
-    initializeStockForItem,
+  initializeStockForItem,
   initializeStockForStore,
   executeStockTransaction,
   reverseStockTransaction,

@@ -11,6 +11,12 @@ import {
 
 const money = (v) => `₹${Number(v).toLocaleString("en-IN")}`;
 
+const formatMoney = (value) =>
+  new Intl.NumberFormat("en-IN", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+
 export default function TrendChart({ data }) {
   const [view, setView] = useState("amount");
 
@@ -56,7 +62,7 @@ export default function TrendChart({ data }) {
 
       <div className="h-[340px] p-4">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data.data}>
+          <AreaChart data={data.data} responsive margin={{ top: 16, right: 8, left: -20, bottom: 6 }}>
             <defs>
               <linearGradient id="fillColor" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#2563eb" stopOpacity={0.5} />
@@ -69,7 +75,7 @@ export default function TrendChart({ data }) {
 
             <XAxis dataKey="label" />
 
-            <YAxis />
+            <YAxis tickFormatter={formatMoney} />
 
             <Tooltip
               formatter={(value) => [

@@ -1,35 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
-import axios from 'axios';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchNotifications } from '../features/notification/notificationSlice';
+import React, { useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchNotifications } from "../features/notification/notificationSlice";
 
 axios.defaults.withCredentials = true;
 const CreateContractor = ({ onClose, isEdit }) => {
   const [contractor, setContractor] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    whatsapp: '',
-    address: '',
-    addhar: '',
-    pan: '',
-    bank: '',
-    jobWork: '',
+    name: "",
+    email: "",
+    phone: "",
+    whatsapp: "",
+    address: "",
+    state: "",
+    addhar: "",
+    pan: "",
+    bank: "",
+    jobWork: "",
     isUser: false,
-    gstNo:'',
+    gstNo: "",
   });
   const [contractorToEdit, setContractorToEdit] = useState(null);
-    const { user, isLoggedIn } = useSelector((state) => state.auth);
-    const dispatch = useDispatch();
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
   useEffect(() => {
     if (isEdit) {
-      console.log(isEdit)
-      setContractorToEdit(isEdit)
-      fetchContractor(isEdit)
+      console.log(isEdit);
+      setContractorToEdit(isEdit);
+      fetchContractor(isEdit);
     }
-  }, [isEdit])
+  }, [isEdit]);
   const [loading, setLoading] = useState(false);
   const fetchContractor = async (id) => {
     try {
@@ -37,22 +38,23 @@ const CreateContractor = ({ onClose, isEdit }) => {
       const Contractor = contractorData.data;
       setContractor({
         name: Contractor?.name,
-        email: Contractor?.email || '',
+        email: Contractor?.email || "",
         phone: Contractor?.phone,
         whatsapp: Contractor?.whatsapp,
         address: Contractor?.address,
+        state: Contractor?.state,
         addhar: Contractor?.addhar,
         pan: Contractor?.pan,
         bank: Contractor?.bank,
         jobWork: Contractor?.jobWork,
         isUser: Contractor?.isUser || false,
-        gstNo: Contractor?.gstNo || '',
-      })
-      console.log(Contractor)
+        gstNo: Contractor?.gstNo || "",
+      });
+      console.log(Contractor);
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.message);
     }
-  }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -64,29 +66,51 @@ const CreateContractor = ({ onClose, isEdit }) => {
 
   const handleReset = () => {
     setContractor({
-      name: '',
-      email: '',
-      phone: '',
-      whatsapp: '',
-      address: '',
-      addhar: '',
-      pan: '',
-      bank: '',
-      jobWork: '',
-      isUser: '',
-      gstNo:'',
-    })
-  }
+      name: "",
+      email: "",
+      phone: "",
+      whatsapp: "",
+      address: "",
+      state: "",
+      addhar: "",
+      pan: "",
+      bank: "",
+      jobWork: "",
+      isUser: "",
+      gstNo: "",
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(contractor)
+    console.log(contractor);
     setLoading(true);
     try {
       if (contractorToEdit) {
-        const response = await axios.put(`/api/v1/contractor/${contractorToEdit}`, {
+        const response = await axios.put(
+          `/api/v1/contractor/${contractorToEdit}`,
+          {
+            name: contractor.name,
+            email: contractor.email,
+            phone: contractor.phone,
+            whatsapp: contractor.whatsapp,
+            address: contractor.address,
+            state: contractor.state,
+            addhar: contractor.addhar,
+            pan: contractor.pan,
+            bank: contractor.bank,
+            jobWork: contractor.jobWork,
+            isUser: contractor.isUser,
+            gstNo: contractor.gstNo,
+          },
+        );
+        toast.success(response.data.message);
+        console.log("Form data submitted:", contractor);
+        dispatch(fetchNotifications(user._id));
+        onClose();
+      } else {
+        const response = await axios.post("/api/v1/contractor", {
           name: contractor.name,
-          email: contractor.email,
           phone: contractor.phone,
           whatsapp: contractor.whatsapp,
           address: contractor.address,
@@ -94,43 +118,23 @@ const CreateContractor = ({ onClose, isEdit }) => {
           pan: contractor.pan,
           bank: contractor.bank,
           jobWork: contractor.jobWork,
+          email: contractor.email,
           isUser: contractor.isUser,
           gstNo: contractor.gstNo,
         });
         toast.success(response.data.message);
-        console.log('Form data submitted:', contractor);
-          dispatch(fetchNotifications(user._id));
-        onClose()
-      } else {
-        const response = await axios.post('/api/v1/contractor', {
-          name: contractor.name,
-          phone: contractor.phone,
-          whatsapp: contractor.whatsapp,
-          address: contractor.address,
-          addhar: contractor.addhar,
-          pan: contractor.pan,
-          bank: contractor.bank,
-          jobWork: contractor.jobWork,
-          email: contractor.email,
-          isUser: contractor.isUser,  
-          gstNo: contractor.gstNo,
-        });
-        toast.success(response.data.message);
-        console.log('Form data submitted:', contractor);
-          dispatch(fetchNotifications(user._id));
-        onClose()
+        console.log("Form data submitted:", contractor);
+        dispatch(fetchNotifications(user._id));
+        onClose();
       }
     } catch (error) {
-      console.error('Error creating contractor:', error);
-      toast.error('Failed Creating Contractor. Please check your credentials.');
+      console.error("Error creating contractor:", error);
+      toast.error("Failed Creating Contractor. Please check your credentials.");
     }
   };
   return (
     <div>
-      <form
-        className='space-y-4'
-        onSubmit={handleSubmit}>
-
+      <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-600">
             Name:
@@ -140,7 +144,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
             name="name"
             value={contractor.name}
             onChange={handleChange}
-            placeholder='Name'
+            placeholder="Name"
             required
             className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
           />
@@ -160,46 +164,54 @@ const CreateContractor = ({ onClose, isEdit }) => {
             value={contractor.email}
             onChange={handleChange}
             placeholder="Email"
-            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500" />
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+          />
         </div>
 
-        <div className='mb-4'>
-          <label htmlFor='phone'
-            className='block text-sm font-medium text-gray-600'>
+        <div className="mb-4">
+          <label
+            htmlFor="phone"
+            className="block text-sm font-medium text-gray-600"
+          >
             Contact Number:
           </label>
           <input
-            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-            type='text'
-            name='phone'
-            id='phone'
-            placeholder='Enter Contact Number'
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+            type="text"
+            name="phone"
+            id="phone"
+            placeholder="Enter Contact Number"
             required
-            autoComplete='off'
+            autoComplete="off"
             value={contractor.phone}
             onChange={handleChange}
           />
         </div>
 
-        <div className='mb-4'>
-          <label htmlFor='whatsapp'
-            className='block text-sm font-medium text-gray-600'>
+        <div className="mb-4">
+          <label
+            htmlFor="whatsapp"
+            className="block text-sm font-medium text-gray-600"
+          >
             Whatsapp Number:
           </label>
           <input
-            className='mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500'
-            type='text'
-            name='whatsapp'
-            id='whatsapp'
-            placeholder='Enter Your Whatsapp Number'
-            autoComplete='off'
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+            type="text"
+            name="whatsapp"
+            id="whatsapp"
+            placeholder="Enter Your Whatsapp Number"
+            autoComplete="off"
             value={contractor.whatsapp}
             onChange={handleChange}
           />
         </div>
 
-        <div className='mb-4'>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-600">
+        <div className="mb-4">
+          <label
+            htmlFor="address"
+            className="block text-sm font-medium text-gray-600"
+          >
             Address
           </label>
           <input
@@ -213,8 +225,29 @@ const CreateContractor = ({ onClose, isEdit }) => {
           />
         </div>
 
-        <div className='mb-4'>
-          <label htmlFor="jobWork" className="block text-sm font-medium text-gray-600">
+        <div className="mb-4">
+          <label
+            htmlFor="state"
+            className="block text-sm font-medium text-gray-600"
+          >
+            State
+          </label>
+          <input
+            type="text"
+            id="state"
+            name="state"
+            value={contractor.state}
+            onChange={handleChange}
+            placeholder="state"
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="jobWork"
+            className="block text-sm font-medium text-gray-600"
+          >
             Work Of Contractor
           </label>
           <input
@@ -228,8 +261,11 @@ const CreateContractor = ({ onClose, isEdit }) => {
           />
         </div>
 
-        <div className='mb-4'>
-          <label htmlFor="gstNo" className="block text-sm font-medium text-gray-600">
+        <div className="mb-4">
+          <label
+            htmlFor="gstNo"
+            className="block text-sm font-medium text-gray-600"
+          >
             GST No
           </label>
           <input
@@ -247,8 +283,14 @@ const CreateContractor = ({ onClose, isEdit }) => {
             name="isUser"
             className="border-none rounded-lg focus:outline-none mr-2"
             onChange={handleChange}
-            value='true' />
-          <label htmlFor="isUser" className="block text-md font-medium text-gray-600">Is a User</label>
+            value="true"
+          />
+          <label
+            htmlFor="isUser"
+            className="block text-md font-medium text-gray-600"
+          >
+            Is a User
+          </label>
         </div>
 
         {/* <div className="mb-5">
@@ -301,29 +343,32 @@ const CreateContractor = ({ onClose, isEdit }) => {
         </div> */}
 
         <div className="flex justify-center md:justify-end lg:justify-end gap-2 mt-6">
-          <button type="button" onClick={onClose} className="px-4 py-2 bg-red-400 text-white rounded-md">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-red-400 text-white rounded-md"
+          >
             Cancel
           </button>
           <button
-            type='submit'
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" 
-                          disabled={loading}
-            >
-              {loading ? "Submitting..." : "Submit"}
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            disabled={loading}
+          >
+            {loading ? "Submitting..." : "Submit"}
           </button>
-          <button type="button" onClick={handleReset}
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:bg-gray-400"
+          >
             Reset
           </button>
         </div>
-
       </form>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-      />
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
-  )
-}
+  );
+};
 
-export default CreateContractor
+export default CreateContractor;

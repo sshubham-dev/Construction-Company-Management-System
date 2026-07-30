@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux'
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { GrEdit } from "react-icons/gr";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import { MdDelete, MdAdd } from "react-icons/md";
@@ -282,7 +282,6 @@ const Bills = () => {
         <CreateBill onClose={() => setEditModal(false)} editId={editId} />
       </Modal>
 
-      <Toaster position="top-right" />
     </div>
   );
 };

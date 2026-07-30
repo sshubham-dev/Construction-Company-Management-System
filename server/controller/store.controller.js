@@ -109,17 +109,17 @@ const createStore = async (req, res) => {
 ========================= */
 const getStores = async (req, res) => {
   try {
-    const { type, businessUnitId } = req.query;
+    const { type, businessUnitId, companyId } = req.query;
 
-    const filter = { isActive: true };
+    const filter = {};
 
     if (type) filter.type = type;
     if (businessUnitId) filter.businessUnitId = businessUnitId;
+    if (companyId) filter.companyId = companyId;
 
     const stores = await Store.find(filter)
       .populate("businessUnitId storeHead storeIncharge")
       .sort({ createdAt: -1 })
-      .lean();
 
     res.json({ success: true, data: stores });
   } catch (err) {
@@ -159,7 +159,7 @@ const updateStore = async (req, res) => {
 
     Object.assign(store, req.body);
     store.companyId = user?.companyId;
-    
+
     if (!store.costCenterId) {
       const costCenter = await syncCostCenter(store, "WAREHOUSE");
       store.costCenterId = costCenter._id;

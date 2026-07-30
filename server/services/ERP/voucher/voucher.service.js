@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Voucher = require("../../../models/voucher.models");
-const { generateVoucherNo } = require("../../../utils/voucherNoGenerator");
-const getFinancialYear = require("../../../utils/getFinancialYear.js");
+const { generateVoucherNo } = require("../../../utils/voucher/voucherNoGenerator");
+const getFinancialYear = require("../../../utils/voucher/getFinancialYear.js");
 
 const validateEntries = (entries) => {
   if (!entries || entries.length < 2) {
@@ -96,19 +96,25 @@ const postVoucher = async (voucherId) => {
   return voucher;
 };
 
-const cancelVoucher = async (voucherId) => {
-  const voucher = await Voucher.findById(voucherId);
+const cancelVoucher = async (voucherId, session = null, cancelledBy = null) => {
+  const voucher = await Voucher.findById(voucherId).session(session);
 
-  if (!voucher) throw new Error("Voucher not found");
-
-  if (voucher.status !== "POSTED") {
-    throw new Error("Only posted voucher can be cancelled");
+  if (!voucher) {
+    throw new Error("Voucher not found");
   }
+
+  // if (voucher.status !== "POSTED") {
+  //   throw new Error("Only posted voucher can be cancelled");
+  // }
 
   voucher.status = "CANCELLED";
   voucher.cancelledAt = new Date();
 
-  await voucher.save();
+  if (cancelledBy) {
+    voucher.cancelledBy = cancelledBy;
+  }
+
+  await voucher.save({ session });
 
   return voucher;
 };

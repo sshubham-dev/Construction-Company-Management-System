@@ -57,39 +57,6 @@ const stockGroupSchema = new mongoose.Schema(
       default: false,
     },
 
-    // // === ACCOUNTING DEFAULTS ===
-    accounting: {
-      inventoryLedgerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Ledger",
-        default: null,
-      },
-
-      purchaseLedgerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Ledger",
-        default: null,
-      },
-
-      salesLedgerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Ledger",
-        default: null,
-      },
-
-      consumptionLedgerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Ledger",
-        default: null,
-      },
-
-      scrapLedgerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Ledger",
-        default: null,
-      },
-    },
-
     description: String,
 
     isActive: {
@@ -118,6 +85,8 @@ const stockItemSchema = new mongoose.Schema(
       uppercase: true,
       trim: true,
     },
+
+    description: String,
 
     /* ======================
        CLASSIFICATION
@@ -160,6 +129,76 @@ const stockItemSchema = new mongoose.Schema(
       default: "STORE_STOCK",
     },
 
+    // GST
+    gstRate: Number,
+    gstType: {
+      type: String,
+      enum: ["GOODS", "SERVICE"],
+      default: "GOODS"
+    }, // GOODS | SERVICE
+    hsnSacCode: Number,
+
+
+    /* ======================
+       ACCOUNTING
+    ====================== */
+
+      purchaseLedgerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ledger",
+        default: null,
+      }, // Used by Purchase Voucher
+
+      salesLedgerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ledger",
+        default: null,
+      }, // Used by Sales Voucher
+
+      inventoryLedgerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ledger",
+        default: null,
+      }, // Asset ledger for stock valuation
+
+      issueLedgerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ledger",
+        default: null,
+      }, // Project/Site material issue expense
+
+
+    /* ======================
+       INVENTORY
+    ====================== */
+
+      affectsInventory: {
+        type: Boolean,
+        default: false,
+      },
+      allowNegativeStock: {
+        type: Boolean,
+        default: false,
+      },
+      trackSerialNo: {
+        type: Boolean,
+        default: false,
+      },
+      trackBatch: {
+        type: Boolean,
+        default: false,
+      },
+      expiryApplicable: {
+        type: Boolean,
+        default: false,
+      },
+
+
+      minimumLevel: Number,
+      reorderLevel: Number,
+      maximumLevel: Number,
+
+
     /* ======================
        DEFAULTS (NOT DYNAMIC)
     ====================== */
@@ -173,7 +212,6 @@ const stockItemSchema = new mongoose.Schema(
     ====================== */
     brand: String, // Ultratech, ACC, etc.
     specification: String, // 50kg bag, grade, etc.
-    description: String,
 
     /* ======================
        STATUS

@@ -88,12 +88,65 @@ const createLedger = async (data) => {
 };
 
 // ✅
-const getLedgers = async (query) => {
+const getLedgers = async (data) => {
+  const {
+    companyId,
+    ledgerType,
+    group,
+    isActive,
+    search,
+    limit
+  } = data;
+
+  /* =========================
+     QUERY
+  ========================== */
+
+  const query = {};
+
+  if (companyId) {
+    query.companyId =
+      companyId;
+  }
+
+  if (ledgerType) {
+    query.referenceType =
+      ledgerType;
+  }
+
+  if (group) {
+    query.groupId =
+      group;
+  }
+
+  /* =========================
+     SEARCH
+  ========================== */
+
+  if (search) {
+    query.$or = [
+      {
+        name: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+
+      {
+        ledgerCode: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+    ];
+  }
+
   return await Ledger.find(query)
     .populate("groupId")
     .populate("referenceId")
     .populate("companyId")
-    .sort({ name: 1 });
+    .sort({ name: 1 })
+    .limit(data.limit);
 };
 
 

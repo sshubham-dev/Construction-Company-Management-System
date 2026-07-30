@@ -10,8 +10,8 @@ const {
   updateVoucher,
   cancelVoucher,
 } = require("../services/ERP/voucher/voucher.service.js");
-const getFinancialYear = require("../utils/getFinancialYear.js");
-const { generateVoucherNo } = require("../utils/voucherNoGenerator.js");
+const getFinancialYear = require("../utils/voucher/getFinancialYear.js");
+const { generateVoucherNo } = require("../utils/voucher/voucherNoGenerator.js");
 const { getCollectionDashboard } = require("../services/ERP/collection.service.js")
 
 /* ---------------- CREATE COLLECTION ENTRY ---------------- */

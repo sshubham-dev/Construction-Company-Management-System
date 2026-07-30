@@ -12,6 +12,7 @@ const CreateSupplier = ({ onClose, isEdit }) => {
     whatsapp: "",
     gstNo: "",
     address: "",
+    state: "",
     pan: "",
     bank: "",
     isUser: false,
@@ -38,6 +39,7 @@ const CreateSupplier = ({ onClose, isEdit }) => {
         whatsapp: supplier.whatsapp,
         gstNo: supplier.gstNo,
         address: supplier.address,
+        state: supplier.state,
         pan: supplier.pan,
         bank: "",
       });
@@ -69,6 +71,7 @@ const CreateSupplier = ({ onClose, isEdit }) => {
       whatsapp: "",
       gstNo: "",
       address: "",
+      state: "",
       pan: "",
       bank: "",
       isUser: "",
@@ -180,6 +183,23 @@ const CreateSupplier = ({ onClose, isEdit }) => {
             value={supplier.address}
             onChange={handleChange}
             placeholder="Address"
+            className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="state"
+            className="block text-sm font-medium text-gray-600"
+          >
+            State
+          </label>
+          <input
+            type="text"
+            name="state"
+            value={supplier.state}
+            onChange={handleChange}
+            placeholder="State"
             className="mt-1 p-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
           />
         </div>

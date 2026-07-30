@@ -255,7 +255,7 @@ const updateEmployeeData = async (req, res) => {
       bank,
     });
 
-    console.log("Updating Employee:", employee.status);
+    // console.log("Updating Employee:", employee.status);
     // Boolean safety
     employee.isUser = isUser === true || isUser === "true";
 
@@ -281,6 +281,7 @@ const updateEmployeeData = async (req, res) => {
       if (existingUser) {
         const notificationMessage = `Your account status has been changed to ${employee.status}. Please contact your administrator for more details.`;
         existingUser.status = employee.status; // Update the status in the User model as well
+        existingUser.userName = employee.name;
         await existingUser.save();
         await sendPushNotification(
           existingUser._id,

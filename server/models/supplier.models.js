@@ -28,6 +28,12 @@ const supplierSchema = new mongoose.Schema(
 
     address: {
       type: String,
+      required: true,
+    },
+
+    state: {
+      type: String,
+      required: true,
     },
 
     gstNo: {
@@ -146,6 +152,7 @@ supplierSchema.pre("save", async function () {
         address: doc.address || "",
         email: doc.email || "",
         phone: doc.phone || "",
+        state: doc?.state,
       }),
       getTaxDetails: (doc) => ({
         gstNo: doc.gstNo || "",

@@ -22,7 +22,15 @@ const voucherSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["PAYMENT", "RECEIPT", "CONTRA", "JOURNAL"],
+      enum: [
+        "PAYMENT",
+        "RECEIPT",
+        "CONTRA",
+        "JOURNAL",
+
+        "PURCHASE",
+        "SALES",
+      ],
       required: true,
     },
 
@@ -50,7 +58,9 @@ const voucherSchema = new mongoose.Schema(
           ref: "Ledger",
           required: true,
         },
-
+        ledgerName: {
+          type: String,
+        },
         type: {
           type: String,
           enum: ["DEBIT", "CREDIT"],
@@ -122,8 +132,6 @@ const voucherSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-
-// voucherSchema.index({ voucherNo: 1, companyId: 1 }, { unique: true });
 
 voucherSchema.pre("save", function () {
   let debit = 0;

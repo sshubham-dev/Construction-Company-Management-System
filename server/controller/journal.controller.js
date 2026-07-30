@@ -68,6 +68,15 @@ const getJournalById = async (req, res) => {
   }
 };
 
+const getJournal = async (req, res) => {
+  try {
+    const data = await journalService.getJournal(req.params.id);
+    res.json(data);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+};
+
 /* ======================
    GET BY VOUCHER NO
 ====================== */
@@ -111,6 +120,7 @@ module.exports = {
   deleteJournal,
   getJournals,
   getJournalById,
+  getJournal,
   getJournalByVoucherNo,
   postJournal,
   cancelJournal,

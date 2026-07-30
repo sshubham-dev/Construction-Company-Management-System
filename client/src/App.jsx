@@ -106,9 +106,6 @@ import MonthlyPerformance from "./pages/HRMS/MonthlyPerformance.jsx";
 
 // CMS
 import BlogPreviewer from "./pages/CMS/Blog/BlogPreviewer.jsx";
-import FAQs from "./pages/CMS/FAQs.jsx";
-import Projects from "./pages/CMS/Projects.jsx";
-import ProjectDetail from "./pages/CMS/ProjectDetail.jsx";
 import Blogs from "./pages/CMS/Blogs.jsx";
 import BlogEdit from "./pages/CMS/Blog/BlogEdit.jsx";
 import CreateBlog from "./pages/CMS/Blog/CreateBlog.jsx";
@@ -164,9 +161,12 @@ import SiteProfit from "./pages/ERP/Reports/SiteProfit.jsx"; //
 import Sales from "./pages/ERP/Reports/Sales.jsx";
 import TrialBalance from "./pages/ERP/Reports/TrialBalance.jsx"; //
 
-import ProjectEditor from "./components/CreateProject.jsx";
 import CollectionReport from "./pages/ERP/Reports/CollectionReport.jsx";
 import SiteProfitDetail from "./pages/ERP/Reports/SiteProfit/SiteProfitDetail.jsx";
+import PurchaseInvoiceForm from "./pages/ERP/Components/PurchaseInvoiceForm.jsx";
+import VoucherDetail from "./pages/ERP/Components/VoucherDetail.jsx";
+import PurchaseInvoice from "./pages/ERP/PurchaseInvoice.jsx";
+import GSTConfigPage from "./pages/ERP/gstConfig/GSTConfigPage.jsx";
 
 const App = () => {
   const { user, isLoggedIn } = useSelector((state) => {
@@ -416,7 +416,13 @@ const App = () => {
         <Route path="/erp/business_unit" element={<BusinessUnit />} />
         <Route path="/erp/business_unit/:id" element={<BusinessUnitScreen />} />
         <Route path="/erp/:voucher" element={<Voucher />} />
+        <Route path="/erp/purchase-invoice" element={<PurchaseInvoice />} />
+        <Route path="/erp/purchase-form/:mode" element={<PurchaseInvoiceForm />} />
+        <Route path="/erp/purchase-form/:mode/:id" element={<PurchaseInvoiceForm />} />
+        <Route path="/erp/purchase-invoice/:mode/:id" element={<PurchaseInvoiceForm />} />
+        <Route path="/erp/:voucher/:id" element={<VoucherDetail />} />
         <Route path="/erp/ledger" element={<LedgerList />} />
+        <Route path="/erp/gst-config" element={<GSTConfigPage />} />
         <Route path="/erp/cost-center" element={<CostCenter />} />
         <Route path="/erp/invoice/create" element={<InvoiceForm />} />
         <Route path="/erp/invoice" element={<Invoice />} />
@@ -461,13 +467,6 @@ const App = () => {
         <Route path="/cms/blogs" element={<Blogs />} />
         <Route path="/cms/blog/preview/:id" element={<BlogPreviewer />} />
         <Route path="/cms/blog/edit/:id" element={<BlogEdit />} />
-
-        <Route path="/cms/faqs" element={<FAQs />} />
-
-        <Route path="/cms/projects" element={<Projects />} />
-        <Route path="/cms/project/create" element={<ProjectEditor />} />
-        <Route path="/cms/project/edit/:id" element={<ProjectEditor />} />
-        <Route path="/cms/project/:id" element={<ProjectDetail />} />
 
         <Route path="/work-details" element={<WorkDetails />} />
 

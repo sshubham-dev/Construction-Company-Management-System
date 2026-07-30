@@ -21,8 +21,8 @@ const {
   cancelVoucher,
   updateVoucher,
 } = require("../services/ERP/voucher/voucher.service.js");
-const  getFinancialYear = require("../utils/getFinancialYear.js");
-const { generateVoucherNo } = require("../utils/voucherNoGenerator.js");
+const getFinancialYear = require("../utils/voucher/getFinancialYear.js");
+const { generateVoucherNo } = require("../utils/voucher/voucherNoGenerator.js");
 
 const resolvePaidByLedger = async (userId) => {
   const employee = await Employee.findOne({ userId });
@@ -304,6 +304,7 @@ const getExpenses = async (req, res) => {
   }
 };
 
+
 const getExpenseById = async (req, res) => {
   const expense = await Expenses.findById(req.params.id)
     .populate("expenseLedger")
@@ -325,9 +326,10 @@ const updateExpense = async (req, res) => {
     if (!expense) {
       return res.status(404).json({ message: "Expense not found" });
     }
-
-    if (expense.createdBy !== user._id){
-      return res.status(410).json("Permission deined");
+    //  console.log(user.department)
+    if (user._id !== expense.createdBy && (user.department !== "Account Head" && user.department !== "Accountant")) {
+      console.log("Permission deined")
+      return res.status(400).json("Permission deined");
     }
 
     /* ----------------------------------
@@ -385,8 +387,8 @@ const updateExpense = async (req, res) => {
     if (narration !== undefined) expense.narration = narration;
     if (remarks !== undefined) expense.remarks = remarks || expense?.remarks;
     expense.companyId = user.companyId || expense?.companyId;
-    expense.paidByLedger = paidByLedger || expense?.paidByLedger;
-    expense.createdBy = user._id || expense?.createdBy;
+    // expense.paidByLedger = paidByLedger || expense?.paidByLedger;
+    // expense.createdBy = user._id || expense?.createdBy;
     expense.expenseCategory = expenseCategory;
 
     /* ----------------------------------

@@ -111,16 +111,16 @@ const convertToUser = async (id, role, password, status) => {
   try {
     switch (role) {
       case "Employee":
-        console.log("Finding Employee");
+        // console.log("Finding Employee");
         const employee = await Employee.findById(id);
         // console.log('employee', employee)
         if (!employee) return "Employee not Found";
-        console.log("Found Employee");
-        console.log("Finding User");
+        // console.log("Found Employee");
+        // console.log("Finding User");
         const employeeUser = await User.findOne({
           $and: [
-            // { _id: employee?.userId },
-            { userName: employee.name },
+            { _id: employee?.userId },
+            // { userName: employee.name },
             // { department: employee.department },
             // { companyId: employee.companyId },
           ],
@@ -128,6 +128,7 @@ const convertToUser = async (id, role, password, status) => {
         if (employeeUser)
           console.log("Found User");
         if (status === "Update") {
+          console.log(employeeUser.userName)
           employeeUser.userName = employee.name || employeeUser.userName;
           employeeUser.userMail = employee.email || employeeUser.userMail;
           employeeUser.phone = employee.phone || employeeUser.phone;
@@ -141,7 +142,7 @@ const convertToUser = async (id, role, password, status) => {
           employeeUser.ledger = employee.ledger || employeeUser.ledger;
           employeeUser.businessUnitId =
             employee.businessUnitId || employeeUser.businessUnitId;
-          console.log(employee.companyId);
+          // console.log(employee.companyId);
           await employeeUser.save();
         } else if (status === "Create") {
           const newEmployeeUser = new User({
@@ -489,7 +490,7 @@ const updateUser = async (req, res) => {
     });
     console.log(upload);
     const existingUser = await User.findById(id).select("-refreshToken");
-    if (upload.secure_url) {
+    if (avatarLocalPath) {
       existingUser.avatar = {
         secure_url:
           upload?.secure_url || existingUser.avatar?.secure_url || null,

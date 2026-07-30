@@ -4,7 +4,7 @@ const { syncLedger } = require("../utils/ledgerSync");
 const employeeSchema = new mongoose.Schema(
   {
     /* ================= BASIC IDENTITY ================= */
-    name: { type: String, required: true },
+    name: { type: String, required: true, trim: true },
     email: { type: String, unique: true, lowercase: true, trim: true },
     phone: { type: Number, required: true },
     whatsapp: { type: Number },

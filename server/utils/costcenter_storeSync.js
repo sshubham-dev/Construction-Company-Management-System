@@ -16,6 +16,7 @@ const SyncStore_CostCenter = async (site) => {
             companyId,
             type,
             name,
+            isActive,
         } = site;
 
         if (!businessUnitId) throw new Error("Business Unit required");
@@ -57,7 +58,7 @@ const SyncStore_CostCenter = async (site) => {
 
             if (!store.costCenterId) {
                 let costCenterId = site.costCenterId;
-                
+
                 if (!costCenterId) {
                     console.log("Cost Center not exist creating one.");
                     const costCenter = await syncCostCenter(site, "SITE");
@@ -67,7 +68,8 @@ const SyncStore_CostCenter = async (site) => {
 
                 store.costCenterId = costCenterId;
             }
-            
+            store.isActive = isActive || store.isActive;
+
             await store.save();
 
             return store;
@@ -89,6 +91,7 @@ const SyncStore_CostCenter = async (site) => {
             address,
             storeHead,
             storeIncharge: incharge ? incharge._id : null,
+            isActive: true
         });
 
         /* =========================

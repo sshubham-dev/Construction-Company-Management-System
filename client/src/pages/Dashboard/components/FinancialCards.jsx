@@ -78,7 +78,7 @@ export default function FinancialCards({ summary = {} }) {
         return (
           <div
             key={card.title}
-            className={`bg-white border ${card.border} rounded-xl shadow-sm p-5`}
+            className={`bg-white border ${card.border} rounded-xl shadow-sm p-5 `}
           >
             <div className="flex items-start justify-between">
 
@@ -106,7 +106,7 @@ export default function FinancialCards({ summary = {} }) {
 
             </div>
 
-            <p className="text-xs text-gray-500 mt-4 leading-5">
+            <p className="text-xs text-gray-500 mt-2 leading-5">
               {card.subtitle}
             </p>
 

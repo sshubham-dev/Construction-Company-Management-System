@@ -69,7 +69,6 @@ const CreateLedger = ({ onClose, editData }) => {
     fetchCompany();
   }, []);
 
-
   /* =========================
      EDIT MODE
   ========================== */
@@ -273,7 +272,7 @@ const CreateLedger = ({ onClose, editData }) => {
         />
       </div>
 
-            {/* STATUTORY */}
+      {/* STATUTORY */}
       <div className="flex gap-6">
         <label>
           <input
@@ -366,7 +365,7 @@ const CreateLedger = ({ onClose, editData }) => {
 
           <Select
             options={referenceOptions}
-            onChange={(e) => setReferenceId(e?.value || "")}
+            onChange={(e) => setReferenceId(e?.value || null)}
             placeholder="Select Reference"
             isDisabled={!referenceType}
           />
@@ -379,7 +378,7 @@ const CreateLedger = ({ onClose, editData }) => {
           Cancel
         </button>
 
-        <button disabled={loading} className="btn-primary" >
+        <button disabled={loading} className="btn-primary">
           {loading ? "Saving..." : isEdit ? "Update" : "Create"}
         </button>
       </div>

@@ -330,6 +330,7 @@ const updateSite = async (req, res) => {
         type: "SITE",
         name: existingSite.name,
         costCenterId: existingSite.costcenter,
+        isActive: true,
       }
       const siteStore = existingSite.store;
 

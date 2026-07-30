@@ -32,6 +32,12 @@ const getCurrentFY = () => {
   };
 };
 
+const formatMoney = (value) =>
+  new Intl.NumberFormat("en-IN", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+
 export default function ERP() {
   const fy = getCurrentFY();
   const [data, setData] = useState({
@@ -189,12 +195,20 @@ export default function ERP() {
                 top: 10,
                 right: 0,
                 bottom: 0,
-                left: 15,
+                left: -18,
               }}
             >
               <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
+              <YAxis tickFormatter={formatMoney} />
+              <Tooltip
+                formatter={(value) =>
+                  new Intl.NumberFormat("en-IN", {
+                    style: "currency",
+                    currency: "INR",
+                    maximumFractionDigits: 0,
+                  }).format(value)
+                }
+              />
               <Bar dataKey="value" />
             </BarChart>
           </ResponsiveContainer>
@@ -229,12 +243,20 @@ export default function ERP() {
                 top: 10,
                 right: 0,
                 bottom: 0,
-                left: 15,
+                left: -18,
               }}
             >
               <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
+              <YAxis tickFormatter={formatMoney} />
+              <Tooltip
+                formatter={(value) =>
+                  new Intl.NumberFormat("en-IN", {
+                    style: "currency",
+                    currency: "INR",
+                    maximumFractionDigits: 0,
+                  }).format(value)
+                }
+              />
               <Bar dataKey="value" />
             </BarChart>
           </ResponsiveContainer>
@@ -343,7 +365,7 @@ export default function ERP() {
       </div>
 
       {/* Recent Voucher */}
-      <div className="rounded-xl border bg-white shadow-sm">
+      {/* <div className="rounded-xl border bg-white shadow-sm">
         <div className="border-b p-4">Recent Activity</div>
 
         {data?.recentVouchers?.map((voucher, index) => (
@@ -375,7 +397,7 @@ export default function ERP() {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }

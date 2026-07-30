@@ -22,6 +22,7 @@ const Store = () => {
     try {
       const res = await axios.get("/api/v1/store");
       setStores(Array.isArray(res.data) ? res.data : res.data.data || []);
+      console.log(res.data)
     } catch {
       toast.error("Failed to load stores");
     } finally {

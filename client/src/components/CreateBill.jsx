@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchNotifications } from "../features/notification/notificationSlice";
 
@@ -574,7 +574,6 @@ const CreateBill = ({ onClose, editId = null }) => {
         </div>
       </form>
 
-      <Toaster position="top-right" />
     </div>
   );
 };

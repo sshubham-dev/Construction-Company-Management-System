@@ -20,7 +20,7 @@ const LedgerList = () => {
     });
     console.log(res.data.data);
     setLedgers(res.data.data);
-    setFiltered(res.data.data);
+    // setFiltered(res.data.data);
   };
 
   useEffect(() => {

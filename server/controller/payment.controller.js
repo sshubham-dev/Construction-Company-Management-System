@@ -38,10 +38,21 @@ const getPayments = async (req, res) => {
   }
 };
 
-/* GET ONE */
+/* GET BY ID */
 const getPaymentById = async (req, res) => {
   try {
     const data = await paymentService.getPaymentById(req.params.id);
+    res.json(data);
+  } catch (err) {
+    console.log(err)
+    res.status(404).json({ error: err.message });
+  }
+};
+
+/* GET ONE */
+const getPayment = async (req, res) => {
+  try {
+    const data = await paymentService.getPayment(req.params.id);
     res.json(data);
   } catch (err) {
     console.log(err)
@@ -88,6 +99,7 @@ module.exports = {
   updatePayment,
   getPayments,
   getPaymentById,
+  getPayment,
   deletePayment,
   postPayment,
   cancelPayment,

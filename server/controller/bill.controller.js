@@ -15,7 +15,6 @@ const {
   sendApproveByContractor,
 } = require("./approval.controller.js");
 const { Ledger } = require("../models/ledger.models.js");
-const { Journal } = require("../models/journal.models.js");
 const { sendPushNotification, notifyRole } = require("../utils/pushNotification.js");
 
 const generateBillNo = async (req, res) => {
@@ -397,9 +396,7 @@ const createBill = async (req, res) => {
       emp.notification.push({
         title: "Bill Alert",
         message: `A Bill created by ${existingUser.userName} for ${existingSite.name}`,
-        createdAt: newBill.createdAt
-          ? newBill.createdAt.toLocaleString()
-          : new Date().toLocaleString(),
+        createdAt: newBill.createdAt || new Date(),
         link: `/bill/${newBill.id}`,
       });
       await emp.save();
@@ -454,8 +451,7 @@ const saveBill = async (req, res) => {
             title: "Bill Alert",
             message: `A Bill created by ${existingUser.userName} for ${existingSite.name}`,
             createdAt: bill.updatedAt
-              ? bill.updatedAt.toLocaleString()
-              : new Date().toLocaleString(),
+              || new Date(),
             link: `/bill/${bill.id}`,
           });
           await employee.save();
@@ -475,51 +471,6 @@ const saveBill = async (req, res) => {
           referenceType: "Site",
         });
 
-        if (contractorLedger && siteLedger) {
-          const voucherCount = await Journal.countDocuments();
-          const voucherNo = `JRN-${String(voucherCount + 1).padStart(4, "0")}`;
-
-          const newJournal = new Journal({
-            voucherNo,
-            date: new Date(),
-            narration: `Bill for ${existingContractor
-                ? existingContractor.name
-                : bill.contractor.name
-              } at site ${existingSite.name}`,
-            entries: [
-              {
-                account: {
-                  name: existingContractor
-                    ? contractorLedger.name
-                    : bill.contractor.name,
-                  id: existingContractor && contractorLedger._id,
-                },
-                type: "Debit",
-                amount: bill.totalAmount, // Contractor is to receive
-                reference: "Bill",
-                referenceId: bill._id,
-              },
-              {
-                account: { name: siteLedger.name, id: siteLedger._id },
-                type: "Credit",
-                amount: bill.totalAmount, // Site is being charged
-                reference: "Bill",
-                referenceId: bill._id,
-              },
-            ],
-            createdBy: user._id,
-          });
-
-          await newJournal.save();
-
-          // Optionally update ledger balance or add to transaction log
-          existingContractor &&
-            (contractorLedger.payable =
-              (contractorLedger.payable || 0) + bill.totalAmount);
-          siteLedger.paid = (siteLedger.paid || 0) + bill.totalAmount;
-          existingContractor && (await contractorLedger.save());
-          await siteLedger.save();
-        }
       } else {
         console.log("Bill is Not Approved By Every One");
         return res

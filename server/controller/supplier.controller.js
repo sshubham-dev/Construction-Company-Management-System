@@ -2,13 +2,13 @@ const Supplier = require('../models/supplier.models.js');
 const User = require('../models/user.models.js');
 const { addLedger } = require('./ledger.controller.js');
 const { convertToUser } = require('./user.controller.js');
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
+const { sendPushNotification, notifyRole } = require("../utils/pushNotification.js");
 
 const getSuppliers = async (req, res) => {
     try {
         const suppliers = await Supplier.find()
-        .sort({ name: 1 })
-        .exec();
+            .sort({ name: 1 })
+            .exec();
         if (suppliers.length === '0') return res.status(404).json({ error: 'No Suppliers found' });
         res.status(200).json(suppliers);
     } catch (error) {
@@ -33,15 +33,16 @@ const getSupplier = async (req, res) => {
 
 const createSupplier = async (req, res) => {
     try {
-        const { name, email, phone, whatsapp, address, gstNo, bank, isUser } = req.body;
+        const { name, email, phone, whatsapp, address, state, gstNo, bank, isUser } = req.body;
         console.log(req.body)
-           const user = req.user;
+        const user = req.user;
         const newSupplier = new Supplier({
             name,
             email,
             phone,
             whatsapp,
             address,
+            state,
             gstNo,
             isUser,
             companyId: user.companyId,
@@ -70,6 +71,7 @@ const updateSupplier = async (req, res) => {
             phone,
             whatsapp,
             address,
+            state,
             gstNo,
             bank,
             isUser,
@@ -87,6 +89,7 @@ const updateSupplier = async (req, res) => {
         supplier.phone = phone || supplier.phone;
         supplier.whatsapp = whatsapp || supplier.whatsapp;
         supplier.address = address || supplier.address;
+        supplier.state = state || supplier.state;
         supplier.gstNo = gstNo?.trim() || supplier.gstNo;
         supplier.bank = bank || supplier.bank;
         supplier.companyId = user.companyId || supplier.companyId;

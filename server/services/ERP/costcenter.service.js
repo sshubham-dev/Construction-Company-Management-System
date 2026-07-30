@@ -9,6 +9,7 @@ const createCostCenter = async (data) => {
 
 // ✅
 const getCostCenters = async (query) => {
+  
   return await CostCenter.find(query)
     .sort({ name: 1 })
     .populate("companyId parentId")

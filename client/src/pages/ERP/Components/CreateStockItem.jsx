@@ -2,29 +2,60 @@ import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import Select from "react-select";
 import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
 const CreateStockItem = ({ onClose, editId }) => {
   const isEdit = Boolean(editId);
   const [loading, setLoading] = useState(false);
   const [groups, setGroups] = useState([]);
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [categories, setCategories] = useState([]);
+  const [purchaseLedgers, setPurchaseLedgers] = useState([]);
+  const [salesLedgers, setSalesLedgers] = useState([]);
+  const [inventoryLedgers, setInventoryLedgers] = useState([]);
+  const [issueLedgers, setIssueLedgers] = useState([]);
   const [form, setForm] = useState({
+    // Basic
     name: "",
     code: "",
+    description: "",
 
+    // Classification
     groupId: "",
     categoryId: "",
-
     unit: "",
-
     itemType: "INVENTORY",
     procurementMode: "STORE_STOCK",
 
+    // Tax
+    hsnSacCode: "",
+    gstRate: 18,
+    gstType: "GOODS",
+
+    // Accounting
+    purchaseLedgerId: null,
+    salesLedgerId: null,
+    inventoryLedgerId: null,
+    issueLedgerId: null,
+
+    // Inventory Behaviour
+    affectsInventory: true,
+    allowNegativeStock: false,
+    trackBatch: false,
+    trackSerialNo: false,
+    expiryApplicable: false,
+
+    // Stock Control
+    minimumLevel: 0,
+    reorderLevel: 0,
+    maximumLevel: 0,
+
+    // Purchase
     defaultPurchaseRate: 0,
 
+    // Additional
     brand: "",
     specification: "",
-    description: "",
 
     isActive: true,
   });
@@ -37,15 +68,39 @@ const CreateStockItem = ({ onClose, editId }) => {
   }, []);
   const fetchMasters = async () => {
     try {
-      const [groupRes, categoryRes] = await Promise.all([
+      const [
+        groupRes,
+        categoryRes,
+        purchaseLedgerRes,
+        salesLedgerRes,
+        inventoryLedgerRes,
+        issueLedgerRes,
+      ] = await Promise.all([
         axios.get("/api/v1/stock-group"),
         axios.get("/api/v1/stock-category"),
+        axios.get("/api/v1/ledger", {
+          params: { companyId: user.companyId },
+        }),
+        axios.get("/api/v1/ledger", {
+          params: { companyId: user.companyId },
+        }),
+        axios.get("/api/v1/ledger", {
+          params: { companyId: user.companyId },
+        }),
+        axios.get("/api/v1/ledger", {
+          params: { companyId: user.companyId },
+        }),
       ]);
 
       setGroups(groupRes.data.data || []);
       console.log(groupRes.data.data);
 
       setCategories(categoryRes.data.data || []);
+
+      setPurchaseLedgers(purchaseLedgerRes.data.data || []);
+      setSalesLedgers(salesLedgerRes.data.data || []);
+      setInventoryLedgers(inventoryLedgerRes.data.data || []);
+      setIssueLedgers(issueLedgerRes.data.data || []);
     } catch (err) {
       toast.error("Failed to load master data");
     }
@@ -62,27 +117,46 @@ const CreateStockItem = ({ onClose, editId }) => {
         const res = await axios.get(`/api/v1/stock-item/${editId}`);
 
         const data = res.data.data;
-        console.log(data)
+        console.log(data);
 
         setForm({
           name: data.name || "",
           code: data.code || "",
+          description: data.description || "",
 
           groupId: data.groupId?._id || "",
-
           categoryId: data.categoryId?._id || "",
-
           unit: data.unit || "",
-
           itemType: data.itemType || "INVENTORY",
+          procurementMode: data.procurementMode || "",
+
+          // Tax
+          hsnSacCode: data.hsnSacCode || "",
+          gstRate: data.gstRate || "",
+          gstType: data.gstType || "",
+
+          // Accounting
+          purchaseLedgerId: data.purchaseLedgerId || null,
+          salesLedgerId: data.salesLedgerId || null,
+          inventoryLedgerId: data.inventoryLedgerId || null,
+          issueLedgerId: data.issueLedgerId || null,
+
+          // Inventory Behaviour
+          affectsInventory: data.affectsInventory || true,
+          allowNegativeStock: data.allowNegativeStock || false,
+          trackBatch: data.trackBatch || false,
+          trackSerialNo: data.trackSerialNo || false,
+          expiryApplicable: data.expiryApplicable || false,
+
+          // Stock Control
+          minimumLevel: data.minimumLevel || 0,
+          reorderLevel: data.reorderLevel || 0,
+          maximumLevel: data.maximumLevel || 0,
 
           defaultPurchaseRate: data.defaultPurchaseRate || 0,
 
           brand: data.brand || "",
-
           specification: data.specification || "",
-
-          description: data.description || "",
 
           isActive: data.isActive ?? true,
         });
@@ -117,6 +191,7 @@ const CreateStockItem = ({ onClose, editId }) => {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
+
   const handleNumber = (field, value) => {
     setForm((prev) => ({
       ...prev,
@@ -150,7 +225,7 @@ const CreateStockItem = ({ onClose, editId }) => {
 
     return true;
   };
-  
+
   /* =========================
      SUBMIT
   ========================== */
@@ -171,7 +246,7 @@ const CreateStockItem = ({ onClose, editId }) => {
         defaultPurchaseRate: Number(form.defaultPurchaseRate) || 0,
       };
 
-      if (isEdit) {
+      if (editId !== undefined) {
         await axios.put(`/api/v1/stock-item/${editId}`, payload);
 
         toast.success("Item updated");
@@ -207,7 +282,6 @@ const CreateStockItem = ({ onClose, editId }) => {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* BASIC */}
-
         <Section title="Basic Information">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Input
@@ -237,7 +311,6 @@ const CreateStockItem = ({ onClose, editId }) => {
         </Section>
 
         {/* CLASSIFICATION */}
-
         <Section title="Classification">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <SelectField
@@ -282,9 +355,9 @@ const CreateStockItem = ({ onClose, editId }) => {
               }
               placeholder={
                 !form.groupId
-                  ? "Select Group First*"
+                  ? "Select Group*"
                   : !form.categoryId
-                    ? "Select Category First*"
+                    ? "Select Category*"
                     : "Select Item*"
               }
             />
@@ -341,9 +414,178 @@ const CreateStockItem = ({ onClose, editId }) => {
           </div>
         </Section>
 
-        {/* PURCHASE */}
+        <Section title="Tax Information">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Input
+              label="HSN / SAC Code"
+              name="hsnSacCode"
+              value={form.hsnSacCode}
+              onChange={handleChange}
+              placeholder="2523"
+            />
 
-        <Section title="Purchase Defaults">
+            <Input
+              label="GST Rate (%)"
+              type="number"
+              value={form.gstRate}
+              onChange={(e) => handleNumber("gstRate", e.target.value)}
+              placeholder="18"
+            />
+
+            <div>
+              <label className="text-sm text-gray-600 mb-1.5 block">
+                GST Type
+              </label>
+
+              <select
+                name="gstType"
+                value={form.gstType}
+                onChange={handleChange}
+                className="border rounded-lg px-3 py-2 w-full"
+              >
+                <option value="GOODS">Goods</option>
+                <option value="SERVICE">Service</option>
+              </select>
+            </div>
+          </div>
+        </Section>
+
+        <Section title="Accounting">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <SelectField
+              label="Purchase Ledger *"
+              options={purchaseLedgers.map((l) => ({
+                value: l._id,
+                label: l.name,
+              }))}
+              value={purchaseLedgers
+                .map((l) => ({
+                  value: l._id,
+                  label: l.name,
+                }))
+                .find((l) => l.value === form.purchaseLedgerId)}
+              onChange={(v) =>
+                setForm((p) => ({
+                  ...p,
+                  purchaseLedgerId: v?.value || null,
+                }))
+              }
+            />
+
+            <SelectField
+              label="Sales Ledger *"
+              options={salesLedgers}
+              options={salesLedgers.map((l) => ({
+                value: l._id,
+                label: l.name,
+              }))}
+              value={salesLedgers
+                .map((l) => ({
+                  value: l._id,
+                  label: l.name,
+                }))
+                .find((l) => l.value === form.salesLedgerId)}
+              onChange={(v) =>
+                setForm((p) => ({
+                  ...p,
+                  salesLedgerId: v?.value || null,
+                }))
+              }
+            />
+
+            {form.itemType !== "SERVICE" && (
+              <>
+                <SelectField
+                  label={
+                    form.itemType === "ASSET"
+                      ? "Fixed Asset Ledger"
+                      : "Inventory Ledger"
+                  }
+                  options={inventoryLedgers.map((l) => ({
+                    value: l._id,
+                    label: l.name,
+                  }))}
+                  value={inventoryLedgers
+                    .map((l) => ({
+                      value: l._id,
+                      label: l.name,
+                    }))
+                    .find((l) => l.value === form.inventoryLedgerId)}
+                  onChange={(v) =>
+                    setForm((p) => ({
+                      ...p,
+                      inventoryLedgerId: v?.value || null,
+                    }))
+                  }
+                />
+
+                <SelectField
+                  label="Issue Ledger"
+                  options={issueLedgers.map((l) => ({
+                    value: l._id,
+                    label: l.name,
+                  }))}
+                  value={issueLedgers
+                    .map((l) => ({
+                      value: l._id,
+                      label: l.name,
+                    }))
+                    .find((l) => l.value === form.issueLedgerId)}
+                  onChange={(v) =>
+                    setForm((p) => ({
+                      ...p,
+                      issueLedgerId: v?.value || null,
+                    }))
+                  }
+                />
+              </>
+            )}
+          </div>
+        </Section>
+
+        {form.itemType !== "SERVICE" && (
+          <Section title="Inventory Behaviour">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <Toggle
+                label="Affects Inventory"
+                checked={form.affectsInventory}
+                name="affectsInventory"
+                onChange={handleChange}
+              />
+
+              <Toggle
+                label="Allow Negative Stock"
+                checked={form.allowNegativeStock}
+                name="allowNegativeStock"
+                onChange={handleChange}
+              />
+
+              <Toggle
+                label="Track Batch"
+                checked={form.trackBatch}
+                name="trackBatch"
+                onChange={handleChange}
+              />
+
+              <Toggle
+                label="Track Serial Number"
+                checked={form.trackSerialNo}
+                name="trackSerialNo"
+                onChange={handleChange}
+              />
+
+              <Toggle
+                label="Expiry Applicable"
+                checked={form.expiryApplicable}
+                name="expiryApplicable"
+                onChange={handleChange}
+              />
+            </div>
+          </Section>
+        )}
+
+        {/* PURCHASE */}
+        <Section title="Purchase Information">
           <Input
             label="Default Purchase Rate"
             type="number"
@@ -356,7 +598,6 @@ const CreateStockItem = ({ onClose, editId }) => {
         </Section>
 
         {/* OPTIONAL */}
-
         <Section title="Additional Details">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Input
@@ -387,7 +628,6 @@ const CreateStockItem = ({ onClose, editId }) => {
         </Section>
 
         {/* ACTIONS */}
-
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 border rounded-lg">
             Cancel

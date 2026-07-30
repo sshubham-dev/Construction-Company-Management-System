@@ -348,27 +348,158 @@ const deleteStockGroup = async (req, res) => {
 ========================= */
 const createStockItem = async (req, res) => {
   try {
+    const {
+      // Basic
+      name,
+      code,
+      description,
+
+      // Classification
+      groupId,
+      categoryId,
+      unit,
+      itemType,
+      procurementMode,
+
+      // Tax
+      hsnSacCode,
+      gstRate,
+      gstType,
+
+      // Accounting
+      purchaseLedgerId,
+      salesLedgerId,
+      inventoryLedgerId,
+      issueLedgerId,
+
+      // Inventory Behaviour
+      affectsInventory,
+      allowNegativeStock,
+      trackBatch,
+      trackSerialNo,
+      expiryApplicable,
+
+      // Stock Control
+      minimumLevel,
+      reorderLevel,
+      maximumLevel,
+
+      // Purchase
+      defaultPurchaseRate,
+
+      // Additional
+      brand,
+      specification,
+
+      isActive,
+    } = req.body;
+
+    if (!purchaseLedgerId)
+      return res.status(400).json({ message: "Purchase Ledger is required." });
+
+    if (!salesLedgerId)
+      return res.status(400).json({ message: "Sales Ledger is required." });
+
+    if (
+      itemType !== "SERVICE" &&
+      !inventoryLedgerId
+    )
+      return res.status(400).json({
+        message: "Inventory Ledger is required.",
+      });
+
+    if (
+      itemType !== "SERVICE" &&
+      !issueLedgerId
+    )
+      return res.status(400).json({
+        message: "Issue Ledger is required.",
+      });
+
     const item = await Item.create({
-      ...req.body,
-      createdBy: req.user?._id,
+      // Basic
+      name: name?.trim(),
+      code: code?.trim().toUpperCase(),
+      description,
+
+      // Classification
+      groupId,
+      categoryId,
+      unit,
+      itemType,
+      procurementMode,
+
+      // Tax
+      hsnSacCode,
+      gstRate,
+      gstType,
+
+      // Accounting
+      purchaseLedgerId,
+      salesLedgerId,
+      inventoryLedgerId:
+        itemType === "SERVICE" ? null : inventoryLedgerId,
+      issueLedgerId:
+        itemType === "SERVICE" ? null : issueLedgerId,
+
+      // Inventory Behaviour
+      affectsInventory:
+        itemType === "SERVICE" ? false : affectsInventory,
+      allowNegativeStock:
+        itemType === "SERVICE" ? false : allowNegativeStock,
+      trackBatch:
+        itemType === "SERVICE" ? false : trackBatch,
+      trackSerialNo:
+        itemType === "SERVICE" ? false : trackSerialNo,
+      expiryApplicable:
+        itemType === "SERVICE" ? false : expiryApplicable,
+
+      // Stock Control
+      minimumLevel:
+        itemType === "SERVICE" ? 0 : minimumLevel,
+      reorderLevel:
+        itemType === "SERVICE" ? 0 : reorderLevel,
+      maximumLevel:
+        itemType === "SERVICE" ? 0 : maximumLevel,
+
+      // Purchase
+      defaultPurchaseRate,
+
+      // Additional
+      brand,
+      specification,
+
+      isActive,
+
+      createdBy: req.user._id,
     });
 
-    // 🔥 OPTIONAL: Auto stock create for all stores (if needed)
-    // 🔥 AUTO CREATE STOCK FOR ALL STORES
-    const stores = await Store.find({
-      isActive: true,
-    }).select("_id");
+    // Create opening stock only for inventory items
+    if (item.affectsInventory) {
+      console.log("Item Created:", item._id);
+      const stores = await Store.find({
+        isActive: true,
+      });
+      if (!stores.length) return;
+      console.log("Stores:", stores);
+      await initializeStockForItem(
+        item._id,
+        stores.map((s) => s._id)
+      );
+      console.log("Stock initialized");
+    }
 
-    await initializeStockForItem(
-      item._id,
-      stores.map((s) => s._id)
-    );
-    // Or skip and let service auto-create on first transaction
-
-    res.status(201).json({ success: true, data: item });
+    return res.status(201).json({
+      success: true,
+      data: item,
+    });
   } catch (err) {
-    console.log(err)
-    res.status(400).json({ success: false, message: err.message });
+    console.error(err);
+
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -411,15 +542,223 @@ const updateStockItem = async (req, res) => {
   try {
     const item = await Item.findById(req.params.id);
 
-    if (!item) throw new Error("Item not found");
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
+    }
 
-    Object.assign(item, req.body);
+    const {
+      // Basic
+      name,
+      code,
+      description,
+
+      // Classification
+      groupId,
+      categoryId,
+      unit,
+      itemType,
+      procurementMode,
+
+      // Tax
+      hsnSacCode,
+      gstRate,
+      gstType,
+
+      // Accounting
+      purchaseLedgerId,
+      salesLedgerId,
+      inventoryLedgerId,
+      issueLedgerId,
+
+      // Inventory Behaviour
+      affectsInventory,
+      allowNegativeStock,
+      trackBatch,
+      trackSerialNo,
+      expiryApplicable,
+
+      // Stock Control
+      minimumLevel,
+      reorderLevel,
+      maximumLevel,
+
+      // Purchase
+      defaultPurchaseRate,
+
+      // Additional
+      brand,
+      specification,
+
+      // Status
+      isActive,
+    } = req.body;
+    console.log(req.body)
+
+    /* =========================
+       VALIDATION
+    ========================= */
+
+    if (purchaseLedgerId === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "Purchase Ledger is required.",
+      });
+    }
+
+    if (salesLedgerId === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "Sales Ledger is required.",
+      });
+    }
+
+    if (itemType !== "SERVICE") {
+      if (inventoryLedgerId === undefined) {
+        return res.status(400).json({
+          success: false,
+          message: "Inventory Ledger is required.",
+        });
+      }
+
+      if (issueLedgerId === undefined) {
+        return res.status(400).json({
+          success: false,
+          message: "Issue Ledger is required.",
+        });
+      }
+    }
+
+    /* =========================
+       BASIC
+    ========================= */
+
+    item.name = name?.trim();
+    item.code = code?.trim().toUpperCase();
+    item.description = description;
+
+    /* =========================
+       CLASSIFICATION
+    ========================= */
+
+    item.groupId = groupId;
+    item.categoryId = categoryId;
+    item.unit = unit;
+    item.itemType = itemType;
+    item.procurementMode = procurementMode;
+
+    /* =========================
+       TAX
+    ========================= */
+
+    item.hsnSacCode = hsnSacCode;
+    item.gstRate = gstRate;
+    item.gstType = gstType;
+
+    /* =========================
+       ACCOUNTING
+    ========================= */
+
+    item.purchaseLedgerId = purchaseLedgerId;
+    item.salesLedgerId = salesLedgerId;
+
+    item.inventoryLedgerId =
+      itemType === "SERVICE" ? null : inventoryLedgerId;
+
+    item.issueLedgerId =
+      itemType === "SERVICE" ? null : issueLedgerId;
+
+    /* =========================
+       INVENTORY BEHAVIOUR
+    ========================= */
+
+    item.affectsInventory =
+      itemType === "SERVICE"
+        ? false
+        : affectsInventory;
+
+    item.allowNegativeStock =
+      itemType === "SERVICE"
+        ? false
+        : allowNegativeStock;
+
+    item.trackBatch =
+      itemType === "SERVICE"
+        ? false
+        : trackBatch;
+
+    item.trackSerialNo =
+      itemType === "SERVICE"
+        ? false
+        : trackSerialNo;
+
+    item.expiryApplicable =
+      itemType === "SERVICE"
+        ? false
+        : expiryApplicable;
+
+    /* =========================
+       STOCK CONTROL
+    ========================= */
+
+    item.minimumLevel =
+      itemType === "SERVICE" ? 0 : minimumLevel;
+
+    item.reorderLevel =
+      itemType === "SERVICE" ? 0 : reorderLevel;
+
+    item.maximumLevel =
+      itemType === "SERVICE" ? 0 : maximumLevel;
+
+    /* =========================
+       PURCHASE
+    ========================= */
+
+    item.defaultPurchaseRate = defaultPurchaseRate;
+
+    /* =========================
+       ADDITIONAL
+    ========================= */
+
+    item.brand = brand;
+    item.specification = specification;
+
+    item.isActive = isActive;
+
+    item.updatedBy = req.user?._id;
+
     await item.save();
 
-    res.json({ success: true, data: item });
+    // Create opening stock only for inventory items
+    if (item.affectsInventory) {
+      console.log("Item Created:", item._id);
+      console.log(item.affectsInventory);
+      const stores = await Store.find({
+        isActive: true,
+      });
+      if (!stores.length) return;
+      console.log("Stores:", stores[0]);
+      console.log(initializeStockForItem);
+      await initializeStockForItem(
+        item._id,
+        stores.map((s) => s._id)
+      );
+      console.log("Stock initialized");
+    }
+
+    return res.json({
+      success: true,
+      data: item,
+    });
   } catch (err) {
-    console.log(err)
-    res.status(400).json({ success: false, message: err.message });
+    console.log(err);
+
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 

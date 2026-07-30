@@ -30,14 +30,14 @@ const ExpenseForm = ({ onClose, editId, onSave }) => {
         const res = await axios.get("/api/v1/ledger-group", {
           params: { companyId: user.companyId, nature: "EXPENSES" },
         });
-        console.log(
-          res.data?.filter(
-            (g) =>
-              g.name !== "Indirect Expenses" &&
-              g.name !== "Direct Expenses" &&
-              g.name !== "Employee Expenses",
-          ),
-        );
+        // console.log(
+        //   res.data?.filter(
+        //     (g) =>
+        //       g.name !== "Indirect Expenses" &&
+        //       g.name !== "Direct Expenses" &&
+        //       g.name !== "Employee Expenses",
+        //   ),
+        // );
         setExpenseGroups(
           res.data?.filter(
             (g) =>

@@ -139,7 +139,7 @@ const CostCenterReport = async (req, res) => {
     );
 
     res.json(data);
-    console.log(data)
+    // console.log(data)
     console.log("Cost center report found ");
   } catch (error) {
     console.log(error);

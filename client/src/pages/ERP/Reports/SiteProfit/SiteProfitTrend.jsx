@@ -48,8 +48,17 @@ export default function SiteProfitTrend({ data = [], loading = false }) {
             No trend data available.
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
+          <ResponsiveContainer width="100%" height="100%" style={{ margin: "auto", overflow: "hidden" }}>
+            <LineChart
+              data={chartData}
+              responsive
+              margin={{
+                top: 10,
+                right: 0,
+                bottom: 0,
+                left: -18,
+              }}
+            >
               <CartesianGrid strokeDasharray="3 3" />
 
               <XAxis dataKey="period" />

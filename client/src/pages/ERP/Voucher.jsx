@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import VoucherList from "./Components/VoucherList";
 import CreateContra from "../../components/CreateContra";
 import Modal from "../../components/Modal";
@@ -11,6 +11,7 @@ const Voucher = () => {
   const { voucher } = useParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   console.log(voucher);
+  const navigate = useNavigate()
   const displayVoucher = (voucher) => {
     switch (voucher) {
       case "contra":
@@ -34,6 +35,8 @@ const Voucher = () => {
       // return <VoucherEditor type="journal" onClose={() => setIsModalOpen(false)} />;
       default:
         return null;
+      case "purchase":
+        navigate("/erp/purchase-invoice")
     }
   };
   return (

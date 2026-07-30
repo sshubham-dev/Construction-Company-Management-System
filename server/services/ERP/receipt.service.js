@@ -1,9 +1,9 @@
 const Voucher = require("../../models/voucher.models");
 const { Ledger } = require("../../models/ledger.models");
-const InvoiceAllocation = require("../../models/invoiceAllocation.models");
+const InvoiceAllocation = require("../../models/BillAllocation.models");
 const { getVouchers } = require("./voucher/query.service");
-const { generateVoucherNo, rebuildVoucherNumbers } = require("../../utils/voucherNoGenerator");
-const getFinancialYear = require("../../utils/getFinancialYear");
+const { generateVoucherNo, rebuildVoucherNumbers } = require("../../utils/voucher/voucherNoGenerator");
+const getFinancialYear = require("../../utils/voucher/getFinancialYear");
 
 
 /* ======================
@@ -131,11 +131,118 @@ async function getAllReceipts(query) {
 
 // ✅
 async function getReceiptById(id) {
-  const voucher = await Voucher.findById(id).populate("entries.ledgerId");
+  const voucher = await Voucher.findById(id)
+    .populate("entries.ledgerId")
 
-  const allocations = await InvoiceAllocation.find({ voucherId: id });
+  if (!voucher) {
+    throw new Error("Voucher not found");
+  }
 
-  return { voucher, allocations };
+  return {
+    voucher
+  };
+}
+
+// ✅
+async function getReceipt(id) {
+  const voucher = await Voucher.findById(id)
+    .populate("entries.ledgerId", "name under referenceType")
+    .populate("companyId", "name")
+    .populate("createdBy", "userName")
+    // .populate("postedBy", "userName")
+    .populate("costCenterId", "name")
+    .lean();
+
+  if (!voucher) {
+    throw new Error("Voucher not found");
+  }
+
+  // Receipt Allocations
+  const allocations = await InvoiceAllocation.find({
+    voucherId: id,
+  }).lean();
+
+  // Transform Entries
+  let totalDebit = 0;
+  let totalCredit = 0;
+
+  voucher.entries = voucher.entries.map((entry) => {
+    const amount = Number(entry.amount || 0);
+
+    if (entry.type === "DEBIT") {
+      totalDebit += amount;
+    } else {
+      totalCredit += amount;
+    }
+
+    return {
+      ledgerId: entry.ledgerId?._id,
+      ledger: entry.ledgerId?.name || "-",
+      ledgerGroup: entry.ledgerId?.under || "-",
+      referenceType: entry.ledgerId?.referenceType || null,
+      type: entry.type,
+      amount,
+    };
+  });
+
+  // Timeline
+  const timeline = [];
+
+  timeline.push({
+    type: "CREATED",
+    user: voucher.createdBy?.userName || "-",
+    date: voucher.createdAt,
+  });
+
+  if (voucher.postedAt) {
+    timeline.push({
+      type: "POSTED",
+      user: voucher.postedBy?.userName || "-",
+      date: voucher.postedAt,
+    });
+  }
+
+  if (voucher.cancelledAt) {
+    timeline.push({
+      type: "CANCELLED",
+      user: voucher.cancelledBy || "-",
+      date: voucher.cancelledAt,
+    });
+  }
+
+  return {
+    voucher: {
+      ...voucher,
+
+      status: voucher.status,
+
+      date: voucher.date,
+
+      fy: voucher.fy,
+
+      narration: voucher.narration,
+
+      reference: voucher.reference,
+
+      paidBy: voucher.paidBy,
+
+      company: voucher.companyId,
+
+      costCenter: voucher.costCenterId,
+
+      entries: voucher.entries,
+
+      totalDebit,
+
+      totalCredit,
+
+      balanced: totalDebit === totalCredit,
+      timeline,
+    },
+
+    allocations,
+
+  };
 }
 
 // ✅
@@ -165,5 +272,6 @@ module.exports = {
   updateReceiptVoucher,
   getAllReceipts,
   getReceiptById,
+  getReceipt,
   deleteReceiptVoucher,
 };

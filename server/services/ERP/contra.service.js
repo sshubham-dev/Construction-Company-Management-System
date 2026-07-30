@@ -4,8 +4,8 @@ const { getVouchers } = require("./voucher/query.service");
 const {
   generateVoucherNo,
   rebuildVoucherNumbers,
-} = require("../../utils/voucherNoGenerator");
-const getFinancialYear = require("../../utils/getFinancialYear");
+} = require("../../utils/voucher/voucherNoGenerator");
+const getFinancialYear = require("../../utils/voucher/getFinancialYear");
 
 /* ======================
    CREATE
@@ -151,11 +151,96 @@ async function getAllContras(query) {
 async function getContraById(id) {
   const voucher = await Voucher.findById(id)
     .populate("entries.ledgerId")
-    .populate("createdBy");
+  if (!voucher) {
+    throw new Error("Voucher not found");
+  }
+  return {
+    voucher
+  };
+}
 
-  if (!voucher) throw new Error("Voucher not found");
+async function getContraDetail(id) {
+  const voucher = await Voucher.findById(id)
+    .populate("entries.ledgerId", "name under referenceType")
+    .populate("companyId", "name")
+    .populate("createdBy", "userName")
+    .populate("postedBy", "userName")
+    .populate("costCenterId", "name")
+    .lean();
 
-  return voucher;
+  if (!voucher) {
+    throw new Error("Voucher not found");
+  }
+
+  // Transform Entries
+  let totalDebit = 0;
+  let totalCredit = 0;
+
+  voucher.entries = voucher.entries.map((entry) => {
+    const amount = Number(entry.amount || 0);
+
+    if (entry.type === "DEBIT") {
+      totalDebit += amount;
+    } else {
+      totalCredit += amount;
+    }
+
+    return {
+      ledgerId: entry.ledgerId?._id,
+      ledger: entry.ledgerId?.name || "-",
+      ledgerGroup: entry.ledgerId?.under || "-",
+      referenceType: entry.ledgerId?.referenceType || null,
+      type: entry.type,
+      amount,
+    };
+  });
+
+  // Timeline
+  const timeline = [
+    {
+      type: "CREATED",
+      user: voucher.createdBy?.userName || "-",
+      date: voucher.createdAt,
+    },
+  ];
+
+  if (voucher.postedAt) {
+    timeline.push({
+      type: "POSTED",
+      user: voucher.postedBy?.userName || "-",
+      date: voucher.postedAt,
+    });
+  }
+
+  if (voucher.cancelledAt) {
+    timeline.push({
+      type: "CANCELLED",
+      user: voucher.cancelledBy || "-",
+      date: voucher.cancelledAt,
+    });
+  }
+
+  return {
+    voucher: {
+      ...voucher,
+      status: voucher.status,
+      date: voucher.date,
+      fy: voucher.fy,
+      narration: voucher.narration,
+      reference: voucher.reference,
+
+      company: voucher.companyId,
+      costCenter: voucher.costCenterId,
+
+      entries: voucher.entries,
+
+      totalDebit,
+      totalCredit,
+      balanced: totalDebit === totalCredit,
+      timeline,
+    },
+
+  };
 }
 
 /* ======================
@@ -177,5 +262,6 @@ module.exports = {
   deleteContraVoucher,
   getAllContras,
   getContraById,
+  getContraDetail,
   getContraByVoucherNo,
 };

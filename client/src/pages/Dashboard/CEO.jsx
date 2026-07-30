@@ -34,6 +34,7 @@ import {
 } from "recharts";
 import FinancialSummary from "./components/FinancialSummary";
 import { getCurrentMonth } from "../../helper/dateFormater";
+import OutstandingOverview from "./components/OutstandingOverview";
 
 const getCurrentFY = () => {
   const today = new Date();
@@ -52,7 +53,6 @@ export default function CEO() {
   const approvals = [];
   const { user, isLoggedIn } = useSelector((state) => state.auth);
 
-
   return (
     <Layout title="Dashboard">
       <div className="space-y-6">
@@ -66,6 +66,7 @@ export default function CEO() {
 
             {/* Finance */}
             <FinancialSummary />
+            <OutstandingOverview />
 
             {/* Site Status */}
             {/* <Section title="Site Status">

@@ -1480,230 +1480,20 @@ async function getSiteTable(match) {
 
     {
       $sort: {
-        revenue: -1,
+        profit: -1,
       },
     },
   ]);
 }
 
 // ✅
-async function getSiteTrend(match, fromDate, toDate) {
-
-  const days =
-    fromDate && toDate
-      ? Math.ceil(
-        (new Date(toDate) -
-          new Date(fromDate)) /
-        (1000 * 60 * 60 * 24)
-      )
-      : 30;
-
-  const groupBy =
-    days <= 31
-      ? {
-        year: {
-          $year: "$date",
-        },
-        month: {
-          $month: "$date",
-        },
-        day: {
-          $dayOfMonth: "$date",
-        },
-      }
-      : {
-        year: {
-          $year: "$date",
-        },
-        month: {
-          $month: "$date",
-        },
-      };
-
-  return await Voucher.aggregate([
-    {
-      $match: match,
-    },
-
-    {
-      $lookup: {
-        from: "costcenters",
-        localField: "costCenterId",
-        foreignField: "_id",
-        as: "costCenter",
-      },
-    },
-
-    {
-      $unwind: "$costCenter",
-    },
-
-    {
-      $match: {
-        "costCenter.type":
-          "SITE",
-      },
-    },
-
-    {
-      $group: {
-        _id: groupBy,
-
-        revenue: {
-          $sum: {
-            $cond: [
-              {
-                $eq: [
-                  "$type",
-                  "RECEIPT",
-                ],
-              },
-              "$totalDebit",
-              0,
-            ],
-          },
-        },
-
-        // future revenue: {
-        //   $sum: {
-        //     $cond: [
-        //       {
-        //         $or: [
-        //           {
-        //             $eq: ["$type", "RECEIPT"],
-        //           },
-        //           {
-        //             $and: [
-        //               {
-        //                 $eq: ["$type", "PAYMENT"],
-        //               },
-        //               {
-        //                 $eq: [
-        //                   {
-        //                     $ifNull: [
-        //                       "$paidBy",
-        //                       "COMPANY",
-        //                     ],
-        //                   },
-        //                   "CLIENT",
-        //                 ],
-        //               },
-        //             ],
-        //           },
-        //         ],
-        //       },
-        //       "$totalDebit",
-        //       0,
-        //     ],
-        //   },
-        // },
-
-        expense: {
-          $sum: {
-            $cond: [
-              {
-                $eq: ["$type", "PAYMENT"],
-              },
-              "$totalDebit",
-              0,
-            ],
-          },
-        },
-      },
-    },
-
-    {
-      $addFields: {
-        profit: {
-          $subtract: [
-            "$revenue",
-            "$expense",
-          ],
-        },
-      },
-    },
-
-    {
-      $project: {
-        _id: 0,
-
-        period: {
-          $cond: [
-            {
-              $ifNull: [
-                "$_id.day",
-                false,
-              ],
-            },
-
-            {
-              $dateToString: {
-                format:
-                  "%d %b",
-                date: {
-                  $dateFromParts:
-                  {
-                    year: "$_id.year",
-                    month:
-                      "$_id.month",
-                    day: "$_id.day",
-                  },
-                },
-              },
-            },
-
-            {
-              $dateToString: {
-                format:
-                  "%b %Y",
-                date: {
-                  $dateFromParts:
-                  {
-                    year: "$_id.year",
-                    month:
-                      "$_id.month",
-                    day: 1,
-                  },
-                },
-              },
-            },
-          ],
-        },
-
-        revenue: 1,
-
-        expense: 1,
-
-        profit: 1,
-      },
-    },
-
-    {
-      $sort: {
-        period: 1,
-      },
-    },
-  ]);
-}
-
-// ✅
-async function getSiteAnalysis(companyId, fromDate, toDate) {
+async function getSiteAnalysis(companyId) {
   const match = {
     companyId: new mongoose.Types.ObjectId(companyId),
     costCenterId: { $ne: null },
   };
 
-  if (fromDate || toDate) {
-    match.date = {};
-
-    if (fromDate) match.date.$gte = new Date(fromDate);
-
-    if (toDate) match.date.$lte = new Date(toDate);
-  }
-
   const sites = await getSiteTable(match);
-
-  const trend = await getSiteTrend(match, fromDate, toDate);
 
   const summary = sites.reduce(
     (acc, site) => {
@@ -1719,19 +1509,22 @@ async function getSiteAnalysis(companyId, fromDate, toDate) {
       profit: 0,
     }
   );
-
-  summary.margin = summary.revenue > 0 ? Number(
-    (
-      (summary.profit / summary.revenue) *
-      100
-    ).toFixed(2)
-  ) : 0;
+  summary.margin =
+    summary.revenue > 0
+      ? Number(
+        (
+          (summary.profit / summary.revenue) *
+          100
+        ).toFixed(2)
+      )
+      : 0;
 
   summary.totalSites = sites.length;
 
   summary.profitableSites = sites.filter(
     (x) => x.profit > 0
   ).length;
+
   summary.lossMakingSites = sites.filter(
     (x) => x.profit < 0
   ).length;
@@ -1739,7 +1532,6 @@ async function getSiteAnalysis(companyId, fromDate, toDate) {
   return {
     summary,
     sites,
-    trend,
   };
 }
 
