@@ -474,7 +474,6 @@ const CreateStockItem = ({ onClose, editId }) => {
 
             <SelectField
               label="Sales Ledger *"
-              options={salesLedgers}
               options={salesLedgers.map((l) => ({
                 value: l._id,
                 label: l.name,

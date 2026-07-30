@@ -158,7 +158,6 @@ const PurchaseInvoiceForm = () => {
         stockItems: stockItems.data.data || [],
         stores: stores.data.data || [],
         purchaseOrders: pos.data.data || [],
-        purchaseOrders: pos.data.data || [],
         chargeLedgers: chargeLedgers.data.data || [],
         gstConfig: gstConfigRes.data.data,
       });
