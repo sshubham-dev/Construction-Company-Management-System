@@ -7,7 +7,7 @@ const Site = require("../models/site.models");
 const User = require("../models/user.models");
 const QualitySchedule = require("../models/qualityschedule.models.js");
 const ProjectSchedule = require("../models/projectschedule.models.js");
-const {sendPushNotification, notifyRole} = require("../utils/pushNotification.js");
+const { sendPushNotification, notifyRole } = require("../utils/pushNotification.js");
 // const moment = require("moment")
 
 // Create a new checklist
@@ -40,7 +40,6 @@ const createChecklist = async (req, res) => {
       rating,
       observation,
       createdBy: user._id,
-      supervisor: existingSite.supervisor,
     });
 
     const savedChecklist = await newChecklist.save();
@@ -146,6 +145,7 @@ const createChecklist = async (req, res) => {
 
     res.status(201).json(savedChecklist);
   } catch (error) {
+    console.log(error)
     res.status(400).json({ error: error.message });
   }
 };
@@ -189,7 +189,7 @@ const saveChecklist = async (req, res) => {
 // Get all checklists
 const getAllChecklists = async (req, res) => {
   try {
-    const checklists = await Checklist.find().populate("createdBy").sort({createdAt: -1});
+    const checklists = await Checklist.find().populate("createdBy").sort({ createdAt: -1 });
     res.status(200).json(checklists);
   } catch (error) {
     res.status(500).json({ error: error.message });

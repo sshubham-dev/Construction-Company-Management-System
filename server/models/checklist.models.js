@@ -19,13 +19,6 @@ const checklistSchema = new mongoose.Schema({
             ref: 'Site', // Selected site
         }
     },
-    supervisor: {
-        name: String,
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User', // Supervisor (selected)
-        }
-    },
     checkFor: {
         type: String, // Specify which work the checklist is for
     },
