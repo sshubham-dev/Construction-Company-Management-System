@@ -646,6 +646,7 @@ const getLedgerReport = async ({
     }
 
     transactions.push({
+      id: voucher._id,
       date: voucher.date,
       voucherNo: voucher.voucherNo,
       voucherType: voucher.type,

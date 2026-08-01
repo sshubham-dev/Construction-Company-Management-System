@@ -3,8 +3,9 @@ import axios from "axios";
 import CreateLedger from "../../components/CreateLedger";
 import Modal from "../../components/Modal";
 import { useSelector } from "react-redux";
-import { GrEdit } from "react-icons/gr";
+import { GrEdit, GrView } from "react-icons/gr";
 import { MdDelete, MdAdd } from "react-icons/md";
+import { useParams, useNavigate } from "react-router-dom";
 
 const LedgerList = () => {
   const [ledgers, setLedgers] = useState([]);
@@ -13,7 +14,7 @@ const LedgerList = () => {
   const [editLedger, setEditLedger] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const { user } = useSelector((state) => state.auth);
-
+  const navigate = useNavigate();
   const fetchLedgers = async () => {
     const res = await axios.get("/api/v1/ledger", {
       params: { companyId: user.companyId },
@@ -70,12 +71,15 @@ const LedgerList = () => {
             <div className="flex justify-between items-center mb-2">
               <h2
                 className="text-lg font-semibold cursor-pointer"
-                onClick={() => setSelectedLedger(ledger)}
+                onClick={() => navigate(`/erp/ledger-report/${ledger._id}`)}
               >
                 {ledger.name}
               </h2>
 
               <div className="space-x-4">
+                <button onClick={() => setSelectedLedger(ledger)}>
+                  <GrView className="text-green-500 hover:text-green-800 text-lg" />
+                </button>
                 <button
                   onClick={() => {
                     setEditLedger(ledger);

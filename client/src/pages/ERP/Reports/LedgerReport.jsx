@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { FiArrowLeft } from "react-icons/fi";
 
 const getCurrentFY = () => {
   const today = new Date();
@@ -19,7 +20,7 @@ const getCurrentFY = () => {
 const LedgerReport = () => {
   const [ledgers, setLedgers] = useState([]);
   const { id } = useParams();
-
+  const navigate = useNavigate();
   const fy = getCurrentFY();
   const [ledgerId, setLedgerId] = useState(id || "");
   const [company, setCompany] = useState("");
@@ -70,6 +71,7 @@ const LedgerReport = () => {
       });
 
       setData(res.data);
+      console.log("ledger report: ", res.data);
     } catch (error) {
       console.log(error);
     }
@@ -83,11 +85,21 @@ const LedgerReport = () => {
   return (
     <div className="space-y-6 p-4">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">Ledger Report</h1>
-        <p className="text-sm text-gray-500">
-          View ledger transactions and running balance
-        </p>
+      <div className="flex items-start gap-4">
+        {id && (
+          <button
+            onClick={() => navigate(-1)}
+            className="rounded-lg border p-2 hover:bg-gray-100"
+          >
+            <FiArrowLeft size={18} />
+          </button>
+        )}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Ledger Report</h1>
+          <p className="text-sm text-gray-500">
+            View ledger transactions and running balance
+          </p>
+        </div>
       </div>
 
       {/* Filters */}
@@ -98,6 +110,7 @@ const LedgerReport = () => {
             value={ledgerOptions.find((l) => l.value === ledgerId) || null}
             onChange={(e) => setLedgerId(e?.value)}
             placeholder="Select Ledger"
+            isDisabled={id}
           />
 
           <input
@@ -204,7 +217,12 @@ const LedgerReport = () => {
                 data.transactions.map((row, i) => (
                   <React.Fragment key={i}>
                     {/* Desktop Row */}
-                    <tr className="hidden md:table-row border-b hover:bg-gray-50">
+                    <tr
+                      className="hidden md:table-row border-b hover:bg-gray-50"
+                      onClick={() =>
+                        navigate(`/erp/${row?.voucherType}/${row.id}`)
+                      }
+                    >
                       <td className="px-4 py-3">
                         {new Date(row.date).toLocaleDateString()}
                       </td>
@@ -240,7 +258,13 @@ const LedgerReport = () => {
 
                     {/* Mobile Card */}
                     <tr className="md:hidden border-b">
-                      <td colSpan={8} className="p-3">
+                      <td
+                        colSpan={8}
+                        className="p-3"
+                        onClick={() =>
+                          navigate(`/erp/${row?.voucherType}/${row.id}`)
+                        }
+                      >
                         <div className="rounded-lg border bg-white p-3 shadow-sm">
                           <div className="flex items-start justify-between">
                             <div>

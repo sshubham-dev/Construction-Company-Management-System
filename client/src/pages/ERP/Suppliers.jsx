@@ -44,8 +44,7 @@ const Suppliers = () => {
     if (!search) return suppliers;
 
     return suppliers.filter((supplier) => {
-      const text =
-        `${supplier?.name} ${supplier?.contactNo}`.toLowerCase();
+      const text = `${supplier?.name} ${supplier?.contactNo}`.toLowerCase();
       return text.includes(search.toLowerCase());
     });
   }, [suppliers, search]);
@@ -63,22 +62,19 @@ const Suppliers = () => {
     <div>
       <section className="overflow-x-auto">
         <Header category="Page" title="Supplier's" />
-        <div className="w-full mx-auto mb-6 text-gray-700 p-1 flex flex-row justify-between items-center">
+        <div className="w-full mx-auto text-gray-700 p-1 flex flex-row justify-between items-center">
           <h2 className="text-lg text-wrap sm:text-md md:text-lg lg:text-xl text-green-600 mr-4 pr-4">
             Total Suppliers: {suppliers?.length}
           </h2>
-          {user.department === "Accountant" ||
-            (user.department === "Account Head" && (
-              <button
-                onClick={() => setCreateModal(true)}
-                className="bg-green-500 rounded-full text-white px-2 py-2"
-              >
-                <MdAdd className="text-xl" />
-              </button>
-            ))}
+          <button
+            onClick={() => setCreateModal(true)}
+            className="bg-green-500 rounded-full text-white px-2 py-2"
+          >
+            <MdAdd className="text-xl" />
+          </button>
         </div>
 
-        <div className="bg-white border rounded-xl p-3 m-2 shadow-sm">
+        <div className="bg-white border rounded-xl py-2 px-3 my-4 shadow-sm">
           <input
             placeholder="Search supplier..."
             value={search}
