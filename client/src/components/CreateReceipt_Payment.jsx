@@ -25,7 +25,7 @@ const CreateReceipt_Payment = ({
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
-    costCenterId: "",
+    costCenterId: null,
     from: "",
     to: "",
     amount: "",

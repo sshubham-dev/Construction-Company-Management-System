@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 const CreateJournal = ({ onClose, refresh, editData }) => {
   const isEdit = Boolean(editData?._id);
   const [costCenters, setCostCenters] = useState([]);
-  const [costCenterId, setCostCenterId] = useState("");
+  const [costCenterId, setCostCenterId] = useState(null);
   const [ledgers, setLedgers] = useState([]);
   const [entries, setEntries] = useState([]);
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);

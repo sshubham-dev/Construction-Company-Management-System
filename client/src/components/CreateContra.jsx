@@ -10,7 +10,7 @@ const CreateContra = ({ onClose, refresh, editId }) => {
   const [costCenters, setCostCenters] = useState([]);
   const [form, setForm] = useState({
     date: new Date().toISOString().split("T")[0],
-    costCenterId: "",
+    costCenterId: null,
     from: "",
     to: "",
     amount: "",
