@@ -1504,7 +1504,7 @@ const sendApproveByIncharge = async (data, approvalof, by) => {
 
 const sendApproveByAccountant = async (data, approvalof, by) => {
   try {
-    const existingAccountant = await User.findOne({"status":"Active"})
+    const existingAccountant = await User.findOne({ "status": "Active" })
       .where("department")
       .equals("Accountant")
       .select("-password -refreshToken")

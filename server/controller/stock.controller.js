@@ -408,13 +408,13 @@ const createStockItem = async (req, res) => {
         message: "Inventory Ledger is required.",
       });
 
-    if (
-      itemType !== "SERVICE" &&
-      !issueLedgerId
-    )
-      return res.status(400).json({
-        message: "Issue Ledger is required.",
-      });
+    // if (
+    //   itemType !== "SERVICE" &&
+    //   !issueLedgerId
+    // )
+    //   return res.status(400).json({
+    //     message: "Issue Ledger is required.",
+    //   });
 
     const item = await Item.create({
       // Basic

@@ -8,21 +8,15 @@ const voucherCounterSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
       required: true,
-      unique: true,
     },
-
     fy: {
       type: String,
       required: true,
-      unique: true,
     },
-
     type: {
       type: String,
       required: true,
-      unique: true,
     },
-
     seq: {
       type: Number,
       default: 0,
@@ -33,6 +27,7 @@ const voucherCounterSchema = new mongoose.Schema(
   }
 );
 
+voucherCounterSchema.index({ fy: 1, type: 1, companyId: 1 }, { unique: true })
 
 module.exports = mongoose.model(
   "VoucherCounter",

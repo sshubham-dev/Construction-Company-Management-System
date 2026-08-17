@@ -62,9 +62,19 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
         groupRes,
         // requirementRes
       ] = await Promise.all([
-        axios.get("/api/v1/store?type=SITE"),
+        axios.get("/api/v1/store", {
+          params: {
+            type: "SITE",
+            companyId: user?.companyId,
+          },
+        }),
 
-        axios.get("/api/v1/store?type=WAREHOUSE"),
+        axios.get("/api/v1/store", {
+          params: {
+            type: "WAREHOUSE",
+            companyId: user?.companyId,
+          },
+        }),
 
         axios.get("/api/v1/stock-item"),
 
@@ -74,7 +84,8 @@ const CreatePurchaseRequest = ({ onClose, editId }) => {
 
         // axios.get("/api/v1/project-schedule"),
       ]);
-
+      console.log(siteRes.data.data);
+      console.log(storeRes.data.data);
       setSites(siteRes.data.data || []);
       setStores(storeRes.data.data || []);
       setItemsMaster(itemRes.data.data || []);

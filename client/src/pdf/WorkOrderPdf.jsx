@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 10,
     border: "1px solid #e0e0e0",
-        backgroundColor: lightBg,
+    backgroundColor: lightBg,
     borderRadius: 6,
   },
 
@@ -188,10 +188,10 @@ const WorkOrderPdf = ({ workOrder }) => {
             <Text style={styles.label}>Start Date:</Text>
             <Text>
               {moment(
-                workOrder?.startDate?.$date || workOrder?.startDate
+                workOrder?.startDate?.$date || workOrder?.startDate,
               ).isValid()
                 ? moment(
-                    workOrder?.startDate?.$date || workOrder?.startDate
+                    workOrder?.startDate?.$date || workOrder?.startDate,
                   ).format("DD-MM-YYYY")
                 : "-"}
             </Text>
@@ -302,6 +302,46 @@ const WorkOrderPdf = ({ workOrder }) => {
           <View style={styles.row}>
             <Text>Authority:</Text>
             <Text>{workOrder.adminApprove || "-"}</Text>
+          </View>
+        </View>
+
+        {/* =====================================
+                TERMS & CONDITIONS
+        ===================================== */}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionHeader}>Terms & Conditions</Text>
+
+          <View style={styles.sectionBody}>
+            <Text style={{ marginBottom: 5 }}>
+              1. Material shall be supplied strictly as per the specifications
+              and quantity mentioned in this Purchase Order.
+            </Text>
+
+            <Text style={{ marginBottom: 5 }}>
+              2. Supplier shall clearly mention the Purchase Order Number on all
+              Challans, Tax Invoices and Transport Documents.
+            </Text>
+
+            <Text style={{ marginBottom: 5 }}>
+              3. Material shall be inspected at the delivery location. Any
+              damaged, defective or short supplied material may be rejected.
+            </Text>
+
+            <Text style={{ marginBottom: 5 }}>
+              4. Payment shall be processed only after successful receipt,
+              verification and approval of material.
+            </Text>
+
+            <Text style={{ marginBottom: 5 }}>
+              5. GST shall be charged as applicable under prevailing Government
+              regulations.
+            </Text>
+
+            <Text style={{ marginBottom: 5 }}>
+              6. Any deviation from this Purchase Order requires prior written
+              approval from Bhuvi Consultants.
+            </Text>
           </View>
         </View>
 

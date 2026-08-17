@@ -118,8 +118,8 @@ const getStores = async (req, res) => {
     if (companyId) filter.companyId = companyId;
 
     const stores = await Store.find(filter)
-      .populate("businessUnitId storeHead storeIncharge")
-      .sort({ createdAt: -1 })
+      .populate("businessUnitId")
+      .sort({ createdAt: -1 });
 
     res.json({ success: true, data: stores });
   } catch (err) {

@@ -20,11 +20,13 @@ const PurchaseOrderScreen = () => {
 
   useEffect(() => {
     fetchPO();
+    console.log(id);
   }, [id]);
 
   const fetchPO = async () => {
     try {
       const res = await axios.get(`/api/v1/purchase-order/${id}`);
+      console.log(res.data);
       setPo(res.data);
     } catch (err) {
       toast.error("Failed to load Purchase Order");
@@ -48,12 +50,12 @@ const PurchaseOrderScreen = () => {
       <div className="flex justify-between items-center mt-4 mb-6">
         <div>
           <p className="text-sm text-gray-500">PO No</p>
-          <p className="font-semibold">{po.poNumber}</p>
+          <p className="font-semibold">{po.poNo}</p>
         </div>
 
         <PDFDownloadLink
           document={<PurchaseOrderPdf PurchaseOrder={po} />}
-          fileName={`PO-${po.poNumber}.pdf`}
+          fileName={`${po.poNo}.pdf`}
         >
           {({ loading }) => (
             <button className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2">
@@ -66,28 +68,28 @@ const PurchaseOrderScreen = () => {
 
       {/* SUMMARY */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-white p-4 rounded shadow">
-        <Info label="Supplier" value={po.supplier?.name} />
-        <Info label="Delivery To" value={po.deliveryTo} />
-        <Info label="Delivery Status" value={po.deliveryStatus} />
-        <Info label="Total Amount" value={`₹ ${po.totalAfterTax || 0}`} />
-        <Info label="Paid" value={`₹ ${po.totalPaid || 0}`} />
-        <Info label="Due" value={`₹ ${po.totalDue || 0}`} />
+        <Info label="Supplier" value={po?.supplierId?.name} />
+        <Info label="Delivery To" value={po?.deliveryType} />
+        <Info label="Delivery Status" value={po?.status} />
+        <Info label="Total Amount" value={`₹ ${po?.totalAmount || 0}`} />
       </div>
-
-      {/* APPROVAL TIMELINE */}
-      <ApprovalTimeLine item={po} module="purchaseOrder" />
 
       {/* ITEMS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
         {po.items.map((item, index) => (
           <div key={index} className="bg-white p-4 rounded shadow">
-            <p className="font-semibold">{item.item}</p>
+            <p className="font-semibold">{item.itemId?.name || "-"}</p>
 
             <div className="text-sm text-gray-600 mt-2 space-y-1">
-              <Row label="Requested Qty" value={item.requestedQty} />
-              <Row label="Received Qty" value={item.receivedQty} />
-              <Row label="Invoiced Qty" value={item.invoicedQty} />
-              <Row label="Rate" value={`₹ ${item.rate}`} />
+              <Row
+                label="Requested Qty"
+                value={`${item.quantity || 0}  ${item.unit}`}
+              />
+              <Row
+                label="Received Qty"
+                value={`${item.receivedQty || 0} ${item.unit}`}
+              />
+              <Row label="Rate" value={`₹ ${item.rate} / ${item.unit}`} />
               <Row label="Amount" value={`₹ ${item.amount}`} />
             </div>
 
@@ -103,6 +105,9 @@ const PurchaseOrderScreen = () => {
           </div>
         ))}
       </div>
+
+      {/* APPROVAL TIMELINE */}
+      <ApprovalTimeLine item={po} module="purchaseOrder" />
 
       {/* APPROVAL ACTIONS */}
       {approvalId && (

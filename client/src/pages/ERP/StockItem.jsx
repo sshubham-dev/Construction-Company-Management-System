@@ -23,7 +23,7 @@ const StockItem = () => {
   });
 
   const [drawer, setDrawer] = useState(false);
-  const [editId, setEditId] = useState(null);
+  const [editId, setEditId] = useState("");
 
   /* =========================
      FETCH DATA
@@ -107,7 +107,6 @@ const StockItem = () => {
 
         <button
           onClick={() => {
-            setEditId(null);
             setDrawer(true);
           }}
           className="bg-blue-600 text-white px-4 py-2 rounded"

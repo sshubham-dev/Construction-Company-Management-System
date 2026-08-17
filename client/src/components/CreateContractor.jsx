@@ -108,6 +108,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
         console.log("Form data submitted:", contractor);
         dispatch(fetchNotifications(user._id));
         onClose();
+        setLoading(false);
       } else {
         const response = await axios.post("/api/v1/contractor", {
           name: contractor.name,
@@ -117,6 +118,7 @@ const CreateContractor = ({ onClose, isEdit }) => {
           addhar: contractor.addhar,
           pan: contractor.pan,
           bank: contractor.bank,
+          state: contractor.state,
           jobWork: contractor.jobWork,
           email: contractor.email,
           isUser: contractor.isUser,
@@ -126,8 +128,10 @@ const CreateContractor = ({ onClose, isEdit }) => {
         console.log("Form data submitted:", contractor);
         dispatch(fetchNotifications(user._id));
         onClose();
+        setLoading(false);
       }
     } catch (error) {
+      setLoading(false);
       console.error("Error creating contractor:", error);
       toast.error("Failed Creating Contractor. Please check your credentials.");
     }

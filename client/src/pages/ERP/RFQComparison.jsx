@@ -179,7 +179,7 @@ const RFQComparison = () => {
           </div>
         </div>
 
-        {rfq.status === "CLOSED" && rfq.purchaseOrderId && (
+        {rfq.status === "CLOSED" && rfq.purchaseOrderId !== undefined && (
           <div className="flex flex-wrap gap-3">
             <button className="bg-green-100 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2">
               <CheckCircle2 size={18} />
@@ -188,7 +188,7 @@ const RFQComparison = () => {
 
             <button
               onClick={() =>
-                navigate(`/erp/inventory/purchase-order/${rfq.purchaseOrderId._id}`)
+                navigate(`/erp/inventory/purchase-order/${rfq.purchaseOrderId}`)
               }
               className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl flex items-center gap-2"
             >

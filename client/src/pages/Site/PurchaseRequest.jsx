@@ -283,13 +283,13 @@ const PurchaseRequest = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">
-            {isSiteMode ? "Site Purchase Requests" : "Procurement Requests"}
+            {isSiteMode ? "Site Purchase Requests" : "Material Requests"}
           </h1>
 
           <p className="text-sm text-gray-500 mt-1">
             {isSiteMode
               ? "Track material requests and delivery status"
-              : "Manage procurement and fulfillment workflow"}
+              : "Manage material requesta and fulfillment workflow"}
           </p>
         </div>
 
@@ -298,7 +298,7 @@ const PurchaseRequest = () => {
           className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 justify-center"
         >
           <Plus size={18} />
-          New PR
+          {isSiteMode ? "New PR" : "New MR"}
         </button>
       </div>
 

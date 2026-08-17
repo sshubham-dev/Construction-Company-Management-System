@@ -763,18 +763,6 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
 
     {
-      name: "CMS",
-      role: [
-        "Admin",
-        "Company",
-        "Ceo",
-        "Marketing",
-        "Account Head",
-        "Design Engineer",
-        "Quality Engineer",
-      ],
-    },
-    {
       to: "/cms/blogs",
       name: "Blogs",
       icon: <ImBlog />,

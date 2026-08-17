@@ -10,6 +10,11 @@ const {
   generateSupplierRFQLink,
   generateRFQShareMessage,
 } = require("../utils/rfq.utils");
+const {
+  sendApproveByAdmin,
+  sendApproveByAccountant,
+  sendApproveByAccountHead,
+} = require("./approval.controller.js");
 
 /* =========================
    GENERATE RFQ NUMBER
@@ -748,6 +753,7 @@ const selectQuotation = async (req, res) => {
   try {
 
     session.startTransaction();
+    const user = req.user;
 
     /* =====================
        QUOTATION
@@ -920,6 +926,9 @@ const selectQuotation = async (req, res) => {
     await rfq.save({
       session,
     });
+
+    sendApproveByAccountHead(po, "Purchase Order", user._id)
+    sendApproveByAdmin(po, "Purchase Order", user._id)
 
     /* =====================
        COMMIT

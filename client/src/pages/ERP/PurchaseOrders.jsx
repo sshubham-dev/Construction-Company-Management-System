@@ -165,14 +165,14 @@ const PurchaseOrders = () => {
                       className="border-b border-blue-gray-200"
                     >
                       <td className="px-6 py-4">
-                        <p className=""> {purchaseOrder.site?.name} </p>
+                        <p className=""> {purchaseOrder.siteId?.name} </p>
                         <p className="text-gray-500 text-sm font-semibold tracking-wide">
                           {" "}
-                          {purchaseOrder.supplier?.name}{" "}
+                          {purchaseOrder.supplierId?.name}{" "}
                         </p>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        {purchaseOrder?.adminApprove}
+                        {purchaseOrder?.approvedBy}
                       </td>
                       {/* <td className="px-6 py-4 text-center">{purchaseOrder?.supplierApprove}</td> */}
                       <td className="px-6 py-4 text-center">

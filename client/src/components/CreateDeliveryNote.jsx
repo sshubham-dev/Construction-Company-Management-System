@@ -288,7 +288,9 @@ const CreateDeliveryNote = ({ editId, onClose }) => {
 
   useEffect(() => {
     fetchPRs();
+  }, []);
 
+  useEffect(() => {
     if (editId) {
       fetchDN(editId);
     }
@@ -297,11 +299,10 @@ const CreateDeliveryNote = ({ editId, onClose }) => {
   const fetchPRs = async () => {
     try {
       const res = await axios.get("/api/v1/purchase-request/open-pr");
-
+      console.log(res.data);
       setPrList(res.data || []);
     } catch (err) {
       console.log(err);
-
       toast.error("Failed to load PR");
     }
   };

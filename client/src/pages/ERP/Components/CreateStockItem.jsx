@@ -59,7 +59,7 @@ const CreateStockItem = ({ onClose, editId }) => {
 
     isActive: true,
   });
-
+  console.log(isEdit)
   /* =========================
      LOAD MASTERS
   ========================== */
@@ -111,6 +111,7 @@ const CreateStockItem = ({ onClose, editId }) => {
   ========================== */
   useEffect(() => {
     if (!isEdit) return;
+    console.log(editId);
 
     const loadItem = async () => {
       try {
@@ -246,7 +247,7 @@ const CreateStockItem = ({ onClose, editId }) => {
         defaultPurchaseRate: Number(form.defaultPurchaseRate) || 0,
       };
 
-      if (editId !== undefined) {
+      if (editId !== undefined && isEdit) {
         await axios.put(`/api/v1/stock-item/${editId}`, payload);
 
         toast.success("Item updated");

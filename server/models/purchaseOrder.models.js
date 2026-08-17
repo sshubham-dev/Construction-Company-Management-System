@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 ========================= */
 const poItemSchema = new mongoose.Schema({
   itemId: { type: mongoose.Schema.Types.ObjectId, ref: "Item", required: true },
+  itemName: { type: String, required: true },
 
   unit: { type: String, required: true },
 
@@ -24,7 +25,7 @@ const poItemSchema = new mongoose.Schema({
 ========================= */
 const purchaseOrderSchema = new mongoose.Schema(
   {
-    poNo: { type: String, unique: true, index: true },
+    poNo: { type: String, index: true },
 
     date: { type: Date, default: Date.now },
 
@@ -39,6 +40,7 @@ const purchaseOrderSchema = new mongoose.Schema(
       enum: ["STORE", "SITE"],
       required: true,
     },
+      
 
     storeId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
     siteId: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },

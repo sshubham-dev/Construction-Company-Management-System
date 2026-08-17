@@ -164,7 +164,20 @@ const getPurchaseOrders = async (req, res) => {
    GET BY ID
 ===================================== */
 const getPurchaseOrder = async (req, res) => {
-  const po = await PurchaseOrder.findById(req.params.id);
+  const po = await PurchaseOrder.findById(req.params.id)
+    .populate("supplierId")
+    .populate("siteId")
+    .populate("storeId")
+    .populate("purchaseRequestId")
+    .populate("rfqId")
+    .populate("quotationId")
+    .populate({
+      path: "items.itemId",
+      populate: {
+        path: "categoryId",
+        select: "name"
+      }
+    });
 
   if (!po) return res.status(404).json({ message: "Not found" });
 
